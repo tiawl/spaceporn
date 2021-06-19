@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+# https://wiki.wxwidgets.org/Valgrind_Suppression_File_Howto
+[[ ! -f amd.supp ]] && touch amd.supp
+valgrind --leak-check=full --show-reachable=yes --error-limit=no \
+  --gen-suppressions=all --log-file=minimalraw.log --suppressions=amd.supp\
+  ./bin/all/spaceporn -a -m -p -x 500 -f 30 ${@}
+cat ./minimalraw.log | ./scripts/dev/parse-suppressions > minimal.supp
+cat minimal.supp >> amd.supp
+rm minimal.supp minimalraw.log

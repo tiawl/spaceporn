@@ -1,0 +1,192 @@
+#!/usr/bin/env bash
+
+# WARNING: in C files, can not detect:
+# 1) multilines comments
+# 2) oneline comments after C code. ex:
+#        char c = 'c' // my comment after C code
+# 3) lonely double quotes in comments
+
+remove_array_dups() {
+  declare -A tmp_array
+
+  for i in "$@"; do
+    [[ $i ]] && IFS=" " tmp_array["${i:- }"]=1
+  done
+
+  printf '%s\n' "${!tmp_array[@]}"
+}
+
+declare -r CFILES="src/*.c include/*.h"
+declare -r RED="\e[38;5;1m"
+declare -r GREEN="\e[38;5;2m"
+declare -r RESET="\e[m"
+
+[[ ${#} -ne 1 ]] || [[ "${1}" != strict && "${1}" != nostrict ]] \
+  && echo -e "${RED}needs \"strict\" or \"nostrict\" argument${RESET}" \
+  && exit
+
+DQUOTES=($(grep -h -E "^[[:space:]]*//" ${CFILES} | grep -E '"' \
+  | sed 's/[^"]//g' | awk '{print length}'))
+for D in ${DQUOTES[@]}; do
+  [[ $(( ${D} & 1 )) -eq 1 ]] && echo -e -n "${RED}Lonely double quotes in " \
+    && echo -e "comments detected. Delete them and run again.${RESET}" && exit
+done
+echo -e "${GREEN}No lonely double quotes in comments.${RESET}"
+
+OLCOMMENTS=($(cat ${CFILES} | tr '\n' '\0' \
+  | perl -pe 's/""|"(\n|.)*?[^\\]"/""/g' | tr '\0' '\n' \
+  | grep -E -h -v '^[[:space:]]*//' | grep -E '//'))
+[[ ${#OLCOMMENTS[@]} -gt 0 ]] && echo -e -n "${RED}Oneline comments after " \
+  && echo -e "C code detected. Delete them and run again.${RESET}" && exit
+echo -e "${GREEN}No oneline comments after C code.${RESET}"
+
+MLCOMMENTS=($(cat ${CFILES} | tr '\n' '\0' \
+  | perl -pe 's/""|"(\n|.)*?[^\\]"/""/g' | tr '\0' '\n' \
+  | grep -E -h -v '^[[:space:]]*//' | grep -E '/\*|\*/'))
+[[ ${#MLCOMMENTS[@]} -gt 0 ]] && echo -e -n "${RED}Multiline comments " \
+  && echo -e "delected. Delete them and run again.${RESET}" && exit
+echo -e "${GREEN}No multiline comments.${RESET}"
+
+echo "--- included libraries --------------------------------------------------"
+declare -a INCL=()
+for I in include/*; do
+  INCL+=($(grep -h -E '#[[:space:]]*include <' ${I} \
+    | sed 's/^#[[:space:]]*include <\(.*\)>/\1/g'))
+done
+INCL=( $(remove_array_dups "${INCL[@]}") )
+for I in ${INCL[@]}; do echo ${I}; done
+
+echo "--- GCC libraries paths -------------------------------------------------"
+declare -a GCCPATH=()
+for P in $(echo | gcc -E -Wp,-v - 2>&1); do
+  [[ -d "${P}" ]] && GCCPATH+=(${P})
+done
+for P in ${GCCPATH[@]}; do echo ${P}; done
+
+echo "--- absolute path libraries ---------------------------------------------"
+declare -a LIB=()
+for I in ${INCL[@]}; do
+  for P in ${GCCPATH[@]}; do
+    [[ -f "${P}/${I}" ]] && LIB+=( "${P}/${I}" )
+  done
+done
+for L in ${LIB[@]}; do echo ${L}; done
+
+echo "--- visited libraries ---------------------------------------------------"
+declare -a LIBDEF=()
+declare -a LIBMBR=()
+declare -a VISITED=()
+while [[ ${#LIB[@]} -gt 0 ]]; do
+  INCL=()
+  for L in ${LIB[@]}; do
+    LIBDEF+=($(ctags -x --kinds-c=+p-fh ${L} | grep -E -o '^[^[:space:]]+'))
+    LIBMBR+=($(ctags -x --kinds-c=m ${L} | grep -E -o '^[^[:space:]]+'))
+    INCL+=($(echo "$(grep -E -h '#[[:space:]]*include [<"]' ${L} \
+      | sed 's/^#[[:space:]]*include [<"]\(.*\)[>"]/\1/g')"))
+  done
+  INCL=( $(remove_array_dups "${INCL[@]}") )
+  VISITED+=("${LIB[@]}")
+  LIB=()
+  for I in ${INCL[@]}; do
+    for P in ${GCCPATH[@]}; do
+      [[ -f "${P}/${I}" ]] && LIB+=( "${P}/${I}" )
+    done
+  done
+  LIB=($(echo "${LIB[@]} ${VISITED[@]} ${VISITED[@]}" | tr ' ' '\n' | sort \
+    | uniq -u))
+done
+echo "${#VISITED[@]}"
+
+echo "--- libraries' definitions ----------------------------------------------"
+LIBDEF=($(remove_array_dups "${LIBDEF[@]}"))
+echo "${#LIBDEF[@]}"
+
+echo "--- libraries' struct members -------------------------------------------"
+LIBMBR=($(remove_array_dups "${LIBMBR[@]}"))
+echo "${#LIBMBR[@]}"
+
+echo "--- library definitions declared through macro --------------------------"
+declare -a MAC=()
+for V in ${VISITED[@]}; do
+  MAC+=($(grep "^\b__MATHCALL[X]\?[[:space:]]*(\b" ${V} \
+    | awk '{printf $2}' | grep -E -o "\b[a-zA-Z]\w*\b"))
+  MAC+=($(grep "^\bPNG_EXPORT[A]\?[[:space:]]*(\b" ${V} \
+    | awk '{printf $3}' | grep -E -o "\b[a-zA-Z]\w*\b"))
+done
+LIBDEF=($(echo "${LIBDEF[@]} ${MAC[@]}"))
+LIBDEF=($(remove_array_dups "${LIBDEF[@]}"))
+echo ${#LIBDEF[@]}
+
+declare -a USRDEF=()
+if [[ "${1}" == strict ]]; then
+  echo "--- ctags user definitions ----------------------------------------------"
+  USRDEF+=($(find . -type f -name '*.[ch]' -exec \
+    ctags -x --kinds-c=+lpzD {} ';' | grep -E -o '^[^[:space:]]+'))
+  USRDEF=($(remove_array_dups "${USRDEF[@]} ${LIBMBR[@]}"))
+elif [[ "${1}" == nostrict ]]; then
+  echo "--- strictless ctags user definitions -----------------------------------"
+  USRDEF+=($(find . -type f -name '*.[ch]' -exec \
+    ctags -x --kinds-c=+p-vm {} ';' | grep -E -o '^[^[:space:]]+'))
+  LIBDEF=($(remove_array_dups "${LIBDEF[@]} ${LIBMBR[@]}"))
+fi
+echo "${#USRDEF[@]}"
+
+echo "--- unique words in C files ---------------------------------------------"
+declare -a WORDS=($(cat ${CFILES} | tr '\n' '\0' \
+  | perl -pe 's/""|"(\n|.)*?[^\\]"/""/g' | tr '\0' '\n' \
+  | grep -E -h -v '^[[:space:]]*//' | grep -E -v '#[[:space:]]*include ' \
+  | grep -E -o '\b[a-zA-Z]\w*\b'))
+WORDS=($(remove_array_dups "${WORDS[@]}"))
+echo "${#WORDS[@]}"
+
+declare -a KEYWORDS=("auto break case char const continue default do double")
+KEYWORDS+=("else enum extern float for goto if int long register return")
+KEYWORDS+=("short signed sizeof static struct switch typedef union unsigned")
+KEYWORDS+=("void volatile while true false ifdef ifndef endif define include")
+KEYWORDS+=("undef bool")
+
+echo "--- non user definitions in C files -------------------------------------"
+declare -a NO_USR=($(echo "${WORDS[@]} ${KEYWORDS[@]} ${KEYWORDS[@]} \
+  ${USRDEF[@]} ${USRDEF[@]}" | tr ' ' '\n' | sort | uniq -u))
+for N in ${NO_USR[@]}; do echo ${N}; done
+echo "--- non user definitions in C files -------------------------------------"
+echo "${#NO_USR[@]}"
+
+echo "--- ctags unknown definitions in C files --------------------------------"
+declare -a UNDEF=()
+if [[ "${1}" == strict ]]; then
+  UNDEF+=($(echo "${NO_USR[@]} ${LIBDEF[@]} ${LIBDEF[@]}" \
+    | grep -E -v "GCC_" | tr ' ' '\n' | sort | uniq -u))
+else
+  UNDEF+=($(echo "${NO_USR[@]} ${LIBDEF[@]} ${LIBDEF[@]}" \
+    | tr ' ' '\n' | sort | uniq -u))
+fi
+for U in ${UNDEF[@]}; do echo ${U}; done
+
+[[ ${#UNDEF[@]} -gt 0 && "${1}" == strict ]] \
+  && for L in ${UNDEF[@]}; do echo ${L}; done \
+  && echo -e "${RED}EXIT WITH ERROR: Find definition for above words${RESET}" \
+  && exit
+[[ ${#UNDEF[@]} -eq 0 ]] && \
+  echo -e "${GREEN}Every written words in C files are known${RESET}"
+
+echo "--- definitions in conf/configure.ac ------------------------------------"
+REGEX="AC_CHECK_TYPES\(\[(\n|.)*?\]|AC_CHECK_TYPE\((.)*?,"
+REGEX="${REGEX}|AC_CHECK_DECLS\(\[(\n|.)*?\]|AC_CHECK_DECL\((.)*?,"
+REGEX="${REGEX}|AC_CHECK_FUNCS\(\[(\n|.)*?\]|AC_CHECK_FUNC\((.)*?,"
+declare -a CONFWORDS=($(grep -z -h -P -o "${REGEX}" conf/configure.ac \
+  | tr '\0' '\n' | grep -E -o '\b[a-zA-Z]\w*\b' | grep -E -v 'AC_CHECK_'))
+CONFWORDS=($(remove_array_dups "${CONFWORDS[@]}"))
+echo "${#CONFWORDS[@]}"
+
+echo "--- defined in conf/configure.ac but not in C files ---------------------"
+for U in $(echo "${CONFWORDS[@]} ${NO_USR[@]} ${NO_USR[@]}" | tr ' ' '\n' \
+  | sort | uniq -u); do
+    echo ${U}
+done
+
+echo "--- defined in C files but not in conf/configure.ac ---------------------"
+for U in $(echo "${NO_USR[@]} ${CONFWORDS[@]} ${CONFWORDS[@]}" | tr ' ' '\n' \
+  | sort | uniq -u); do
+    echo ${U}
+done

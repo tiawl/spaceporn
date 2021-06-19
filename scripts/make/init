@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+
+[[ ${#} -ne 5 ]] && exit 1
+[[ ! -d ${1} ]] && echo "${1} is not a directory" && exit 1
+[[ ! -d ${2} ]] && echo "${2} is not a directory" && exit 1
+[[ ! -d ${3} ]] && echo "${3} is not a directory" && exit 1
+PREFIX=$(pushd ${1} &> /dev/null && echo ${PWD} && popd &> /dev/null)
+SPREFIX=$(pushd ${2} &> /dev/null && echo ${PWD} && popd &> /dev/null)
+TPREFIX=$(pushd ${3} &> /dev/null && echo ${PWD} && popd &> /dev/null)
+BIN="${4}"
+OBJ="${5}"
+
+# need execute access to run binary
+[[ ! -d ${PREFIX} ]] && echo "${PREFIX} is not a directory" >&2 && exit 1
+[[ ! -x ${PREFIX} ]] && echo "You are not allow to execute in ${PREFIX}" >&2 \
+  && exit 1
+
+# need read access to load shaders
+[[ ! -d ${SPREFIX} ]] && echo "${SPREFIX} is not a directory" >&2 && exit 1
+[[ ! -r ${SPREFIX} ]] && echo "You are not allow to read in ${SPREFIX}" >&2 \
+  && exit 1
+
+# need read access to load textures
+# need write access to generate textures atlas
+[[ ! -d ${TPREFIX} ]] && echo "${TPREFIX} is not a directory" >&2 && exit 1
+[[ ! -r ${TPREFIX} ]] && echo "You are not allow to read in ${TPREFIX}" >&2 \
+  && exit 1
+[[ ! -w ${TPREFIX} ]] && echo "You are not allow to write in ${TPREFIX}" >&2 \
+  && exit 1
+
+mkdir -p ${BIN} ${OBJ} && echo "${PREFIX}" > ${BIN}/prefix \
+  && echo "${SPREFIX}" > ${BIN}/sprefix \
+  && echo "${TPREFIX}" > ${BIN}/tprefix && exit 0

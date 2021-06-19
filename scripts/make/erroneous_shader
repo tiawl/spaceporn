@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+
+[[ ${#} -ne 2 ]] && exit 1
+[[ ! -f ${1} ]] && echo "${1} does not exist" && exit 1
+[[ ! -r ${1} ]] && echo "${1} is not readable" && exit 1
+[[ ${2} -ne 0 && ${2} -ne 1 ]] && echo "second arg must be 0 or 1" && exit 1
+
+I=0
+L=0
+LLINE=""
+if [[ ${2} -eq 0 ]]; then
+  while IFS= read -r LINE; do
+    (( L++ ))
+    (( I+=${#LINE} ))
+    [[ "${LLINE}" == void[[:space:]]main\(\) && "${LINE}" == { ]] && break;
+    LLINE="${LINE}"
+  done < ${1}
+else
+  while IFS= read -r LINE; do
+    if [[ "${LINE}" == void[[:space:]]main\(\) ]]; then
+      [[ "x${LLINE}" == x ]] && (( L-- ))
+      break;
+    fi
+    (( L++ ))
+    (( I+=${#LINE} ))
+    LLINE="${LINE}"
+  done < ${1}
+fi
+echo $(( ${I} + ${L} ))

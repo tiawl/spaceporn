@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+mkdir -p bin/conf && cp conf/configure.ac bin/conf \
+  && pushd bin/conf &> /dev/null && autoconf && rm configure.ac \
+  && popd &> /dev/null && mv bin/conf/configure conf/

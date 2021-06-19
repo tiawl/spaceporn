@@ -1,0 +1,83 @@
+#!/usr/bin/env bash
+
+color () {
+  local U="$(echo "${1}" | sed "s/^[^[:digit:]]*//g" \
+    | grep -E -o "^[[:digit:]]+")"
+  [[ ! -f log ]] && echo "$1\n$U" > log
+  [[ ${U} -gt 99 ]] && U="99"
+  [[ ${U} -lt 50 ]] \
+    && echo -e '\e[38;5;'"$(( 230 - ( ${U} / 10) ))"'m' \
+    || echo -e '\e[38;5;'"$(( 220 - 6 * ( (${U} - 50) / 10) ))"'m'
+}
+
+BIN="bin/all/spaceporn"
+if [[ -x ${BIN} ]]; then
+  sudo -k && sudo printf ""
+
+  declare -r RESET='\e[m'
+  declare -r SAVE_CURSOR='\e7'
+  declare -r RESTORE_CURSOR='\e8'
+  declare -r HOME_CURSOR='\e[H'
+  declare -r CURSOR_POS_2_0='\e[2;0H'
+  declare -r HIDE_CURSOR='\e[?25l'
+  declare -r SHOW_CURSOR='\e[?25h'
+  declare -r NO_LINEWRAP='\e[?7l'
+  declare -r LINEWRAP='\e[?7h'
+  declare -r ALT_BUFFER='\e[?1049h'
+  declare -r MAIN_BUFFER='\e[?1049l'
+  declare -r CLEAR_TERM='\e[2J'
+  declare -r ERASE_ENDLINE='\e[K'
+
+  printf "${SAVE_CURSOR}${HOME_CURSOR}${ALT_BUFFER}${NO_LINEWRAP}${HIDE_CURSOR}${CLEAR_TERM}"
+  stty -echo
+
+  declare -r TMP_DIR="bin/tmp"
+  mkdir -p ${TMP_DIR}
+  declare -r LOG="${TMP_DIR}/stdout"
+  declare -r GPULOG="${TMP_DIR}/gpu"
+
+  sudo intel_gpu_top -J -s 1000 \
+    | sed --unbuffered -e 's/^{/'$(printf "\x1e")'{/' \
+    | jq --seq --unbuffered '.engines."Render/3D/0".busy' \
+      > ${GPULOG} 2> /dev/null &
+  declare -r GPULOG_PID=${!}
+
+  unbuffer ./${BIN} ${@} > ${LOG} &
+  declare -r LOG_PID=${!}
+
+  while [[ $(cat ${LOG} | grep -E "Seed is" | wc -l) -eq 0 ]]; do
+    sleep 0.1s
+    [[ ! -d /proc/${LOG_PID} ]] && break;
+  done
+
+  [[ -d /proc/${LOG_PID} ]] && echo "[SEED] $(cat ${LOG} \
+    | grep -P -o "(?<=Seed is )[[:digit:]]+(?=\.0+)")"
+
+  while [[ -d /proc/${LOG_PID} ]]; do
+    echo -e "[FPS] $(tail -n 1 ${LOG} \
+      | grep -P -o "[[:digit:]]+(?= FPS)")${ERASE_ENDLINE}"
+
+    GPU_USAGE=$(tail -n 1 ${GPULOG})
+    echo -e "[GPU] $(color "${GPU_USAGE}")${GPU_USAGE}%${RESET}${ERASE_ENDLINE}"
+
+    I=0
+    for USAGE in $(top -b -n 1 -1 | grep -E "^%Cpu[0-9]+" \
+      | awk "{printf \" %s\", \$3}"); do
+
+        # '%%'  : Escape % character in printf format
+        printf "[CPU ${I}] $(color "${USAGE}")${USAGE}%%${RESET}${ERASE_ENDLINE}\n"
+        I=$(( ${I} + 1 ))
+    done
+
+    printf "${CURSOR_POS_2_0}"
+    sleep 1
+  done
+
+  kill ${GPULOG_PID}
+  rm -rf ${TMP_DIR}
+
+  printf "${LINEWRAP}${SHOW_CURSOR}${CLEAR_TERM}${MAIN_BUFFER}${RESTORE_CURSOR}"
+  stty echo
+else
+  echo "No spaceporn binary found"
+fi

@@ -1,0 +1,103 @@
+#!/usr/bin/env bash
+
+declare -r FRAGMENTS=$(find shaders/fragment -type f)
+declare -r VERTEXES=$(find shaders/vertex -type f)
+
+STATUS=0
+EQUALS=0
+
+echo -e "\nCompiling ...\n"
+make clean dev > /dev/null 2>&1
+
+declare -r SPACEPORN="./bin/all/spaceporn"
+
+declare -a -r ROADMAPS=($(seq 1 $(${SPACEPORN} -M)))
+
+declare -r VERTEXFILE_MIN=$(${SPACEPORN} -T | tr ' ' '\n' | head -n 1)
+declare -r VERTEXFILE_MAX=$(${SPACEPORN} -T | tr ' ' '\n' | tail -n 1)
+declare -r FRAGMENTFILE_MIN=$(${SPACEPORN} -F | tr ' ' '\n' | head -n 1)
+declare -r FRAGMENTFILE_MAX=$(${SPACEPORN} -F | tr ' ' '\n' | tail -n 1)
+
+for ROADMAP in ${ROADMAPS[@]}; do
+
+  FLAGS=""
+  if [[ ${ROADMAP} -ge ${VERTEXFILE_MIN} \
+    && ${ROADMAP} -le ${VERTEXFILE_MAX} ]]; then
+      FLAGS="${VERTEXES}"
+  elif [[ ${ROADMAP} -ge ${FRAGMENTFILE_MIN} \
+    && ${ROADMAP} -le ${FRAGMENTFILE_MAX} ]]; then
+      FLAGS="${FRAGMENTS}"
+  fi
+
+
+  if [[ "x${FLAGS}" == "x" ]]; then
+    for I in $(seq 0 1); do
+      if [[ ${I} -eq 0 ]]; then
+        [[ -f "textures/atlas.png" ]] && rm -f textures/atlas.png
+      fi
+      VALGRIND_OUTPUT=$(valgrind --leak-check=summary --show-leak-kinds=all \
+        --suppressions=amd.supp ${SPACEPORN} -a -m -p -x 500 -f 30 \
+        -R ${ROADMAP} 2>&1 > /dev/null | sed 's/==[[:digit:]]*==/ /g')
+
+      [[ $(echo "${VALGRIND_OUTPUT}" | tee >(grep -E -A 4 "LEAK SUMMARY") \
+        >(grep -E "ERROR SUMMARY") > /dev/null | grep -Po '^\D*\K(\d,?)+' \
+        | tr -d ',' | grep -E -v "^0$" | wc -l) -gt 0 ]] && STATUS=1
+
+      EQUALS=$(( (80 - ${#ROADMAP} - 2) / 2 ))
+
+      BAR=$(printf %${EQUALS}s | tr ' ' '=')
+      printf "${BAR} ${ROADMAP} ${BAR}"
+      [[ $(( ${#ROADMAP} % 2 )) -eq 1 ]] && printf "="
+
+      if [[ ${I} -eq 0 ]]; then
+        echo -e "\n  without textures/atlas.png before execution"
+      else
+        echo -e "\n  with textures/atlas.png before execution"
+      fi
+      printf %80s | tr ' ' '='
+
+      echo -e "\n\n$(echo "${VALGRIND_OUTPUT}" | grep -E -A 2 "HEAP SUMMARY")\n"
+      [[ "${VALGRIND_OUTPUT}" =~ LEAK\ SUMMARY ]] && echo -e "$( \
+        echo "${VALGRIND_OUTPUT}" | grep -E -A 5 "LEAK SUMMARY")\n"
+      echo -e "$(echo "${VALGRIND_OUTPUT}" | grep -E "ERROR SUMMARY")\n"
+
+      [[ ${STATUS} -ne 0 ]] && exit 1
+    done
+  else
+    for FILE in ${FLAGS}; do
+      for I in $(seq 0 1); do
+        if [[ ${I} -eq 0 ]]; then
+          [[ -f "textures/atlas.png" ]] && rm -f textures/atlas.png
+        fi
+        VALGRIND_OUTPUT=$(valgrind --leak-check=summary --show-leak-kinds=all \
+          --suppressions=amd.supp ${SPACEPORN} -a -m -p -x 500 -f 30 \
+          -R ${ROADMAP} $(echo ${FILE} | sed 's:^\([^/]\+/\)\{2\}::g') 2>&1 \
+          > /dev/null | sed 's/==[[:digit:]]*==/ /g')
+
+        [[ $(echo "${VALGRIND_OUTPUT}" | tee >(grep -E -A 4 "LEAK SUMMARY") \
+          >(grep -E "ERROR SUMMARY") > /dev/null | grep -Po '^\D*\K(\d,?)+' \
+          | tr -d ',' | grep -E -v "^0$" | wc -l) -gt 0 ]] && STATUS=1
+
+        EQUALS=$(( (80 - ${#ROADMAP} - ${#FILE} - 5) / 2 ))
+
+        BAR=$(printf %${EQUALS}s | tr ' ' '=')
+        printf "${BAR} ${ROADMAP} - ${FILE} ${BAR}"
+        [[ $(( (${#ROADMAP} + ${#FILE} + 3) % 2 )) -eq 1 ]] && printf "="
+
+        if [[ ${I} -eq 0 ]]; then
+          echo -e "\n  without textures/atlas.png before execution"
+        else
+          echo -e "\n  with textures/atlas.png before execution"
+        fi
+        printf %80s | tr ' ' '='
+
+        echo -e "\n\n$(echo "${VALGRIND_OUTPUT}" | grep -E -A 2 "HEAP SUMMARY")\n"
+        [[ "${VALGRIND_OUTPUT}" =~ LEAK\ SUMMARY ]] && echo -e "$( \
+          echo "${VALGRIND_OUTPUT}" | grep -E -A 5 "LEAK SUMMARY")\n"
+        echo -e "$(echo "${VALGRIND_OUTPUT}" | grep -E "ERROR SUMMARY")\n"
+
+        [[ ${STATUS} -ne 0 ]] && exit 1
+      done
+    done
+  fi
+done

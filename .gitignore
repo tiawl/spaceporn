@@ -1,0 +1,6 @@
+.*.sw[a-z]
+Session.vim
+spaceporn.wiki
+zig-out/
+zig-cache/
+libs/

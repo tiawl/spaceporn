@@ -1,0 +1,2 @@
+#define SPACEPORN_VK_LAYERS_COUNT 1
+#define PREFIX_MACRO(macro) SPACEPORN_ ## macro

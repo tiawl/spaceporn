@@ -15,7 +15,7 @@ void initPaths(char** fshaderpath, char** vshaderpath, char** texturepath)
   if (!*fshaderpath)
   {
     printf("Failed to build string fragment shader path");
-    exit(1);
+    exit(EXIT_FAILURE);
   }
 
   *vshaderpath = malloc(len1 + len2 + len3 + len4 + len7 + 1);
@@ -23,7 +23,7 @@ void initPaths(char** fshaderpath, char** vshaderpath, char** texturepath)
   if (!*vshaderpath)
   {
     printf("Failed to build string vertex shader path");
-    exit(1);
+    exit(EXIT_FAILURE);
   }
 
   *texturepath = malloc(len1 + len2 + len3 + len5 + len8 + 1);
@@ -31,7 +31,7 @@ void initPaths(char** fshaderpath, char** vshaderpath, char** texturepath)
   if (!*texturepath)
   {
     printf("Failed to build string texture path");
-    exit(1);
+    exit(EXIT_FAILURE);
   }
 
   memcpy(*fshaderpath, HOME_DIR, len1);
@@ -73,7 +73,7 @@ const char* readFile(char** filepath)
     buffer[length] = '\0'; // fread does not 0 terminate strings
   } else {
     printf("Failed to read inside %s: %s.\n", *filepath, strerror(errno));
-    exit(1);
+    exit(EXIT_FAILURE);
   }
 
   return buffer;
@@ -177,11 +177,11 @@ void getUniforms(GLuint uniformIds[UNIFORM_COUNT], GLuint* program)
   }
 }
 
-void setUniforms(GLuint uniformIds[UNIFORM_COUNT], UniformValues* values)
+void updateUniforms(GLuint uniformIds[UNIFORM_COUNT], UniformValues* values)
 {
   for (int i = 0; i < UNIFORM_COUNT; i++)
   {
-    uniforms[i].setValue(uniformIds[i], values);
+    uniforms[i].update(uniformIds[i], values);
   }
 }
 
@@ -243,7 +243,7 @@ void cleanup(png_structp* parser, png_infop* info, png_bytep** row_pointers,
   if (error)
   {
     printf("Failed to load %s\n", filename);
-    exit(1);
+    exit(EXIT_FAILURE);
   }
 }
 
@@ -329,14 +329,14 @@ than 8 failed to load in OpenGL.\n");
   if (!data)
   {
     free(data);
-    exit(1);
+    exit(EXIT_FAILURE);
   }
 
   row_pointers = malloc(h * sizeof(png_bytep));
   if (!row_pointers)
   {
     free(data);
-    exit(1);
+    exit(EXIT_FAILURE);
   }
 
   // set the individual row_pointers to point at the correct offsets of data

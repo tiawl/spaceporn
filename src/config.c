@@ -10,20 +10,19 @@ void CheckOpenGLError(const char* stmt, const char* fname, int line)
   }
 }
 
-void incr_time(GLint uniformId, UniformValues* values)
+void updateFloatUniforms(GLint uniformId, UniformValues* values)
 {
   values->time = ((double)(clock() - values->clock)) / CLOCKS_PER_SEC;
-  GL_CHECK(glUniform1f(uniformId, values->time));
+  GLfloat ffloats[6] =
+  {
+    values->width, values->height, values->xseed, values->yseed, values->time,
+    values->pixels
+  };
+  GL_CHECK(glUniform1fv(uniformId, 6, ffloats));
 }
 
-void get_resolution(GLint uniformId, UniformValues* values)
+void updateBoolUniforms(GLint uniformId, UniformValues* values)
 {
-  GL_CHECK(glUniform2f(uniformId, values->width, values->height));
-}
-
-void get_texture(GLint uniformId, UniformValues* values)
-{
-  GL_CHECK(glActiveTexture(GL_TEXTURE0));
-  GL_CHECK(glBindTexture(GL_TEXTURE_2D, values->tex.id));
-  GL_CHECK(glUniform1i(uniformId, 0));
+  GL_CHECK(glUniform3i(uniformId, values->animations, values->motion,
+    values->palettes));
 }

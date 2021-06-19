@@ -57,7 +57,7 @@ void initContext(ContextBuilder* builder)
   if (!builder->display)
   {
     printf("Failed to open X display\n");
-    exit(1);
+    exit(EXIT_FAILURE);
   }
 
   // Get a matching FB config
@@ -85,7 +85,7 @@ void initContext(ContextBuilder* builder)
     ((glx_major == 1) && (glx_minor < 3)) || (glx_major < 1))
   {
     printf("Invalid GLX version");
-    exit(1);
+    exit(EXIT_FAILURE);
   }
 
   int fbcount;
@@ -95,7 +95,7 @@ void initContext(ContextBuilder* builder)
   if (!fbc)
   {
     printf("Failed to retrieve a framebuffer config\n");
-    exit(1);
+    exit(EXIT_FAILURE);
   }
 
   // Pick the FB config/visual with the most samples per pixel
@@ -156,7 +156,7 @@ void initContext(ContextBuilder* builder)
   if (!builder->window)
   {
     printf("Failed to create window.\n");
-    exit(1);
+    exit(EXIT_FAILURE);
   }
 
   XWMHints *wmHint = XAllocWMHints();
@@ -241,7 +241,7 @@ void initContext(ContextBuilder* builder)
   if (contextErrorOccurred || !builder->context)
   {
     printf("Failed to create an OpenGL context\n");
-    exit(1);
+    exit(EXIT_FAILURE);
   }
 
   glXMakeCurrent(builder->display, builder->window, builder->context);

@@ -26,12 +26,18 @@ typedef struct
   GLint width;
   GLint height;
   Texture tex;
+  GLfloat pixels;
+  GLboolean animations;
+  GLboolean motion;
+  GLboolean palettes;
+  GLfloat xseed;
+  GLfloat yseed;
 } UniformValues;
 
 typedef struct
 {
   char* name;
-  void (*setValue)(GLint, UniformValues*);
+  void (*update)(GLint, UniformValues*);
 } Uniform;
 
 #define _DEBUG
@@ -47,23 +53,19 @@ void CheckOpenGLError(const char* stmt, const char* fname, int line);
   #define GL_CHECK(stmt) stmt
 #endif
 
-/* measured in microseconds */
-#define DELAY 30000
-
 /* shader uniforms */
-#define UNIFORM_COUNT 3
+#define UNIFORM_COUNT 2
 
 /* custom functions used to set uniform values */
-void incr_time(GLint uniformId, UniformValues* values);
-void get_resolution(GLint uniformId, UniformValues* values);
-void get_texture(GLint uniformId, UniformValues* values);
+void updateFloatUniforms(GLint uniformId, UniformValues* values);
+void updateBoolUniforms(GLint uniformId, UniformValues* values);
+void updateTexture(GLint uniformId, UniformValues* values);
 
 /* array of all uniforms to pass to the shader */
 static const Uniform uniforms[] =
 {
-  {"time", &incr_time},
-  {"resolution", &get_resolution},
-  {"big_stars_texture", &get_texture},
+  {"fflags", &updateFloatUniforms},
+  {"bflags", &updateBoolUniforms},
 };
 
 #endif

@@ -1,16 +1,25 @@
 # version 330 core
 
-uniform float time;
-uniform vec2 resolution;
+uniform float fflags[6];
+uniform bvec3 bflags;
 uniform sampler2D big_stars_texture;
 
 out vec4 fragColor;
 
 float size = 10.0;
-float pixels = 500.0;
+
 float star_density = 30.;
 float planet_density = 0.6;
 float bigstars_density = 3.;
+
+vec2 resolution = vec2(fflags[0], fflags[1]);
+vec2 seed = vec2(fflags[2], fflags[3]);
+float time = fflags[4];
+float pixels = fflags[5];
+
+bool animation = bflags.x;
+bool motion = bflags.y;
+bool palettes = bflags.z;
 
 #define TEXTURE_SIZE vec2(256., 32.)
 
@@ -189,9 +198,9 @@ vec3 nrand3(vec2 co)
 
 vec4 stars(vec2 uv)
 {
-  vec2 seed = uv.xy * 2.0;
-  seed = floor(seed * resolution.x);
-  vec3 rnd = nrand3(seed);
+  vec2 stars_seed = uv.xy * 2.0;
+  stars_seed = floor(stars_seed * resolution.x);
+  vec3 rnd = nrand3(stars_seed);
   vec4 starcolor = vec4(pow(rnd.y, star_density));
 
   if (starcolor.x > 0.3)
@@ -256,31 +265,30 @@ float calc_square(vec2 xy, vec2 offset)
     rd_bigstar = 1.;
   }
 
-  float size = (resolution.x / (pixels)) * (0.5 + rand(ixy + 300.) * 0.4);
+  float bigstar_size =
+    (resolution.x / (pixels)) * (0.5 + rand(ixy + 300.) * 0.4);
 
-  vec2 dist_text_center = ceil(12.0 * size + 0.1) * uv_unit;
+  vec2 dist_text_center = ceil(12.0 * bigstar_size + 0.1) * uv_unit;
   float m = 2. * ((rd_bigstar - 1.) / rd_bigstar) - 1.;
 
-  xy = rotate(xy, center, radians(rand(ixy + 400.) * 360.));
+  //xy = rotate(xy, center, radians(rand(ixy + 400.) * 360.));
   vec2 dist_center = vec2(xy.x - center.x, xy.y - center.y);
 
-  float dist = (1. - distance(center, xy));
-  float halo = dist * dist * dist * dist * dist * (rand(ixy + 150. + fract(time)) * 0.15);
   if ((abs(dist_center.x) < dist_text_center.x) &&
     (abs(dist_center.y) < dist_text_center.y))
   {
-    dist_center += floor(12.5 * size + 0.1) * uv_unit;
-    dist_center.x += (25. * uv_unit.x * size) * (rd_bigstar - 1.);
+    dist_center += floor(12.5 * bigstar_size + 0.1) * uv_unit;
+    dist_center.x += (25. * uv_unit.x * bigstar_size) * (rd_bigstar - 1.);
     vec4 text = texture2D(big_stars_texture,
-      dist_center / (size * uv_unit * TEXTURE_SIZE));
+      dist_center / (bigstar_size * uv_unit * TEXTURE_SIZE));
     if (text.a > 0.)
     {
       return text.x * ((rand(ixy + 150. + fract(time)) * 0.5) + 1.);
     } else {
-      return halo;
+      return 0.;
     }
   } else {
-    return halo;
+    return 0.;
   }
 }
 

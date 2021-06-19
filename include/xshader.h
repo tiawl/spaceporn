@@ -21,7 +21,7 @@ GLuint loadShader(const char* shaderSource, GLenum shaderType);
 bool loadProgram(GLuint* program, GLuint* vertex_shader,
   char** vshaderpath, GLuint* fragment_shader, char** fshaderpath);
 void getUniforms(GLuint uniformIds[UNIFORM_COUNT], GLuint* program);
-void setUniforms(GLuint uniformIds[UNIFORM_COUNT], UniformValues* values);
+void updateUniforms(GLuint uniformIds[UNIFORM_COUNT], UniformValues* values);
 void initVertices();
 void drawScreen();
 

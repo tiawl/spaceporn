@@ -1,8 +1,27 @@
 #include "xshader.h"
 #include "context.h"
 
-int main()
+#define NAME "xtelesktop"
+#define VERSION "0.1"
+
+void help()
 {
+  fprintf(stderr, "%s v%s\n", NAME, VERSION);
+  fprintf(stderr, "\nUsage: %s [-a] [-c] [-m] [-p PIXELS] [-fps FRAMES]\n",
+    NAME);
+  fprintf(stderr, "Options:\n\
+            -a      - Enable shader animations\n\
+            -c      - Enable camera motion\n\
+            -m      - Enable multiple colorschemes\n\
+            -p      - Pixels value between 200 to 600 (ex: -p 300)\n\
+                      default: 500\n\
+            -fps    - Frames value between 1 to 60 (ex: -fps 30)\n");
+}
+
+int main(int argc, char **argv)
+{
+  srand(time(NULL));
+
   char* fshaderpath = NULL;
   char* vshaderpath = NULL;
   char* texturepath = NULL;
@@ -38,7 +57,7 @@ int main()
     &fshaderpath))
   {
     printf("\n\tshader program failed to load\n\n");
-    exit(0);
+    exit(EXIT_FAILURE);
   }
 
   GLuint uniformIds[UNIFORM_COUNT];
@@ -48,6 +67,49 @@ int main()
   uniform_values.clock = clock();
   uniform_values.width = builder.window_attribs.width;
   uniform_values.height = builder.window_attribs.height;
+  uniform_values.pixels = 500;
+  uniform_values.animations = false;
+  uniform_values.motion = false;
+  uniform_values.palettes = false;
+  uniform_values.xseed = rand();
+  uniform_values.yseed = rand();
+
+  int fps = 60;
+
+  for (int i = 1; i < argc; i++)
+  {
+    if (strcmp(argv[i], "-p") == 0)
+    {
+      if (++i < argc)
+      {
+        uniform_values.pixels = atof(argv[i]);
+        if ((uniform_values.pixels > 600.) || (uniform_values.pixels < 200.))
+        {
+          help();
+          exit(EXIT_FAILURE);
+        }
+      }
+    } else if (strcmp(argv[i], "-fps") == 0) {
+      if (++i < argc)
+      {
+        fps = atoi(argv[i]);
+        if ((fps > 60) || (fps < 1))
+        {
+          help();
+          exit(EXIT_FAILURE);
+        }
+      }
+    } else if (strcmp(argv[i], "-a") == 0) {
+      uniform_values.animations = true;
+    } else if (strcmp(argv[i], "-c") == 0) {
+      uniform_values.motion = true;
+    } else if (strcmp(argv[i], "-m") == 0) {
+      uniform_values.palettes = true;
+    } else {
+      help();
+      exit(EXIT_FAILURE);
+    }
+  }
 
   loadPng(&uniform_values.tex, texturepath);
 
@@ -56,7 +118,7 @@ int main()
   GL_CHECK(glUseProgram(program));
 
   GL_CHECK(glViewport(0, 0, builder.window_attribs.width,
-                      builder.window_attribs.height));
+    builder.window_attribs.height));
 
   initVertices();
 
@@ -64,7 +126,7 @@ int main()
 
   while(true)
   {
-    setUniforms(uniformIds, &uniform_values);
+    updateUniforms(uniformIds, &uniform_values);
 
     drawScreen();
 

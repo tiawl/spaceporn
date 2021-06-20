@@ -47,8 +47,8 @@ Options:
 1. Clone the repository.
 2. `cd` into the directory.
 3. Run `sudo make clean install`.
-4. Test the program by using flags described in "Usage" to fit your needs.
-5. Add `xtelesktop [-a] [-m] [-p] [-x PIXELS] [-d MICROS] &` to your `.xinitrc`.
+4. Test the program by using flags described in "Usage" section to find a configuration which fits your needs.
+5. Add the previous step command to your `.xinitrc`.
 6. Logout and log back in to update the background.
 
 ## Supported environments

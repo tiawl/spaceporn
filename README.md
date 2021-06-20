@@ -4,8 +4,8 @@ A PixelSpace Shader Wallpaper for X System
 
 ## WARNING
 
-**Parts of what you will read (and some of it are huge) on this repository is not written by my own. Even if there are no licence on this repository, this code is not completly mine.**</br>
-I copy paste parts of scripts written by others, merged it and rearranged it to make an app for my personnal use. Some of those scripts are under licence.</br>
+**Parts of what you will read (and some of it are huge) on this repository is not written by my own. Even if there are no licence on this repository, this code is not completly mine.**</br></br>
+I copy paste parts of scripts written by others, merged it and rearranged it to make an app for my personnal use. Some of those scripts are under licence.</br></br>
 You can not use this code for a non-personal usage without to be aware of its authors' wishes and how I used their scripts on this repository (if you want to rewrite under licence parts):
 - [Khronos - Tutorial: OpenGL 3.0 Context Creation (GLX)][1] - Used to create OpenGL 3 context with X.
 - [Github - mmhobi7's xwinwrap][2] - Used to create X desktop window.
@@ -27,14 +27,19 @@ You can not use this code for a non-personal usage without to be aware of its au
 ## Usage
 
 ```
-Usage: xtelesktop [-a] [-c] [-m] [-p PIXELS] [-fps FRAMES]
+Usage: xtelesktop [-a] [-m] [-p] [-x PIXELS] [-d MICROS]
 Options:
             -a      - Enable shader animations
-            -c      - Enable camera motion
-            -m      - Enable multiple colorschemes
-            -p      - Pixels value between 200 to 600 (ex: -p 300)
+                      default: disabled
+            -m      - Enable camera motion
+                      default: disabled
+            -p      - Enable multiple colorschemes
+                      default: disabled
+            -x      - Pixels value between 100 to 600 (ex: -x 300)
                       default: 500
-            -fps    - Frames value between 1 to 60 (ex: -fps 30)
+            -d      - Delay value between each frame in microseconds
+                      (ex: -d 30000)
+                      default: 0
 ```
 
 ## Installing
@@ -43,7 +48,7 @@ Options:
 2. `cd` into the directory.
 3. Run `sudo make clean install`.
 4. Test the program by using flags described in "Usage" to fit your needs.
-5. Add `xtelesktop [-a] [-c] [-m] [-p PIXELS] [-fps FRAMES] &` to your `.xinitrc`.
+5. Add `xtelesktop [-a] [-m] [-p] [-x PIXELS] [-d MICROS] &` to your `.xinitrc`.
 6. Logout and log back in to update the background.
 
 ## Supported environments
@@ -57,4 +62,4 @@ If you ran **xtelesktop** on a non-listed environment, contact me, I will add it
 
 ## Known issues
 
-- Running app hides desktop icons &rarr; During execution, the app creates a window above the root window (or desktop window) and behind every other windows to render the shader. This is why desktop icons disappears. The only way to fix this issue is to use root window for shader rendering. Unfortunely on some environments it can lead to unexpected behaviours and I do not want to manage those cases;
+- Running app hides desktop icons &rarr; During execution, the app creates a window above the root window (or desktop window) and behind every other windows to render the shader. This is why desktop icons disappears. The only way to fix this issue is to use root window for shader rendering. Unfortunely on some environments it can lead to unexpected behaviours and I do not want to manage those situations.

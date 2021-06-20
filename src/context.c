@@ -50,14 +50,14 @@ int contextErrorHandler(Display* display, XErrorEvent* event)
   return 0;
 }
 
-void initContext(ContextBuilder* builder)
+bool initContext(ContextBuilder* builder)
 {
   builder->display = XOpenDisplay(NULL);
 
   if (!builder->display)
   {
     printf("Failed to open X display\n");
-    exit(EXIT_FAILURE);
+    return false;
   }
 
   // Get a matching FB config
@@ -85,17 +85,19 @@ void initContext(ContextBuilder* builder)
     ((glx_major == 1) && (glx_minor < 3)) || (glx_major < 1))
   {
     printf("Invalid GLX version");
-    exit(EXIT_FAILURE);
+    XCloseDisplay(builder->display);
+    return false;;
   }
 
   int fbcount;
   GLXFBConfig* fbc = glXChooseFBConfig(builder->display,
-                                       DefaultScreen(builder->display),
-                                       visual_attribs, &fbcount);
+    DefaultScreen(builder->display), visual_attribs, &fbcount);
+
   if (!fbc)
   {
     printf("Failed to retrieve a framebuffer config\n");
-    exit(EXIT_FAILURE);
+    XCloseDisplay(builder->display);
+    return false;
   }
 
   // Pick the FB config/visual with the most samples per pixel
@@ -106,12 +108,12 @@ void initContext(ContextBuilder* builder)
 
   for (int i = 0; i < fbcount; ++i)
   {
-    XVisualInfo *vi = glXGetVisualFromFBConfig(builder->display, fbc[i]);
+    XVisualInfo* vi = glXGetVisualFromFBConfig(builder->display, fbc[i]);
     if (vi)
     {
       int samp_buf, samples;
       glXGetFBConfigAttrib(builder->display, fbc[i],
-                           GLX_SAMPLE_BUFFERS, &samp_buf);
+        GLX_SAMPLE_BUFFERS, &samp_buf);
       glXGetFBConfigAttrib(builder->display, fbc[i], GLX_SAMPLES, &samples);
 
       if ((best_fbc < 0) || (samp_buf && (samples > best_num_samp)))
@@ -132,12 +134,12 @@ void initContext(ContextBuilder* builder)
 
   XFree(fbc);
 
-  XVisualInfo *vi = glXGetVisualFromFBConfig(builder->display, bestFbc);
+  XVisualInfo* vi = glXGetVisualFromFBConfig(builder->display, bestFbc);
   Window root = RootWindow(builder->display, vi->screen);
 
   XSetWindowAttributes swa;
   swa.colormap = builder->cmap = XCreateColormap(builder->display, root,
-                                                 vi->visual, AllocNone);
+    vi->visual, AllocNone);
   swa.background_pixmap = None;
   swa.border_pixel      = 0;
   swa.event_mask        = StructureNotifyMask;
@@ -145,33 +147,32 @@ void initContext(ContextBuilder* builder)
   XGetWindowAttributes(builder->display, root, &(builder->window_attribs));
 
   builder->window = XCreateWindow(builder->display, root,
-                                  builder->window_attribs.x,
-                                  builder->window_attribs.y,
-                                  builder->window_attribs.width,
-                                  builder->window_attribs.height, 0,
-                                  vi->depth, InputOutput, vi->visual,
-                                  CWBorderPixel | CWColormap | CWEventMask,
-                                  &swa);
+    builder->window_attribs.x, builder->window_attribs.y,
+    builder->window_attribs.width, builder->window_attribs.height, 0,
+    vi->depth, InputOutput, vi->visual,
+    CWBorderPixel | CWColormap | CWEventMask, &swa);
 
   if (!builder->window)
   {
-    printf("Failed to create window.\n");
-    exit(EXIT_FAILURE);
+    printf("Failed to create window\n");
+    XFree(vi);
+    XCloseDisplay(builder->display);
+    return false;
   }
 
-  XWMHints *wmHint = XAllocWMHints();
+  XWMHints* wmHint = XAllocWMHints();
   wmHint->flags = InputHint | StateHint;
   wmHint->input = false;
   wmHint->initial_state = NormalState;
   XSetWMProperties(builder->display, builder->window, NULL, NULL,
-                   NULL, 0, NULL, wmHint, NULL);
+    NULL, 0, NULL, wmHint, NULL);
 
   Atom xa = XInternAtom(builder->display, "_NET_WM_WINDOW_TYPE", False);
   Atom prop =
     XInternAtom(builder->display, "_NET_WM_WINDOW_TYPE_DESKTOP", False);
 
   XChangeProperty(builder->display, builder->window, xa, XA_ATOM, 32,
-                  PropModeReplace, (unsigned char *)&prop, 1);
+    PropModeReplace, (unsigned char *)&prop, 1);
 
   XFree(wmHint);
   XFree(vi);
@@ -201,35 +202,19 @@ void initContext(ContextBuilder* builder)
   if (!isExtensionSupported(glxExts, "GLX_ARB_create_context") ||
     !glXCreateContextAttribsARB)
   {
-    printf("glXCreateContextAttribsARB() not found"
-           " ... using old-style GLX context\n");
-    builder->context =
-      glXCreateNewContext(builder->display, bestFbc, GLX_RGBA_TYPE, 0, True);
+    printf("glXCreateContextAttribsARB() not found\n");
+    XCloseDisplay(builder->display);
+    return false;
   } else {
     int context_attribs[] =
-      {
-        GLX_CONTEXT_MAJOR_VERSION_ARB, 3,
-        GLX_CONTEXT_MINOR_VERSION_ARB, 3,
-        None
-      };
+    {
+      GLX_CONTEXT_MAJOR_VERSION_ARB, 3,
+      GLX_CONTEXT_MINOR_VERSION_ARB, 3,
+      None
+    };
 
     builder->context = glXCreateContextAttribsARB(builder->display, bestFbc, 0,
-                                                  True, context_attribs);
-
-    // Sync to ensure any errors generated are processed.
-    XSync(builder->display, False);
-    if (contextErrorOccurred || !builder->context)
-    {
-      context_attribs[1] = 1;
-      context_attribs[3] = 0;
-
-      contextErrorOccurred = false;
-
-      printf("Failed to create GL 3.3 context"
-             " ... using old-style GLX context\n");
-      builder->context = glXCreateContextAttribsARB(builder->display, bestFbc,
-                                                    0, True, context_attribs);
-    }
+      True, context_attribs);
   }
 
   // Sync to ensure any errors generated are processed.
@@ -240,9 +225,10 @@ void initContext(ContextBuilder* builder)
 
   if (contextErrorOccurred || !builder->context)
   {
-    printf("Failed to create an OpenGL context\n");
-    exit(EXIT_FAILURE);
+    XCloseDisplay(builder->display);
+    return false;
   }
 
   glXMakeCurrent(builder->display, builder->window, builder->context);
+  return true;
 }

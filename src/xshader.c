@@ -1,6 +1,6 @@
 #include "xshader.h"
 
-void initPaths(char** fshaderpath, char** vshaderpath, char** texturepath)
+bool initPaths(char** fshaderpath, char** vshaderpath, char** texturepath)
 {
   const size_t len1 = strlen(HOME_DIR);
   const size_t len2 = strlen(getenv("USERNAME"));
@@ -14,24 +14,27 @@ void initPaths(char** fshaderpath, char** vshaderpath, char** texturepath)
 
   if (!*fshaderpath)
   {
-    printf("Failed to build string fragment shader path");
-    exit(EXIT_FAILURE);
+    printf("fshaderpath malloc() failed\n");
+    return false;
   }
 
   *vshaderpath = malloc(len1 + len2 + len3 + len4 + len7 + 1);
 
   if (!*vshaderpath)
   {
-    printf("Failed to build string vertex shader path");
-    exit(EXIT_FAILURE);
+    printf("vshaderpath malloc() failed\n");
+    free(fshaderpath);
+    return false;
   }
 
   *texturepath = malloc(len1 + len2 + len3 + len5 + len8 + 1);
 
   if (!*texturepath)
   {
-    printf("Failed to build string texture path");
-    exit(EXIT_FAILURE);
+    printf("texturepath malloc() failed\n");
+    free(fshaderpath);
+    free(vshaderpath);
+    return false;
   }
 
   memcpy(*fshaderpath, HOME_DIR, len1);
@@ -51,11 +54,12 @@ void initPaths(char** fshaderpath, char** vshaderpath, char** texturepath)
   memcpy(*texturepath + len1 + len2, BIN_DIR, len3);
   memcpy(*texturepath + len1 + len2 + len3, TEXTURES_DIR, len5);
   memcpy(*texturepath + len1 + len2 + len3 + len5, TEXTURE_FILE, len8 + 1);
+
+  return true;
 }
 
-const char* readFile(char** filepath)
+bool readFile(char** filepath, char** buffer)
 {
-  char* buffer = 0;
   long length;
   FILE* f = fopen(*filepath, "r");
 
@@ -64,19 +68,22 @@ const char* readFile(char** filepath)
     fseek(f, 0, SEEK_END);
     length = ftell(f);
     fseek(f, 0, SEEK_SET);
-    buffer = malloc(length + 1);
-    if (buffer)
+    *buffer = malloc(length + 1);
+    if (*buffer)
     {
-      fread(buffer, 1, length, f);
+      fread(*buffer, 1, length, f);
+    } else {
+      printf("buffer malloc() failed\n");
+      return false;
     }
     fclose(f);
-    buffer[length] = '\0'; // fread does not 0 terminate strings
+    (*buffer)[length] = '\0'; // fread does not 0 terminate strings
   } else {
-    printf("Failed to read inside %s: %s.\n", *filepath, strerror(errno));
-    exit(EXIT_FAILURE);
+    printf("Failed to read inside %s: %s\n", *filepath, strerror(errno));
+    return false;
   }
 
-  return buffer;
+  return true;
 }
 
 GLuint loadShader(const char* shaderSource, GLenum shaderType)
@@ -112,21 +119,43 @@ bool loadProgram(GLuint* program, GLuint* vertex_shader,
 {
   GL_CHECK(*program = glCreateProgram());
 
-  *vertex_shader = loadShader(readFile(vshaderpath), GL_VERTEX_SHADER);
-  *fragment_shader = loadShader(readFile(fshaderpath), GL_FRAGMENT_SHADER);
-
-  if (*vertex_shader == 0)
+  char* vertex_file = 0;
+  if (!readFile(vshaderpath, &vertex_file))
   {
     GL_CHECK(glDeleteProgram(*program));
-    *fragment_shader = 0;
+    *program = 0;
+    printf("Failed to read in vertex shader file\n");
+    return false;
+  }
+
+  char* fragment_file = 0;
+  if (!readFile(fshaderpath, &fragment_file))
+  {
+    free(vertex_file);
+    GL_CHECK(glDeleteProgram(*program));
+    *program = 0;
+    printf("Failed to read in fragment shader file\n");
+    return false;
+  }
+
+  *vertex_shader = loadShader(vertex_file, GL_VERTEX_SHADER);
+  if (*vertex_shader == 0)
+  {
+    free(vertex_file);
+    free(fragment_file);
+    GL_CHECK(glDeleteProgram(*program));
     *program = 0;
     return false;
   }
 
+  *fragment_shader = loadShader(fragment_file, GL_FRAGMENT_SHADER);
   if (*fragment_shader == 0)
   {
-    GL_CHECK(glDeleteProgram(*program));
+    free(vertex_file);
+    free(fragment_file);
+    GL_CHECK(glDeleteShader(*vertex_shader));
     *vertex_shader = 0;
+    GL_CHECK(glDeleteProgram(*program));
     *program = 0;
     return false;
   }
@@ -147,14 +176,17 @@ bool loadProgram(GLuint* program, GLuint* vertex_shader,
     GL_CHECK(glGetShaderInfoLog(*program, maxLength, &maxLength, message));
 
     printf("%s\n", &(message[0]));
-    printf("\n\nunable to link program %d!\n", *program);
+    printf("\n\nUnable to link program %d\n", *program);
 
+    free(vertex_file);
+    free(fragment_file);
     GL_CHECK(glDeleteShader(*vertex_shader));
     *vertex_shader = 0;
     GL_CHECK(glDeleteShader(*fragment_shader));
     *fragment_shader = 0;
     GL_CHECK(glDeleteProgram(*program));
     *program = 0;
+
     return false;
   }
 
@@ -185,11 +217,10 @@ void updateUniforms(GLuint uniformIds[UNIFORM_COUNT], UniformValues* values)
   }
 }
 
-void initVertices()
+void initVertices(GLuint* vertexbuffer, GLuint* vertexarray)
 {
-  GLuint VertexArrayID;
-  GL_CHECK(glGenVertexArrays(1, &VertexArrayID));
-  GL_CHECK(glBindVertexArray(VertexArrayID));
+  GL_CHECK(glGenVertexArrays(1, vertexarray));
+  GL_CHECK(glBindVertexArray(*vertexarray));
 
   static const GLfloat g_vertex_buffer_data[] = {
     -1.0f, -1.0f,
@@ -198,14 +229,12 @@ void initVertices()
     1.0f, 1.0f
   };
 
-  GLuint vertexbuffer;
-  GL_CHECK(glGenBuffers(1, &vertexbuffer));
-  GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer));
+  GL_CHECK(glGenBuffers(1, vertexbuffer));
+  GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, *vertexbuffer));
   GL_CHECK(glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data),
                g_vertex_buffer_data, GL_STATIC_DRAW));
 
   GL_CHECK(glEnableVertexAttribArray(0));
-  GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer));
   GL_CHECK(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, (void*)0));
 }
 
@@ -218,7 +247,7 @@ void drawScreen()
 }
 
 void cleanup(png_structp* parser, png_infop* info, png_bytep** row_pointers,
-  uint8_t** data, FILE** file, bool error, char const * const filename)
+  uint8_t** data, FILE** file, char const * const filename)
 {
   if(*parser)
   {
@@ -239,15 +268,9 @@ void cleanup(png_structp* parser, png_infop* info, png_bytep** row_pointers,
   {
     fclose(*file);
   }
-
-  if (error)
-  {
-    printf("Failed to load %s\n", filename);
-    exit(EXIT_FAILURE);
-  }
 }
 
-void loadPng(Texture * tex, char const * const filename)
+bool loadPng(Texture * tex, char const * const filename)
 {
   FILE* file = 0;
   uint8_t* data = 0;
@@ -261,35 +284,44 @@ void loadPng(Texture * tex, char const * const filename)
 
   if (!tex || !filename)
   {
-    printf("1 or more loadPng pointers arguments are null.\n");
-    cleanup(&parser, &info, &row_pointers, &data, &file, true, filename);
+    printf("One or more loadPng() pointers arguments are null\n");
+    cleanup(&parser, &info, &row_pointers, &data, &file, filename);
+    printf("Failed to load PNG file\n");
+    return false;
   }
 
   file = fopen(filename, "rb");
   if (!file)
   {
-    printf("failed to open %s\n", filename);
-    cleanup(&parser, &info, &row_pointers, &data, &file, true, filename);
+    printf("Failed to open %s\n", filename);
+    cleanup(&parser, &info, &row_pointers, &data, &file, filename);
+    return false;
   }
 
   parser = png_create_read_struct(PNG_LIBPNG_VER_STRING, 0, 0, 0);
   if (!parser)
   {
-    printf("png_create_read_struct() failed.\n");
-    cleanup(&parser, &info, &row_pointers, &data, &file, true, filename);
+    printf("png_create_read_struct() failed\n");
+    cleanup(&parser, &info, &row_pointers, &data, &file, filename);
+    printf("Failed to load %s\n", filename);
+    return false;
   }
 
   info = png_create_info_struct(parser);
   if (!info)
   {
-    printf("png_create_info_struct() failed.\n");
-    cleanup(&parser, &info, &row_pointers, &data, &file, true, filename);
+    printf("png_create_info_struct() failed\n");
+    cleanup(&parser, &info, &row_pointers, &data, &file, filename);
+    printf("Failed to load %s\n", filename);
+    return false;
   }
 
   if (setjmp(png_jmpbuf(parser)))
   {
-    printf("png_jmpbuf() failed.\n");
-    cleanup(&parser, &info, &row_pointers, &data, &file, true, filename);
+    printf("png_jmpbuf() failed\n");
+    cleanup(&parser, &info, &row_pointers, &data, &file, filename);
+    printf("Failed to load %s\n", filename);
+    return false;
   }
 
   png_init_io(parser, file);
@@ -299,8 +331,10 @@ void loadPng(Texture * tex, char const * const filename)
   if ((w & (w - 1)) || (h & (h - 1)) || (w < 8) || (h < 8))
   {
     printf("PNG images with dimensions that are not power of two or smaller \
-than 8 failed to load in OpenGL.\n");
-    cleanup(&parser, &info, &row_pointers, &data, &file, true, filename);
+than 8 failed to load in OpenGL\n");
+    cleanup(&parser, &info, &row_pointers, &data, &file, filename);
+    printf("Failed to load %s\n", filename);
+    return false;
   }
 
   if (png_get_valid(parser, info, PNG_INFO_tRNS) ||
@@ -328,15 +362,19 @@ than 8 failed to load in OpenGL.\n");
   data = malloc(rowbytes * h * sizeof(png_byte) + 15);
   if (!data)
   {
-    free(data);
-    exit(EXIT_FAILURE);
+    printf("data malloc() failed\n");
+    cleanup(&parser, &info, &row_pointers, &data, &file, filename);
+    printf("Failed to load %s\n", filename);
+    return false;
   }
 
   row_pointers = malloc(h * sizeof(png_bytep));
   if (!row_pointers)
   {
-    free(data);
-    exit(EXIT_FAILURE);
+    printf("row_pointers malloc() failed\n");
+    cleanup(&parser, &info, &row_pointers, &data, &file, filename);
+    printf("Failed to load %s\n", filename);
+    return false;
   }
 
   // set the individual row_pointers to point at the correct offsets of data
@@ -369,5 +407,6 @@ than 8 failed to load in OpenGL.\n");
   GL_CHECK(glTexParameteri(
     GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, tex->min_filter));
 
-  cleanup(&parser, &info, &row_pointers, &data, &file, false, filename);
+  cleanup(&parser, &info, &row_pointers, &data, &file, filename);
+  return true;
 }

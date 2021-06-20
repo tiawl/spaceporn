@@ -8,8 +8,8 @@ out vec4 fragColor;
 
 float size = 10.0;
 
-float star_density = 30.;
-float planet_density = 0.6;
+float star_density = 20.;
+float planet_density = 1.; // WARNING: must be greater than 1 to avoid some artifacts
 float bigstars_density = 3.;
 
 vec2 resolution = vec2(fflags[0], fflags[1]);
@@ -22,6 +22,13 @@ bool motion = bflags.y;
 bool palettes = bflags.z;
 
 #define TEXTURE_SIZE vec2(256., 32.)
+#define NB_COL 7.
+
+/****************************************************************************
+ *                                                                          *
+ *                            Random and Noises                             *
+ *                                                                          *
+ ****************************************************************************/
 
 float rand(vec2 coord)
 {
@@ -59,6 +66,12 @@ float fbm(vec2 coord, uint octaves)
   return value;
 }
 
+/****************************************************************************
+ *                                                                          *
+ *                              Noise Animation                             *
+ *                                                                          *
+ ****************************************************************************/
+
 mat2 makem2(float theta)
 {
   float c = cos(theta);
@@ -77,6 +90,12 @@ vec2 dualfbm(vec2 p, uint octaves)
 
   return p * makem2(time * .2);
 }
+
+/****************************************************************************
+ *                                                                          *
+ *                            Deep-Fold Functions                           *
+ *                                                                          *
+ ****************************************************************************/
 
 bool dither(vec2 uv1, vec2 uv2)
 {
@@ -117,6 +136,12 @@ float cloud_alpha(vec2 uv, uint octaves)
   return fbm;
 }
 
+/****************************************************************************
+ *                                                                          *
+ *                                 Nebulae                                  *
+ *                                                                          *
+ ****************************************************************************/
+
 vec4 nebulae(vec2 uv, bool dith)
 {
   uint octaves = 2u;
@@ -150,13 +175,19 @@ vec4 nebulae(vec2 uv, bool dith)
 
   float col_value = 0.0;
   if (a2 > a) {
-    col_value = floor(n_dust_lerp * 35.0) / 7.0;
+    col_value = floor(n_dust_lerp * 35.0) / NB_COL;
   } else {
-    col_value = floor(n_dust_lerp * 14.0) / 7.0;
+    col_value = floor(n_dust_lerp * 14.0) / NB_COL;
   }
 
-  return vec4(vec3(col_value), a2);
+  return vec4(vec3(col_value), a2) * (sin(time * 1000.) * 0.05 + 1.);
 }
+
+/****************************************************************************
+ *                                                                          *
+ *                                   Dust                                   *
+ *                                                                          *
+ ****************************************************************************/
 
 vec4 dust(vec2 uv, bool dith)
 {
@@ -184,9 +215,15 @@ vec4 dust(vec2 uv, bool dith)
     n_dust_lerp *= 1.1;
   }
 
-  float col_value = floor(n_dust_lerp) / 7.0;
-  return vec4(vec3(col_value), a_dust);
+  float col_value = floor(n_dust_lerp) / NB_COL;
+  return vec4(vec3(col_value), a_dust) * (sin(time * 1000.) * 0.05 + 1.);
 }
+
+/****************************************************************************
+ *                                                                          *
+ *                                 Stars                                    *
+ *                                                                          *
+ ****************************************************************************/
 
 vec3 nrand3(vec2 co)
 {
@@ -196,54 +233,80 @@ vec3 nrand3(vec2 co)
   return c;
 }
 
-vec4 stars(vec2 uv)
+vec3 stars(vec2 uv)
 {
   vec2 stars_seed = uv.xy * 2.0;
   stars_seed = floor(stars_seed * resolution.x);
   vec3 rnd = nrand3(stars_seed);
-  vec4 starcolor = vec4(pow(rnd.y, star_density));
+  vec3 starcolor = vec3(pow(rnd.y, star_density));
 
   if (starcolor.x > 0.3)
   {
     float brighness_variance = max(0.15, rand(uv) / 2.0f);
-    return starcolor + (vec4(rand((1. + fract(time)) * uv)
+    return starcolor + (vec3(rand((1. + fract(time)) * uv)
       * brighness_variance) - (brighness_variance / 2.));
   } else {
-    return vec4(0.);
+    return vec3(0.);
   }
 }
 
-float normrand(vec2 co)
-{
-  return (rand(co) + rand(co + 1.) + rand(co + 2.) + rand(co + 3.)
-    + rand(co + 4.)) / 5.;
-}
+/****************************************************************************
+ *                                                                          *
+ *                                 Planets                                  *
+ *                                                                          *
+ ****************************************************************************/
 
+float roundDown(float numToRound, float multiple)
+{
+  float remainder = mod(abs(numToRound), multiple);
+  if (remainder == 0.)
+  {
+    return numToRound;
+  } else if (numToRound < 0.) {
+    return -(abs(numToRound) - remainder);
+  } else {
+    return numToRound - remainder;
+  }
+}
 
 float calc_circle(vec2 xy, vec2 offset)
 {
-  vec2 ixy = floor(xy) - offset;
-  vec2 center = ixy + 0.5;
+  vec2 ixy = vec2(roundDown(xy.x, planet_density),
+    roundDown(xy.y, planet_density));
+  ixy -= offset;
+  vec2 center = ixy + planet_density * 0.5;
 
-  float radius = 0.01 * planet_density +
-    0.2 * planet_density * normrand(ixy + 100.0);
-  center += 0.25 + 0.5 * rand(ixy);
+  float radius = 0.05 + 0.2 * rand(ixy + 100.0);
+  center += planet_density * 0.25 + planet_density * 0.5 * rand(ixy);
 
   float angle = radians(rand(ixy + 50.0) * 360.);
-  center.x += 0.25 * sin(angle);
-  center.y += 0.25 * cos(angle);
+  center.x += planet_density * 0.1 * sin(angle);
+  center.y += planet_density * 0.1 * cos(angle);
+  center.x += 0.1 * sin(angle * time * 10. * (rand(ixy + 150.0)));
+  center.y += 0.1 * cos(angle * time * 10. * (rand(ixy + 150.0)));
 
-  return step(distance(center, xy), radius);
+  vec2 d = xy - center;
+  float hsq = d.x*d.x + d.y*d.y;
+
+  return (1.0 - smoothstep(radius, radius + 0.01, hsq)) *
+    (ceil(rand(ixy * 620.) * 4.0) / 4.);
 }
 
-vec4 planets(vec2 uv)
+vec3 planets(vec2 uv)
 {
-  uv *= planet_density;
-  uv.x *= resolution.x / resolution.y;
-  return vec4(calc_circle(uv, vec2(0.0, 0.0)) +
-    calc_circle(uv, vec2(0.0, 1.0)) + calc_circle(uv, vec2(1.0, 0.0)) +
-    calc_circle(uv, vec2(1.0, 1.0)));
+  uv *= 5.;
+  float col_value = max(calc_circle(uv, vec2(0.0, 0.0)),
+    max(calc_circle(uv, vec2(0.0, planet_density)),
+    max(calc_circle(uv, vec2(planet_density, 0.0)),
+    calc_circle(uv, vec2(planet_density, planet_density)))));
+  return vec3(floor(col_value * NB_COL) / NB_COL);
 }
+
+/****************************************************************************
+ *                                                                          *
+ *                               Big Stars                                  *
+ *                                                                          *
+ ****************************************************************************/
 
 float calc_square(vec2 xy, vec2 offset)
 {
@@ -265,8 +328,8 @@ float calc_square(vec2 xy, vec2 offset)
     rd_bigstar = 1.;
   }
 
-  float bigstar_size =
-    (resolution.x / (pixels)) * (0.5 + rand(ixy + 300.) * 0.4);
+  float bigstar_size = (max(resolution.x, resolution.y) / pixels) *
+    (0.5 + rand(ixy + 300.) * 0.4);
 
   vec2 dist_text_center = ceil(12.0 * bigstar_size + 0.1) * uv_unit;
   float m = 2. * ((rd_bigstar - 1.) / rd_bigstar) - 1.;
@@ -292,25 +355,69 @@ float calc_square(vec2 xy, vec2 offset)
   }
 }
 
-vec4 bigstars(vec2 uv)
+vec3 bigstars(vec2 uv)
 {
   uv *= bigstars_density;
-  uv.x *= resolution.x / resolution.y;
-  return vec4(max(max(max(calc_square(uv, vec2(0.0, 0.0)),
+  float col_value = max(max(max(calc_square(uv, vec2(0.0, 0.0)),
     calc_square(uv, vec2(0.0, 1.0))), calc_square(uv, vec2(1.0, 0.0))),
-    calc_square(uv, vec2(1.0, 1.0))));
+    calc_square(uv, vec2(1.0, 1.0)));
+  return vec3(floor(col_value * NB_COL) / NB_COL);
 }
+
+/****************************************************************************
+ *                                                                          *
+ *                                   Main                                   *
+ *                                                                          *
+ ****************************************************************************/
 
 void main()
 {
-  vec2 UV = gl_FragCoord.xy / resolution;
+  vec2 m = vec2(0.);
+  if (motion)
+  {
+    m = 2. * max(resolution.x, resolution.y) * vec2(sin(time), sin(time * 0.75));
+  }
+
+  vec2 UV = (gl_FragCoord.xy + m) / resolution;
+  UV.x *= resolution.x / resolution.y;
 
   // pixelizing and dithering
   vec2 uv = floor((UV) * pixels) / pixels;
   bool dith = dither(uv, UV);
 
-  vec4 col = max(bigstars(UV), max(stars(uv), max(nebulae(uv, dith), dust(uv, dith))
-    * (sin(time * 1000.) * 0.05 + 1.)));//planets(uv);
+  vec4 col;
 
-  fragColor= col;
+  vec4 planets = vec4(planets(uv), 1.);
+  float planets_value = planets.x;
+
+  if (planets_value == -1.)
+  {
+    vec4 nebulae = nebulae(uv, dith);
+    vec4 dust = dust(uv, dith);
+    vec4 stars = vec4(stars(uv), 1.);
+    vec4 bigstars = vec4(bigstars(UV), 1.);
+
+    float nebulae_value = nebulae.x;
+    float dust_value = dust.x;
+    float stars_value = stars.x;
+    float bigstars_value = bigstars.x;
+
+    float max_value = max(bigstars_value, max(stars_value,
+      max(dust_value, nebulae_value)));
+
+    if (max_value == nebulae_value)
+    {
+      col = nebulae;
+    } else if (max_value == dust_value) {
+      col = dust;
+    } else if (max_value == stars_value) {
+      col = stars;
+    } else {
+      col = bigstars;
+    }
+  } else {
+    col = planets;
+  }
+
+  fragColor = col;
 }

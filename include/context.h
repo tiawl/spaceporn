@@ -26,6 +26,6 @@ typedef struct
 
 bool isExtensionSupported(const char* extList, const char* extension);
 int contextErrorHandler(Display* display, XErrorEvent* event);
-void initContext(ContextBuilder* builder);
+bool initContext(ContextBuilder* builder);
 
 #endif

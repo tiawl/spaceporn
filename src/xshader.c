@@ -1,5 +1,38 @@
 #include "xshader.h"
 
+void CheckOpenGLError(const char* stmt, const char* fname, int line)
+{
+  GLenum error = glGetError();
+  if (error != GL_NO_ERROR)
+  {
+    printf("OpenGL error %08x, at %s:%i - for %s\n", error, fname, line, stmt);
+    abort();
+  }
+}
+
+/************************************************************************
+                          Uniforms functions
+*************************************************************************/
+
+void updateFloatUniforms(GLint uniformId, UniformValues* values)
+{
+  values->time = ((double)(clock() - values->clock)) / CLOCKS_PER_SEC;
+  GLfloat ffloats[6] =
+  {
+    values->width, values->height, values->xseed, values->yseed, values->time,
+    values->pixels
+  };
+  GL_CHECK(glUniform1fv(uniformId, 6, ffloats));
+}
+
+void updateBoolUniforms(GLint uniformId, UniformValues* values)
+{
+  GL_CHECK(glUniform3i(uniformId, values->animations, values->motion,
+    values->palettes));
+}
+
+/**************************************************************************/
+
 bool initPaths(char** fshaderpath, char** vshaderpath, char** texturepath)
 {
   const size_t len1 = strlen(HOME_DIR);
@@ -201,7 +234,8 @@ bool loadProgram(GLuint* program, GLuint* vertex_shader,
   return true;
 }
 
-void getUniforms(GLuint uniformIds[UNIFORM_COUNT], GLuint* program)
+void getUniforms(const Uniform uniforms[UNIFORM_COUNT],
+  GLuint uniformIds[UNIFORM_COUNT], GLuint* program)
 {
   for (int i = 0; i < UNIFORM_COUNT; i++)
   {
@@ -209,7 +243,8 @@ void getUniforms(GLuint uniformIds[UNIFORM_COUNT], GLuint* program)
   }
 }
 
-void updateUniforms(GLuint uniformIds[UNIFORM_COUNT], UniformValues* values)
+void updateUniforms(const Uniform uniforms[UNIFORM_COUNT],
+  GLuint uniformIds[UNIFORM_COUNT], UniformValues* values)
 {
   for (int i = 0; i < UNIFORM_COUNT; i++)
   {
@@ -270,7 +305,7 @@ void cleanup(png_structp* parser, png_infop* info, png_bytep** row_pointers,
   }
 }
 
-bool loadPng(Texture * tex, char const * const filename)
+bool loadPng(GLuint* texture, char const* const filename)
 {
   FILE* file = 0;
   uint8_t* data = 0;
@@ -282,7 +317,7 @@ bool loadPng(Texture * tex, char const * const filename)
   int bit_depth;
   int color_type;
 
-  if (!tex || !filename)
+  if (!filename)
   {
     printf("One or more loadPng() pointers arguments are null\n");
     cleanup(&parser, &info, &row_pointers, &data, &file, filename);
@@ -385,27 +420,21 @@ than 8 failed to load in OpenGL\n");
 
   png_read_image(parser, row_pointers);
 
-  GLuint texture_id;
-  GL_CHECK(glGenTextures(1, &texture_id));
-  GL_CHECK(glBindTexture(GL_TEXTURE_2D, texture_id));
+  GL_CHECK(glGenTextures(1, texture));
+  GL_CHECK(glBindTexture(GL_TEXTURE_2D, *texture));
   GLenum texture_format =
     (color_type & PNG_COLOR_MASK_ALPHA) ? GL_RGBA : GL_RGB;
   GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, texture_format, w, h,
     0, texture_format, GL_UNSIGNED_BYTE, data));
 
-  tex->id = texture_id;
-  tex->w = w;
-  tex->h = h;
-  tex->format = texture_format;
-  tex->min_filter = tex->mag_filter = GL_NEAREST;
-  tex->wrap_s = tex->wrap_t = GL_CLAMP_TO_BORDER;
-
-  GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, tex->wrap_s));
-  GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, tex->wrap_t));
+  GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
+    GL_CLAMP_TO_BORDER));
+  GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,
+    GL_CLAMP_TO_BORDER));
   GL_CHECK(glTexParameteri(
-    GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, tex->mag_filter));
+    GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
   GL_CHECK(glTexParameteri(
-    GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, tex->min_filter));
+    GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST));
 
   cleanup(&parser, &info, &row_pointers, &data, &file, filename);
   return true;

@@ -104,6 +104,13 @@ int main(int argc, char **argv)
     exit(EXIT_FAILURE);
   }
 
+  /* array of all uniforms to pass to the shader */
+  const Uniform uniforms[] =
+  {
+    {"fflags", &updateFloatUniforms},
+    {"bflags", &updateBoolUniforms},
+  };
+
   GLuint uniformIds[UNIFORM_COUNT];
 
   UniformValues uniform_values;
@@ -178,7 +185,8 @@ int main(int argc, char **argv)
     exit(EXIT_FAILURE);
   }
 
-  if (!loadPng(&uniform_values.tex, texturepath))
+  GLuint texture;
+  if (!loadPng(&texture, texturepath))
   {
     free(fshaderpath);
     free(vshaderpath);
@@ -197,7 +205,7 @@ int main(int argc, char **argv)
     exit(EXIT_FAILURE);
   }
 
-  getUniforms(uniformIds, &program);
+  getUniforms(uniforms, uniformIds, &program);
 
   GL_CHECK(glUseProgram(program));
 
@@ -212,7 +220,7 @@ int main(int argc, char **argv)
 
   while(true)
   {
-    updateUniforms(uniformIds, &uniform_values);
+    updateUniforms(uniforms, uniformIds, &uniform_values);
 
     drawScreen();
 
@@ -242,7 +250,7 @@ int main(int argc, char **argv)
   free(texturepath);
   GL_CHECK(glDeleteBuffers(1, &vertexbuffer));
   GL_CHECK(glDeleteVertexArrays(1, &vertexarray));
-  GL_CHECK(glDeleteTextures(1, &(uniform_values.tex.id)));
+  GL_CHECK(glDeleteTextures(1, &texture));
   GL_CHECK(glDeleteProgram(program));
 
   glXMakeCurrent(builder.display, 0, 0);
@@ -256,5 +264,5 @@ int main(int argc, char **argv)
   XFreeColormap(builder.display, builder.cmap);
   XCloseDisplay(builder.display);
 
-  return 0;
+  return EXIT_SUCCESS;
 }

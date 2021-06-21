@@ -56,6 +56,7 @@ struct Planet
   float radius;
   vec2 seed;
   float time_speed;
+  float plan;
 };
 
 #define TEXTURE_SIZE vec2(256., 32.)
@@ -67,20 +68,20 @@ struct Planet
  *                                                                          *
  ****************************************************************************/
 
-float pxrand(vec2 coord)
+float psrand(vec2 coord)
 {
   return fract(43757.5453 * sin(dot(coord, vec2(12.9898, 78.233))));
 }
 
-float pxnoise(vec2 coord)
+float psnoise(vec2 coord)
 {
   vec2 i = floor(coord);
   vec2 f = fract(coord);
 
-  float a = pxrand(i);
-  float b = pxrand(i + vec2(1.0, 0.0));
-  float c = pxrand(i + vec2(0.0, 1.0));
-  float d = pxrand(i + vec2(1.0, 1.0));
+  float a = psrand(i);
+  float b = psrand(i + vec2(1.0, 0.0));
+  float c = psrand(i + vec2(0.0, 1.0));
+  float d = psrand(i + vec2(1.0, 1.0));
 
   vec2 cubic = f * f * (3.0 - 2.0 * f);
 
@@ -88,14 +89,14 @@ float pxnoise(vec2 coord)
     (1.0 - cubic.x) + (d - b) * cubic.x * cubic.y;
 }
 
-float pxfbm(vec2 coord, uint octaves)
+float psfbm(vec2 coord, uint octaves)
 {
   float value = 0.0;
   float scale = 0.5;
 
   for(uint i = 0u; i < octaves; i++)
   {
-    value += pxnoise(coord) * scale;
+    value += psnoise(coord) * scale;
     coord *= 2.0;
     scale *= 0.5;
   }
@@ -103,18 +104,18 @@ float pxfbm(vec2 coord, uint octaves)
   return value;
 }
 
-float pxcircleNoise(vec2 uv)
+float pscircleNoise(vec2 uv)
 {
   float uv_y = floor(uv.y);
   uv.x += uv_y * .31;
   vec2 f = fract(uv);
-  float h = pxrand(vec2(floor(uv.x), floor(uv_y)));
+  float h = psrand(vec2(floor(uv.x), floor(uv_y)));
   float m = (length(f - 0.25 - (h * 0.5)));
   float r = h * 0.25;
   return smoothstep(0.0, r, m * 0.75);
 }
 
-float pxcloud_alpha(vec2 uv, uint octaves)
+float pscloud_alpha(vec2 uv, uint octaves)
 {
   float c_noise = 0.0;
 
@@ -122,14 +123,14 @@ float pxcloud_alpha(vec2 uv, uint octaves)
   int iters = 2;
   for (int i = 0; i < iters; i++)
   {
-    c_noise += pxcircleNoise(uv * 0.5 + (float(i + 1)) + vec2(-0.3, 0.0));
+    c_noise += pscircleNoise(uv * 0.5 + (float(i + 1)) + vec2(-0.3, 0.0));
   }
-  float fbm = pxfbm(uv + c_noise, octaves);
+  float fbm = psfbm(uv + c_noise, octaves);
 
   return fbm;
 }
 
-bool pxdither(vec2 uv1, vec2 uv2)
+bool psdither(vec2 uv1, vec2 uv2)
 {
   return mod(uv1.y + uv2.x, 2.0 / pixels) <= 1.0 / pixels;
 }
@@ -143,7 +144,7 @@ bool pxdither(vec2 uv1, vec2 uv2)
 float pprand(float size, vec2 sizeModifier, vec2 coord)
 {
   coord = mod(coord, sizeModifier * round(size));
-  return pxrand(coord);
+  return psrand(coord);
 }
 
 float ppnoise(float size, vec2 sizeModifier, vec2 coord)
@@ -252,7 +253,7 @@ vec2 dualfbm(vec2 p, uint octaves)
   //get two rotated fbm calls and displace the domain
   vec2 p2 = p * 2.7;
   vec2 basis =
-    vec2(pxfbm(p2 - time * 1.6, octaves), pxfbm(p2 + time * 1.7, octaves));
+    vec2(psfbm(p2 - time * 1.6, octaves), psfbm(p2 + time * 1.7, octaves));
   basis = (basis - .5) * .2;
   p += basis;
 
@@ -274,14 +275,14 @@ vec4 nebulae(vec2 uv, bool dith)
   float d = distance(uv, vec2(0.5)) * 0.4;
 
   // noise for the inside of the nebulae
-  float n = pxcloud_alpha(uv * size, octaves);
-  float n2 = pxfbm(uv * size + vec2(1, 1), octaves);
+  float n = pscloud_alpha(uv * size, octaves);
+  float n2 = psfbm(uv * size + vec2(1, 1), octaves);
   float n_lerp = n2 * n;
-  float n_dust = pxcloud_alpha(uv * size, octaves);
+  float n_dust = pscloud_alpha(uv * size, octaves);
   float n_dust_lerp = n_dust * n_lerp;
 
   // noise for the shape of the nebulae
-  float n_alpha = pxfbm(uv * ceil(size * 0.05) - vec2(1, 1), octaves);
+  float n_alpha = psfbm(uv * ceil(size * 0.05) - vec2(1, 1), octaves);
   float a_dust = step(n_alpha , n_dust_lerp * 1.8);
 
   // apply dithering
@@ -319,9 +320,9 @@ vec4 dust(vec2 uv, bool dith)
 
   // noise for the dust
   // the + vec2(x,y) is to create an offset in noise values
-  float n_alpha = pxfbm(uv * ceil(size * 0.5) + vec2(2, 2), octaves);
-  float n_dust = pxcloud_alpha(uv * size, octaves);
-  float n_dust2 = pxfbm(uv * ceil(size * 0.2) - vec2(2, 2), octaves);
+  float n_alpha = psfbm(uv * ceil(size * 0.5) + vec2(2, 2), octaves);
+  float n_dust = pscloud_alpha(uv * size, octaves);
+  float n_dust2 = psfbm(uv * ceil(size * 0.2) - vec2(2, 2), octaves);
   float n_dust_lerp = n_dust2 * n_dust;
 
   // apply dithering
@@ -365,8 +366,8 @@ vec3 stars(vec2 uv)
 
   if (starcolor.x > 0.3)
   {
-    float brighness_variance = max(0.15, pxrand(uv) / 2.0f);
-    return starcolor + (vec3(pxrand((1. + fract(time)) * uv)
+    float brighness_variance = max(0.15, psrand(uv) / 2.0f);
+    return starcolor + (vec3(psrand((1. + fract(time)) * uv)
       * brighness_variance) - (brighness_variance / 2.));
   } else {
     return vec3(0.);
@@ -523,41 +524,50 @@ Planet calc_circle(vec2 xy, vec2 offset)
   ixy -= offset;
   vec2 center = ixy + planet_density * 0.5;
 
-  float radius = 0.05 + 0.2 * pxrand(ixy + 100.0);
-  center += planet_density * 0.25 + planet_density * 0.5 * pxrand(ixy);
+  float radius = 0.2 + 0.4 * psrand(ixy + 100.0);
+  center += planet_density * 0.25 + planet_density * 0.5 * psrand(ixy);
 
-  float angle = radians(pxrand(ixy + 50.0) * 360.);
+  float angle = radians(psrand(ixy + 50.0) * 360.);
   center.x += planet_density * 0.1 * sin(angle);
   center.y += planet_density * 0.1 * cos(angle);
-  center.x += 0.1 * sin(angle * time * 10. * (pxrand(ixy + 150.0)));
-  center.y += 0.1 * cos(angle * time * 10. * (pxrand(ixy + 150.0)));
+  center.x += 0.1 * sin(angle * time * 10. * (psrand(ixy + 150.0)));
+  center.y += 0.1 * cos(angle * time * 10. * (psrand(ixy + 150.0)));
 
   vec2 d = xy - center;
   float hsq = d.x * d.x + d.y * d.y;
 
-  return Planet((1.0 - smoothstep(radius, radius + 0.01, hsq)) *
-    (ceil(pxrand(ixy * 620.) * 4.0) / 4.), center,
-    radians(pxrand(ixy - 20.0) * 360.), radius,
-    vec2(pxrand(ixy + 840.), pxrand(ixy + 480.)), pxrand(ixy - 90.) * 5.);
+  float rd_planet = ceil(psrand(ixy + 620.) * 4.);
+  if (rd_planet < 1.)
+  {
+    rd_planet = 1.;
+  }
+  rd_planet = rd_planet / 4.;
+
+  return Planet(step(distance(xy, center), radius) * rd_planet,
+    center, radians(psrand(ixy - 20.0) * 360.), radius,
+    vec2(psrand(ixy + 840.), psrand(ixy + 480.)), psrand(ixy - 90.) * 5.,
+    psrand(ixy - 520.));
 }
 
 vec4 planets(vec2 uv, bool dith)
 {
   uv *= 5.;
 
-  vec2 offsets[4] = vec2[4](
-    vec2(0., 0.), vec2(planet_density, 0.), vec2(0., planet_density),
-    vec2(planet_density, planet_density)
+  Planet calc[4] = Planet[4](
+    calc_circle(uv, vec2(0., 0.)), calc_circle(uv, vec2(planet_density, 0.)),
+    calc_circle(uv, vec2(0., planet_density)),
+    calc_circle(uv, vec2(planet_density, planet_density))
   );
 
   int index = 0;
-  Planet planet = Planet(0., vec2(0.), 0., 0., vec2(0.), 0.);
+  Planet planet = Planet(0., vec2(0.), 0., 0., vec2(0.), 0., 0.);
 
-  while ((planet.type == 0.) && (index < 4))
-  //while (index < 4)
+  while (index < 4)
   {
-    planet = calc_circle(uv, offsets[index]);
-    //planet.type = max(planet.type, calc_circle(uv, offsets[index]).type);
+    if ((calc[index].type > 0.) && (planet.plan < calc[index].plan))
+    {
+      planet = calc[index];
+    }
     ++index;
   }
 
@@ -565,7 +575,7 @@ vec4 planets(vec2 uv, bool dith)
   {
     return landplanet(uv, planet, dith);
   } else {
-    return vec4(floor(planet.type * NB_COL) / NB_COL);
+    return vec4(planet.type);
   }
 }
 
@@ -580,23 +590,23 @@ float calc_square(vec2 xy, vec2 offset)
   vec2 ixy = floor(xy) - offset;
   vec2 center = ixy + 0.5;
 
-  center += 0.25 + 0.5 * pxrand(ixy + 1000.0);
+  center += 0.25 + 0.5 * psrand(ixy + 1000.0);
 
-  float angle = radians(pxrand(ixy + 1050.0) * 360.);
+  float angle = radians(psrand(ixy + 1050.0) * 360.);
   center.x += 0.25 * sin(angle);
   center.y += 0.25 * cos(angle);
 
   vec2 uv_unit = (vec2(1.) / resolution) * bigstars_density;
   uv_unit.x *= resolution.x / resolution.y;
 
-  float rd_bigstar = ceil(pxrand(ixy + 500.) * 6.);
+  float rd_bigstar = ceil(psrand(ixy + 500.) * 6.);
   if (rd_bigstar < 1.)
   {
     rd_bigstar = 1.;
   }
 
   float bigstar_size = (max(resolution.x, resolution.y) / pixels) *
-    (0.5 + pxrand(ixy + 300.) * 0.4);
+    (0.5 + psrand(ixy + 300.) * 0.4);
 
   vec2 dist_text_center = ceil(12.0 * bigstar_size + 0.1) * uv_unit;
   float m = 2. * ((rd_bigstar - 1.) / rd_bigstar) - 1.;
@@ -612,7 +622,7 @@ float calc_square(vec2 xy, vec2 offset)
       dist_center / (bigstar_size * uv_unit * TEXTURE_SIZE));
     if (text.a > 0.)
     {
-      return text.x * ((pxrand(ixy + 150. + fract(time)) * 0.5) + 1.);
+      return text.x * ((psrand(ixy + 150. + fract(time)) * 0.5) + 1.);
     } else {
       return 0.;
     }
@@ -649,7 +659,7 @@ void main()
 
   // pixelizing and dithering
   vec2 uv = floor((UV) * pixels) / pixels;
-  bool pxdith = pxdither(uv, UV);
+  bool psdith = psdither(uv, UV);
   bool ppdith = ppdither(uv, UV);
 
   vec4 col;
@@ -657,10 +667,11 @@ void main()
   vec4 planets = planets(uv, ppdith);
   float planets_value = planets.x;
 
+  //if (planets_value == 0.)
   if (planets_value == -1.)
   {
-    vec4 nebulae = nebulae(uv, pxdith);
-    vec4 dust = dust(uv, pxdith);
+    vec4 nebulae = nebulae(uv, psdith);
+    vec4 dust = dust(uv, psdith);
     vec4 stars = vec4(stars(uv), 1.);
     vec4 bigstars = vec4(bigstars(UV), 1.);
 

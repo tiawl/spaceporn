@@ -7,22 +7,21 @@ A PixelSpace Shader Wallpaper for X System
 **Parts of what you will read (and some of it are huge) on this repository is not written by my own. Even if there are no licence on this repository, this code is not completly mine.**</br></br>
 I copy paste parts of scripts written by others, merged it and rearranged it to make an app for my personnal use. Some of those scripts are under licence.</br></br>
 You can not use this code for a non-personal usage without to be aware of its authors' wishes and how I used their scripts on this repository (if you want to rewrite under licence parts):
-- [Khronos - Tutorial: OpenGL 3.0 Context Creation (GLX)][1] - Used to create OpenGL 3 context with X.
-- [Github - mmhobi7's xwinwrap][2] - Used to create X desktop window.
-- [Github - lord-123's xshader][3] - Used for almost everything else not in shaders..
-- [Shadertoy - CBS' Simplicity Galaxy shader][4] - Used for camera movement and stars.
-- [Shadertoy - chalky's Red Circles shader][5] - Used for random generated shapes.
-- [Shadertoy - nimitz's Noise animation - Electric shader][6] - Used for nebulae and dust animation.
-- [Github - Deep-Fold's PixelSpace][7] and [Github - Deep-Fold's PixelPlanets][8] - Used for everything else in shaders.
+- [Github - mmhobi7's xwinwrap][1] - Used to create X desktop window.
+- [Github - lord-123's xshader][2] - Used for almost everything else not in shaders..
+- [Shadertoy - CBS' Simplicity Galaxy shader][3] - Used for camera movement and stars.
+- [Shadertoy - chalky's Red Circles shader][4] - Used for random generated shapes.
+- [Shadertoy - nimitz's Noise animation - Electric shader][5] - Used for nebulae and dust animation.
+- [Github - Deep-Fold's PixelSpace][6], [Github - Deep-Fold's PixelPlanets][7] and [Github - EnthusiastGuy's MonoGame-Pixel-Planets][8]- Used for everything else in shaders.
 
-[1]:https://www.khronos.org/opengl/wiki/Tutorial:_OpenGL_3.0_Context_Creation_(GLX)
-[2]:https://github.com/mmhobi7/xwinwrap
-[3]:https://github.com/lord-123/xshader
-[4]:https://www.shadertoy.com/view/MslGWN
-[5]:https://www.shadertoy.com/view/Xds3Ws
-[6]:https://www.shadertoy.com/view/ldlXRS
-[7]:https://github.com/Deep-Fold/PixelSpace
-[8]:https://github.com/Deep-Fold/PixelPlanets
+[1]:https://github.com/mmhobi7/xwinwrap
+[2]:https://github.com/lord-123/xshader
+[3]:https://www.shadertoy.com/view/MslGWN
+[4]:https://www.shadertoy.com/view/Xds3Ws
+[5]:https://www.shadertoy.com/view/ldlXRS
+[6]:https://github.com/Deep-Fold/PixelSpace
+[7]:https://github.com/Deep-Fold/PixelPlanets
+[8]:https://github.com/EnthusiastGuy/MonoGame-Pixel-Planets
 
 ## Usage
 
@@ -63,3 +62,17 @@ If you ran **xtelesktop** on a non-listed environment, contact me, I will add it
 ## Known issues
 
 - Running app hides desktop icons &rarr; During execution, the app creates a window above the root window (or desktop window) and behind every other windows to render the shader. This is why desktop icons disappears. The only way to fix this issue is to use root window for shader rendering. Unfortunely on some environments it can lead to unexpected behaviours and I do not want to manage those situations.
+
+## Additional links
+
+Placed here for my own needs:
+
+- [Khronos - Tutorial: OpenGL 3.0 Context Creation (GLX)][9]
+- [Shadertoy - vegardno's Pixel planet shader][10]
+- [Shadertoy - viclw17's Jupiter shader][11]
+- [Daniel Linssen's planetarium][12]
+
+[9]:https://www.khronos.org/opengl/wiki/Tutorial:_OpenGL_3.0_Context_Creation_(GLX)
+[10]:https://www.shadertoy.com/view/WdSSWD
+[11]:https://www.shadertoy.com/view/MdyfWw
+[12]:https://managore.itch.io/planetarium

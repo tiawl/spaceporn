@@ -342,10 +342,10 @@ vec4 computeClouds(vec2 uv, Planet planet)
 {
   const float cloud_curve = 1.3;
   const float size = 7.315;
-  const float stretch = 2.0;
+  const float stretch = 3.0;
   const float cloud_cover = 0.47;
-  const float light_border_clouds_1 = 0.52;
-  const float light_border_clouds_2 = 0.62;
+  float light_border_clouds_1 = 1.04 * planet.radius;
+  float light_border_clouds_2 = 1.24 * planet.radius;
   const uint octaves = 2u;
 
   float d_to_center = distance(uv, planet.center);
@@ -382,8 +382,8 @@ vec4 computeLand(vec2 UV, vec2 uv, Planet planet)
   const float dither_size = 3.951;
   const float size = 4.6;
   const float river_cutoff = 0.368;
-  const float light_border_1 = 0.52;
-  const float light_border_2 = 0.62;
+  float light_border_1 = 1.04 * planet.radius;
+  float light_border_2 = 1.24 * planet.radius;
   const uint octaves = 5u;
 
   bool dith = dither(dither_size, uv, UV);
@@ -499,7 +499,7 @@ float crater(float size, vec2 sizeModifier, float time_speed, vec2 uv)
 
 vec4 computeCraters(vec2 uv, Planet planet)
 {
-  const float light_border_crater = 0.465;
+  float light_border_crater = 0.93 * planet.radius;
   const float sizeCraters = 5.0;
   const vec3 craterColor1 = vec3(0.298, 0.407, 0.521);
   const vec3 craterColor2 = vec3(0.227, 0.247, 0.368);
@@ -536,8 +536,8 @@ vec4 computeMoon(vec2 UV, vec2 uv, Planet planet)
 {
   const float dither_size = 2.0;
   const float size = 8.0;
-  const float light_border_1 = 0.615;
-  const float light_border_2 = 0.729;
+  float light_border_1 = 1.23 * planet.radius;
+  float light_border_2 = 1.458 * planet.radius;
   const vec3 color1 = vec3(0.639, 0.654, 0.760);
   const vec3 color2 = vec3(0.298, 0.407, 0.521);
   const vec3 color3 = vec3(0.227, 0.247, 0.368);
@@ -553,7 +553,7 @@ vec4 computeMoon(vec2 UV, vec2 uv, Planet planet)
   float a = step(d_circle, planet.radius);
 
   d_light += ppfbm(size, vec2(1.0, 1.0),
-    uv * size + vec2(time * planet.time_speed, 0.0), octaves) * 0.6;
+    uv * size + vec2(time * planet.time_speed, 0.0), octaves) * 0.3;
 
   float dither_border = (1.0 / pixels) * dither_size;
 
@@ -619,14 +619,11 @@ Planet calc_circle(vec2 xy, vec2 offset)
   ixy -= offset;
   vec2 center = ixy + planets_density * 0.5;
 
-  float radius = 0.2 + 0.4 * psrand(ixy + 100.0);
   center += planets_density * 0.25 + planets_density * 0.5 * psrand(ixy);
 
   float angle = radians(psrand(ixy + 50.0) * 360.);
   center.x += planets_density * 0.1 * sin(angle);
   center.y += planets_density * 0.1 * cos(angle);
-  center.x += 0.1 * sin(angle * time * 10. * (psrand(ixy + 150.0)));
-  center.y += 0.1 * cos(angle * time * 10. * (psrand(ixy + 150.0)));
 
   vec2 d = xy - center;
   float hsq = d.x * d.x + d.y * d.y;
@@ -638,13 +635,23 @@ Planet calc_circle(vec2 xy, vec2 offset)
   }
   rd_planet = rd_planet / 4.;
 
+  float radius;
+  if (rd_planet == LAND_PLANET)
+  {
+    radius = 0.4 + 0.2 * psrand(ixy + 100.0);
+  } else if (rd_planet == MOON) {
+    radius = 0.2 + 0.2 * psrand(ixy + 100.0);
+  } else {
+    radius = 0.3;
+  }
+
   float light_angle = radians(psrand(ixy + 230.0) * 360.);
 
   return Planet(step(distance(xy, center), radius) * rd_planet,
     center, radians(psrand(ixy - 20.0) * 360.), radius,
     vec2(psrand(ixy + 840.), psrand(ixy + 480.)), psrand(ixy - 90.) * 5.,
     psrand(ixy - 520.),
-    center + radius * vec2(cos(light_angle), sin(light_angle)));
+    center + (radius / 2.) * vec2(cos(light_angle), sin(light_angle)));
 }
 
 vec4 planets(vec2 UV, vec2 uv)

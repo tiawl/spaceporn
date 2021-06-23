@@ -61,7 +61,7 @@ If you ran **xtelesktop** on a non-listed environment, contact me, I will add it
 
 ## Known issues
 
-- Running app hides desktop icons &rarr; During execution, the app creates a window above the root window (or desktop window) and behind every other windows to render the shader. This is why desktop icons disappears. The only way to fix this issue is to use root window for shader rendering. Unfortunely on some environments it can lead to unexpected behaviours and I do not want to manage those situations.
+- Running app hides desktop icons &rarr; During execution, the app creates a window above the root window (or desktop window) and behind every other windows to render the shader. This is why desktop icons disappear during execution. The only way to fix this issue is to use root window and/or File System window which draw icons and desktop above root window. Unfortunely I did not find a way to do this properly. However I will if I can.
 
 ## Additional links
 

@@ -1,8 +1,4 @@
-#include "xshader.h"
-#include "context.h"
-
-#define NAME "xtelesktop"
-#define VERSION "0.1"
+#include "xtelesktop.h"
 
 void help()
 {
@@ -125,7 +121,7 @@ int main(int argc, char **argv)
   uniform_values.xseed = rand();
   uniform_values.yseed = rand();
 
-  int delay = 0;
+  int delay = DEFAULT_DELAY;
   bool help_needed = false;
 
   for (int i = 1; i < argc; i++)

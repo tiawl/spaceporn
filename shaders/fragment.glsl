@@ -182,10 +182,12 @@ float ppcloud_alpha(float size, vec2 sizeModifier, float time_speed, vec2 uv,
 
 vec2 spherify(vec2 uv, vec2 center, float radius)
 {
-  vec2 centered = (uv - center) * 2.;
+  //vec2 centered = (uv - center) * 2.;
+  vec2 centered = uv - center;
   float z = sqrt(radius - dot(centered.xy, centered.xy));
-  vec2 sphere = centered/(z + 1.0);
-  return sphere * 0.5 + 0.5;
+  vec2 sphere = centered / (z + 1.0);
+  //return sphere * 0.5 + 0.5;
+  return sphere + 0.5;
 }
 
 vec2 rotate(vec2 vec, vec2 center, float angle)
@@ -638,18 +640,9 @@ Planet calc_circle(vec2 xy, vec2 offset)
   }
   rd_planet = rd_planet / 4.;
 
-  float radius;
-  if (rd_planet == LAND_PLANET)
-  {
-    radius = 0.4 + 0.2 * psrand(ixy + 100.0);
-  } else if (rd_planet == MOON) {
-    radius = 0.2 + 0.2 * psrand(ixy + 100.0);
-  } else {
-    radius = 0.3;
-  }
-
+  float radius = 0.2 + 0.4 * psrand(ixy + 100.0);
   float light_angle = radians(psrand(ixy + 230.0) * 360.);
-  float light_dist = psrand(ixy - 370.) * (radius / 2.);
+  float light_dist = (radius / 4.) + psrand(ixy - 370.) * (radius / 4.);
 
   return Planet(step(distance(xy, center), radius) * rd_planet,
     center, radians(psrand(ixy - 20.0) * 360.), radius,
@@ -660,7 +653,7 @@ Planet calc_circle(vec2 xy, vec2 offset)
 
 vec4 planets(vec2 UV, vec2 uv)
 {
-  uv *= 2.5;
+  uv *= 5.;
 
   Planet calc[4] = Planet[4](
     calc_circle(uv, vec2(0., 0.)), calc_circle(uv, vec2(planets_density, 0.)),
@@ -759,6 +752,11 @@ vec4 bigstars(vec2 uv)
 
 void main()
 {
+  if (!animation)
+  {
+    time = 0.0;
+  }
+
   vec2 m = vec2(0.);
   if (motion)
   {

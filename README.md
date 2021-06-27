@@ -37,8 +37,8 @@ Options:
             -x      - Pixels value between 100 to 600 (ex: -x 300)
                       default: 500
             -d      - Delay value between each frame in microseconds
-                      (ex: -d 30000)
-                      default: 0
+                      (ex: -d 0)
+                      default: 30000
 ```
 
 ## Installing

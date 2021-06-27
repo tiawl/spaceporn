@@ -15,8 +15,8 @@ void help()
             -x      - Pixels value between 100 to 600 (ex: -x 300)\n\
                       default: 500\n\
             -d      - Delay value between each frame in microseconds\n\
-                      (ex: -d 30000)\n\
-                      default: 0\n");
+                      (ex: -d 0)\n\
+                      default: 30000\n");
 }
 
 int main(int argc, char **argv)

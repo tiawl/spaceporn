@@ -374,6 +374,16 @@ vec4 computeClouds(vec2 uv, Planet planet)
     col = vec3(0.329);
   }
 
+  d_light *= d_light * 0.4;
+  if (d_light > planet.radius / 4.)
+  {
+    float p = (1. - d_light) / (1. - planet.radius / 4.);
+    p *= p;
+    p *= p;
+    p *= p;
+    col = col * p;
+  }
+
   c *= step(d_to_center, 0.5);
 
   return vec4(col, step(cloud_cover, c));
@@ -433,13 +443,13 @@ vec4 computeLand(vec2 UV, vec2 uv, Planet planet)
     }
   }
 
-  d_light = pow(d_light, 2.0) * 0.4;
+  d_light *= d_light * 0.4;
   vec3 col = vec3(0.204);
   if (fbm4 + d_light < fbm1 * 1.5)
   {
     col = vec3(0.283);
   }
-  if (fbm3 + d_light < fbm1 * 1.0)
+  if (fbm3 + d_light < fbm1)
   {
     col = vec3(0.343);
   }
@@ -454,6 +464,15 @@ vec4 computeLand(vec2 UV, vec2 uv, Planet planet)
     {
       col = vec3(0.558);
     }
+  }
+
+  if (d_light > planet.radius / 4.)
+  {
+    float p = (1. - d_light) / (1. - planet.radius / 4.);
+    p *= p;
+    p *= p;
+    p *= p;
+    col = col * p;
   }
 
   return vec4(col, step(distance(vec2(0.5), uv), 0.5));
@@ -555,9 +574,8 @@ vec4 computeCraters(vec2 uv, Planet planet)
   return vec4(col, a);
 }
 
-vec4 computeMoon(vec2 UV, vec2 uv, Planet planet)
+vec4 computeMoon(vec2 uv, Planet planet)
 {
-  const float dither_size = 2.0;
   const float size = 8.0;
   const float light_border_1 = 0.615;
   const float light_border_2 = 0.729;
@@ -565,8 +583,6 @@ vec4 computeMoon(vec2 UV, vec2 uv, Planet planet)
   const vec3 color2 = vec3(0.521);
   const vec3 color3 = vec3(0.368);
   const uint octaves = 4u;
-
-  bool dith = dither(dither_size, uv, UV);
 
   float lratio = 1. / sqrt(planet.radius);
   float d_circle = distance(uv, planet.center);
@@ -578,8 +594,6 @@ vec4 computeMoon(vec2 UV, vec2 uv, Planet planet)
 
   d_light += ppfbm(size, vec2(1.0),
     uv * size + vec2(time * planet.time_speed, 0.0), octaves) * 0.3;
-
-  float dither_border = (1.0 / pixels) * dither_size;
 
   float p = (light_border_1 - d_light) / light_border_1;
   p = sqrt(p);
@@ -597,13 +611,13 @@ vec4 computeMoon(vec2 UV, vec2 uv, Planet planet)
   return vec4(col, a);
 }
 
-vec4 moon(vec2 UV, vec2 uv, Planet planet)
+vec4 moon(vec2 uv, Planet planet)
 {
   planet.time_speed *= 3.;
   vec4 craters = computeCraters(uv, planet);
   if (craters.a == 0.)
   {
-    return computeMoon(UV, uv, planet);
+    return computeMoon(uv, planet);
   } else {
     return craters;
   }
@@ -688,7 +702,7 @@ vec4 planets(vec2 UV, vec2 uv)
   {
     return land(UV, uv, planet);
   } else if (planet.type == MOON) {
-    return moon(UV, uv, planet);
+    return moon(uv, planet);
   } else {
     return vec4(planet.type);
   }

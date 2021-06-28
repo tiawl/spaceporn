@@ -26,19 +26,19 @@ You can not use this code for a non-personal usage without to be aware of its au
 ## Usage
 
 ```
+xtelesktop v0.1
+
 Usage: xtelesktop [-a] [-m] [-p] [-x PIXELS] [-d MICROS]
+
 Options:
+
             -a      - Enable shader animations
-                      default: disabled
             -m      - Enable camera motion
-                      default: disabled
             -p      - Enable multiple colorschemes
-                      default: disabled
             -x      - Pixels value between 100 to 600 (ex: -x 300)
-                      default: 500
+                      [default: 500]
             -d      - Delay value between each frame in microseconds
-                      (ex: -d 0)
-                      default: 30000
+                      (ex: -d 0) [default: 30000]
 ```
 
 ## Installing
@@ -61,7 +61,7 @@ If you ran **xtelesktop** on a non-listed environment, contact me, I will add it
 
 ## Known issues
 
-- Running app hides desktop icons &rarr; During execution, the app creates a window above the root window (or desktop window) and behind every other windows to render the shader. This is why desktop icons disappear during execution. The only way to fix this issue is to use root window and/or File System window which draw icons and desktop above root window. Unfortunely I did not find a way to do this properly. However I will if I can.
+- Running app hides desktop icons &rarr; During execution, the app creates a window above the root window (or desktop window) and behind every other windows to render the shader. This is why desktop icons disappear during execution. The only way to fix this issue is to use root window and/or File-System/Window Manager window which draw icons and desktop above root window. Unfortunely I did not find a way to do this properly. However I will if I can.
 
 ## Additional links
 

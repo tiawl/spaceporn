@@ -357,7 +357,7 @@ vec4 computeClouds(vec2 uv, Planet planet)
 
   uv.y += smoothstep(0.0, cloud_curve, abs(uv.x - 0.4));
 
-  float c = ppcloud_alpha(size, vec2(1.0, 1.0), planet.time_speed,
+  float c = ppcloud_alpha(size, vec2(1.0), planet.time_speed,
     (uv + planet.seed) * vec2(1.0, stretch), octaves);
 
   vec3 col = vec3(0.956);

@@ -1,3 +1,7 @@
+ifndef VERBOSE
+.SILENT:
+endif
+
 SRC_DIR := src
 OBJ_DIR := obj
 HEAD_DIR := include
@@ -12,7 +16,10 @@ FLAGS := -lX11 -lGL -lGLEW -lpng
 CPPFLAGS := -Wall -g -I ./$(HEAD_DIR)
 PACKAGES := build-essential mesa-common-dev libgl1-mesa-glx libx11-dev libglew-dev libpng-dev
 
-all: packages $(BIN_DIR)/$(BIN)
+all: directories packages $(BIN_DIR)/$(BIN)
+
+directories:
+	mkdir -p $(OBJ_DIR) $(BIN_DIR)
 
 $(BIN_DIR)/$(BIN): $(OBJ_FILES)
 	$(mkdir -p $(BIN_DIR))
@@ -23,7 +30,8 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	gcc $(CPPFLAGS) $(FLAGS) -c -o $@ $<
 
 clean:
-	rm -f $(OBJ_DIR)/*.o bin/*
+	if test -d $(OBJ_DIR); then rm -r $(OBJ_DIR); fi
+	if test -d $(BIN_DIR); then rm -r $(BIN_DIR); fi
 
 install: all
 # INSTALLER BIG_STARS.PNG DANS LE HOST !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

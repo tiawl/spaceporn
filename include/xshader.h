@@ -18,7 +18,12 @@
 #define VSHADER_FILE "/vertex.glsl"
 #define TEXTURE_FILE "/big_stars.png"
 
-#define _DEBUG
+#define DEBUG true
+
+#if DEBUG
+#define EXIT_SUCCESS_SCHEME 0
+#define EXIT_FAILURE_SCHEME 1
+#endif
 
 #define UNIFORM_COUNT 2
 
@@ -44,7 +49,7 @@ typedef struct
 
 void CheckOpenGLError(const char* stmt, const char* fname, int line);
 
-#ifdef _DEBUG
+#if DEBUG
   #define GL_CHECK(stmt) do { \
     stmt; \
     CheckOpenGLError(#stmt, __FILE__, __LINE__); \

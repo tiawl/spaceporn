@@ -3,20 +3,35 @@
 void help()
 {
   fprintf(stderr, "%s v%s\n", NAME, VERSION);
-  fprintf(stderr, "\nUsage: %s [-a] [-m] [-p] [-x PIXELS] [-d MICROS]\n",
+  fprintf(stderr, "\nUsage: %s [-a] [-m] [-p] [-x PIXELS] [-d MICROS]",
     NAME);
-  fprintf(stderr, "Options:\n\
+
+#if DEBUG
+  fprintf(stderr, " [-D SCHEME]");
+#endif
+
+  fprintf(stderr, "\n\n");
+
+#if DEBUG
+  fprintf(stderr, "User ");
+#endif
+
+  fprintf(stderr, "Options:\n\n\
             -a      - Enable shader animations\n\
-                      default: disabled\n\
             -m      - Enable camera motion\n\
-                      default: disabled\n\
             -p      - Enable multiple colorschemes\n\
-                      default: disabled\n\
             -x      - Pixels value between 100 to 600 (ex: -x 300)\n\
-                      default: 500\n\
+                      [default: 500]\n\
             -d      - Delay value between each frame in microseconds\n\
-                      (ex: -d 0)\n\
-                      default: 30000\n");
+                      (ex: -d 0) [default: 30000]\n");
+
+#if DEBUG
+  fprintf(stderr, "\nDev Options:\n\n\
+            -D      - Run the corresponding execution scheme (ex: -D 0)\n\
+                      [default: 0]\n\n\
+                      Execution schemes values: - 0 -> Exit Success\n");
+#endif
+
 }
 
 int main(int argc, char **argv)
@@ -49,14 +64,27 @@ int main(int argc, char **argv)
   }
 
   glewExperimental = GL_TRUE;
-  glewInit();
+
+  if (glewInit())
+  {
+    free(fshaderpath);
+    free(vshaderpath);
+    free(texturepath);
+    glXMakeCurrent(builder.display, 0, 0);
+    glXDestroyContext(builder.display, builder.context);
+    XDestroyWindow(builder.display, builder.window);
+    XFreeColormap(builder.display, builder.cmap);
+    XCloseDisplay(builder.display);
+    printf("glewInit() failed\n");
+    exit(EXIT_FAILURE);
+  }
 
   XSelectInput(builder.display, builder.window, ExposureMask);
 
   GL_CHECK(glEnable(GL_BLEND));
   GL_CHECK(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
 
-#ifdef _DEBUG
+#if DEBUG
   Window debug_window = XCreateSimpleWindow(builder.display,
     RootWindow(builder.display, DefaultScreen(builder.display)), 0, 0, 1, 1,
     1, BlackPixel(builder.display, DefaultScreen(builder.display)),
@@ -89,7 +117,7 @@ int main(int argc, char **argv)
     glXMakeCurrent(builder.display, 0, 0);
     glXDestroyContext(builder.display, builder.context);
 
-#ifdef _DEBUG
+#if DEBUG
     XDestroyWindow(builder.display, debug_window);
 #endif
 
@@ -124,6 +152,10 @@ int main(int argc, char **argv)
   int delay = DEFAULT_DELAY;
   bool help_needed = false;
 
+#if DEBUG
+  int thread = EXIT_SUCCESS_SCHEME;
+#endif
+
   for (int i = 1; i < argc; i++)
   {
     if (strcmp(argv[i], "-x") == 0)
@@ -155,6 +187,19 @@ int main(int argc, char **argv)
       uniform_values.motion = true;
     } else if (strcmp(argv[i], "-p") == 0) {
       uniform_values.palettes = true;
+#if DEBUG
+    } else if (strcmp(argv[i], "-D") == 0) {
+      if (++i < argc)
+      {
+        thread = atoi(argv[i]);
+        if ((thread < EXIT_SUCCESS_SCHEME) || (thread > EXIT_FAILURE_SCHEME))
+        {
+          help();
+          help_needed = true;
+          break;
+        }
+      }
+#endif
     } else {
       help();
       help_needed = true;
@@ -171,7 +216,7 @@ int main(int argc, char **argv)
     glXMakeCurrent(builder.display, 0, 0);
     glXDestroyContext(builder.display, builder.context);
 
-#ifdef _DEBUG
+#if DEBUG
     XDestroyWindow(builder.display, debug_window);
 #endif
 
@@ -191,7 +236,7 @@ int main(int argc, char **argv)
     glXMakeCurrent(builder.display, 0, 0);
     glXDestroyContext(builder.display, builder.context);
 
-#ifdef _DEBUG
+#if DEBUG
     XDestroyWindow(builder.display, debug_window);
 #endif
 
@@ -212,7 +257,9 @@ int main(int argc, char **argv)
   GLuint vertexbuffer;
   initVertices(&vertexbuffer, &vertexarray);
 
+#if DEBUG
   XEvent event;
+#endif
 
   while(true)
   {
@@ -222,7 +269,7 @@ int main(int argc, char **argv)
 
     glXSwapBuffers(builder.display, builder.window);
 
-#ifdef _DEBUG
+#if DEBUG
 #define ESCAPE 0x09
     if (XCheckMaskEvent(builder.display, KeyPressMask, &event))
     {
@@ -252,7 +299,7 @@ int main(int argc, char **argv)
   glXMakeCurrent(builder.display, 0, 0);
   glXDestroyContext(builder.display, builder.context);
 
-#ifdef _DEBUG
+#if DEBUG
   XDestroyWindow(builder.display, debug_window);
 #endif
 

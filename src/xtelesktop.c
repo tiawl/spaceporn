@@ -7,7 +7,7 @@ void help()
     NAME);
 
 #if DEBUG
-  fprintf(stderr, " [-D SCHEME]");
+  fprintf(stderr, " [-r ROADMAP]");
 #endif
 
   fprintf(stderr, "\n\n");
@@ -17,19 +17,18 @@ void help()
 #endif
 
   fprintf(stderr, "Options:\n\n\
-            -a      - Enable shader animations\n\
-            -m      - Enable camera motion\n\
-            -p      - Enable multiple colorschemes\n\
-            -x      - Pixels value between 100 to 600 (ex: -x 300)\n\
-                      [default: 500]\n\
-            -d      - Delay value between each frame in microseconds\n\
-                      (ex: -d 0) [default: 30000]\n");
+    -a  Enable shader animations\n\n\
+    -m  Enable camera motion\n\n\
+    -p  Enable multiple colorschemes\n\n\
+    -x  Pixels value between 100 to 600 (ex: -x 300) [default: 500]\n\n\
+    -d  Delay value between each frame in microseconds (ex: -d 0)\n\
+        [default: 30000]\n");
 
 #if DEBUG
   fprintf(stderr, "\nDev Options:\n\n\
-            -D      - Run the corresponding execution scheme (ex: -D 0)\n\
-                      [default: 0]\n\n\
-                      Execution schemes values: - 0 -> Exit Success\n");
+    -r  Run the corresponding predefined execution roadmap (ex: -r 0)\n\
+        [default: 0]\n\n\
+        ROADMAP values: - 0 -> Exit Success\n\n");
 #endif
 
 }
@@ -153,7 +152,7 @@ int main(int argc, char **argv)
   bool help_needed = false;
 
 #if DEBUG
-  int thread = EXIT_SUCCESS_SCHEME;
+  int roadmap = EXIT_SUCCESS_RM;
 #endif
 
   for (int i = 1; i < argc; i++)
@@ -188,11 +187,11 @@ int main(int argc, char **argv)
     } else if (strcmp(argv[i], "-p") == 0) {
       uniform_values.palettes = true;
 #if DEBUG
-    } else if (strcmp(argv[i], "-D") == 0) {
+    } else if (strcmp(argv[i], "-r") == 0) {
       if (++i < argc)
       {
-        thread = atoi(argv[i]);
-        if ((thread < EXIT_SUCCESS_SCHEME) || (thread > EXIT_FAILURE_SCHEME))
+        roadmap = atoi(argv[i]);
+        if ((roadmap < EXIT_SUCCESS_RM) || (roadmap > EXIT_FAILURE_RM))
         {
           help();
           help_needed = true;

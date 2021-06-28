@@ -21,8 +21,8 @@
 #define DEBUG true
 
 #if DEBUG
-#define EXIT_SUCCESS_SCHEME 0
-#define EXIT_FAILURE_SCHEME 1
+#define EXIT_SUCCESS_RM 0
+#define EXIT_FAILURE_RM 1
 #endif
 
 #define UNIFORM_COUNT 2

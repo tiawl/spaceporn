@@ -28,17 +28,20 @@ You can not use this code for a non-personal usage without to be aware of its au
 ```
 xtelesktop v0.1
 
-Usage: xtelesktop [-a] [-m] [-p] [-x PIXELS] [-d MICROS]
+Usage: xtelesktop [-a] [-m] [-p] [-x PIXELS] [-d MICROS] [-r ROADMAP]
 
-Options:
+User Options:
 
-            -a      - Enable shader animations
-            -m      - Enable camera motion
-            -p      - Enable multiple colorschemes
-            -x      - Pixels value between 100 to 600 (ex: -x 300)
-                      [default: 500]
-            -d      - Delay value between each frame in microseconds
-                      (ex: -d 0) [default: 30000]
+    -a  Enable shader animations
+
+    -m  Enable camera motion
+
+    -p  Enable multiple colorschemes
+
+    -x  Pixels value between 100 to 600 (ex: -x 300) [default: 500]
+
+    -d  Delay value between each frame in microseconds (ex: -d 0)
+        [default: 30000]
 ```
 
 ## Installing

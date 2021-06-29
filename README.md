@@ -28,9 +28,9 @@ You can not use this code for a non-personal usage without to be aware of its au
 ```
 xtelesktop v0.1
 
-Usage: xtelesktop [-a] [-m] [-p] [-x PIXELS] [-d MICROS] [-r ROADMAP]
+Usage: xtelesktop [-a] [-m] [-p] [-x PIXELS] [-d MICROS]
 
-User Options:
+Options:
 
     -a  Enable shader animations
 
@@ -42,6 +42,8 @@ User Options:
 
     -d  Delay value between each frame in microseconds (ex: -d 0)
         [default: 30000]
+
+    -v  Verbose
 ```
 
 ## Installing

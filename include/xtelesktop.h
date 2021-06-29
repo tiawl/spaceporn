@@ -1,3 +1,6 @@
+#ifndef XTELESKTOP_H
+#define XTELESKTOP_H
+
 #include "xshader.h"
 #include "context.h"
 
@@ -6,3 +9,5 @@
 #define DEFAULT_DELAY 30000
 
 void help();
+
+#endif

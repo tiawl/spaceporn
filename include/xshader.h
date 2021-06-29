@@ -1,7 +1,6 @@
-#ifndef XSHADER
-#define XSHADER
+#ifndef XTELESKTOP_XSHADER_H
+#define XTELESKTOP_XSHADER_H
 
-#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -10,6 +9,8 @@
 #include <string.h>
 #include <GL/glew.h>
 
+#include "util.h"
+
 #define HOME_DIR "/home/"
 #define BIN_DIR "/Workspace/Perso/xtelesktop" //  "/.local/bin"
 #define SHADERS_DIR "/shaders"
@@ -17,13 +18,6 @@
 #define FSHADER_FILE "/fragment.glsl"
 #define VSHADER_FILE "/vertex.glsl"
 #define TEXTURE_FILE "/big_stars.png"
-
-#define DEBUG true
-
-#if DEBUG
-#define EXIT_SUCCESS_RM 0
-#define EXIT_FAILURE_RM 1
-#endif
 
 #define UNIFORM_COUNT 2
 
@@ -63,7 +57,8 @@ void updateFloatUniforms(GLint uniformId, UniformValues* values);
 void updateBoolUniforms(GLint uniformId, UniformValues* values);
 void updateTexture(GLint uniformId, UniformValues* values);
 
-bool initPaths(char** fshaderpath, char** vshaderpath, char** texturepath);
+bool initPaths(char** fshaderpath, char** vshaderpath, char** texturepath,
+  bool verbose);
 bool readFile(char** filepath, char** buffer);
 GLuint loadShader(const char* shaderSource, GLenum shaderType);
 bool loadProgram(GLuint* program, GLuint* vertex_shader,

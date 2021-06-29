@@ -1,15 +1,12 @@
-ifndef VERBOSE
-.SILENT:
-endif
-
 SRC_DIR := src
 OBJ_DIR := obj
 HEAD_DIR := include
 SHAD_DIR := shaders
+TEXT_DIR := textures
 BIN := xtelesktop
 BIN_DIR := bin
 HOST_BIN_DIR := /usr/local/bin
-HOST_SHAD_DIR := ~/.local/bin
+HOST_LOCAL_DIR := ~/.local/bin
 SRC_FILES := $(wildcard $(SRC_DIR)/*.c)
 OBJ_FILES := $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(SRC_FILES))
 FLAGS := -lX11 -lGL -lGLEW -lpng
@@ -34,11 +31,11 @@ clean:
 	if test -d $(BIN_DIR); then rm -r $(BIN_DIR); fi
 
 install: all
-# INSTALLER BIG_STARS.PNG DANS LE HOST !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	mkdir -p $(HOST_BIN_DIR)
-	cp -nf $(BIN_DIR)/$(BIN) $(HOST_BIN_DIR)
+	cp -n $(BIN_DIR)/$(BIN) $(HOST_BIN_DIR)
 	chmod 755 $(HOST_BIN_DIR)/$(BIN)
-	cp -R $(SHAD_DIR) $(HOST_SHAD_DIR)
+	cp -r $(SHAD_DIR) $(HOST_LOCAL_DIR)
+	cp -r $(TEXT_DIR) $(HOST_LOCAL_DIR)
 
 packages:
 	$(apt-get install $(PACKAGES))

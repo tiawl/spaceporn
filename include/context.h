@@ -1,13 +1,14 @@
-#ifndef GLX_CONTEXT
-#define GLX_CONTEXT
+#ifndef XTELESKTOP_CONTEXT_H
+#define XTELESKTOP_CONTEXT_H
 
-#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <X11/Xatom.h>
 #include <GL/glx.h>
+
+#include "util.h"
 
 #define GLX_CONTEXT_MAJOR_VERSION_ARB       0x2091
 #define GLX_CONTEXT_MINOR_VERSION_ARB       0x2092
@@ -26,6 +27,6 @@ typedef struct
 
 bool isExtensionSupported(const char* extList, const char* extension);
 int contextErrorHandler(Display* display, XErrorEvent* event);
-bool initContext(ContextBuilder* builder);
+bool initContext(ContextBuilder* builder, bool verbose);
 
 #endif

@@ -5,7 +5,7 @@ void CheckOpenGLError(const char* stmt, const char* fname, int line)
   GLenum error = glGetError();
   if (error != GL_NO_ERROR)
   {
-    printf("OpenGL error %08x, at %s:%i - for %s\n", error, fname, line, stmt);
+    fprintf(stderr, "OpenGL error %08x, at %s:%i - for %s\n", error, fname, line, stmt);
     abort();
   }
 }
@@ -33,60 +33,117 @@ void updateBoolUniforms(GLint uniformId, UniformValues* values)
 
 /**************************************************************************/
 
-bool initPaths(char** fshaderpath, char** vshaderpath, char** texturepath)
+bool initPaths(char** fshaderpath, char** vshaderpath, char** texturepath,
+  bool verbose)
 {
+  VERB(verbose, printf("Computing length of home directory path ...\n"));
   const size_t len1 = strlen(HOME_DIR);
+  VERB(verbose, printf("Length of \"%s\" is %lu\n", HOME_DIR, len1));
+
+  VERB(verbose, printf("Computing username length ...\n"));
   const size_t len2 = strlen(getenv("USERNAME"));
+  VERB(verbose, printf("Length of \"%s\" is %lu\n",
+    getenv("USERNAME"), len2));
+
+  VERB(verbose, printf("Computing length of binary directory path ...\n"));
   const size_t len3 = strlen(BIN_DIR);
+  VERB(verbose, printf("Length of \"%s\" is %lu\n", BIN_DIR, len3));
+
+  VERB(verbose, printf("Computing length of shaders directory path ...\n"));
   const size_t len4 = strlen(SHADERS_DIR);
+  VERB(verbose, printf("Length of \"%s\" is %lu\n", SHADERS_DIR, len4));
+
+  VERB(verbose, printf("Computing length of textures directory path ...\n"));
   const size_t len5 = strlen(TEXTURES_DIR);
+  VERB(verbose, printf("Length of \"%s\" is %lu\n", TEXTURES_DIR, len5));
+
+  VERB(verbose, printf("Computing length of fragment shader filename ...\n"));
   const size_t len6 = strlen(FSHADER_FILE);
+  VERB(verbose, printf("Length of \"%s\" is %lu\n", FSHADER_FILE, len6));
+
+  VERB(verbose, printf("Computing length of vertex shader filename ...\n"));
   const size_t len7 = strlen(VSHADER_FILE);
+  VERB(verbose, printf("Length of \"%s\" is %lu\n", VSHADER_FILE, len7));
+
+  VERB(verbose, printf("Computing length of texture filename ...\n"));
   const size_t len8 = strlen(TEXTURE_FILE);
+  VERB(verbose, printf("Length of \"%s\" is %lu\n", TEXTURE_FILE, len8));
+
+  VERB(verbose, printf("Allocating memory for fragment shader path ...\n"));
   *fshaderpath = malloc(len1 + len2 + len3 + len4 + len6 + 1);
 
   if (!*fshaderpath)
   {
-    printf("fshaderpath malloc() failed\n");
+    fprintf(stderr, "fshaderpath malloc() failed\n");
     return false;
   }
+  VERB(verbose, printf("Successfull allocated memory for fragment shader \
+path ...\n"));
 
+  VERB(verbose, printf("Allocating memory for vertex shader path ...\n"));
   *vshaderpath = malloc(len1 + len2 + len3 + len4 + len7 + 1);
 
   if (!*vshaderpath)
   {
-    printf("vshaderpath malloc() failed\n");
+    fprintf(stderr, "vshaderpath malloc() failed\n");
     free(fshaderpath);
     return false;
   }
+  VERB(verbose, printf("Successfull allocated memory for vertex shader \
+path\n"));
 
+  VERB(verbose, printf("Allocating memory for texture path ...\n"));
   *texturepath = malloc(len1 + len2 + len3 + len5 + len8 + 1);
 
   if (!*texturepath)
   {
-    printf("texturepath malloc() failed\n");
+    fprintf(stderr, "texturepath malloc() failed\n");
     free(fshaderpath);
     free(vshaderpath);
     return false;
   }
+  VERB(verbose, printf("Successfull allocated memory for texture path\n"));
 
+  VERB(verbose, printf("Building fragment shader path string ... 0/5\n"));
   memcpy(*fshaderpath, HOME_DIR, len1);
+  VERB(verbose, printf("Building fragment shader path string ... 1/5\n"));
   memcpy(*fshaderpath + len1, getenv("USERNAME"), len2);
+  VERB(verbose, printf("Building fragment shader path string ... 2/5\n"));
   memcpy(*fshaderpath + len1 + len2, BIN_DIR, len3);
+  VERB(verbose, printf("Building fragment shader path string ... 3/5\n"));
   memcpy(*fshaderpath + len1 + len2 + len3, SHADERS_DIR, len4);
+  VERB(verbose, printf("Building fragment shader path string ... 4/5\n"));
   memcpy(*fshaderpath + len1 + len2 + len3 + len4, FSHADER_FILE, len6 + 1);
+  VERB(verbose, printf("Building fragment shader path string ... 5/5\n"));
+  VERB(verbose, printf("Fragment shader path string built: %s\n",
+    *fshaderpath));
 
+  VERB(verbose, printf("Building vertex shader path string ... 0/5\n"));
   memcpy(*vshaderpath, HOME_DIR, len1);
+  VERB(verbose, printf("Building vertex shader path string ... 1/5\n"));
   memcpy(*vshaderpath + len1, getenv("USERNAME"), len2);
+  VERB(verbose, printf("Building vertex shader path string ... 2/5\n"));
   memcpy(*vshaderpath + len1 + len2, BIN_DIR, len3);
+  VERB(verbose, printf("Building vertex shader path string ... 3/5\n"));
   memcpy(*vshaderpath + len1 + len2 + len3, SHADERS_DIR, len4);
+  VERB(verbose, printf("Building vertex shader path string ... 4/5\n"));
   memcpy(*vshaderpath + len1 + len2 + len3 + len4, VSHADER_FILE, len7 + 1);
+  VERB(verbose, printf("Building vertex shader path string ... 5/5\n"));
+  VERB(verbose, printf("Vertex shader path string built: %s\n",
+    *vshaderpath));
 
+  VERB(verbose, printf("Building texture path string ... 0/5\n"));
   memcpy(*texturepath, HOME_DIR, len1);
+  VERB(verbose, printf("Building texture path string ... 1/5\n"));
   memcpy(*texturepath + len1, getenv("USERNAME"), len2);
+  VERB(verbose, printf("Building texture path string ... 2/5\n"));
   memcpy(*texturepath + len1 + len2, BIN_DIR, len3);
+  VERB(verbose, printf("Building texture path string ... 3/5\n"));
   memcpy(*texturepath + len1 + len2 + len3, TEXTURES_DIR, len5);
+  VERB(verbose, printf("Building texture path string ... 4/5\n"));
   memcpy(*texturepath + len1 + len2 + len3 + len5, TEXTURE_FILE, len8 + 1);
+  VERB(verbose, printf("Building texture path string ... 5/5\n"));
+  VERB(verbose, printf("Texture path string built: %s\n", *texturepath));
 
   return true;
 }
@@ -106,13 +163,13 @@ bool readFile(char** filepath, char** buffer)
     {
       fread(*buffer, 1, length, f);
     } else {
-      printf("buffer malloc() failed\n");
+      fprintf(stderr, "buffer malloc() failed\n");
       return false;
     }
     fclose(f);
     (*buffer)[length] = '\0'; // fread does not 0 terminate strings
   } else {
-    printf("Failed to read inside %s: %s\n", *filepath, strerror(errno));
+    fprintf(stderr, "Failed to read inside %s: %s\n", *filepath, strerror(errno));
     return false;
   }
 
@@ -138,7 +195,7 @@ GLuint loadShader(const char* shaderSource, GLenum shaderType)
     char message[maxLength];
     GL_CHECK(glGetShaderInfoLog(shader, maxLength, &maxLength, message));
 
-    printf("%s\n", &(message[0]));
+    fprintf(stderr, "%s\n", &(message[0]));
 
     GL_CHECK(glDeleteShader(shader));
     shader = 0;
@@ -157,7 +214,7 @@ bool loadProgram(GLuint* program, GLuint* vertex_shader,
   {
     GL_CHECK(glDeleteProgram(*program));
     *program = 0;
-    printf("Failed to read in vertex shader file\n");
+    fprintf(stderr, "Failed to read in vertex shader file\n");
     return false;
   }
 
@@ -167,7 +224,7 @@ bool loadProgram(GLuint* program, GLuint* vertex_shader,
     free(vertex_file);
     GL_CHECK(glDeleteProgram(*program));
     *program = 0;
-    printf("Failed to read in fragment shader file\n");
+    fprintf(stderr, "Failed to read in fragment shader file\n");
     return false;
   }
 
@@ -208,8 +265,8 @@ bool loadProgram(GLuint* program, GLuint* vertex_shader,
     char message[maxLength];
     GL_CHECK(glGetShaderInfoLog(*program, maxLength, &maxLength, message));
 
-    printf("%s\n", &(message[0]));
-    printf("\n\nUnable to link program %d\n", *program);
+    fprintf(stderr, "%s\n", &(message[0]));
+    fprintf(stderr, "\n\nUnable to link program %d\n", *program);
 
     free(vertex_file);
     free(fragment_file);
@@ -319,16 +376,16 @@ bool loadPng(GLuint* texture, char const* const filename)
 
   if (!filename)
   {
-    printf("One or more loadPng() pointers arguments are null\n");
+    fprintf(stderr, "One or more loadPng() pointers arguments are null\n");
     cleanup(&parser, &info, &row_pointers, &data, &file, filename);
-    printf("Failed to load PNG file\n");
+    fprintf(stderr, "Failed to load PNG file\n");
     return false;
   }
 
   file = fopen(filename, "rb");
   if (!file)
   {
-    printf("Failed to open %s\n", filename);
+    fprintf(stderr, "Failed to open %s\n", filename);
     cleanup(&parser, &info, &row_pointers, &data, &file, filename);
     return false;
   }
@@ -336,26 +393,26 @@ bool loadPng(GLuint* texture, char const* const filename)
   parser = png_create_read_struct(PNG_LIBPNG_VER_STRING, 0, 0, 0);
   if (!parser)
   {
-    printf("png_create_read_struct() failed\n");
+    fprintf(stderr, "png_create_read_struct() failed\n");
     cleanup(&parser, &info, &row_pointers, &data, &file, filename);
-    printf("Failed to load %s\n", filename);
+    fprintf(stderr, "Failed to load %s\n", filename);
     return false;
   }
 
   info = png_create_info_struct(parser);
   if (!info)
   {
-    printf("png_create_info_struct() failed\n");
+    fprintf(stderr, "png_create_info_struct() failed\n");
     cleanup(&parser, &info, &row_pointers, &data, &file, filename);
-    printf("Failed to load %s\n", filename);
+    fprintf(stderr, "Failed to load %s\n", filename);
     return false;
   }
 
   if (setjmp(png_jmpbuf(parser)))
   {
-    printf("png_jmpbuf() failed\n");
+    fprintf(stderr, "png_jmpbuf() failed\n");
     cleanup(&parser, &info, &row_pointers, &data, &file, filename);
-    printf("Failed to load %s\n", filename);
+    fprintf(stderr, "Failed to load %s\n", filename);
     return false;
   }
 
@@ -365,10 +422,10 @@ bool loadPng(GLuint* texture, char const* const filename)
 
   if ((w & (w - 1)) || (h & (h - 1)) || (w < 8) || (h < 8))
   {
-    printf("PNG images with dimensions that are not power of two or smaller \
+    fprintf(stderr, "PNG images with dimensions that are not power of two or smaller \
 than 8 failed to load in OpenGL\n");
     cleanup(&parser, &info, &row_pointers, &data, &file, filename);
-    printf("Failed to load %s\n", filename);
+    fprintf(stderr, "Failed to load %s\n", filename);
     return false;
   }
 
@@ -397,18 +454,18 @@ than 8 failed to load in OpenGL\n");
   data = malloc(rowbytes * h * sizeof(png_byte) + 15);
   if (!data)
   {
-    printf("data malloc() failed\n");
+    fprintf(stderr, "data malloc() failed\n");
     cleanup(&parser, &info, &row_pointers, &data, &file, filename);
-    printf("Failed to load %s\n", filename);
+    fprintf(stderr, "Failed to load %s\n", filename);
     return false;
   }
 
   row_pointers = malloc(h * sizeof(png_bytep));
   if (!row_pointers)
   {
-    printf("row_pointers malloc() failed\n");
+    fprintf(stderr, "row_pointers malloc() failed\n");
     cleanup(&parser, &info, &row_pointers, &data, &file, filename);
-    printf("Failed to load %s\n", filename);
+    fprintf(stderr, "Failed to load %s\n", filename);
     return false;
   }
 

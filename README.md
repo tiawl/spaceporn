@@ -50,10 +50,15 @@ Options:
 
 1. Clone the repository.
 2. `cd` into the directory.
-3. Run `sudo make clean install`.
-4. Test the program by using flags described in "Usage" section to find a configuration which fits your needs.
-5. Add the previous step command to your `.xinitrc`.
-6. Logout and log back in to update the background.
+3. Run `./bin/configure` and install requested dependencies. Repeat this step until `bin/config.status` is generated.
+4. Run `make`.
+5. Test the program by using options described in **Usage** section until you find a command which fits your needs.
+   This command will be called `YOUR_XTELESKTOP_CLI` for following steps of this tutorial.
+6. Run `sudo make install`.
+
+7. Add this following line to your `.xinitrc`:
+   `YOUR_XTELESKTOP_CLI -v > ~/.xtelesktop.log 2>&1`
+8. Logout and log back in to update the background.
 
 ## Supported environments
 
@@ -67,6 +72,10 @@ If you ran **xtelesktop** on a non-listed environment, contact me, I will add it
 ## Known issues
 
 - Running app hides desktop icons &rarr; During execution, the app creates a window above the root window (or desktop window) and behind every other windows to render the shader. This is why desktop icons disappear during execution. The only way to fix this issue is to use root window and/or File-System/Window Manager window which draw icons and desktop above root window. Unfortunely I did not find a way to do this properly. However I will if I can.
+
+## Reporting bugs
+
+If the application crashed, you can send me your OS config (OS and Window Manager) **and** the content of the file located at: `~/.xtelesktop.log` if you follow the **Installing** tutorial (if not it will be really hard to understand what happened on your device).
 
 ## Additional links
 

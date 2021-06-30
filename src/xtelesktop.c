@@ -112,7 +112,7 @@ int main(int argc, char **argv)
 
   if (help_needed)
   {
-    exit(EXIT_FAILURE);
+    return EXIT_FAILURE;
   }
 
   char* fshaderpath = NULL;
@@ -125,7 +125,7 @@ int main(int argc, char **argv)
 
   if (!initPaths(&fshaderpath, &vshaderpath, &texturepath, verbose))
   {
-    exit(EXIT_FAILURE);
+    return EXIT_FAILURE;
   }
   VERB(verbose, printf("Fragment shader, vertex shader and texture paths \
 are initialized\n"));
@@ -139,7 +139,7 @@ are initialized\n"));
     free(vshaderpath);
     free(texturepath);
     fprintf(stderr, "Failed to create an OpenGL context\n");
-    exit(EXIT_FAILURE);
+    return EXIT_FAILURE;
   }
 
   glewExperimental = GL_TRUE;
@@ -155,7 +155,7 @@ are initialized\n"));
     XFreeColormap(builder.display, builder.cmap);
     XCloseDisplay(builder.display);
     fprintf(stderr, "glewInit() failed\n");
-    exit(EXIT_FAILURE);
+    return EXIT_FAILURE;
   }
 
   XSelectInput(builder.display, builder.window, ExposureMask);
@@ -180,7 +180,7 @@ are initialized\n"));
     XFreeColormap(builder.display, builder.cmap);
     XCloseDisplay(builder.display);
     fprintf(stderr, "Failed to create debug window\n");
-    exit(EXIT_FAILURE);
+    return EXIT_FAILURE;
   }
 
   XSelectInput(builder.display, debug_window, KeyPressMask);
@@ -204,7 +204,7 @@ are initialized\n"));
     XFreeColormap(builder.display, builder.cmap);
     XCloseDisplay(builder.display);
     fprintf(stderr, "\n\tShader program failed to load\n\n");
-    exit(EXIT_FAILURE);
+    return EXIT_FAILURE;
   }
 
   /* array of all uniforms to pass to the shader */
@@ -236,7 +236,7 @@ are initialized\n"));
     XDestroyWindow(builder.display, builder.window);
     XFreeColormap(builder.display, builder.cmap);
     XCloseDisplay(builder.display);
-    exit(EXIT_FAILURE);
+    return EXIT_FAILURE;
   }
 
   getUniforms(uniforms, uniformIds, &program);

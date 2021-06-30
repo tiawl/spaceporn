@@ -11,9 +11,8 @@ SRC_FILES := $(wildcard $(SRC_DIR)/*.c)
 OBJ_FILES := $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(SRC_FILES))
 FLAGS := -lX11 -lGL -lGLEW -lpng
 CPPFLAGS := -Wall -g -I ./$(HEAD_DIR)
-PACKAGES := build-essential mesa-common-dev libgl1-mesa-glx libx11-dev libglew-dev libpng-dev
 
-all: directories packages $(BIN_DIR)/$(BIN)
+all: directories $(BIN_DIR)/$(BIN)
 
 directories:
 	mkdir -p $(OBJ_DIR) $(BIN_DIR)
@@ -28,7 +27,8 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 
 clean:
 	if test -d $(OBJ_DIR); then rm -r $(OBJ_DIR); fi
-	if test -d $(BIN_DIR); then rm -r $(BIN_DIR); fi
+	if test -f $(BIN_DIR)/$(BIN); then rm -r $(BIN_DIR)/$(BIN); fi
+	if test -f $(BIN_DIR)/config.status; then rm -r $(BIN_DIR)/config.status; fi
 
 install: all
 	mkdir -p $(HOST_BIN_DIR)
@@ -36,6 +36,3 @@ install: all
 	chmod 755 $(HOST_BIN_DIR)/$(BIN)
 	cp -r $(SHAD_DIR) $(HOST_LOCAL_DIR)
 	cp -r $(TEXT_DIR) $(HOST_LOCAL_DIR)
-
-packages:
-	$(apt-get install $(PACKAGES))

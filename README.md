@@ -50,7 +50,7 @@ Options:
 
 1. Clone the repository.
 2. `cd` into the directory.
-3. Run `./bin/configure` and install requested dependencies. Repeat this step until `bin/config.status` is generated.
+3. Run `./sh/configure.sh` and install requested dependencies. Repeat this step until `conf/config.status` is generated.
 4. Run `make`.
 5. Test the program by using options described in **Usage** section until you find a command which fits your needs.
    This command will be called `YOUR_XTELESKTOP_CLI` for following steps of this tutorial.
@@ -75,7 +75,7 @@ If you ran **xtelesktop** on a non-listed environment, contact me, I will add it
 
 ## Reporting bugs
 
-If the application crashed, you can send me your OS config (OS and Window Manager) **and** the content of the file located at: `~/.xtelesktop.log` if you follow the **Installing** tutorial (if not it will be really hard to understand what happened on your device).
+If the application crashed, you can send me your OS config (OS and Window Manager) **and** the content of the file located at: `~/.xtelesktop.log` if you followed the **Installing** tutorial (if not it will be really hard to understand what happened on your device).
 
 ## Additional links
 

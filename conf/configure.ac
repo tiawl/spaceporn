@@ -1,6 +1,6 @@
 AC_PREREQ([2.69])
 AC_INIT([xtelesktop], [0.1], [pabtomas@protonmail.com])
-AC_CONFIG_SRCDIR([src/xtelesktop.c])
+AC_CONFIG_SRCDIR([../src/xtelesktop.c])
 
 # Checks for programs.
 AC_PROG_CC

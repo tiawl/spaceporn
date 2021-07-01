@@ -3,6 +3,7 @@ OBJ_DIR := obj
 HEAD_DIR := include
 SHAD_DIR := shaders
 TEXT_DIR := textures
+CONF_DIR := conf
 BIN := xtelesktop
 BIN_DIR := bin
 HOST_BIN_DIR := /usr/local/bin
@@ -27,8 +28,10 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 
 clean:
 	if test -d $(OBJ_DIR); then rm -r $(OBJ_DIR); fi
-	if test -f $(BIN_DIR)/$(BIN); then rm -r $(BIN_DIR)/$(BIN); fi
-	if test -f $(BIN_DIR)/config.status; then rm -r $(BIN_DIR)/config.status; fi
+	if test -d $(BIN_DIR); then rm -r $(BIN_DIR); fi
+	if test -f $(CONF_DIR)/config.status; then rm $(CONF_DIR)/config.status; fi
+	if test -f $(CONF_DIR)/config.log; then rm $(CONF_DIR)/config.log; fi
+	if test -d $(CONF_DIR)/autom4te.cache; then rm -r $(CONF_DIR)/autom4te.cache; fi
 
 install: all
 	mkdir -p $(HOST_BIN_DIR)

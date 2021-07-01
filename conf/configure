@@ -585,7 +585,7 @@ PACKAGE_STRING='xtelesktop 0.1'
 PACKAGE_BUGREPORT='pabtomas@protonmail.com'
 PACKAGE_URL=''
 
-ac_unique_file="src/xtelesktop.c"
+ac_unique_file="../src/xtelesktop.c"
 # Factoring default headers for most tests.
 ac_includes_default="\
 #include <stdio.h>
@@ -3405,7 +3405,7 @@ if eval test \"x\$"$as_ac_Header"\" = x"yes"; then :
 _ACEOF
 
 else
-  as_fn_error $? "Install or check the GLibC package." "$LINENO" 5
+  as_fn_error $? "Some GLibC headers are not found. Install or check the GLibC developing package." "$LINENO" 5
 fi
 
 done

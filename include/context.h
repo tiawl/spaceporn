@@ -28,5 +28,7 @@ typedef struct
 bool isExtensionSupported(const char* extList, const char* extension);
 int contextErrorHandler(Display* display, XErrorEvent* event);
 bool initContext(ContextBuilder* builder, bool verbose);
+void hideCursor(ContextBuilder* builder);
+void getCursor(ContextBuilder* builder, int* cursor_x, int* cursor_y);
 
 #endif

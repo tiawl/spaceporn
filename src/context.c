@@ -282,5 +282,37 @@ samples per pixel ... %d/%d\n", fbcount, fbcount));
   }
 
   glXMakeCurrent(builder->display, builder->window, builder->context);
+
   return true;
+}
+
+void hideCursor(ContextBuilder* builder)
+{
+  XColor black;
+  black.red = black.green = black.blue = 0;
+  static char noData[] =
+  {
+    0, 0, 0, 0, 0, 0, 0, 0
+  };
+
+  Pixmap bitmapNoData =
+    XCreateBitmapFromData(builder->display, builder->window, noData, 8, 8);
+  Cursor invisibleCursor = XCreatePixmapCursor(builder->display, bitmapNoData,
+    bitmapNoData, &black, &black, 0, 0);
+
+  XDefineCursor(builder->display, builder->window, invisibleCursor);
+
+  XFreeCursor(builder->display, invisibleCursor);
+  XFreePixmap(builder->display, bitmapNoData);
+}
+
+void getCursor(ContextBuilder* builder, int* cursor_x, int* cursor_y)
+{
+  Window dummy;
+  int x;
+  int y;
+  unsigned int mask_return;
+
+  XQueryPointer(builder->display, builder->window, &dummy, &dummy, cursor_x,
+    cursor_y, &x, &y, &mask_return);
 }

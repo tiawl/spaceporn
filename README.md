@@ -36,6 +36,8 @@ Options:
 
     -m  Enable camera motion
 
+    -r  Enable rocket cursor, shader animations and camera motion
+
     -p  Enable multiple colorschemes
 
     -x  Pixels value between 100 to 600 (ex: -x 300) [default: 500]

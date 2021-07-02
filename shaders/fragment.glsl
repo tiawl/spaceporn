@@ -1,7 +1,7 @@
 # version 330 core
 
-uniform float fflags[6];
-uniform bvec3 bflags;
+uniform float fflags[8];
+uniform bvec4 bflags;
 uniform sampler2D big_stars_texture;
 
 out vec4 fragColor;
@@ -13,12 +13,14 @@ const float bigstars_density = 3.;
 
 vec2 resolution = vec2(fflags[0], fflags[1]);
 vec2 seed = vec2(fflags[2], fflags[3]);
-float time = fflags[4];
-float pixels = fflags[5];
+vec2 cursor = vec2(fflags[4], fflags[5]);
+float time = fflags[6];
+float pixels = fflags[7];
 
 bool animation = bflags.x;
 bool motion = bflags.y;
-bool palettes = bflags.z;
+bool rocket = bflags.z;
+bool palettes = bflags.a;
 
 struct Planet
 {
@@ -771,6 +773,24 @@ vec4 bigstars(vec2 uv)
 
 /****************************************************************************
  *                                                                          *
+ *                                  Rocket                                  *
+ *                                                                          *
+ ****************************************************************************/
+
+vec4 rocket_cursor(vec2 uv)
+{
+  vec4 col = vec4(0.);
+
+  if (distance(uv, cursor) < 0.05)
+  {
+    col = vec4(1.);
+  }
+
+  return col;
+}
+
+/****************************************************************************
+ *                                                                          *
  *                                   Main                                   *
  *                                                                          *
  ****************************************************************************/
@@ -791,21 +811,29 @@ void main()
   vec2 UV = (gl_FragCoord.xy + m) / resolution;
   UV.x *= resolution.x / resolution.y;
 
-  vec2 uv = floor((UV) * pixels) / pixels;
+  vec2 uv = floor(UV * pixels) / pixels;
   bool psdith = dither(1., uv, UV);
 
-  vec4 col;
+  vec4 col = vec4(0.);
 
-  vec4 planets = planets(UV, uv);
-  float planets_value = planets.x;
+  if (rocket)
+  {
+    cursor.y = resolution.y - cursor.y;
+    cursor = (cursor + m) / resolution;
+    cursor.x *= resolution.x / resolution.y;
+    col = rocket_cursor(uv);
+  }
 
-  //if (planets_value == 0.)
-  if (planets_value == -1.)
+  if (col.x == 0.)
+  {
+    col = planets(UV, uv);
+  }
+
+  //if (col.x == 0.)
+  if (col.x == -1.)
   {
     col = max(bigstars(UV), max(stars(uv), max(nebulae(uv, psdith),
       dust(uv, psdith)) * (sin(time * 2500.) * 0.025 + 1.)));
-  } else {
-    col = planets;
   }
 
   fragColor = col;

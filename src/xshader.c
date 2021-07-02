@@ -17,18 +17,18 @@ void CheckOpenGLError(const char* stmt, const char* fname, int line)
 void updateFloatUniforms(GLint uniformId, UniformValues* values)
 {
   values->time = ((double)(clock() - values->clock)) / CLOCKS_PER_SEC;
-  GLfloat ffloats[6] =
+  GLfloat ffloats[UNIFORM_FLOATS] =
   {
-    values->width, values->height, values->xseed, values->yseed, values->time,
-    values->pixels
+    values->width, values->height, values->xseed, values->yseed,
+    values->xcursor, values->ycursor, values->time, values->pixels
   };
-  GL_CHECK(glUniform1fv(uniformId, 6, ffloats));
+  GL_CHECK(glUniform1fv(uniformId, UNIFORM_FLOATS, ffloats));
 }
 
 void updateBoolUniforms(GLint uniformId, UniformValues* values)
 {
-  GL_CHECK(glUniform3i(uniformId, values->animations, values->motion,
-    values->palettes));
+  GL_CHECK(glUniform4i(uniformId, values->animations, values->motion,
+    values->rocket, values->palettes));
 }
 
 /**************************************************************************/

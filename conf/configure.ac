@@ -5,7 +5,7 @@ AC_CONFIG_SRCDIR([../src/xtelesktop.c])
 AC_LANG(C)
 
 # Checks for programs.
-AC_PROG_CC([cc gcc])
+AC_PROG_CC
 
 if test "$ac_cv_prog_cc_g" = "no"; then
   AC_MSG_ERROR([No C compiler present. Install GCC.]);

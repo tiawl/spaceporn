@@ -20,15 +20,15 @@ void updateFloatUniforms(GLint uniformId, UniformValues* values)
   GLfloat ffloats[UNIFORM_FLOATS] =
   {
     values->width, values->height, values->xseed, values->yseed,
-    values->xcursor, values->ycursor, values->time, values->pixels
+    values->time, values->pixels
   };
   GL_CHECK(glUniform1fv(uniformId, UNIFORM_FLOATS, ffloats));
 }
 
 void updateBoolUniforms(GLint uniformId, UniformValues* values)
 {
-  GL_CHECK(glUniform4i(uniformId, values->animations, values->motion,
-    values->rocket, values->palettes));
+  GL_CHECK(glUniform3i(uniformId, values->animations, values->motion,
+    values->palettes));
 }
 
 /**************************************************************************/

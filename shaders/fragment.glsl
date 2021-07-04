@@ -1,7 +1,7 @@
 # version 330 core
 
-uniform float fflags[8];
-uniform bvec4 bflags;
+uniform float fflags[6];
+uniform bvec3 bflags;
 uniform sampler2D big_stars_texture;
 
 out vec4 fragColor;
@@ -13,14 +13,12 @@ const float bigstars_density = 3.;
 
 vec2 resolution = vec2(fflags[0], fflags[1]);
 vec2 seed = vec2(fflags[2], fflags[3]);
-vec2 cursor = vec2(fflags[4], fflags[5]);
-float time = fflags[6];
-float pixels = fflags[7];
+float time = fflags[4];
+float pixels = fflags[5];
 
 bool animation = bflags.x;
 bool motion = bflags.y;
-bool rocket = bflags.z;
-bool palettes = bflags.a;
+bool palettes = bflags.z;
 
 struct Planet
 {
@@ -634,23 +632,22 @@ vec4 moon(vec2 uv, Planet planet)
 #define MOON 0.25
 #define LAND 1.
 
-float roundDown(float numToRound, float multiple)
+float floor_multiple(float numToRound, float base)
 {
-  float remainder = mod(abs(numToRound), multiple);
-  if (remainder == 0.)
+  float modulo = mod(numToRound, base);
+  if (modulo == 0.)
   {
     return numToRound;
-  } else if (numToRound < 0.) {
-    return -(abs(numToRound) - remainder);
   } else {
-    return numToRound - remainder;
+    return numToRound - modulo;
   }
 }
 
 Planet calc_circle(vec2 xy, vec2 offset)
 {
-  vec2 ixy = vec2(roundDown(xy.x, planets_density),
-    roundDown(xy.y, planets_density));
+  vec2 ixy = vec2(floor_multiple(xy.x, planets_density),
+    floor_multiple(xy.y, planets_density));
+
   ixy -= offset;
   vec2 center = ixy + planets_density * 0.5;
 
@@ -773,24 +770,6 @@ vec4 bigstars(vec2 uv)
 
 /****************************************************************************
  *                                                                          *
- *                                  Rocket                                  *
- *                                                                          *
- ****************************************************************************/
-
-vec4 rocket_cursor(vec2 uv)
-{
-  vec4 col = vec4(0.);
-
-  if (distance(uv, cursor) < 0.05)
-  {
-    col = vec4(1.);
-  }
-
-  return col;
-}
-
-/****************************************************************************
- *                                                                          *
  *                                   Main                                   *
  *                                                                          *
  ****************************************************************************/
@@ -816,18 +795,7 @@ void main()
 
   vec4 col = vec4(0.);
 
-  if (rocket)
-  {
-    cursor.y = resolution.y - cursor.y;
-    cursor = (cursor + m) / resolution;
-    cursor.x *= resolution.x / resolution.y;
-    col = rocket_cursor(uv);
-  }
-
-  if (col.x == 0.)
-  {
-    col = planets(UV, uv);
-  }
+  col = planets(UV, uv);
 
   //if (col.x == 0.)
   if (col.x == -1.)
@@ -835,6 +803,10 @@ void main()
     col = max(bigstars(UV), max(stars(uv), max(nebulae(uv, psdith),
       dust(uv, psdith)) * (sin(time * 2500.) * 0.025 + 1.)));
   }
+
+  float yu = mod(abs(uv.x * 5.), planets_density);
+  float yv = mod(abs(uv.y * 5.), planets_density);
+  if ((yu < .001) || (yv < 0.001)) col = vec4(0., 1., 0., 1.);
 
   fragColor = col;
 }

@@ -20,8 +20,8 @@
 #define TEXTURE_FILE "/big_stars.png"
 
 #define UNIFORM_COUNT 2
-#define UNIFORM_FLOATS 8
-#define UNIFORM_BOOLEANS 4
+#define UNIFORM_FLOATS 6
+#define UNIFORM_BOOLEANS 3
 
 typedef struct
 {
@@ -32,12 +32,9 @@ typedef struct
   GLfloat pixels;
   GLboolean animations;
   GLboolean motion;
-  GLboolean rocket;
   GLboolean palettes;
   GLfloat xseed;
   GLfloat yseed;
-  GLint xcursor;
-  GLint ycursor;
 } UniformValues;
 
 typedef struct

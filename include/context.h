@@ -5,8 +5,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <X11/Xatom.h>
 #include <GL/glx.h>
+#include <X11/Xatom.h>
 
 #include "util.h"
 
@@ -28,7 +28,5 @@ typedef struct
 bool isExtensionSupported(const char* extList, const char* extension);
 int contextErrorHandler(Display* display, XErrorEvent* event);
 bool initContext(ContextBuilder* builder, bool verbose);
-void hideCursor(ContextBuilder* builder);
-void getCursor(ContextBuilder* builder, int* cursor_x, int* cursor_y);
 
 #endif

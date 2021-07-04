@@ -19,7 +19,6 @@ void help()
   fprintf(stderr, "Options:\n\n\
     -a  Enable shader animations\n\n\
     -m  Enable camera motion\n\n\
-    -r  Enable rocket cursor, shader animations and camera motion\n\n\
     -p  Enable multiple colorschemes\n\n\
     -x  Pixels value between 100 to 600 (ex: -x 300) [default: 500]\n\n\
     -d  Delay value between each frame in microseconds (ex: -d 0)\n\
@@ -50,7 +49,6 @@ int main(int argc, char **argv)
   uniform_values.pixels = 500;
   uniform_values.animations = false;
   uniform_values.motion = false;
-  uniform_values.rocket = false;
   uniform_values.palettes = false;
   uniform_values.xseed = rand();
   uniform_values.yseed = rand();
@@ -90,10 +88,6 @@ int main(int argc, char **argv)
       uniform_values.motion = true;
     } else if (strcmp(argv[i], "-p") == 0) {
       uniform_values.palettes = true;
-    } else if (strcmp(argv[i], "-r") == 0) {
-      uniform_values.animations = true;
-      uniform_values.motion = true;
-      uniform_values.rocket = true;
     } else if (strcmp(argv[i], "-v") == 0) {
       verbose = true;
 #if DEBUG
@@ -165,11 +159,6 @@ are initialized\n"));
   }
 
   XSelectInput(builder.display, builder.window, ExposureMask);
-
-  if (uniform_values.rocket)
-  {
-    hideCursor(&builder);
-  }
 
   GL_CHECK(glEnable(GL_BLEND));
   GL_CHECK(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
@@ -267,11 +256,6 @@ are initialized\n"));
 
   while(true)
   {
-    if (uniform_values.rocket)
-    {
-      getCursor(&builder, &(uniform_values.xcursor), &(uniform_values.ycursor));
-    }
-
     updateUniforms(uniforms, uniformIds, &uniform_values);
 
     drawScreen();

@@ -212,6 +212,7 @@ samples per pixel ... %d/%d\n", fbcount, fbcount));
   }
   VERB(verbose, printf("Window created: 0x%lx\n", builder->window));
 
+  VERB(verbose, printf("Allocation window manager hint ...\n"));
   XWMHints* wmHint = XAllocWMHints();
   wmHint->flags = InputHint | StateHint;
   wmHint->input = false;

@@ -1785,6 +1785,52 @@ $as_echo "$ac_res" >&6; }
 
 } # ac_fn_c_find_uintX_t
 
+# ac_fn_c_check_decl LINENO SYMBOL VAR INCLUDES
+# ---------------------------------------------
+# Tests whether SYMBOL is declared in INCLUDES, setting cache variable VAR
+# accordingly.
+ac_fn_c_check_decl ()
+{
+  as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
+  as_decl_name=`echo $2|sed 's/ *(.*//'`
+  as_decl_use=`echo $2|sed -e 's/(/((/' -e 's/)/) 0&/' -e 's/,/) 0& (/g'`
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $as_decl_name is declared" >&5
+$as_echo_n "checking whether $as_decl_name is declared... " >&6; }
+if eval \${$3+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+$4
+int
+main ()
+{
+#ifndef $as_decl_name
+#ifdef __cplusplus
+  (void) $as_decl_use;
+#else
+  (void) $as_decl_name;
+#endif
+#endif
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  eval "$3=yes"
+else
+  eval "$3=no"
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+eval ac_res=\$$3
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+  eval $as_lineno_stack; ${as_lineno_stack:+:} unset as_lineno
+
+} # ac_fn_c_check_decl
+
 # ac_fn_c_check_func LINENO FUNC VAR
 # ----------------------------------
 # Tests whether FUNC exists, setting the cache variable VAR accordingly
@@ -2219,7 +2265,197 @@ ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 if test -n "$ac_tool_prefix"; then
-  for ac_prog in cc gcc
+  # Extract the first word of "${ac_tool_prefix}gcc", so it can be a program name with args.
+set dummy ${ac_tool_prefix}gcc; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_CC+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$CC"; then
+  ac_cv_prog_CC="$CC" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_CC="${ac_tool_prefix}gcc"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+CC=$ac_cv_prog_CC
+if test -n "$CC"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $CC" >&5
+$as_echo "$CC" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+fi
+if test -z "$ac_cv_prog_CC"; then
+  ac_ct_CC=$CC
+  # Extract the first word of "gcc", so it can be a program name with args.
+set dummy gcc; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_ac_ct_CC+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$ac_ct_CC"; then
+  ac_cv_prog_ac_ct_CC="$ac_ct_CC" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_ac_ct_CC="gcc"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+ac_ct_CC=$ac_cv_prog_ac_ct_CC
+if test -n "$ac_ct_CC"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_ct_CC" >&5
+$as_echo "$ac_ct_CC" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+  if test "x$ac_ct_CC" = x; then
+    CC=""
+  else
+    case $cross_compiling:$ac_tool_warned in
+yes:)
+{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: using cross tools not prefixed with host triplet" >&5
+$as_echo "$as_me: WARNING: using cross tools not prefixed with host triplet" >&2;}
+ac_tool_warned=yes ;;
+esac
+    CC=$ac_ct_CC
+  fi
+else
+  CC="$ac_cv_prog_CC"
+fi
+
+if test -z "$CC"; then
+          if test -n "$ac_tool_prefix"; then
+    # Extract the first word of "${ac_tool_prefix}cc", so it can be a program name with args.
+set dummy ${ac_tool_prefix}cc; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_CC+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$CC"; then
+  ac_cv_prog_CC="$CC" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_CC="${ac_tool_prefix}cc"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+CC=$ac_cv_prog_CC
+if test -n "$CC"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $CC" >&5
+$as_echo "$CC" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+  fi
+fi
+if test -z "$CC"; then
+  # Extract the first word of "cc", so it can be a program name with args.
+set dummy cc; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_CC+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$CC"; then
+  ac_cv_prog_CC="$CC" # Let the user override the test.
+else
+  ac_prog_rejected=no
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    if test "$as_dir/$ac_word$ac_exec_ext" = "/usr/ucb/cc"; then
+       ac_prog_rejected=yes
+       continue
+     fi
+    ac_cv_prog_CC="cc"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+if test $ac_prog_rejected = yes; then
+  # We found a bogon in the path, so make sure we never use it.
+  set dummy $ac_cv_prog_CC
+  shift
+  if test $# != 0; then
+    # We chose a different compiler from the bogus one.
+    # However, it has the same basename, so the bogon will be chosen
+    # first if we set CC to just the basename; use the full file name.
+    shift
+    ac_cv_prog_CC="$as_dir/$ac_word${1+' '}$@"
+  fi
+fi
+fi
+fi
+CC=$ac_cv_prog_CC
+if test -n "$CC"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $CC" >&5
+$as_echo "$CC" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+fi
+if test -z "$CC"; then
+  if test -n "$ac_tool_prefix"; then
+  for ac_prog in cl.exe
   do
     # Extract the first word of "$ac_tool_prefix$ac_prog", so it can be a program name with args.
 set dummy $ac_tool_prefix$ac_prog; ac_word=$2
@@ -2263,7 +2499,7 @@ fi
 fi
 if test -z "$CC"; then
   ac_ct_CC=$CC
-  for ac_prog in cc gcc
+  for ac_prog in cl.exe
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
@@ -2316,6 +2552,8 @@ ac_tool_warned=yes ;;
 esac
     CC=$ac_ct_CC
   fi
+fi
+
 fi
 
 
@@ -3224,7 +3462,8 @@ if eval test \"x\$"$as_ac_Header"\" = x"yes"; then :
 _ACEOF
 
 else
-  as_fn_error $? "Some GLibC headers are not found. Install or check the GLibC developing package." "$LINENO" 5
+  as_fn_error $? "Some GLibC headers are not found. Install or check the \
+GLibC developing package." "$LINENO" 5
 fi
 
 done
@@ -3274,12 +3513,14 @@ _ACEOF
   LIBS="-lpng $LIBS"
 
 else
-  as_fn_error $? "libPNG linking flag (-lpng) is not found. Install or check libPNG developing package." "$LINENO" 5
+  as_fn_error $? "libPNG \
+linking flag (-lpng) is not found. Install or check libPNG developing \
+package." "$LINENO" 5
 fi
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for glXCreateContext in -lGL" >&5
-$as_echo_n "checking for glXCreateContext in -lGL... " >&6; }
-if ${ac_cv_lib_GL_glXCreateContext+:} false; then :
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for glClear in -lGL" >&5
+$as_echo_n "checking for glClear in -lGL... " >&6; }
+if ${ac_cv_lib_GL_glClear+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
@@ -3293,27 +3534,27 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char glXCreateContext ();
+char glClear ();
 int
 main ()
 {
-return glXCreateContext ();
+return glClear ();
   ;
   return 0;
 }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_GL_glXCreateContext=yes
+  ac_cv_lib_GL_glClear=yes
 else
-  ac_cv_lib_GL_glXCreateContext=no
+  ac_cv_lib_GL_glClear=no
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_GL_glXCreateContext" >&5
-$as_echo "$ac_cv_lib_GL_glXCreateContext" >&6; }
-if test "x$ac_cv_lib_GL_glXCreateContext" = xyes; then :
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_GL_glClear" >&5
+$as_echo "$ac_cv_lib_GL_glClear" >&6; }
+if test "x$ac_cv_lib_GL_glClear" = xyes; then :
   cat >>confdefs.h <<_ACEOF
 #define HAVE_LIBGL 1
 _ACEOF
@@ -3321,7 +3562,8 @@ _ACEOF
   LIBS="-lGL $LIBS"
 
 else
-  as_fn_error $? "GL linking flag (-lGL) is not found. Install or check GL developing package." "$LINENO" 5
+  as_fn_error $? "GL linking flag \
+(-lGL) is not found. Install or check GL developing package." "$LINENO" 5
 fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for glewInit in -lGLEW" >&5
@@ -3368,7 +3610,8 @@ _ACEOF
   LIBS="-lGLEW $LIBS"
 
 else
-  as_fn_error $? "GLEW linking flag (-lGLEW) is not found. Install or check GLEW developing package." "$LINENO" 5
+  as_fn_error $? "GLEW linking flag \
+(-lGLEW) is not found. Install or check GLEW developing package." "$LINENO" 5
 fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for XOpenDisplay in -lX11" >&5
@@ -3415,7 +3658,8 @@ _ACEOF
   LIBS="-lX11 $LIBS"
 
 else
-  as_fn_error $? "X11 linking flag (-lX11) is not found. Install or check X11 developing package." "$LINENO" 5
+  as_fn_error $? "X11 linking flag \
+(-lX11) is not found. Install or check X11 developing package." "$LINENO" 5
 fi
 
 
@@ -3423,7 +3667,8 @@ ac_fn_c_check_header_mongrel "$LINENO" "png.h" "ac_cv_header_png_h" "$ac_include
 if test "x$ac_cv_header_png_h" = xyes; then :
 
 else
-  as_fn_error $? "libPNG header is not found. Install or check libPNG developing package." "$LINENO" 5
+  as_fn_error $? "libPNG header is not found. \
+Install or check libPNG developing package." "$LINENO" 5
 fi
 
 
@@ -3431,7 +3676,8 @@ ac_fn_c_check_header_mongrel "$LINENO" "GL/gl.h" "ac_cv_header_GL_gl_h" "$ac_inc
 if test "x$ac_cv_header_GL_gl_h" = xyes; then :
 
 else
-  as_fn_error $? "GL header is not found. Install or check GL developing package." "$LINENO" 5
+  as_fn_error $? "GL header is not found. \
+Install or check GL developing package." "$LINENO" 5
 fi
 
 
@@ -3439,7 +3685,8 @@ ac_fn_c_check_header_mongrel "$LINENO" "GL/glx.h" "ac_cv_header_GL_glx_h" "$ac_i
 if test "x$ac_cv_header_GL_glx_h" = xyes; then :
 
 else
-  as_fn_error $? "GLX header is not found. Install or check GLX developing package." "$LINENO" 5
+  as_fn_error $? "GLX header is not found. \
+Install or check GLX developing package." "$LINENO" 5
 fi
 
 
@@ -3447,7 +3694,8 @@ ac_fn_c_check_header_mongrel "$LINENO" "GL/glew.h" "ac_cv_header_GL_glew_h" "$ac
 if test "x$ac_cv_header_GL_glew_h" = xyes; then :
 
 else
-  as_fn_error $? "GLEW header is not found. Install or check GLEW developing package." "$LINENO" 5
+  as_fn_error $? "GLEW header is not found. \
+Install or check GLEW developing package." "$LINENO" 5
 fi
 
 
@@ -3461,7 +3709,8 @@ if eval test \"x\$"$as_ac_Header"\" = x"yes"; then :
 _ACEOF
 
 else
-  as_fn_error $? "Some X11 headers are not found. Install or check X11 developing package." "$LINENO" 5
+  as_fn_error $? "Some X11 headers are not found. Install or check X11 \
+developing package." "$LINENO" 5
 fi
 
 done
@@ -3661,6 +3910,1566 @@ _ACEOF
 ;;
   esac
 
+ac_fn_c_check_type "$LINENO" "FILE" "ac_cv_type_FILE" "$ac_includes_default"
+if test "x$ac_cv_type_FILE" = xyes; then :
+
+else
+  as_fn_error $? "GLibC package is found but some types \
+of this package are not found. Update the GLibC developing package." "$LINENO" 5
+fi
+
+ac_fn_c_check_type "$LINENO" "png_infop" "ac_cv_type_png_infop" "#include <png.h>
+"
+if test "x$ac_cv_type_png_infop" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_PNG_INFOP 1
+_ACEOF
+
+
+else
+  as_fn_error $? "libPNG package is found but some types and structures \
+of this package are not found. Update the libPNG developing package." "$LINENO" 5
+fi
+ac_fn_c_check_type "$LINENO" "png_byte" "ac_cv_type_png_byte" "#include <png.h>
+"
+if test "x$ac_cv_type_png_byte" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_PNG_BYTE 1
+_ACEOF
+
+
+else
+  as_fn_error $? "libPNG package is found but some types and structures \
+of this package are not found. Update the libPNG developing package." "$LINENO" 5
+fi
+ac_fn_c_check_type "$LINENO" "png_bytep" "ac_cv_type_png_bytep" "#include <png.h>
+"
+if test "x$ac_cv_type_png_bytep" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_PNG_BYTEP 1
+_ACEOF
+
+
+else
+  as_fn_error $? "libPNG package is found but some types and structures \
+of this package are not found. Update the libPNG developing package." "$LINENO" 5
+fi
+ac_fn_c_check_type "$LINENO" "png_uint_32" "ac_cv_type_png_uint_32" "#include <png.h>
+"
+if test "x$ac_cv_type_png_uint_32" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_PNG_UINT_32 1
+_ACEOF
+
+
+else
+  as_fn_error $? "libPNG package is found but some types and structures \
+of this package are not found. Update the libPNG developing package." "$LINENO" 5
+fi
+ac_fn_c_check_type "$LINENO" "png_structp" "ac_cv_type_png_structp" "#include <png.h>
+"
+if test "x$ac_cv_type_png_structp" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_PNG_STRUCTP 1
+_ACEOF
+
+
+else
+  as_fn_error $? "libPNG package is found but some types and structures \
+of this package are not found. Update the libPNG developing package." "$LINENO" 5
+fi
+
+ac_fn_c_check_type "$LINENO" "GLubyte" "ac_cv_type_GLubyte" "#include <GL/gl.h>
+"
+if test "x$ac_cv_type_GLubyte" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_GLUBYTE 1
+_ACEOF
+
+
+else
+  as_fn_error $? "GL package is found but some types of this package are \
+not found. Update the GL developing package." "$LINENO" 5
+fi
+ac_fn_c_check_type "$LINENO" "GLuint" "ac_cv_type_GLuint" "#include <GL/gl.h>
+"
+if test "x$ac_cv_type_GLuint" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_GLUINT 1
+_ACEOF
+
+
+else
+  as_fn_error $? "GL package is found but some types of this package are \
+not found. Update the GL developing package." "$LINENO" 5
+fi
+ac_fn_c_check_type "$LINENO" "GLenum" "ac_cv_type_GLenum" "#include <GL/gl.h>
+"
+if test "x$ac_cv_type_GLenum" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_GLENUM 1
+_ACEOF
+
+
+else
+  as_fn_error $? "GL package is found but some types of this package are \
+not found. Update the GL developing package." "$LINENO" 5
+fi
+ac_fn_c_check_type "$LINENO" "GLfloat" "ac_cv_type_GLfloat" "#include <GL/gl.h>
+"
+if test "x$ac_cv_type_GLfloat" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_GLFLOAT 1
+_ACEOF
+
+
+else
+  as_fn_error $? "GL package is found but some types of this package are \
+not found. Update the GL developing package." "$LINENO" 5
+fi
+ac_fn_c_check_type "$LINENO" "GLint" "ac_cv_type_GLint" "#include <GL/gl.h>
+"
+if test "x$ac_cv_type_GLint" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_GLINT 1
+_ACEOF
+
+
+else
+  as_fn_error $? "GL package is found but some types of this package are \
+not found. Update the GL developing package." "$LINENO" 5
+fi
+ac_fn_c_check_type "$LINENO" "GLchar" "ac_cv_type_GLchar" "#include <GL/gl.h>
+"
+if test "x$ac_cv_type_GLchar" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_GLCHAR 1
+_ACEOF
+
+
+else
+  as_fn_error $? "GL package is found but some types of this package are \
+not found. Update the GL developing package." "$LINENO" 5
+fi
+
+ac_fn_c_check_type "$LINENO" "GLXFBConfig" "ac_cv_type_GLXFBConfig" "#include <GL/glx.h>
+"
+if test "x$ac_cv_type_GLXFBConfig" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_GLXFBCONFIG 1
+_ACEOF
+
+
+else
+  as_fn_error $? "GLX package is \
+found but some strutures of this package are not found. Update the GLX \
+developing package." "$LINENO" 5
+fi
+ac_fn_c_check_type "$LINENO" "GLXContext" "ac_cv_type_GLXContext" "#include <GL/glx.h>
+"
+if test "x$ac_cv_type_GLXContext" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_GLXCONTEXT 1
+_ACEOF
+
+
+else
+  as_fn_error $? "GLX package is \
+found but some strutures of this package are not found. Update the GLX \
+developing package." "$LINENO" 5
+fi
+
+ac_fn_c_check_type "$LINENO" "Bool" "ac_cv_type_Bool" "#include <X11/Xutil.h>
+"
+if test "x$ac_cv_type_Bool" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_BOOL 1
+_ACEOF
+
+
+else
+  as_fn_error $? "X11 package is found but \
+some types and strutures of this package are not found. Update the X11 \
+developing package." "$LINENO" 5
+fi
+ac_fn_c_check_type "$LINENO" "XEvent" "ac_cv_type_XEvent" "#include <X11/Xutil.h>
+"
+if test "x$ac_cv_type_XEvent" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_XEVENT 1
+_ACEOF
+
+
+else
+  as_fn_error $? "X11 package is found but \
+some types and strutures of this package are not found. Update the X11 \
+developing package." "$LINENO" 5
+fi
+ac_fn_c_check_type "$LINENO" "XErrorEvent" "ac_cv_type_XErrorEvent" "#include <X11/Xutil.h>
+"
+if test "x$ac_cv_type_XErrorEvent" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_XERROREVENT 1
+_ACEOF
+
+
+else
+  as_fn_error $? "X11 package is found but \
+some types and strutures of this package are not found. Update the X11 \
+developing package." "$LINENO" 5
+fi
+ac_fn_c_check_type "$LINENO" "XSetWindowAttributes" "ac_cv_type_XSetWindowAttributes" "#include <X11/Xutil.h>
+"
+if test "x$ac_cv_type_XSetWindowAttributes" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_XSETWINDOWATTRIBUTES 1
+_ACEOF
+
+
+else
+  as_fn_error $? "X11 package is found but \
+some types and strutures of this package are not found. Update the X11 \
+developing package." "$LINENO" 5
+fi
+ac_fn_c_check_type "$LINENO" "XWMHints" "ac_cv_type_XWMHints" "#include <X11/Xutil.h>
+"
+if test "x$ac_cv_type_XWMHints" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_XWMHINTS 1
+_ACEOF
+
+
+else
+  as_fn_error $? "X11 package is found but \
+some types and strutures of this package are not found. Update the X11 \
+developing package." "$LINENO" 5
+fi
+ac_fn_c_check_type "$LINENO" "XVisualInfo" "ac_cv_type_XVisualInfo" "#include <X11/Xutil.h>
+"
+if test "x$ac_cv_type_XVisualInfo" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_XVISUALINFO 1
+_ACEOF
+
+
+else
+  as_fn_error $? "X11 package is found but \
+some types and strutures of this package are not found. Update the X11 \
+developing package." "$LINENO" 5
+fi
+ac_fn_c_check_type "$LINENO" "Window" "ac_cv_type_Window" "#include <X11/Xutil.h>
+"
+if test "x$ac_cv_type_Window" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_WINDOW 1
+_ACEOF
+
+
+else
+  as_fn_error $? "X11 package is found but \
+some types and strutures of this package are not found. Update the X11 \
+developing package." "$LINENO" 5
+fi
+ac_fn_c_check_type "$LINENO" "Colormap" "ac_cv_type_Colormap" "#include <X11/Xutil.h>
+"
+if test "x$ac_cv_type_Colormap" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_COLORMAP 1
+_ACEOF
+
+
+else
+  as_fn_error $? "X11 package is found but \
+some types and strutures of this package are not found. Update the X11 \
+developing package." "$LINENO" 5
+fi
+
+
+# Checks for predefined macros and variables.
+ac_fn_c_check_decl "$LINENO" "NULL" "ac_cv_have_decl_NULL" "#include <stdlib.h>
+#include <stdio.h>
+#include <time.h>
+#include <errno.h>
+"
+if test "x$ac_cv_have_decl_NULL" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_NULL $ac_have_decl
+_ACEOF
+if test $ac_have_decl = 1; then :
+
+else
+  as_fn_error $? "GLibC package is found but some \
+declarations of this package are not found. Update the GLibC developing \
+package." "$LINENO" 5
+fi
+ac_fn_c_check_decl "$LINENO" "EXIT_FAILURE" "ac_cv_have_decl_EXIT_FAILURE" "#include <stdlib.h>
+#include <stdio.h>
+#include <time.h>
+#include <errno.h>
+"
+if test "x$ac_cv_have_decl_EXIT_FAILURE" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_EXIT_FAILURE $ac_have_decl
+_ACEOF
+if test $ac_have_decl = 1; then :
+
+else
+  as_fn_error $? "GLibC package is found but some \
+declarations of this package are not found. Update the GLibC developing \
+package." "$LINENO" 5
+fi
+ac_fn_c_check_decl "$LINENO" "EXIT_SUCCESS" "ac_cv_have_decl_EXIT_SUCCESS" "#include <stdlib.h>
+#include <stdio.h>
+#include <time.h>
+#include <errno.h>
+"
+if test "x$ac_cv_have_decl_EXIT_SUCCESS" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_EXIT_SUCCESS $ac_have_decl
+_ACEOF
+if test $ac_have_decl = 1; then :
+
+else
+  as_fn_error $? "GLibC package is found but some \
+declarations of this package are not found. Update the GLibC developing \
+package." "$LINENO" 5
+fi
+ac_fn_c_check_decl "$LINENO" "SEEK_END" "ac_cv_have_decl_SEEK_END" "#include <stdlib.h>
+#include <stdio.h>
+#include <time.h>
+#include <errno.h>
+"
+if test "x$ac_cv_have_decl_SEEK_END" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_SEEK_END $ac_have_decl
+_ACEOF
+if test $ac_have_decl = 1; then :
+
+else
+  as_fn_error $? "GLibC package is found but some \
+declarations of this package are not found. Update the GLibC developing \
+package." "$LINENO" 5
+fi
+ac_fn_c_check_decl "$LINENO" "SEEK_SET" "ac_cv_have_decl_SEEK_SET" "#include <stdlib.h>
+#include <stdio.h>
+#include <time.h>
+#include <errno.h>
+"
+if test "x$ac_cv_have_decl_SEEK_SET" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_SEEK_SET $ac_have_decl
+_ACEOF
+if test $ac_have_decl = 1; then :
+
+else
+  as_fn_error $? "GLibC package is found but some \
+declarations of this package are not found. Update the GLibC developing \
+package." "$LINENO" 5
+fi
+ac_fn_c_check_decl "$LINENO" "CLOCKS_PER_SEC" "ac_cv_have_decl_CLOCKS_PER_SEC" "#include <stdlib.h>
+#include <stdio.h>
+#include <time.h>
+#include <errno.h>
+"
+if test "x$ac_cv_have_decl_CLOCKS_PER_SEC" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_CLOCKS_PER_SEC $ac_have_decl
+_ACEOF
+if test $ac_have_decl = 1; then :
+
+else
+  as_fn_error $? "GLibC package is found but some \
+declarations of this package are not found. Update the GLibC developing \
+package." "$LINENO" 5
+fi
+ac_fn_c_check_decl "$LINENO" "errno" "ac_cv_have_decl_errno" "#include <stdlib.h>
+#include <stdio.h>
+#include <time.h>
+#include <errno.h>
+"
+if test "x$ac_cv_have_decl_errno" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_ERRNO $ac_have_decl
+_ACEOF
+if test $ac_have_decl = 1; then :
+
+else
+  as_fn_error $? "GLibC package is found but some \
+declarations of this package are not found. Update the GLibC developing \
+package." "$LINENO" 5
+fi
+
+ac_fn_c_check_decl "$LINENO" "PNG_LIBPNG_VER_STRING" "ac_cv_have_decl_PNG_LIBPNG_VER_STRING" "#include <png.h>
+"
+if test "x$ac_cv_have_decl_PNG_LIBPNG_VER_STRING" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_PNG_LIBPNG_VER_STRING $ac_have_decl
+_ACEOF
+if test $ac_have_decl = 1; then :
+
+else
+  as_fn_error $? "libPNG package is found but some declarations of this \
+package are not found. Update the libPNG developing package." "$LINENO" 5
+fi
+ac_fn_c_check_decl "$LINENO" "PNG_INFO_tRNS" "ac_cv_have_decl_PNG_INFO_tRNS" "#include <png.h>
+"
+if test "x$ac_cv_have_decl_PNG_INFO_tRNS" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_PNG_INFO_TRNS $ac_have_decl
+_ACEOF
+if test $ac_have_decl = 1; then :
+
+else
+  as_fn_error $? "libPNG package is found but some declarations of this \
+package are not found. Update the libPNG developing package." "$LINENO" 5
+fi
+ac_fn_c_check_decl "$LINENO" "PNG_COLOR_TYPE_GRAY" "ac_cv_have_decl_PNG_COLOR_TYPE_GRAY" "#include <png.h>
+"
+if test "x$ac_cv_have_decl_PNG_COLOR_TYPE_GRAY" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_PNG_COLOR_TYPE_GRAY $ac_have_decl
+_ACEOF
+if test $ac_have_decl = 1; then :
+
+else
+  as_fn_error $? "libPNG package is found but some declarations of this \
+package are not found. Update the libPNG developing package." "$LINENO" 5
+fi
+ac_fn_c_check_decl "$LINENO" "PNG_COLOR_TYPE_PALETTE" "ac_cv_have_decl_PNG_COLOR_TYPE_PALETTE" "#include <png.h>
+"
+if test "x$ac_cv_have_decl_PNG_COLOR_TYPE_PALETTE" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_PNG_COLOR_TYPE_PALETTE $ac_have_decl
+_ACEOF
+if test $ac_have_decl = 1; then :
+
+else
+  as_fn_error $? "libPNG package is found but some declarations of this \
+package are not found. Update the libPNG developing package." "$LINENO" 5
+fi
+ac_fn_c_check_decl "$LINENO" "PNG_COLOR_TYPE_GRAY_ALPHA" "ac_cv_have_decl_PNG_COLOR_TYPE_GRAY_ALPHA" "#include <png.h>
+"
+if test "x$ac_cv_have_decl_PNG_COLOR_TYPE_GRAY_ALPHA" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_PNG_COLOR_TYPE_GRAY_ALPHA $ac_have_decl
+_ACEOF
+if test $ac_have_decl = 1; then :
+
+else
+  as_fn_error $? "libPNG package is found but some declarations of this \
+package are not found. Update the libPNG developing package." "$LINENO" 5
+fi
+ac_fn_c_check_decl "$LINENO" "PNG_COLOR_MASK_ALPHA" "ac_cv_have_decl_PNG_COLOR_MASK_ALPHA" "#include <png.h>
+"
+if test "x$ac_cv_have_decl_PNG_COLOR_MASK_ALPHA" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_PNG_COLOR_MASK_ALPHA $ac_have_decl
+_ACEOF
+if test $ac_have_decl = 1; then :
+
+else
+  as_fn_error $? "libPNG package is found but some declarations of this \
+package are not found. Update the libPNG developing package." "$LINENO" 5
+fi
+ac_fn_c_check_decl "$LINENO" "png_jmpbuf" "ac_cv_have_decl_png_jmpbuf" "#include <png.h>
+"
+if test "x$ac_cv_have_decl_png_jmpbuf" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_PNG_JMPBUF $ac_have_decl
+_ACEOF
+if test $ac_have_decl = 1; then :
+
+else
+  as_fn_error $? "libPNG package is found but some declarations of this \
+package are not found. Update the libPNG developing package." "$LINENO" 5
+fi
+
+ac_fn_c_check_decl "$LINENO" "GL_TEXTURE_2D" "ac_cv_have_decl_GL_TEXTURE_2D" "#include <GL/gl.h>
+"
+if test "x$ac_cv_have_decl_GL_TEXTURE_2D" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_GL_TEXTURE_2D $ac_have_decl
+_ACEOF
+if test $ac_have_decl = 1; then :
+
+else
+  as_fn_error $? "GL package is \
+found but some declarations of this package are not found. Update the GL \
+developing package." "$LINENO" 5
+fi
+ac_fn_c_check_decl "$LINENO" "GL_TEXTURE_WRAP_S" "ac_cv_have_decl_GL_TEXTURE_WRAP_S" "#include <GL/gl.h>
+"
+if test "x$ac_cv_have_decl_GL_TEXTURE_WRAP_S" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_GL_TEXTURE_WRAP_S $ac_have_decl
+_ACEOF
+if test $ac_have_decl = 1; then :
+
+else
+  as_fn_error $? "GL package is \
+found but some declarations of this package are not found. Update the GL \
+developing package." "$LINENO" 5
+fi
+ac_fn_c_check_decl "$LINENO" "GL_TEXTURE_WRAP_T" "ac_cv_have_decl_GL_TEXTURE_WRAP_T" "#include <GL/gl.h>
+"
+if test "x$ac_cv_have_decl_GL_TEXTURE_WRAP_T" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_GL_TEXTURE_WRAP_T $ac_have_decl
+_ACEOF
+if test $ac_have_decl = 1; then :
+
+else
+  as_fn_error $? "GL package is \
+found but some declarations of this package are not found. Update the GL \
+developing package." "$LINENO" 5
+fi
+ac_fn_c_check_decl "$LINENO" "GL_TEXTURE_MAG_FILTER" "ac_cv_have_decl_GL_TEXTURE_MAG_FILTER" "#include <GL/gl.h>
+"
+if test "x$ac_cv_have_decl_GL_TEXTURE_MAG_FILTER" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_GL_TEXTURE_MAG_FILTER $ac_have_decl
+_ACEOF
+if test $ac_have_decl = 1; then :
+
+else
+  as_fn_error $? "GL package is \
+found but some declarations of this package are not found. Update the GL \
+developing package." "$LINENO" 5
+fi
+ac_fn_c_check_decl "$LINENO" "GL_NEAREST" "ac_cv_have_decl_GL_NEAREST" "#include <GL/gl.h>
+"
+if test "x$ac_cv_have_decl_GL_NEAREST" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_GL_NEAREST $ac_have_decl
+_ACEOF
+if test $ac_have_decl = 1; then :
+
+else
+  as_fn_error $? "GL package is \
+found but some declarations of this package are not found. Update the GL \
+developing package." "$LINENO" 5
+fi
+ac_fn_c_check_decl "$LINENO" "GL_TEXTURE_MIN_FILTER" "ac_cv_have_decl_GL_TEXTURE_MIN_FILTER" "#include <GL/gl.h>
+"
+if test "x$ac_cv_have_decl_GL_TEXTURE_MIN_FILTER" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_GL_TEXTURE_MIN_FILTER $ac_have_decl
+_ACEOF
+if test $ac_have_decl = 1; then :
+
+else
+  as_fn_error $? "GL package is \
+found but some declarations of this package are not found. Update the GL \
+developing package." "$LINENO" 5
+fi
+ac_fn_c_check_decl "$LINENO" "GL_NO_ERROR" "ac_cv_have_decl_GL_NO_ERROR" "#include <GL/gl.h>
+"
+if test "x$ac_cv_have_decl_GL_NO_ERROR" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_GL_NO_ERROR $ac_have_decl
+_ACEOF
+if test $ac_have_decl = 1; then :
+
+else
+  as_fn_error $? "GL package is \
+found but some declarations of this package are not found. Update the GL \
+developing package." "$LINENO" 5
+fi
+ac_fn_c_check_decl "$LINENO" "GL_FALSE" "ac_cv_have_decl_GL_FALSE" "#include <GL/gl.h>
+"
+if test "x$ac_cv_have_decl_GL_FALSE" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_GL_FALSE $ac_have_decl
+_ACEOF
+if test $ac_have_decl = 1; then :
+
+else
+  as_fn_error $? "GL package is \
+found but some declarations of this package are not found. Update the GL \
+developing package." "$LINENO" 5
+fi
+ac_fn_c_check_decl "$LINENO" "GL_COMPILE_STATUS" "ac_cv_have_decl_GL_COMPILE_STATUS" "#include <GL/gl.h>
+"
+if test "x$ac_cv_have_decl_GL_COMPILE_STATUS" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_GL_COMPILE_STATUS $ac_have_decl
+_ACEOF
+if test $ac_have_decl = 1; then :
+
+else
+  as_fn_error $? "GL package is \
+found but some declarations of this package are not found. Update the GL \
+developing package." "$LINENO" 5
+fi
+ac_fn_c_check_decl "$LINENO" "GL_TRUE" "ac_cv_have_decl_GL_TRUE" "#include <GL/gl.h>
+"
+if test "x$ac_cv_have_decl_GL_TRUE" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_GL_TRUE $ac_have_decl
+_ACEOF
+if test $ac_have_decl = 1; then :
+
+else
+  as_fn_error $? "GL package is \
+found but some declarations of this package are not found. Update the GL \
+developing package." "$LINENO" 5
+fi
+ac_fn_c_check_decl "$LINENO" "GL_INFO_LOG_LENGTH" "ac_cv_have_decl_GL_INFO_LOG_LENGTH" "#include <GL/gl.h>
+"
+if test "x$ac_cv_have_decl_GL_INFO_LOG_LENGTH" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_GL_INFO_LOG_LENGTH $ac_have_decl
+_ACEOF
+if test $ac_have_decl = 1; then :
+
+else
+  as_fn_error $? "GL package is \
+found but some declarations of this package are not found. Update the GL \
+developing package." "$LINENO" 5
+fi
+ac_fn_c_check_decl "$LINENO" "GL_VERTEX_SHADER" "ac_cv_have_decl_GL_VERTEX_SHADER" "#include <GL/gl.h>
+"
+if test "x$ac_cv_have_decl_GL_VERTEX_SHADER" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_GL_VERTEX_SHADER $ac_have_decl
+_ACEOF
+if test $ac_have_decl = 1; then :
+
+else
+  as_fn_error $? "GL package is \
+found but some declarations of this package are not found. Update the GL \
+developing package." "$LINENO" 5
+fi
+ac_fn_c_check_decl "$LINENO" "GL_FRAGMENT_SHADER" "ac_cv_have_decl_GL_FRAGMENT_SHADER" "#include <GL/gl.h>
+"
+if test "x$ac_cv_have_decl_GL_FRAGMENT_SHADER" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_GL_FRAGMENT_SHADER $ac_have_decl
+_ACEOF
+if test $ac_have_decl = 1; then :
+
+else
+  as_fn_error $? "GL package is \
+found but some declarations of this package are not found. Update the GL \
+developing package." "$LINENO" 5
+fi
+ac_fn_c_check_decl "$LINENO" "GL_LINK_STATUS" "ac_cv_have_decl_GL_LINK_STATUS" "#include <GL/gl.h>
+"
+if test "x$ac_cv_have_decl_GL_LINK_STATUS" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_GL_LINK_STATUS $ac_have_decl
+_ACEOF
+if test $ac_have_decl = 1; then :
+
+else
+  as_fn_error $? "GL package is \
+found but some declarations of this package are not found. Update the GL \
+developing package." "$LINENO" 5
+fi
+ac_fn_c_check_decl "$LINENO" "GL_ARRAY_BUFFER" "ac_cv_have_decl_GL_ARRAY_BUFFER" "#include <GL/gl.h>
+"
+if test "x$ac_cv_have_decl_GL_ARRAY_BUFFER" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_GL_ARRAY_BUFFER $ac_have_decl
+_ACEOF
+if test $ac_have_decl = 1; then :
+
+else
+  as_fn_error $? "GL package is \
+found but some declarations of this package are not found. Update the GL \
+developing package." "$LINENO" 5
+fi
+ac_fn_c_check_decl "$LINENO" "GL_STATIC_DRAW" "ac_cv_have_decl_GL_STATIC_DRAW" "#include <GL/gl.h>
+"
+if test "x$ac_cv_have_decl_GL_STATIC_DRAW" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_GL_STATIC_DRAW $ac_have_decl
+_ACEOF
+if test $ac_have_decl = 1; then :
+
+else
+  as_fn_error $? "GL package is \
+found but some declarations of this package are not found. Update the GL \
+developing package." "$LINENO" 5
+fi
+ac_fn_c_check_decl "$LINENO" "GL_FLOAT" "ac_cv_have_decl_GL_FLOAT" "#include <GL/gl.h>
+"
+if test "x$ac_cv_have_decl_GL_FLOAT" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_GL_FLOAT $ac_have_decl
+_ACEOF
+if test $ac_have_decl = 1; then :
+
+else
+  as_fn_error $? "GL package is \
+found but some declarations of this package are not found. Update the GL \
+developing package." "$LINENO" 5
+fi
+ac_fn_c_check_decl "$LINENO" "GL_COLOR_BUFFER_BIT" "ac_cv_have_decl_GL_COLOR_BUFFER_BIT" "#include <GL/gl.h>
+"
+if test "x$ac_cv_have_decl_GL_COLOR_BUFFER_BIT" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_GL_COLOR_BUFFER_BIT $ac_have_decl
+_ACEOF
+if test $ac_have_decl = 1; then :
+
+else
+  as_fn_error $? "GL package is \
+found but some declarations of this package are not found. Update the GL \
+developing package." "$LINENO" 5
+fi
+ac_fn_c_check_decl "$LINENO" "GL_DEPTH_BUFFER_BIT" "ac_cv_have_decl_GL_DEPTH_BUFFER_BIT" "#include <GL/gl.h>
+"
+if test "x$ac_cv_have_decl_GL_DEPTH_BUFFER_BIT" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_GL_DEPTH_BUFFER_BIT $ac_have_decl
+_ACEOF
+if test $ac_have_decl = 1; then :
+
+else
+  as_fn_error $? "GL package is \
+found but some declarations of this package are not found. Update the GL \
+developing package." "$LINENO" 5
+fi
+ac_fn_c_check_decl "$LINENO" "GL_TRIANGLE_STRIP" "ac_cv_have_decl_GL_TRIANGLE_STRIP" "#include <GL/gl.h>
+"
+if test "x$ac_cv_have_decl_GL_TRIANGLE_STRIP" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_GL_TRIANGLE_STRIP $ac_have_decl
+_ACEOF
+if test $ac_have_decl = 1; then :
+
+else
+  as_fn_error $? "GL package is \
+found but some declarations of this package are not found. Update the GL \
+developing package." "$LINENO" 5
+fi
+ac_fn_c_check_decl "$LINENO" "GL_RGBA" "ac_cv_have_decl_GL_RGBA" "#include <GL/gl.h>
+"
+if test "x$ac_cv_have_decl_GL_RGBA" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_GL_RGBA $ac_have_decl
+_ACEOF
+if test $ac_have_decl = 1; then :
+
+else
+  as_fn_error $? "GL package is \
+found but some declarations of this package are not found. Update the GL \
+developing package." "$LINENO" 5
+fi
+ac_fn_c_check_decl "$LINENO" "GL_RGB" "ac_cv_have_decl_GL_RGB" "#include <GL/gl.h>
+"
+if test "x$ac_cv_have_decl_GL_RGB" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_GL_RGB $ac_have_decl
+_ACEOF
+if test $ac_have_decl = 1; then :
+
+else
+  as_fn_error $? "GL package is \
+found but some declarations of this package are not found. Update the GL \
+developing package." "$LINENO" 5
+fi
+ac_fn_c_check_decl "$LINENO" "GL_UNSIGNED_BYTE" "ac_cv_have_decl_GL_UNSIGNED_BYTE" "#include <GL/gl.h>
+"
+if test "x$ac_cv_have_decl_GL_UNSIGNED_BYTE" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_GL_UNSIGNED_BYTE $ac_have_decl
+_ACEOF
+if test $ac_have_decl = 1; then :
+
+else
+  as_fn_error $? "GL package is \
+found but some declarations of this package are not found. Update the GL \
+developing package." "$LINENO" 5
+fi
+ac_fn_c_check_decl "$LINENO" "GL_CLAMP_TO_BORDER" "ac_cv_have_decl_GL_CLAMP_TO_BORDER" "#include <GL/gl.h>
+"
+if test "x$ac_cv_have_decl_GL_CLAMP_TO_BORDER" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_GL_CLAMP_TO_BORDER $ac_have_decl
+_ACEOF
+if test $ac_have_decl = 1; then :
+
+else
+  as_fn_error $? "GL package is \
+found but some declarations of this package are not found. Update the GL \
+developing package." "$LINENO" 5
+fi
+ac_fn_c_check_decl "$LINENO" "GL_BLEND" "ac_cv_have_decl_GL_BLEND" "#include <GL/gl.h>
+"
+if test "x$ac_cv_have_decl_GL_BLEND" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_GL_BLEND $ac_have_decl
+_ACEOF
+if test $ac_have_decl = 1; then :
+
+else
+  as_fn_error $? "GL package is \
+found but some declarations of this package are not found. Update the GL \
+developing package." "$LINENO" 5
+fi
+ac_fn_c_check_decl "$LINENO" "GL_SRC_ALPHA" "ac_cv_have_decl_GL_SRC_ALPHA" "#include <GL/gl.h>
+"
+if test "x$ac_cv_have_decl_GL_SRC_ALPHA" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_GL_SRC_ALPHA $ac_have_decl
+_ACEOF
+if test $ac_have_decl = 1; then :
+
+else
+  as_fn_error $? "GL package is \
+found but some declarations of this package are not found. Update the GL \
+developing package." "$LINENO" 5
+fi
+ac_fn_c_check_decl "$LINENO" "GL_ONE_MINUS_SRC_ALPHA" "ac_cv_have_decl_GL_ONE_MINUS_SRC_ALPHA" "#include <GL/gl.h>
+"
+if test "x$ac_cv_have_decl_GL_ONE_MINUS_SRC_ALPHA" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_GL_ONE_MINUS_SRC_ALPHA $ac_have_decl
+_ACEOF
+if test $ac_have_decl = 1; then :
+
+else
+  as_fn_error $? "GL package is \
+found but some declarations of this package are not found. Update the GL \
+developing package." "$LINENO" 5
+fi
+
+ac_fn_c_check_decl "$LINENO" "glewExperimental" "ac_cv_have_decl_glewExperimental" "#include <GL/glew.h>
+"
+if test "x$ac_cv_have_decl_glewExperimental" = xyes; then :
+
+else
+  as_fn_error $? "GLEW package is \
+found but some declarations of this package are not found. Update the GLEW \
+developing package." "$LINENO" 5
+fi
+
+ac_fn_c_check_decl "$LINENO" "GLX_WINDOW_BIT" "ac_cv_have_decl_GLX_WINDOW_BIT" "#include <GL/glx.h>
+"
+if test "x$ac_cv_have_decl_GLX_WINDOW_BIT" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_GLX_WINDOW_BIT $ac_have_decl
+_ACEOF
+if test $ac_have_decl = 1; then :
+
+else
+  as_fn_error $? "GLX package is found but some declarations of this package are \
+not found. Update the GLX developing package." "$LINENO" 5
+fi
+ac_fn_c_check_decl "$LINENO" "GLX_RGBA_BIT" "ac_cv_have_decl_GLX_RGBA_BIT" "#include <GL/glx.h>
+"
+if test "x$ac_cv_have_decl_GLX_RGBA_BIT" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_GLX_RGBA_BIT $ac_have_decl
+_ACEOF
+if test $ac_have_decl = 1; then :
+
+else
+  as_fn_error $? "GLX package is found but some declarations of this package are \
+not found. Update the GLX developing package." "$LINENO" 5
+fi
+ac_fn_c_check_decl "$LINENO" "GLX_TRUE_COLOR" "ac_cv_have_decl_GLX_TRUE_COLOR" "#include <GL/glx.h>
+"
+if test "x$ac_cv_have_decl_GLX_TRUE_COLOR" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_GLX_TRUE_COLOR $ac_have_decl
+_ACEOF
+if test $ac_have_decl = 1; then :
+
+else
+  as_fn_error $? "GLX package is found but some declarations of this package are \
+not found. Update the GLX developing package." "$LINENO" 5
+fi
+ac_fn_c_check_decl "$LINENO" "GLX_X_RENDERABLE" "ac_cv_have_decl_GLX_X_RENDERABLE" "#include <GL/glx.h>
+"
+if test "x$ac_cv_have_decl_GLX_X_RENDERABLE" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_GLX_X_RENDERABLE $ac_have_decl
+_ACEOF
+if test $ac_have_decl = 1; then :
+
+else
+  as_fn_error $? "GLX package is found but some declarations of this package are \
+not found. Update the GLX developing package." "$LINENO" 5
+fi
+ac_fn_c_check_decl "$LINENO" "GLX_DRAWABLE_TYPE" "ac_cv_have_decl_GLX_DRAWABLE_TYPE" "#include <GL/glx.h>
+"
+if test "x$ac_cv_have_decl_GLX_DRAWABLE_TYPE" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_GLX_DRAWABLE_TYPE $ac_have_decl
+_ACEOF
+if test $ac_have_decl = 1; then :
+
+else
+  as_fn_error $? "GLX package is found but some declarations of this package are \
+not found. Update the GLX developing package." "$LINENO" 5
+fi
+ac_fn_c_check_decl "$LINENO" "GLX_RENDER_TYPE" "ac_cv_have_decl_GLX_RENDER_TYPE" "#include <GL/glx.h>
+"
+if test "x$ac_cv_have_decl_GLX_RENDER_TYPE" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_GLX_RENDER_TYPE $ac_have_decl
+_ACEOF
+if test $ac_have_decl = 1; then :
+
+else
+  as_fn_error $? "GLX package is found but some declarations of this package are \
+not found. Update the GLX developing package." "$LINENO" 5
+fi
+ac_fn_c_check_decl "$LINENO" "GLX_X_VISUAL_TYPE" "ac_cv_have_decl_GLX_X_VISUAL_TYPE" "#include <GL/glx.h>
+"
+if test "x$ac_cv_have_decl_GLX_X_VISUAL_TYPE" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_GLX_X_VISUAL_TYPE $ac_have_decl
+_ACEOF
+if test $ac_have_decl = 1; then :
+
+else
+  as_fn_error $? "GLX package is found but some declarations of this package are \
+not found. Update the GLX developing package." "$LINENO" 5
+fi
+ac_fn_c_check_decl "$LINENO" "GLX_RED_SIZE" "ac_cv_have_decl_GLX_RED_SIZE" "#include <GL/glx.h>
+"
+if test "x$ac_cv_have_decl_GLX_RED_SIZE" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_GLX_RED_SIZE $ac_have_decl
+_ACEOF
+if test $ac_have_decl = 1; then :
+
+else
+  as_fn_error $? "GLX package is found but some declarations of this package are \
+not found. Update the GLX developing package." "$LINENO" 5
+fi
+ac_fn_c_check_decl "$LINENO" "GLX_GREEN_SIZE" "ac_cv_have_decl_GLX_GREEN_SIZE" "#include <GL/glx.h>
+"
+if test "x$ac_cv_have_decl_GLX_GREEN_SIZE" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_GLX_GREEN_SIZE $ac_have_decl
+_ACEOF
+if test $ac_have_decl = 1; then :
+
+else
+  as_fn_error $? "GLX package is found but some declarations of this package are \
+not found. Update the GLX developing package." "$LINENO" 5
+fi
+ac_fn_c_check_decl "$LINENO" "GLX_BLUE_SIZE" "ac_cv_have_decl_GLX_BLUE_SIZE" "#include <GL/glx.h>
+"
+if test "x$ac_cv_have_decl_GLX_BLUE_SIZE" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_GLX_BLUE_SIZE $ac_have_decl
+_ACEOF
+if test $ac_have_decl = 1; then :
+
+else
+  as_fn_error $? "GLX package is found but some declarations of this package are \
+not found. Update the GLX developing package." "$LINENO" 5
+fi
+ac_fn_c_check_decl "$LINENO" "GLX_ALPHA_SIZE" "ac_cv_have_decl_GLX_ALPHA_SIZE" "#include <GL/glx.h>
+"
+if test "x$ac_cv_have_decl_GLX_ALPHA_SIZE" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_GLX_ALPHA_SIZE $ac_have_decl
+_ACEOF
+if test $ac_have_decl = 1; then :
+
+else
+  as_fn_error $? "GLX package is found but some declarations of this package are \
+not found. Update the GLX developing package." "$LINENO" 5
+fi
+ac_fn_c_check_decl "$LINENO" "GLX_DEPTH_SIZE" "ac_cv_have_decl_GLX_DEPTH_SIZE" "#include <GL/glx.h>
+"
+if test "x$ac_cv_have_decl_GLX_DEPTH_SIZE" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_GLX_DEPTH_SIZE $ac_have_decl
+_ACEOF
+if test $ac_have_decl = 1; then :
+
+else
+  as_fn_error $? "GLX package is found but some declarations of this package are \
+not found. Update the GLX developing package." "$LINENO" 5
+fi
+ac_fn_c_check_decl "$LINENO" "GLX_STENCIL_SIZE" "ac_cv_have_decl_GLX_STENCIL_SIZE" "#include <GL/glx.h>
+"
+if test "x$ac_cv_have_decl_GLX_STENCIL_SIZE" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_GLX_STENCIL_SIZE $ac_have_decl
+_ACEOF
+if test $ac_have_decl = 1; then :
+
+else
+  as_fn_error $? "GLX package is found but some declarations of this package are \
+not found. Update the GLX developing package." "$LINENO" 5
+fi
+ac_fn_c_check_decl "$LINENO" "GLX_DOUBLEBUFFER" "ac_cv_have_decl_GLX_DOUBLEBUFFER" "#include <GL/glx.h>
+"
+if test "x$ac_cv_have_decl_GLX_DOUBLEBUFFER" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_GLX_DOUBLEBUFFER $ac_have_decl
+_ACEOF
+if test $ac_have_decl = 1; then :
+
+else
+  as_fn_error $? "GLX package is found but some declarations of this package are \
+not found. Update the GLX developing package." "$LINENO" 5
+fi
+ac_fn_c_check_decl "$LINENO" "GLX_SAMPLE_BUFFERS" "ac_cv_have_decl_GLX_SAMPLE_BUFFERS" "#include <GL/glx.h>
+"
+if test "x$ac_cv_have_decl_GLX_SAMPLE_BUFFERS" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_GLX_SAMPLE_BUFFERS $ac_have_decl
+_ACEOF
+if test $ac_have_decl = 1; then :
+
+else
+  as_fn_error $? "GLX package is found but some declarations of this package are \
+not found. Update the GLX developing package." "$LINENO" 5
+fi
+ac_fn_c_check_decl "$LINENO" "GLX_SAMPLES" "ac_cv_have_decl_GLX_SAMPLES" "#include <GL/glx.h>
+"
+if test "x$ac_cv_have_decl_GLX_SAMPLES" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_GLX_SAMPLES $ac_have_decl
+_ACEOF
+if test $ac_have_decl = 1; then :
+
+else
+  as_fn_error $? "GLX package is found but some declarations of this package are \
+not found. Update the GLX developing package." "$LINENO" 5
+fi
+ac_fn_c_check_decl "$LINENO" "GLX_CONTEXT_MAJOR_VERSION_ARB" "ac_cv_have_decl_GLX_CONTEXT_MAJOR_VERSION_ARB" "#include <GL/glx.h>
+"
+if test "x$ac_cv_have_decl_GLX_CONTEXT_MAJOR_VERSION_ARB" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_GLX_CONTEXT_MAJOR_VERSION_ARB $ac_have_decl
+_ACEOF
+if test $ac_have_decl = 1; then :
+
+else
+  as_fn_error $? "GLX package is found but some declarations of this package are \
+not found. Update the GLX developing package." "$LINENO" 5
+fi
+ac_fn_c_check_decl "$LINENO" "GLX_CONTEXT_MINOR_VERSION_ARB" "ac_cv_have_decl_GLX_CONTEXT_MINOR_VERSION_ARB" "#include <GL/glx.h>
+"
+if test "x$ac_cv_have_decl_GLX_CONTEXT_MINOR_VERSION_ARB" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_GLX_CONTEXT_MINOR_VERSION_ARB $ac_have_decl
+_ACEOF
+if test $ac_have_decl = 1; then :
+
+else
+  as_fn_error $? "GLX package is found but some declarations of this package are \
+not found. Update the GLX developing package." "$LINENO" 5
+fi
+
+ac_fn_c_check_decl "$LINENO" "XA_ATOM" "ac_cv_have_decl_XA_ATOM" "#include <X11/Xutil.h>
+#include <X11/Xatom.h>
+"
+if test "x$ac_cv_have_decl_XA_ATOM" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_XA_ATOM $ac_have_decl
+_ACEOF
+if test $ac_have_decl = 1; then :
+
+else
+  as_fn_error $? "X11 \
+package is found but some declarations of this package are not found. Update \
+the X11 developing package." "$LINENO" 5
+fi
+ac_fn_c_check_decl "$LINENO" "True" "ac_cv_have_decl_True" "#include <X11/Xutil.h>
+#include <X11/Xatom.h>
+"
+if test "x$ac_cv_have_decl_True" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_TRUE $ac_have_decl
+_ACEOF
+if test $ac_have_decl = 1; then :
+
+else
+  as_fn_error $? "X11 \
+package is found but some declarations of this package are not found. Update \
+the X11 developing package." "$LINENO" 5
+fi
+ac_fn_c_check_decl "$LINENO" "False" "ac_cv_have_decl_False" "#include <X11/Xutil.h>
+#include <X11/Xatom.h>
+"
+if test "x$ac_cv_have_decl_False" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_FALSE $ac_have_decl
+_ACEOF
+if test $ac_have_decl = 1; then :
+
+else
+  as_fn_error $? "X11 \
+package is found but some declarations of this package are not found. Update \
+the X11 developing package." "$LINENO" 5
+fi
+ac_fn_c_check_decl "$LINENO" "CWBorderPixel" "ac_cv_have_decl_CWBorderPixel" "#include <X11/Xutil.h>
+#include <X11/Xatom.h>
+"
+if test "x$ac_cv_have_decl_CWBorderPixel" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_CWBORDERPIXEL $ac_have_decl
+_ACEOF
+if test $ac_have_decl = 1; then :
+
+else
+  as_fn_error $? "X11 \
+package is found but some declarations of this package are not found. Update \
+the X11 developing package." "$LINENO" 5
+fi
+ac_fn_c_check_decl "$LINENO" "CWColormap" "ac_cv_have_decl_CWColormap" "#include <X11/Xutil.h>
+#include <X11/Xatom.h>
+"
+if test "x$ac_cv_have_decl_CWColormap" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_CWCOLORMAP $ac_have_decl
+_ACEOF
+if test $ac_have_decl = 1; then :
+
+else
+  as_fn_error $? "X11 \
+package is found but some declarations of this package are not found. Update \
+the X11 developing package." "$LINENO" 5
+fi
+ac_fn_c_check_decl "$LINENO" "CWEventMask" "ac_cv_have_decl_CWEventMask" "#include <X11/Xutil.h>
+#include <X11/Xatom.h>
+"
+if test "x$ac_cv_have_decl_CWEventMask" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_CWEVENTMASK $ac_have_decl
+_ACEOF
+if test $ac_have_decl = 1; then :
+
+else
+  as_fn_error $? "X11 \
+package is found but some declarations of this package are not found. Update \
+the X11 developing package." "$LINENO" 5
+fi
+ac_fn_c_check_decl "$LINENO" "InputHint" "ac_cv_have_decl_InputHint" "#include <X11/Xutil.h>
+#include <X11/Xatom.h>
+"
+if test "x$ac_cv_have_decl_InputHint" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_INPUTHINT $ac_have_decl
+_ACEOF
+if test $ac_have_decl = 1; then :
+
+else
+  as_fn_error $? "X11 \
+package is found but some declarations of this package are not found. Update \
+the X11 developing package." "$LINENO" 5
+fi
+ac_fn_c_check_decl "$LINENO" "StateHint" "ac_cv_have_decl_StateHint" "#include <X11/Xutil.h>
+#include <X11/Xatom.h>
+"
+if test "x$ac_cv_have_decl_StateHint" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_STATEHINT $ac_have_decl
+_ACEOF
+if test $ac_have_decl = 1; then :
+
+else
+  as_fn_error $? "X11 \
+package is found but some declarations of this package are not found. Update \
+the X11 developing package." "$LINENO" 5
+fi
+ac_fn_c_check_decl "$LINENO" "BlackPixel" "ac_cv_have_decl_BlackPixel" "#include <X11/Xutil.h>
+#include <X11/Xatom.h>
+"
+if test "x$ac_cv_have_decl_BlackPixel" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_BLACKPIXEL $ac_have_decl
+_ACEOF
+if test $ac_have_decl = 1; then :
+
+else
+  as_fn_error $? "X11 \
+package is found but some declarations of this package are not found. Update \
+the X11 developing package." "$LINENO" 5
+fi
+ac_fn_c_check_decl "$LINENO" "WhitePixel" "ac_cv_have_decl_WhitePixel" "#include <X11/Xutil.h>
+#include <X11/Xatom.h>
+"
+if test "x$ac_cv_have_decl_WhitePixel" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_WHITEPIXEL $ac_have_decl
+_ACEOF
+if test $ac_have_decl = 1; then :
+
+else
+  as_fn_error $? "X11 \
+package is found but some declarations of this package are not found. Update \
+the X11 developing package." "$LINENO" 5
+fi
+
 
 # Checks for library functions.
 for ac_header in stdlib.h
@@ -3730,7 +5539,9 @@ $as_echo "#define malloc rpl_malloc" >>confdefs.h
 fi
 
 
-for ac_func in strchr strerror strstr strlen strcmp getenv usleep memcpy printf fprintf free srand rand atof atoi time clock abort fopen fseek fread fclose
+for ac_func in strchr strerror strstr strlen strcmp getenv usleep memcpy \
+printf fprintf free srand rand atof atoi time clock abort fopen fseek fread \
+fclose setjmp
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
 ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
@@ -3739,6 +5550,95 @@ if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
 #define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
 _ACEOF
 
+else
+  as_fn_error $? "GLibC package is found but some functions \
+of this package are not found. Update the GLibC developing package." "$LINENO" 5
+fi
+done
+
+for ac_func in png_destroy_read_struct png_create_read_struct \
+png_create_info_struct png_init_io png_read_info png_get_IHDR \
+png_get_valid png_set_expand png_set_strip_16 png_set_gray_to_rgb \
+png_read_update_info png_get_rowbytes png_read_image
+do :
+  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
+ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
+if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  cat >>confdefs.h <<_ACEOF
+#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+_ACEOF
+
+else
+  as_fn_error $? "libPNG package is found but some functions of this package \
+are not found. Update the libPNG developing package." "$LINENO" 5
+fi
+done
+
+for ac_func in glEnable glBlendFunc glDeleteProgram glUseProgram glViewport \
+glDisableVertexAttribArray glDeleteBuffers glDeleteVertexArrays \
+glDeleteTextures glGetError glUniform1fv glUniform3i glCreateShader \
+glShaderSource glCompileShader glGetShaderiv glGetShaderInfoLog \
+glDeleteShader glAttachShader glLinkProgram glGetProgramiv glValidateProgram \
+glDetachShader glGetUniformLocation glGenVertexArrays glBindVertexArray \
+glGenBuffers glBindBuffer glBufferData glEnableVertexAttribArray \
+glVertexAttribPointer glClearColor glClear glDrawArrays glGenTextures \
+glBindTexture glTexImage2D glTexParameteri
+do :
+  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
+ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
+if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  cat >>confdefs.h <<_ACEOF
+#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+_ACEOF
+
+else
+  as_fn_error $? "GL \
+package is found but some functions of this package are not found. Update \
+the GL developing package." "$LINENO" 5
+fi
+done
+
+ac_fn_c_check_func "$LINENO" "glewInit" "ac_cv_func_glewInit"
+if test "x$ac_cv_func_glewInit" = xyes; then :
+
+else
+  as_fn_error $? "GLEW package is found but some \
+functions of this package are not found. Update the GLEW developing \
+package." "$LINENO" 5
+fi
+
+for ac_func in glXQueryVersion glXChooseFBConfig glXGetVisualFromFBConfig \
+glXGetFBConfigAttrib glXQueryExtensionsString glXGetProcAddressARB \
+glXCreateContextAttribsARB glXMakeCurrent glXDestroyContext glXSwapBuffers
+do :
+  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
+ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
+if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  cat >>confdefs.h <<_ACEOF
+#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+_ACEOF
+
+else
+  as_fn_error $? "GLX package is found but some functions of this package \
+are not found. Update the GLX developing package." "$LINENO" 5
+fi
+done
+
+for ac_func in XOpenDisplay XCloseDisplay XFree XCreateColormap \
+XAllocWMHints XSetWMProperties XInternAtom XChangeProperty XMapWindow \
+XGetWindowAttributes XCreateWindow XSetErrorHandler XSync XDestroyWindow \
+XFreeColormap XSelectInput XCreateSimpleWindow XCheckMaskEvent
+do :
+  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
+ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
+if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  cat >>confdefs.h <<_ACEOF
+#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+_ACEOF
+
+else
+  as_fn_error $? "X11 package is found but some functions of this package are \
+not found. Update the X11 developing package." "$LINENO" 5
 fi
 done
 

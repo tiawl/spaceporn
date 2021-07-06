@@ -20,11 +20,11 @@ directories:
 
 $(BIN_DIR)/$(BIN): $(OBJ_FILES)
 	$(mkdir -p $(BIN_DIR))
-	gcc -o $(BIN_DIR)/$(BIN) $^ $(FLAGS)
+	$(CC) -o $(BIN_DIR)/$(BIN) $^ $(FLAGS)
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	$(mkdir -p $(OBJ_DIR))
-	gcc $(CPPFLAGS) $(FLAGS) -c -o $@ $<
+	$(CC) $(CPPFLAGS) $(FLAGS) -c -o $@ $<
 
 clean:
 	if test -d $(OBJ_DIR); then rm -r $(OBJ_DIR); fi

@@ -1,4 +1,9 @@
-dist: focal
+os: linux
+
+dist:
+  - focal
+  - bionic
+  - xenial
 
 language: c
 
@@ -10,5 +15,4 @@ compiler:
   - gcc
 
 script:
-  - ./sh/configure.sh
-  - make clean all
+  - ./sh/configure.sh && make clean all

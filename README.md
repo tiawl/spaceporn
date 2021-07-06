@@ -6,7 +6,7 @@ A PixelSpace Shader Wallpaper for X System
 
 ## WARNING
 
-**Parts of what you will read (and some of it are huge) on this repository is not written by my own. Even if there are no licence on this repository, this code is not completly mine.**</br></br>
+**Parts of what you will read on this repository (and some of it are huge) is not written by my own. Even if there are no licence on this repository, this code is not completly mine.**</br></br>
 I copy paste parts of scripts written by others, merged it and rearranged it to make an app for my personnal use. Some of those scripts are under licence.</br></br>
 You can not use this code for a non-personal usage without to be aware of its authors' wishes and how I used their scripts on this repository (if you want to rewrite under licence parts):
 - [Github - mmhobi7's xwinwrap][1] - Used to create X desktop window.

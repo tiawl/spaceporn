@@ -25,7 +25,8 @@ typedef struct
   Colormap cmap;
 } ContextBuilder;
 
-bool isExtensionSupported(const char* extList, const char* extension);
+bool isExtensionSupported(const char* extList, const char* extension,
+  bool verbose);
 int contextErrorHandler(Display* display, XErrorEvent* event);
 bool initContext(ContextBuilder* builder, bool verbose);
 

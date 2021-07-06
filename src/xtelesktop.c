@@ -123,8 +123,12 @@ int main(int argc, char **argv)
   GLuint fragment_shader;
   GLuint program;
 
+  VERB(verbose, printf("Initializing fragment shader, vertex shader and \
+texture paths ...\n"));
   if (!initPaths(&fshaderpath, &vshaderpath, &texturepath, verbose))
   {
+    fprintf(stderr, "Failed to initialize fragment shader, vertex shader and \
+texture paths\n");
     return EXIT_FAILURE;
   }
   VERB(verbose, printf("Fragment shader, vertex shader and texture paths \
@@ -133,14 +137,26 @@ are initialized\n"));
   ContextBuilder builder;
   builder.context = 0;
 
+  VERB(verbose, printf("Creating OpenGL context ...\n"));
   if (!initContext(&builder, verbose))
   {
-    free(fshaderpath);
-    free(vshaderpath);
-    free(texturepath);
     fprintf(stderr, "Failed to create an OpenGL context\n");
+
+    VERB(verbose, printf("Freeing fshaderpath ...\n"));
+    free(fshaderpath);
+    VERB(verbose, printf("fshaderpath freed\n"));
+
+    VERB(verbose, printf("Freeing vshaderpath ...\n"));
+    free(vshaderpath);
+    VERB(verbose, printf("vshaderpath freed\n"));
+
+    VERB(verbose, printf("Freeing texturepath ...\n"));
+    free(texturepath);
+    VERB(verbose, printf("texturepath freed\n"));
+
     return EXIT_FAILURE;
   }
+  VERB(verbose, printf("OpenGL context created\n"));
 
   glewExperimental = GL_TRUE;
 

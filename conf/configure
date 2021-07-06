@@ -5294,8 +5294,9 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "X11 package is found but some declarations \
-of this package are not found. Update the X11 developing package." "$LINENO" 5
+  as_fn_error $? "X11 package is \
+found but some declarations of this package are not found. Update the X11 \
+developing package." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "True" "ac_cv_have_decl_True" "#include <X11/Xutil.h>
 #include <X11/Xatom.h>
@@ -5312,8 +5313,9 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "X11 package is found but some declarations \
-of this package are not found. Update the X11 developing package." "$LINENO" 5
+  as_fn_error $? "X11 package is \
+found but some declarations of this package are not found. Update the X11 \
+developing package." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "False" "ac_cv_have_decl_False" "#include <X11/Xutil.h>
 #include <X11/Xatom.h>
@@ -5330,8 +5332,9 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "X11 package is found but some declarations \
-of this package are not found. Update the X11 developing package." "$LINENO" 5
+  as_fn_error $? "X11 package is \
+found but some declarations of this package are not found. Update the X11 \
+developing package." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "None" "ac_cv_have_decl_None" "#include <X11/Xutil.h>
 #include <X11/Xatom.h>
@@ -5348,8 +5351,9 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "X11 package is found but some declarations \
-of this package are not found. Update the X11 developing package." "$LINENO" 5
+  as_fn_error $? "X11 package is \
+found but some declarations of this package are not found. Update the X11 \
+developing package." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "CWBorderPixel" "ac_cv_have_decl_CWBorderPixel" "#include <X11/Xutil.h>
 #include <X11/Xatom.h>
@@ -5366,8 +5370,9 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "X11 package is found but some declarations \
-of this package are not found. Update the X11 developing package." "$LINENO" 5
+  as_fn_error $? "X11 package is \
+found but some declarations of this package are not found. Update the X11 \
+developing package." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "CWColormap" "ac_cv_have_decl_CWColormap" "#include <X11/Xutil.h>
 #include <X11/Xatom.h>
@@ -5384,8 +5389,9 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "X11 package is found but some declarations \
-of this package are not found. Update the X11 developing package." "$LINENO" 5
+  as_fn_error $? "X11 package is \
+found but some declarations of this package are not found. Update the X11 \
+developing package." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "CWEventMask" "ac_cv_have_decl_CWEventMask" "#include <X11/Xutil.h>
 #include <X11/Xatom.h>
@@ -5402,8 +5408,9 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "X11 package is found but some declarations \
-of this package are not found. Update the X11 developing package." "$LINENO" 5
+  as_fn_error $? "X11 package is \
+found but some declarations of this package are not found. Update the X11 \
+developing package." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "InputHint" "ac_cv_have_decl_InputHint" "#include <X11/Xutil.h>
 #include <X11/Xatom.h>
@@ -5420,8 +5427,9 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "X11 package is found but some declarations \
-of this package are not found. Update the X11 developing package." "$LINENO" 5
+  as_fn_error $? "X11 package is \
+found but some declarations of this package are not found. Update the X11 \
+developing package." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "StateHint" "ac_cv_have_decl_StateHint" "#include <X11/Xutil.h>
 #include <X11/Xatom.h>
@@ -5438,8 +5446,9 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "X11 package is found but some declarations \
-of this package are not found. Update the X11 developing package." "$LINENO" 5
+  as_fn_error $? "X11 package is \
+found but some declarations of this package are not found. Update the X11 \
+developing package." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "BlackPixel" "ac_cv_have_decl_BlackPixel" "#include <X11/Xutil.h>
 #include <X11/Xatom.h>
@@ -5456,8 +5465,9 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "X11 package is found but some declarations \
-of this package are not found. Update the X11 developing package." "$LINENO" 5
+  as_fn_error $? "X11 package is \
+found but some declarations of this package are not found. Update the X11 \
+developing package." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "WhitePixel" "ac_cv_have_decl_WhitePixel" "#include <X11/Xutil.h>
 #include <X11/Xatom.h>
@@ -5474,8 +5484,9 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "X11 package is found but some declarations \
-of this package are not found. Update the X11 developing package." "$LINENO" 5
+  as_fn_error $? "X11 package is \
+found but some declarations of this package are not found. Update the X11 \
+developing package." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "InputOutput" "ac_cv_have_decl_InputOutput" "#include <X11/Xutil.h>
 #include <X11/Xatom.h>
@@ -5492,8 +5503,9 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "X11 package is found but some declarations \
-of this package are not found. Update the X11 developing package." "$LINENO" 5
+  as_fn_error $? "X11 package is \
+found but some declarations of this package are not found. Update the X11 \
+developing package." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "NormalState" "ac_cv_have_decl_NormalState" "#include <X11/Xutil.h>
 #include <X11/Xatom.h>
@@ -5510,8 +5522,9 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "X11 package is found but some declarations \
-of this package are not found. Update the X11 developing package." "$LINENO" 5
+  as_fn_error $? "X11 package is \
+found but some declarations of this package are not found. Update the X11 \
+developing package." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "AllocNone" "ac_cv_have_decl_AllocNone" "#include <X11/Xutil.h>
 #include <X11/Xatom.h>
@@ -5528,8 +5541,9 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "X11 package is found but some declarations \
-of this package are not found. Update the X11 developing package." "$LINENO" 5
+  as_fn_error $? "X11 package is \
+found but some declarations of this package are not found. Update the X11 \
+developing package." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "StructureNotifyMask" "ac_cv_have_decl_StructureNotifyMask" "#include <X11/Xutil.h>
 #include <X11/Xatom.h>
@@ -5546,8 +5560,9 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "X11 package is found but some declarations \
-of this package are not found. Update the X11 developing package." "$LINENO" 5
+  as_fn_error $? "X11 package is \
+found but some declarations of this package are not found. Update the X11 \
+developing package." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "PropModeReplace" "ac_cv_have_decl_PropModeReplace" "#include <X11/Xutil.h>
 #include <X11/Xatom.h>
@@ -5564,8 +5579,9 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "X11 package is found but some declarations \
-of this package are not found. Update the X11 developing package." "$LINENO" 5
+  as_fn_error $? "X11 package is \
+found but some declarations of this package are not found. Update the X11 \
+developing package." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "DefaultScreen" "ac_cv_have_decl_DefaultScreen" "#include <X11/Xutil.h>
 #include <X11/Xatom.h>
@@ -5582,8 +5598,9 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "X11 package is found but some declarations \
-of this package are not found. Update the X11 developing package." "$LINENO" 5
+  as_fn_error $? "X11 package is \
+found but some declarations of this package are not found. Update the X11 \
+developing package." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "RootWindow" "ac_cv_have_decl_RootWindow" "#include <X11/Xutil.h>
 #include <X11/Xatom.h>
@@ -5600,8 +5617,47 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "X11 package is found but some declarations \
-of this package are not found. Update the X11 developing package." "$LINENO" 5
+  as_fn_error $? "X11 package is \
+found but some declarations of this package are not found. Update the X11 \
+developing package." "$LINENO" 5
+fi
+ac_fn_c_check_decl "$LINENO" "ExposureMask" "ac_cv_have_decl_ExposureMask" "#include <X11/Xutil.h>
+#include <X11/Xatom.h>
+"
+if test "x$ac_cv_have_decl_ExposureMask" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_EXPOSUREMASK $ac_have_decl
+_ACEOF
+if test $ac_have_decl = 1; then :
+
+else
+  as_fn_error $? "X11 package is \
+found but some declarations of this package are not found. Update the X11 \
+developing package." "$LINENO" 5
+fi
+ac_fn_c_check_decl "$LINENO" "KeyPressMask" "ac_cv_have_decl_KeyPressMask" "#include <X11/Xutil.h>
+#include <X11/Xatom.h>
+"
+if test "x$ac_cv_have_decl_KeyPressMask" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_KEYPRESSMASK $ac_have_decl
+_ACEOF
+if test $ac_have_decl = 1; then :
+
+else
+  as_fn_error $? "X11 package is \
+found but some declarations of this package are not found. Update the X11 \
+developing package." "$LINENO" 5
 fi
 
 

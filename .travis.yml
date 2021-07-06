@@ -1,9 +1,6 @@
 os: linux
 
-dist:
-  - focal
-  - bionic
-  - xenial
+dist: focal
 
 language: c
 

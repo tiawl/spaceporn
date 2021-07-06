@@ -95,9 +95,9 @@ not found. Update the GLX developing package.]), [[#include <GL/glx.h>]])
 AC_CHECK_DECLS([XA_ATOM, True, False, None, CWBorderPixel, CWColormap,
   CWEventMask, InputHint, StateHint, BlackPixel, WhitePixel, InputOutput,
   NormalState, AllocNone, StructureNotifyMask, PropModeReplace, DefaultScreen,
-  RootWindow], [], AC_MSG_ERROR([X11 package is found but some declarations \
-of this package are not found. Update the X11 developing package.]),
-[[#include <X11/Xutil.h>
+  RootWindow, ExposureMask, KeyPressMask], [], AC_MSG_ERROR([X11 package is \
+found but some declarations of this package are not found. Update the X11 \
+developing package.]), [[#include <X11/Xutil.h>
 #include <X11/Xatom.h>]])
 
 # Checks for library functions.

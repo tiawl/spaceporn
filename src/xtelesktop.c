@@ -158,28 +158,68 @@ are initialized\n"));
   }
   VERB(verbose, printf("OpenGL context created\n"));
 
+  VERB(verbose, printf("Initializing GLEW ...\n"));
   glewExperimental = GL_TRUE;
 
   if (glewInit())
   {
-    free(fshaderpath);
-    free(vshaderpath);
-    free(texturepath);
-    glXMakeCurrent(builder.display, 0, 0);
-    glXDestroyContext(builder.display, builder.context);
-    XDestroyWindow(builder.display, builder.window);
-    XFreeColormap(builder.display, builder.cmap);
-    XCloseDisplay(builder.display);
     fprintf(stderr, "glewInit() failed\n");
+
+    VERB(verbose, printf("Freeing fshaderpath ...\n"));
+    free(fshaderpath);
+    VERB(verbose, printf("fshaderpath freed\n"));
+
+    VERB(verbose, printf("Freeing vshaderpath ...\n"));
+    free(vshaderpath);
+    VERB(verbose, printf("vshaderpath freed\n"));
+
+    VERB(verbose, printf("Freeing texturepath ...\n"));
+    free(texturepath);
+    VERB(verbose, printf("texturepath freed\n"));
+
+    VERB(verbose, printf("Detaching current rendering context ...\n"));
+    glXMakeCurrent(builder.display, 0, 0);
+    VERB(verbose, printf("Current rendering context detached\n"));
+
+    VERB(verbose, printf("Destroying detached rendering context ...\n"));
+    glXDestroyContext(builder.display, builder.context);
+    VERB(verbose, printf("Detached rendering context destroyed\n"));
+
+    VERB(verbose, printf("Destroying current window ...\n"));
+    XDestroyWindow(builder.display, builder.window);
+    VERB(verbose, printf("Current window destroyed\n"));
+
+    VERB(verbose, printf("Freeing colormap ...\n"));
+    XFreeColormap(builder.display, builder.cmap);
+    VERB(verbose, printf("Colormap freed\n"));
+
+    VERB(verbose, printf("Closing Display ...\n"));
+    XCloseDisplay(builder.display);
+    VERB(verbose, printf("Display closed\n"));
+
     return EXIT_FAILURE;
   }
+  VERB(verbose, printf("GLEW initialized\n"));
 
+  VERB(verbose, printf("Requesting X server to report exposure events for \
+current window ...\n"));
   XSelectInput(builder.display, builder.window, ExposureMask);
+  VERB(verbose, printf("X server is now reporting exposure events for \
+current window\n"));
 
+  VERB(verbose, printf("Enabling transparency for current window ...\n"));
   GL_CHECK(glEnable(GL_BLEND));
+  VERB(verbose, printf("Transparency enabled for current window\n"));
+
+  VERB(verbose, printf("Selecting transparency function for current \
+window ...\n"));
   GL_CHECK(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
+  VERB(verbose, printf("Transparency function selected for current \
+window\n"));
 
 #if DEBUG
+  VERB(verbose, printf("Creating a debug window to catch key press events \
+...\n"));
   Window debug_window = XCreateSimpleWindow(builder.display,
     RootWindow(builder.display, DefaultScreen(builder.display)), 0, 0, 1, 1,
     1, BlackPixel(builder.display, DefaultScreen(builder.display)),
@@ -187,39 +227,99 @@ are initialized\n"));
 
   if (!debug_window)
   {
-    free(fshaderpath);
-    free(vshaderpath);
-    free(texturepath);
-    glXMakeCurrent(builder.display, 0, 0);
-    glXDestroyContext(builder.display, builder.context);
-    XDestroyWindow(builder.display, builder.window);
-    XFreeColormap(builder.display, builder.cmap);
-    XCloseDisplay(builder.display);
     fprintf(stderr, "Failed to create debug window\n");
+
+    VERB(verbose, printf("Freeing fshaderpath ...\n"));
+    free(fshaderpath);
+    VERB(verbose, printf("fshaderpath freed\n"));
+
+    VERB(verbose, printf("Freeing vshaderpath ...\n"));
+    free(vshaderpath);
+    VERB(verbose, printf("vshaderpath freed\n"));
+
+    VERB(verbose, printf("Freeing texturepath ...\n"));
+    free(texturepath);
+    VERB(verbose, printf("texturepath freed\n"));
+
+    VERB(verbose, printf("Detaching current rendering context ...\n"));
+    glXMakeCurrent(builder.display, 0, 0);
+    VERB(verbose, printf("Current rendering context detached\n"));
+
+    VERB(verbose, printf("Destroying detached rendering context ...\n"));
+    glXDestroyContext(builder.display, builder.context);
+    VERB(verbose, printf("Detached rendering context destroyed\n"));
+
+    VERB(verbose, printf("Destroying current window ...\n"));
+    XDestroyWindow(builder.display, builder.window);
+    VERB(verbose, printf("Current window destroyed\n"));
+
+    VERB(verbose, printf("Freeing colormap ...\n"));
+    XFreeColormap(builder.display, builder.cmap);
+    VERB(verbose, printf("Colormap freed\n"));
+
+    VERB(verbose, printf("Closing Display ...\n"));
+    XCloseDisplay(builder.display);
+    VERB(verbose, printf("Display closed\n"));
+
     return EXIT_FAILURE;
   }
+  VERB(verbose, printf("Debug window created\n"));
 
+  VERB(verbose, printf("Requesting X server to report key press events for \
+debug window ...\n"));
   XSelectInput(builder.display, debug_window, KeyPressMask);
+  VERB(verbose, printf("X server is now reporting key press events for debug \
+window\n"));
+
+  VERB(verbose, printf("Mapping debug window ...\n"));
   XMapWindow(builder.display, debug_window);
+  VERB(verbose, printf("Debug window mapped\n"));
 #endif
 
+  VERB(verbose, printf("Loading OpenGL program ...\n"));
   if (!loadProgram(&program, &vertex_shader, &vshaderpath, &fragment_shader,
     &fshaderpath))
   {
+    fprintf(stderr, "\n\tShader program failed to load\n\n");
+
+    VERB(verbose, printf("Freeing fshaderpath ...\n"));
     free(fshaderpath);
+    VERB(verbose, printf("fshaderpath freed\n"));
+
+    VERB(verbose, printf("Freeing vshaderpath ...\n"));
     free(vshaderpath);
+    VERB(verbose, printf("vshaderpath freed\n"));
+
+    VERB(verbose, printf("Freeing texturepath ...\n"));
     free(texturepath);
+    VERB(verbose, printf("texturepath freed\n"));
+
+    VERB(verbose, printf("Detaching current rendering context ...\n"));
     glXMakeCurrent(builder.display, 0, 0);
+    VERB(verbose, printf("Current rendering context detached\n"));
+
+    VERB(verbose, printf("Destroying detached rendering context ...\n"));
     glXDestroyContext(builder.display, builder.context);
+    VERB(verbose, printf("Detached rendering context destroyed\n"));
 
 #if DEBUG
+    VERB(verbose, printf("Destroying debug window ...\n"));
     XDestroyWindow(builder.display, debug_window);
+    VERB(verbose, printf("Debug window destroyed\n"));
 #endif
 
+    VERB(verbose, printf("Destroying current window ...\n"));
     XDestroyWindow(builder.display, builder.window);
+    VERB(verbose, printf("Current window destroyed\n"));
+
+    VERB(verbose, printf("Freeing colormap ...\n"));
     XFreeColormap(builder.display, builder.cmap);
+    VERB(verbose, printf("Colormap freed\n"));
+
+    VERB(verbose, printf("Closing Display ...\n"));
     XCloseDisplay(builder.display);
-    fprintf(stderr, "\n\tShader program failed to load\n\n");
+    VERB(verbose, printf("Display closed\n"));
+
     return EXIT_FAILURE;
   }
 
@@ -238,20 +338,50 @@ are initialized\n"));
   GLuint texture;
   if (!loadPng(&texture, texturepath))
   {
+    fprintf(stderr, "Failed to load PNG file %s\n", texturepath);
+
+    VERB(verbose, printf("Freeing fshaderpath ...\n"));
     free(fshaderpath);
+    VERB(verbose, printf("fshaderpath freed\n"));
+
+    VERB(verbose, printf("Freeing vshaderpath ...\n"));
     free(vshaderpath);
+    VERB(verbose, printf("vshaderpath freed\n"));
+
+    VERB(verbose, printf("Freeing texturepath ...\n"));
     free(texturepath);
+    VERB(verbose, printf("texturepath freed\n"));
+
+    VERB(verbose, printf("Deleting current OpenGL program ...\n"));
     GL_CHECK(glDeleteProgram(program));
+    VERB(verbose, printf("Current OpenGL program deleted\n"));
+
+    VERB(verbose, printf("Detaching current rendering context ...\n"));
     glXMakeCurrent(builder.display, 0, 0);
+    VERB(verbose, printf("Current rendering context detached\n"));
+
+    VERB(verbose, printf("Destroying detached rendering context ...\n"));
     glXDestroyContext(builder.display, builder.context);
+    VERB(verbose, printf("Detached rendering context destroyed\n"));
 
 #if DEBUG
+    VERB(verbose, printf("Destroying debug window ...\n"));
     XDestroyWindow(builder.display, debug_window);
+    VERB(verbose, printf("Debug window destroyed\n"));
 #endif
 
+    VERB(verbose, printf("Destroying current window ...\n"));
     XDestroyWindow(builder.display, builder.window);
+    VERB(verbose, printf("Current window destroyed\n"));
+
+    VERB(verbose, printf("Freeing colormap ...\n"));
     XFreeColormap(builder.display, builder.cmap);
+    VERB(verbose, printf("Colormap freed\n"));
+
+    VERB(verbose, printf("Closing Display ...\n"));
     XCloseDisplay(builder.display);
+    VERB(verbose, printf("Display closed\n"));
+
     return EXIT_FAILURE;
   }
 
@@ -297,24 +427,51 @@ are initialized\n"));
 
   GL_CHECK(glDisableVertexAttribArray(0));
 
+  VERB(verbose, printf("Freeing fshaderpath ...\n"));
   free(fshaderpath);
+  VERB(verbose, printf("fshaderpath freed\n"));
+
+  VERB(verbose, printf("Freeing vshaderpath ...\n"));
   free(vshaderpath);
+  VERB(verbose, printf("vshaderpath freed\n"));
+
+  VERB(verbose, printf("Freeing texturepath ...\n"));
   free(texturepath);
+  VERB(verbose, printf("texturepath freed\n"));
+
   GL_CHECK(glDeleteBuffers(1, &vertexbuffer));
   GL_CHECK(glDeleteVertexArrays(1, &vertexarray));
   GL_CHECK(glDeleteTextures(1, &texture));
-  GL_CHECK(glDeleteProgram(program));
 
+  VERB(verbose, printf("Deleting current OpenGL program ...\n"));
+  GL_CHECK(glDeleteProgram(program));
+  VERB(verbose, printf("Current OpenGL program deleted\n"));
+
+  VERB(verbose, printf("Detaching current rendering context ...\n"));
   glXMakeCurrent(builder.display, 0, 0);
+  VERB(verbose, printf("Current rendering context detached\n"));
+
+  VERB(verbose, printf("Destroying detached rendering context ...\n"));
   glXDestroyContext(builder.display, builder.context);
+  VERB(verbose, printf("Detached rendering context destroyed\n"));
 
 #if DEBUG
+  VERB(verbose, printf("Destroying debug window ...\n"));
   XDestroyWindow(builder.display, debug_window);
+  VERB(verbose, printf("Debug window destroyed\n"));
 #endif
 
+  VERB(verbose, printf("Destroying current window ...\n"));
   XDestroyWindow(builder.display, builder.window);
+  VERB(verbose, printf("Current window destroyed\n"));
+
+  VERB(verbose, printf("Freeing colormap ...\n"));
   XFreeColormap(builder.display, builder.cmap);
+  VERB(verbose, printf("Colormap freed\n"));
+
+  VERB(verbose, printf("Closing Display ...\n"));
   XCloseDisplay(builder.display);
+  VERB(verbose, printf("Display closed\n"));
 
   return EXIT_SUCCESS;
 }

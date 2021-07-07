@@ -1,15 +1,33 @@
-os: linux
-
-dist: focal
-
 language: c
 
-install:
-  - sudo apt-get install binutils cmake libglew-dev mesa-common-dev build-essential libglm-dev mesa-utils libgl1-mesa-dev libgl1-mesa-glx libx11-dev libpng-dev
+os: linux
 
-compiler:
-  - clang
-  - gcc
+maxtrix:
+  include:
+    - dist: focal
+      env:
+        - cc=gcc
+    - dist: bionic
+      env:
+        - cc=gcc
+    - dist: xenial
+      env:
+        - cc=gcc
+    - dist: focal
+      env:
+        - cc=clang
+    - dist: bionic
+      env:
+        - cc=clang
+    - dist: xenial
+      env:
+        - cc=clang
+
+install:
+  - sudo apt-get install libglew-dev mesa-common-dev build-essential libglm-dev mesa-utils libgl1-mesa-dev libgl1-mesa-glx libx11-dev libpng-dev valgrind
+
+before_script:
+  - export CC=${cc}
 
 script:
   - ./sh/configure.sh && make clean all

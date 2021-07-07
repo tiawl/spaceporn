@@ -69,10 +69,10 @@ package.]), [[#include <stdlib.h>
 #include <time.h>
 #include <errno.h>]])
 AC_CHECK_DECLS([PNG_LIBPNG_VER_STRING, PNG_INFO_tRNS, PNG_COLOR_TYPE_GRAY,
-  PNG_COLOR_TYPE_PALETTE, PNG_COLOR_TYPE_GRAY_ALPHA, PNG_COLOR_MASK_ALPHA, png_jmpbuf],
-  [], AC_MSG_ERROR([libPNG package is found but some declarations of this \
-package are not found. Update the libPNG developing package.]),
-[[#include <png.h>]])
+  PNG_COLOR_TYPE_PALETTE, PNG_COLOR_TYPE_GRAY_ALPHA, PNG_COLOR_MASK_ALPHA,
+  png_jmpbuf], [], AC_MSG_ERROR([libPNG package is found but some \
+declarations of this package are not found. Update the libPNG developing \
+package.]), [[#include <png.h>]])
 AC_CHECK_DECLS([GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_TEXTURE_WRAP_T,
   GL_TEXTURE_MAG_FILTER, GL_NEAREST, GL_TEXTURE_MIN_FILTER, GL_NO_ERROR,
   GL_FALSE, GL_COMPILE_STATUS, GL_TRUE, GL_INFO_LOG_LENGTH, GL_VERTEX_SHADER,

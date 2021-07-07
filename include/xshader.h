@@ -70,7 +70,7 @@ void initVertices(GLuint* vertexbuffer, GLuint* vertexarray);
 void drawScreen();
 
 void cleanup(png_structp* parser, png_infop* info, png_bytep** row_pointers,
-  uint8_t** data, FILE** file, char const * const filename);
-bool loadPng(GLuint* texture, char const * const filename);
+  uint8_t** data, FILE** file, char const * const filename, bool verbose);
+bool loadPng(GLuint* texture, char const * const filename, bool verbose);
 
 #endif

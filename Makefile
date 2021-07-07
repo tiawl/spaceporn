@@ -24,7 +24,7 @@ $(BIN_DIR)/$(BIN): $(OBJ_FILES)
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	$(mkdir -p $(OBJ_DIR))
-	$(CC) $(CPPFLAGS) $(FLAGS) -c -o $@ $<
+	$(CC) $(CPPFLAGS) -c -o $@ $<
 
 clean:
 	if test -d $(OBJ_DIR); then rm -r $(OBJ_DIR); fi

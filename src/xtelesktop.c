@@ -336,8 +336,9 @@ window\n"));
   uniform_values.width = builder.window_attribs.width;
   uniform_values.height = builder.window_attribs.height;
 
+  VERB(verbose, printf("Loading PNG texture ...\n"));
   GLuint texture;
-  if (!loadPng(&texture, texturepath))
+  if (!loadPng(&texture, texturepath, verbose))
   {
     fprintf(stderr, "Failed to load PNG file %s\n", texturepath);
 
@@ -385,6 +386,7 @@ window\n"));
 
     return EXIT_FAILURE;
   }
+  VERB(verbose, printf("PNG texture loaded\n"));
 
   getUniforms(uniforms, uniformIds, &program);
 

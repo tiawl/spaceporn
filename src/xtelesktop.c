@@ -278,7 +278,7 @@ window\n"));
 
   VERB(verbose, printf("Loading OpenGL program ...\n"));
   if (!loadProgram(&program, &vertex_shader, &vshaderpath, &fragment_shader,
-    &fshaderpath))
+    &fshaderpath, verbose))
   {
     fprintf(stderr, "\n\tShader program failed to load\n\n");
 
@@ -322,6 +322,7 @@ window\n"));
 
     return EXIT_FAILURE;
   }
+  VERB(verbose, printf("OpenGL program loaded\n"));
 
   /* array of all uniforms to pass to the shader */
   const Uniform uniforms[] =

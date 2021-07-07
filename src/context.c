@@ -94,8 +94,12 @@ bool initContext(ContextBuilder* builder, bool verbose)
     ((glx_major == 1) && (glx_minor < 3)) || (glx_major < 1))
   {
     fprintf(stderr, "Invalid GLX version\n");
+
+    VERB(verbose, printf("  Closing display ...\n"));
     XCloseDisplay(builder->display);
-    return false;;
+    VERB(verbose, printf("  Display closed\n"));
+
+    return false;
   }
   VERB(verbose, printf("  Valid GLX version: %d.%d\n", glx_major, glx_minor));
 
@@ -107,7 +111,11 @@ bool initContext(ContextBuilder* builder, bool verbose)
   if (!fbc)
   {
     fprintf(stderr, "Failed to found a GLX framebuffer config\n");
+
+    VERB(verbose, printf("  Closing display ...\n"));
     XCloseDisplay(builder->display);
+    VERB(verbose, printf("  Display closed\n"));
+
     return false;
   }
   VERB(verbose, printf("  GLX framebuffer config found\n"));
@@ -216,8 +224,15 @@ samples per pixel ... %d/%d\n", fbcount, fbcount));
   if (!builder->window)
   {
     fprintf(stderr, "Failed to create window\n");
+
+    VERB(verbose, printf("  Freeing current visual ...\n"));
     XFree(vi);
+    VERB(verbose, printf("  Current visual freed\n"));
+
+    VERB(verbose, printf("  Closing Display ...\n"));
     XCloseDisplay(builder->display);
+    VERB(verbose, printf("  Display closed\n"));
+
     return false;
   }
   VERB(verbose, printf("  Window created: 0x%lx\n", builder->window));
@@ -293,7 +308,11 @@ function found\n"));
     !glXCreateContextAttribsARB)
   {
     fprintf(stderr, "glXCreateContextAttribsARB() not found\n");
+
+    VERB(verbose, printf("  Closing Display ...\n"));
     XCloseDisplay(builder->display);
+    VERB(verbose, printf("  Display closed\n"));
+
     return false;
   } else {
     VERB(verbose, printf("  Extension supported\n"));
@@ -326,9 +345,11 @@ creation ...\n"));
   if (contextErrorOccurred || !builder->context)
   {
     fprintf(stderr, "An error occured during creation context\n");
+
     VERB(verbose, printf("  Closing Display ...\n"));
     XCloseDisplay(builder->display);
     VERB(verbose, printf("  Display closed\n"));
+
     return false;
   }
   VERB(verbose, printf("  No error occured during context creation\n"));

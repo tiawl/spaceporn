@@ -57,10 +57,11 @@ void updateTexture(GLint uniformId, UniformValues* values);
 
 bool initPaths(char** fshaderpath, char** vshaderpath, char** texturepath,
   bool verbose);
-bool readFile(char** filepath, char** buffer);
-GLuint loadShader(const char* shaderSource, GLenum shaderType);
+bool readFile(char** filepath, char** buffer, bool verbose);
+GLuint loadShader(const char* shaderSource, GLenum shaderType, bool verbose);
 bool loadProgram(GLuint* program, GLuint* vertex_shader,
-  char** vshaderpath, GLuint* fragment_shader, char** fshaderpath);
+  char** vshaderpath, GLuint* fragment_shader, char** fshaderpath,
+  bool verbose);
 void getUniforms(const Uniform uniforms[UNIFORM_COUNT] ,
   GLuint uniformIds[UNIFORM_COUNT], GLuint* program);
 void updateUniforms(const Uniform uniforms[UNIFORM_COUNT],

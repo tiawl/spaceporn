@@ -1,8 +1,11 @@
 #ifndef XTELESKTOP_H
 #define XTELESKTOP_H
 
-#include "xshader.h"
 #include "context.h"
+#include "path.h"
+#include "pngtexture.h"
+#include "shader.h"
+#include "uniform.h"
 
 #define NAME "xtelesktop"
 #define VERSION "0.1"

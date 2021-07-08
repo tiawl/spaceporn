@@ -142,17 +142,7 @@ are initialized\n"));
   {
     fprintf(stderr, "Failed to create an OpenGL context\n");
 
-    VERB(verbose, printf("Freeing fshaderpath ...\n"));
-    free(fshaderpath);
-    VERB(verbose, printf("fshaderpath freed\n"));
-
-    VERB(verbose, printf("Freeing vshaderpath ...\n"));
-    free(vshaderpath);
-    VERB(verbose, printf("vshaderpath freed\n"));
-
-    VERB(verbose, printf("Freeing texturepath ...\n"));
-    free(texturepath);
-    VERB(verbose, printf("texturepath freed\n"));
+    freePaths(&fshaderpath, &vshaderpath, &texturepath, verbose);
 
     return EXIT_FAILURE;
   }
@@ -165,17 +155,7 @@ are initialized\n"));
   {
     fprintf(stderr, "glewInit() failed\n");
 
-    VERB(verbose, printf("Freeing fshaderpath ...\n"));
-    free(fshaderpath);
-    VERB(verbose, printf("fshaderpath freed\n"));
-
-    VERB(verbose, printf("Freeing vshaderpath ...\n"));
-    free(vshaderpath);
-    VERB(verbose, printf("vshaderpath freed\n"));
-
-    VERB(verbose, printf("Freeing texturepath ...\n"));
-    free(texturepath);
-    VERB(verbose, printf("texturepath freed\n"));
+    freePaths(&fshaderpath, &vshaderpath, &texturepath, verbose);
 
     VERB(verbose, printf("Detaching current rendering context ...\n"));
     glXMakeCurrent(builder.display, 0, 0);
@@ -229,17 +209,7 @@ window\n"));
   {
     fprintf(stderr, "Failed to create debug window\n");
 
-    VERB(verbose, printf("Freeing fshaderpath ...\n"));
-    free(fshaderpath);
-    VERB(verbose, printf("fshaderpath freed\n"));
-
-    VERB(verbose, printf("Freeing vshaderpath ...\n"));
-    free(vshaderpath);
-    VERB(verbose, printf("vshaderpath freed\n"));
-
-    VERB(verbose, printf("Freeing texturepath ...\n"));
-    free(texturepath);
-    VERB(verbose, printf("texturepath freed\n"));
+    freePaths(&fshaderpath, &vshaderpath, &texturepath, verbose);
 
     VERB(verbose, printf("Detaching current rendering context ...\n"));
     glXMakeCurrent(builder.display, 0, 0);
@@ -282,17 +252,7 @@ window\n"));
   {
     fprintf(stderr, "\n\tShader program failed to load\n\n");
 
-    VERB(verbose, printf("Freeing fshaderpath ...\n"));
-    free(fshaderpath);
-    VERB(verbose, printf("fshaderpath freed\n"));
-
-    VERB(verbose, printf("Freeing vshaderpath ...\n"));
-    free(vshaderpath);
-    VERB(verbose, printf("vshaderpath freed\n"));
-
-    VERB(verbose, printf("Freeing texturepath ...\n"));
-    free(texturepath);
-    VERB(verbose, printf("texturepath freed\n"));
+    freePaths(&fshaderpath, &vshaderpath, &texturepath, verbose);
 
     VERB(verbose, printf("Detaching current rendering context ...\n"));
     glXMakeCurrent(builder.display, 0, 0);
@@ -342,17 +302,7 @@ window\n"));
   {
     fprintf(stderr, "Failed to load PNG file %s\n", texturepath);
 
-    VERB(verbose, printf("Freeing fshaderpath ...\n"));
-    free(fshaderpath);
-    VERB(verbose, printf("fshaderpath freed\n"));
-
-    VERB(verbose, printf("Freeing vshaderpath ...\n"));
-    free(vshaderpath);
-    VERB(verbose, printf("vshaderpath freed\n"));
-
-    VERB(verbose, printf("Freeing texturepath ...\n"));
-    free(texturepath);
-    VERB(verbose, printf("texturepath freed\n"));
+    freePaths(&fshaderpath, &vshaderpath, &texturepath, verbose);
 
     VERB(verbose, printf("Deleting OpenGL program ...\n"));
     GL_CHECK(glDeleteProgram(program));
@@ -454,17 +404,7 @@ initialized\n"));
   GL_CHECK(glDisableVertexAttribArray(0));
   VERB(verbose, printf("Vertex attribute array disabled\n"));
 
-  VERB(verbose, printf("Freeing fshaderpath ...\n"));
-  free(fshaderpath);
-  VERB(verbose, printf("fshaderpath freed\n"));
-
-  VERB(verbose, printf("Freeing vshaderpath ...\n"));
-  free(vshaderpath);
-  VERB(verbose, printf("vshaderpath freed\n"));
-
-  VERB(verbose, printf("Freeing texturepath ...\n"));
-  free(texturepath);
-  VERB(verbose, printf("texturepath freed\n"));
+  freePaths(&fshaderpath, &vshaderpath, &texturepath, verbose);
 
   VERB(verbose, printf("Deleting vertex buffer object ...\n"));
   GL_CHECK(glDeleteBuffers(1, &vertexbuffer));

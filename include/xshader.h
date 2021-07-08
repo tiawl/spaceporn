@@ -29,7 +29,7 @@ typedef struct
   clock_t clock;
   GLint width;
   GLint height;
-  GLfloat pixels;
+  GLint pixels;
   GLboolean animations;
   GLboolean motion;
   GLboolean palettes;
@@ -40,7 +40,7 @@ typedef struct
 typedef struct
 {
   char* name;
-  void (*update)(GLint, UniformValues*);
+  void (*update)(GLint, UniformValues*, bool);
 } Uniform;
 
 void CheckOpenGLError(const char* stmt, const char* fname, int line);
@@ -51,9 +51,9 @@ void CheckOpenGLError(const char* stmt, const char* fname, int line);
 } while (0)
 
 /* custom functions used to set uniform values */
-void updateFloatUniforms(GLint uniformId, UniformValues* values);
-void updateBoolUniforms(GLint uniformId, UniformValues* values);
-void updateTexture(GLint uniformId, UniformValues* values);
+void updateFloatUniforms(GLint uniformId, UniformValues* values,
+  bool verbose);
+void updateBoolUniforms(GLint uniformId, UniformValues* values, bool verbose);
 
 bool initPaths(char** fshaderpath, char** vshaderpath, char** texturepath,
   bool verbose);
@@ -62,12 +62,12 @@ GLuint loadShader(const char* shaderSource, GLenum shaderType, bool verbose);
 bool loadProgram(GLuint* program, GLuint* vertex_shader,
   char** vshaderpath, GLuint* fragment_shader, char** fshaderpath,
   bool verbose);
-void getUniforms(const Uniform uniforms[UNIFORM_COUNT] ,
-  GLuint uniformIds[UNIFORM_COUNT], GLuint* program);
+void getUniforms(const Uniform uniforms[UNIFORM_COUNT],
+  GLuint uniformIds[UNIFORM_COUNT], GLuint* program, bool verbose);
 void updateUniforms(const Uniform uniforms[UNIFORM_COUNT],
-  GLuint uniformIds[UNIFORM_COUNT], UniformValues* values);
-void initVertices(GLuint* vertexbuffer, GLuint* vertexarray);
-void drawScreen();
+  GLuint uniformIds[UNIFORM_COUNT], UniformValues* values, bool verbose);
+void initVertices(GLuint* vertexbuffer, GLuint* vertexarray, bool verbose);
+void draw(bool verbose);
 
 void cleanup(png_structp* parser, png_infop* info, png_bytep** row_pointers,
   uint8_t** data, FILE** file, char const * const filename, bool verbose);

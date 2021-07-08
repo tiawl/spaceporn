@@ -15,21 +15,36 @@ void CheckOpenGLError(const char* stmt, const char* fname, int line)
                           Uniforms functions
 *************************************************************************/
 
-void updateFloatUniforms(GLint uniformId, UniformValues* values)
+void updateFloatUniforms(GLint uniformId, UniformValues* values, bool verbose)
 {
   values->time = ((double)(clock() - values->clock)) / CLOCKS_PER_SEC;
-  GLfloat ffloats[UNIFORM_FLOATS] =
+  GLfloat fflags[UNIFORM_FLOATS] =
   {
     values->width, values->height, values->xseed, values->yseed,
     values->time, values->pixels
   };
-  GL_CHECK(glUniform1fv(uniformId, UNIFORM_FLOATS, ffloats));
+
+  VERB(verbose, printf("    New fflags values: [%d, %d, %f, %f, %f, %d]\n",
+    values->width, values->height, fflags[2], fflags[3], fflags[4],
+    values->pixels));
+
+  VERB(verbose, printf("    Specifying value of fflags in current program \
+...\n"));
+  GL_CHECK(glUniform1fv(uniformId, UNIFORM_FLOATS, fflags));
+  VERB(verbose, printf("    Value of fflags specified in current program\n"));
 }
 
-void updateBoolUniforms(GLint uniformId, UniformValues* values)
+void updateBoolUniforms(GLint uniformId, UniformValues* values, bool verbose)
 {
+  VERB(verbose, printf("    New bflags values: [%s, %s, %s]\n",
+    values->animations ? "true" : "false", values->motion ? "true" : "false",
+    values->palettes ? "true" : "false"));
+
+  VERB(verbose, printf("    Specifying value of bflags in current program \
+...\n"));
   GL_CHECK(glUniform3i(uniformId, values->animations, values->motion,
     values->palettes));
+  VERB(verbose, printf("    Value of bflags specified in current program\n"));
 }
 
 /**************************************************************************/
@@ -291,10 +306,10 @@ bool loadProgram(GLuint* program, GLuint* vertex_shader,
   {
     fprintf(stderr, "Failed to read in vertex shader file\n");
 
-    VERB(verbose, printf("  Deleting current OpenGL program ...\n"));
+    VERB(verbose, printf("  Deleting OpenGL program ...\n"));
     GL_CHECK(glDeleteProgram(*program));
     *program = 0;
-    VERB(verbose, printf("  Current OpenGL program deleted\n"));
+    VERB(verbose, printf("  OpenGL program deleted\n"));
 
     return false;
   }
@@ -310,10 +325,10 @@ bool loadProgram(GLuint* program, GLuint* vertex_shader,
     free(vertex_file);
     VERB(verbose, printf("  Vertex file freed\n"));
 
-    VERB(verbose, printf("  Deleting current OpenGL program ...\n"));
+    VERB(verbose, printf("  Deleting OpenGL program ...\n"));
     GL_CHECK(glDeleteProgram(*program));
     *program = 0;
-    VERB(verbose, printf("  Current OpenGL program deleted\n"));
+    VERB(verbose, printf("  OpenGL program deleted\n"));
 
     return false;
   }
@@ -333,10 +348,10 @@ bool loadProgram(GLuint* program, GLuint* vertex_shader,
     free(fragment_file);
     VERB(verbose, printf("  Fragment file freed\n"));
 
-    VERB(verbose, printf("  Deleting current OpenGL program ...\n"));
+    VERB(verbose, printf("  Deleting OpenGL program ...\n"));
     GL_CHECK(glDeleteProgram(*program));
     *program = 0;
-    VERB(verbose, printf("  Current OpenGL program deleted\n"));
+    VERB(verbose, printf("  OpenGL program deleted\n"));
 
     return false;
   }
@@ -361,10 +376,10 @@ bool loadProgram(GLuint* program, GLuint* vertex_shader,
     *vertex_shader = 0;
     VERB(verbose, printf("  Vertex shader deleted\n"));
 
-    VERB(verbose, printf("  Deleting current OpenGL program ...\n"));
+    VERB(verbose, printf("  Deleting OpenGL program ...\n"));
     GL_CHECK(glDeleteProgram(*program));
     *program = 0;
-    VERB(verbose, printf("  Current OpenGL program deleted\n"));
+    VERB(verbose, printf("  OpenGL program deleted\n"));
 
     return false;
   }
@@ -422,19 +437,19 @@ bool loadProgram(GLuint* program, GLuint* vertex_shader,
     *fragment_shader = 0;
     VERB(verbose, printf("  Fragment shader deleted\n"));
 
-    VERB(verbose, printf("  Deleting current OpenGL program ...\n"));
+    VERB(verbose, printf("  Deleting OpenGL program ...\n"));
     GL_CHECK(glDeleteProgram(*program));
     *program = 0;
-    VERB(verbose, printf("  Current OpenGL program deleted\n"));
+    VERB(verbose, printf("  OpenGL program deleted\n"));
 
 
     return false;
   }
   VERB(verbose, printf("  OpenGL program linked\n"));
 
-  VERB(verbose, printf("  Checking current OpenGL program execution ...\n"));
+  VERB(verbose, printf("  Checking OpenGL program execution ...\n"));
   GL_CHECK(glValidateProgram(*program));
-  VERB(verbose, printf("  Current OpenGL program execution checked\n"));
+  VERB(verbose, printf("  OpenGL program execution checked\n"));
 
   VERB(verbose, printf("  Detaching vertex shader to OpenGL program ...\n"));
   GL_CHECK(glDetachShader(*program, *vertex_shader));
@@ -457,50 +472,87 @@ bool loadProgram(GLuint* program, GLuint* vertex_shader,
 }
 
 void getUniforms(const Uniform uniforms[UNIFORM_COUNT],
-  GLuint uniformIds[UNIFORM_COUNT], GLuint* program)
+  GLuint uniformIds[UNIFORM_COUNT], GLuint* program, bool verbose)
 {
   for (int i = 0; i < UNIFORM_COUNT; i++)
   {
-    GL_CHECK(uniformIds[i] = glGetUniformLocation(*program, uniforms[i].name));
+    VERB(verbose, printf("  Querying uniform location of %s\n",
+      uniforms[i].name));
+    GL_CHECK(uniformIds[i] =
+      glGetUniformLocation(*program, uniforms[i].name));
+    VERB(verbose, printf("  %s uniform located\n", uniforms[i].name));
   }
 }
 
 void updateUniforms(const Uniform uniforms[UNIFORM_COUNT],
-  GLuint uniformIds[UNIFORM_COUNT], UniformValues* values)
+  GLuint uniformIds[UNIFORM_COUNT], UniformValues* values, bool verbose)
 {
   for (int i = 0; i < UNIFORM_COUNT; i++)
   {
-    uniforms[i].update(uniformIds[i], values);
+    VERB(verbose, printf("  Updating %s ... \n", uniforms[i].name));
+    uniforms[i].update(uniformIds[i], values, verbose);
+    VERB(verbose, printf("  %s updated\n", uniforms[i].name));
   }
 }
 
-void initVertices(GLuint* vertexbuffer, GLuint* vertexarray)
+void initVertices(GLuint* vertexbuffer, GLuint* vertexarray, bool verbose)
 {
+  VERB(verbose, printf("  Generating vertex array object ...\n"));
   GL_CHECK(glGenVertexArrays(1, vertexarray));
-  GL_CHECK(glBindVertexArray(*vertexarray));
+  VERB(verbose, printf("  Vertex array object generated is %d\n",
+    *vertexarray));
 
-  static const GLfloat g_vertex_buffer_data[] = {
+  VERB(verbose, printf("  Binding vertex array object ...\n"));
+  GL_CHECK(glBindVertexArray(*vertexarray));
+  VERB(verbose, printf("  Vertex array object binded\n"));
+
+  static const GLfloat g_vertex_buffer_data[] =
+  {
     -1.0f, -1.0f,
     1.0f, -1.0f,
     -1.0f, 1.0f,
     1.0f, 1.0f
   };
 
+  VERB(verbose, printf("  Generating vertex buffer object ...\n"));
   GL_CHECK(glGenBuffers(1, vertexbuffer));
-  GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, *vertexbuffer));
-  GL_CHECK(glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data),
-               g_vertex_buffer_data, GL_STATIC_DRAW));
+  VERB(verbose, printf("  Vertex buffer object generated is %d\n",
+    *vertexbuffer));
 
+  VERB(verbose, printf("  Binding vertex buffer object ...\n"));
+  GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, *vertexbuffer));
+  VERB(verbose, printf("  Vertex buffer object binded\n"));
+
+  VERB(verbose, printf("  Initializing vertex buffer object's data store \
+...\n"));
+  GL_CHECK(glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data),
+    g_vertex_buffer_data, GL_STATIC_DRAW));
+  VERB(verbose, printf("  Vertex buffer object's data store initialized\n"));
+
+  VERB(verbose, printf("  Enabling vertex attribute array ...\n"));
   GL_CHECK(glEnableVertexAttribArray(0));
+  VERB(verbose, printf("  Vertex attribute array enabled\n"));
+
+  VERB(verbose, printf("  Defining array of vertex attribute data ...\n"));
   GL_CHECK(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, (void*)0));
+  VERB(verbose, printf("  Array of vertex attribute data defined\n"));
 }
 
-void drawScreen()
+void draw(bool verbose)
 {
-  GL_CHECK(glClearColor(0.0, 0.0, 0.0, 0.0));
+  VERB(verbose, printf("  Clearing depth buffer of the window and indicating \
+buffers enabled for color writing ...\n"));
   GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+  VERB(verbose, printf("  Depth buffer cleared and buffer enabled\n"));
 
+  VERB(verbose, printf("  Clearing color buffer of the window to black color \
+...\n"));
+  GL_CHECK(glClearColor(0.0, 0.0, 0.0, 0.0));
+  VERB(verbose, printf("  Color buffer cleared\n"));
+
+  VERB(verbose, printf("  Rendering primitives ...\n"));
   GL_CHECK(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
+  VERB(verbose, printf("  Primitives rendered\n"));
 }
 
 void cleanup(png_structp* parser, png_infop* info, png_bytep** row_pointers,
@@ -590,7 +642,7 @@ bool loadPng(GLuint* texture, char const* const filename, bool verbose)
   VERB(verbose, printf("  Searching libPNG error ...\n"));
   if (setjmp(png_jmpbuf(parser)))
   {
-    fprintf(stderr, "Routine problem: libPNG encounter an error\n");
+    fprintf(stderr, "Routine problem: libPNG encountered an error\n");
     cleanup(&parser, &info, &row_pointers, &data, &file, filename, verbose);
     fprintf(stderr, "Failed to load \"%s\"\n", filename);
     return false;

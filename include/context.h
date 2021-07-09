@@ -22,6 +22,7 @@ typedef struct
   Window window;
 #ifdef DEBUG
   Window debug_window;
+  XEvent event;
 #endif
   XWindowAttributes window_attribs;
   Colormap cmap;

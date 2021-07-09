@@ -48,52 +48,10 @@ are initialized\n"));
   if (!initContext(&builder, verbose))
   {
     fprintf(stderr, "Failed to create an OpenGL context\n");
-
     freePaths(&fshaderpath, &vshaderpath, &texturepath, verbose);
-
     return EXIT_FAILURE;
   }
   VERB(verbose, printf("OpenGL context created\n"));
-
-  VERB(verbose, printf("Initializing GLEW ...\n"));
-  glewExperimental = GL_TRUE;
-
-  if (glewInit())
-  {
-    fprintf(stderr, "glewInit() failed\n");
-    freePaths(&fshaderpath, &vshaderpath, &texturepath, verbose);
-    freeContext(&builder, verbose);
-
-    return EXIT_FAILURE;
-  }
-  VERB(verbose, printf("GLEW initialized\n"));
-
-  VERB(verbose, printf("Requesting X server to report exposure events for \
-current window ...\n"));
-  XSelectInput(builder.display, builder.window, ExposureMask);
-  VERB(verbose, printf("X server is now reporting exposure events for \
-current window\n"));
-
-  VERB(verbose, printf("Enabling transparency for current window ...\n"));
-  GL_CHECK(glEnable(GL_BLEND));
-  VERB(verbose, printf("Transparency enabled for current window\n"));
-
-  VERB(verbose, printf("Selecting transparency function for current \
-window ...\n"));
-  GL_CHECK(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
-  VERB(verbose, printf("Transparency function selected for current \
-window\n"));
-
-#if DEBUG
-  if (!initDebugWindow(&builder, verbose))
-  {
-    freePaths(&fshaderpath, &vshaderpath, &texturepath, verbose);
-    freeContext(&builder, verbose);
-    return EXIT_FAILURE;
-  }
-
-  XEvent event;
-#endif
 
   VERB(verbose, printf("Loading OpenGL program ...\n"));
   if (!loadProgram(&program, &vertex_shader, &vshaderpath, &fragment_shader,
@@ -102,7 +60,6 @@ window\n"));
     fprintf(stderr, "\n\tShader program failed to load\n\n");
     freePaths(&fshaderpath, &vshaderpath, &texturepath, verbose);
     freeDebugContext(&builder, verbose);
-
     return EXIT_FAILURE;
   }
   VERB(verbose, printf("OpenGL program loaded\n"));
@@ -131,7 +88,6 @@ window\n"));
     VERB(verbose, printf("OpenGL program deleted\n"));
 
     freeDebugContext(&builder, verbose);
-
     return EXIT_FAILURE;
   }
   VERB(verbose, printf("PNG texture loaded\n"));
@@ -176,9 +132,9 @@ initialized\n"));
 #if DEBUG
 #define ESCAPE 0x09
     VERB(verbose, printf("Searching for key press event ...\n"));
-    if (XCheckMaskEvent(builder.display, KeyPressMask, &event))
+    if (XCheckMaskEvent(builder.display, KeyPressMask, &builder.event))
     {
-      if (event.xkey.keycode == ESCAPE)
+      if (builder.event.xkey.keycode == ESCAPE)
       {
         VERB(verbose, printf("Escape key press event occured\n"));
         break;

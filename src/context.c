@@ -457,5 +457,40 @@ newly created window ...\n"));
   VERB(verbose, printf("  Current rendering context attached to the newly \
 created window\n"));
 
+  VERB(verbose, printf("Requesting X server to report exposure events for \
+current window ...\n"));
+  XSelectInput(builder->display, builder->window, ExposureMask);
+  VERB(verbose, printf("X server is now reporting exposure events for \
+current window\n"));
+
+  VERB(verbose, printf("Initializing GLEW ...\n"));
+  glewExperimental = GL_TRUE;
+
+  if (glewInit())
+  {
+    fprintf(stderr, "glewInit() failed\n");
+    freeContext(builder, verbose);
+    return false;
+  }
+  VERB(verbose, printf("GLEW initialized\n"));
+
+  VERB(verbose, printf("Enabling transparency for current window ...\n"));
+  GL_CHECK(glEnable(GL_BLEND));
+  VERB(verbose, printf("Transparency enabled for current window\n"));
+
+  VERB(verbose, printf("Selecting transparency function for current \
+window ...\n"));
+  GL_CHECK(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
+  VERB(verbose, printf("Transparency function selected for current \
+window\n"));
+
+#if DEBUG
+  if (!initDebugWindow(builder, verbose))
+  {
+    freeContext(builder, verbose);
+    return EXIT_FAILURE;
+  }
+#endif
+
   return true;
 }

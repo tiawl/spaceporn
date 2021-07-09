@@ -20,6 +20,9 @@ typedef struct
   Display *display;
   GLXContext context;
   Window window;
+#ifdef DEBUG
+  Window debug_window;
+#endif
   XWindowAttributes window_attribs;
   Colormap cmap;
 } ContextBuilder;
@@ -27,6 +30,13 @@ typedef struct
 bool isExtensionSupported(const char* extList, const char* extension,
   bool verbose);
 int contextErrorHandler(Display* display, XErrorEvent* event);
+bool queryingGlxVersion(ContextBuilder* builder, bool verbose);
+bool searchingBestFbc(ContextBuilder* builder, XVisualInfo** vi,
+  GLXFBConfig* bestFbc, bool verbose);
+bool initWindow(ContextBuilder* builder, XVisualInfo** vi, bool verbose);
+bool initDebugWindow(ContextBuilder* builder, bool verbose);
+void freeContext(ContextBuilder* builder, bool verbose);
+void freeDebugContext(ContextBuilder* builder, bool verbose);
 bool initContext(ContextBuilder* builder, bool verbose);
 
 #endif

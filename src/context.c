@@ -56,35 +56,8 @@ int contextErrorHandler(Display* display, XErrorEvent* event)
   return 0;
 }
 
-bool initContext(ContextBuilder* builder, bool verbose)
+bool queryingGlxVersion(ContextBuilder* builder, bool verbose)
 {
-  VERB(verbose, printf("  Opening X Display ...\n"));
-  builder->display = XOpenDisplay(NULL);
-
-  if (!builder->display)
-  {
-    fprintf(stderr, "Failed to open X display\n");
-    return false;
-  }
-  VERB(verbose, printf("  X Display opened\n"));
-
-  // Get a matching FB config
-  int visual_attribs[] =
-    {
-      GLX_X_RENDERABLE    , True,
-      GLX_DRAWABLE_TYPE   , GLX_WINDOW_BIT,
-      GLX_RENDER_TYPE     , GLX_RGBA_BIT,
-      GLX_X_VISUAL_TYPE   , GLX_TRUE_COLOR,
-      GLX_RED_SIZE        , 8,
-      GLX_GREEN_SIZE      , 8,
-      GLX_BLUE_SIZE       , 8,
-      GLX_ALPHA_SIZE      , 8,
-      GLX_DEPTH_SIZE      , 24,
-      GLX_STENCIL_SIZE    , 8,
-      GLX_DOUBLEBUFFER    , True,
-      None
-    };
-
   int glx_major;
   int glx_minor;
 
@@ -102,6 +75,29 @@ bool initContext(ContextBuilder* builder, bool verbose)
     return false;
   }
   VERB(verbose, printf("  Valid GLX version: %d.%d\n", glx_major, glx_minor));
+
+  return true;
+}
+
+bool searchingBestFbc(ContextBuilder* builder, XVisualInfo** vi,
+  GLXFBConfig* bestFbc, bool verbose)
+{
+  // Get a matching FB config
+  int visual_attribs[] =
+  {
+    GLX_X_RENDERABLE    , True,
+    GLX_DRAWABLE_TYPE   , GLX_WINDOW_BIT,
+    GLX_RENDER_TYPE     , GLX_RGBA_BIT,
+    GLX_X_VISUAL_TYPE   , GLX_TRUE_COLOR,
+    GLX_RED_SIZE        , 8,
+    GLX_GREEN_SIZE      , 8,
+    GLX_BLUE_SIZE       , 8,
+    GLX_ALPHA_SIZE      , 8,
+    GLX_DEPTH_SIZE      , 24,
+    GLX_STENCIL_SIZE    , 8,
+    GLX_DOUBLEBUFFER    , True,
+    None
+  };
 
   int fbcount;
   VERB(verbose, printf("  Querying GLX framebuffer config ...\n"));
@@ -132,8 +128,8 @@ bool initContext(ContextBuilder* builder, bool verbose)
 samples per pixel ... %d/%d\n", i, fbcount));
     VERB(verbose, printf("  Querying visual from GLX framebuffer config \
 ... \n"));
-    XVisualInfo* vi = glXGetVisualFromFBConfig(builder->display, fbc[i]);
-    if (vi)
+    *vi = glXGetVisualFromFBConfig(builder->display, fbc[i]);
+    if (*vi)
     {
       VERB(verbose, printf("  Corresponding visual found\n"));
 
@@ -172,11 +168,11 @@ is: %d\n", worst_fbc));
       }
     }
     VERB(verbose, printf("  Freeing current visual ...\n"));
-    XFree(vi);
+    XFree(*vi);
     VERB(verbose, printf("  Current visual freed\n"));
   }
 
-  GLXFBConfig bestFbc = fbc[best_fbc];
+  *bestFbc = fbc[best_fbc];
   VERB(verbose, printf("  Searching GLX framebuffer visual with the most \
 samples per pixel ... %d/%d\n", fbcount, fbcount));
   VERB(verbose, printf("  Best GLX framebuffer config index: %d\n",
@@ -188,12 +184,17 @@ samples per pixel ... %d/%d\n", fbcount, fbcount));
 
   VERB(verbose, printf("  Querying visual from best GLX framebuffer config \
 ... \n"));
-  XVisualInfo* vi = glXGetVisualFromFBConfig(builder->display, bestFbc);
+  *vi = glXGetVisualFromFBConfig(builder->display, *bestFbc);
   VERB(verbose, printf("  Corresponding visual found\n"));
 
+  return true;
+}
+
+bool initWindow(ContextBuilder* builder, XVisualInfo** vi, bool verbose)
+{
   VERB(verbose, printf("  Searching X root window from visual's screen \
 ...\n"));
-  Window root = RootWindow(builder->display, vi->screen);
+  Window root = RootWindow(builder->display, (*vi)->screen);
   VERB(verbose, printf("  X root window: 0x%lx\n", root));
 
   XSetWindowAttributes swa;
@@ -201,7 +202,7 @@ samples per pixel ... %d/%d\n", fbcount, fbcount));
   VERB(verbose, printf("  Creating color map from visual and root window \
 ...\n"));
   swa.colormap = builder->cmap = XCreateColormap(builder->display, root,
-    vi->visual, AllocNone);
+    (*vi)->visual, AllocNone);
   VERB(verbose, printf("  Color map created\n"));
 
   swa.background_pixmap = None;
@@ -218,7 +219,7 @@ samples per pixel ... %d/%d\n", fbcount, fbcount));
   builder->window = XCreateWindow(builder->display, root,
     builder->window_attribs.x, builder->window_attribs.y,
     builder->window_attribs.width, builder->window_attribs.height, 0,
-    vi->depth, InputOutput, vi->visual,
+    (*vi)->depth, InputOutput, (*vi)->visual,
     CWBorderPixel | CWColormap | CWEventMask, &swa);
 
   if (!builder->window)
@@ -226,7 +227,7 @@ samples per pixel ... %d/%d\n", fbcount, fbcount));
     fprintf(stderr, "Failed to create window\n");
 
     VERB(verbose, printf("  Freeing current visual ...\n"));
-    XFree(vi);
+    XFree(*vi);
     VERB(verbose, printf("  Current visual freed\n"));
 
     VERB(verbose, printf("  Closing Display ...\n"));
@@ -275,12 +276,108 @@ _NET_WM_WINDOW_TYPE_DESKTOP stored\n"));
   VERB(verbose, printf("  Window manager hints freed\n"));
 
   VERB(verbose, printf("  Freeing current visual ...\n"));
-  XFree(vi);
+  XFree(*vi);
   VERB(verbose, printf("  Current visual freed\n"));
 
   VERB(verbose, printf("  Mapping the newly created window ...\n"));
   XMapWindow(builder->display, builder->window);
   VERB(verbose, printf("  Newly created window mapped\n"));
+
+  return true;
+}
+
+bool initDebugWindow(ContextBuilder* builder, bool verbose)
+{
+  VERB(verbose, printf("Creating a debug window to catch key press events \
+...\n"));
+  builder->debug_window = XCreateSimpleWindow(builder->display,
+    RootWindow(builder->display, DefaultScreen(builder->display)), 0, 0, 1, 1,
+    1, BlackPixel(builder->display, DefaultScreen(builder->display)),
+    WhitePixel(builder->display, DefaultScreen(builder->display)));
+
+  if (!builder->debug_window)
+  {
+    fprintf(stderr, "Failed to create debug window\n");
+    return false;
+  }
+  VERB(verbose, printf("Debug window created\n"));
+
+  VERB(verbose, printf("Requesting X server to report key press events for \
+debug window ...\n"));
+  XSelectInput(builder->display, builder->debug_window, KeyPressMask);
+  VERB(verbose, printf("X server is now reporting key press events for debug \
+window\n"));
+
+  VERB(verbose, printf("Mapping debug window ...\n"));
+  XMapWindow(builder->display, builder->debug_window);
+  VERB(verbose, printf("Debug window mapped\n"));
+
+  return true;
+}
+
+void freeContext(ContextBuilder* builder, bool verbose)
+{
+  VERB(verbose, printf("Detaching current rendering context ...\n"));
+  glXMakeCurrent(builder->display, 0, 0);
+  VERB(verbose, printf("Current rendering context detached\n"));
+
+  VERB(verbose, printf("Destroying detached rendering context ...\n"));
+  glXDestroyContext(builder->display, builder->context);
+  VERB(verbose, printf("Detached rendering context destroyed\n"));
+
+  VERB(verbose, printf("Destroying current window ...\n"));
+  XDestroyWindow(builder->display, builder->window);
+  VERB(verbose, printf("Current window destroyed\n"));
+
+  VERB(verbose, printf("Freeing colormap ...\n"));
+  XFreeColormap(builder->display, builder->cmap);
+  VERB(verbose, printf("Colormap freed\n"));
+
+  VERB(verbose, printf("Closing Display ...\n"));
+  XCloseDisplay(builder->display);
+  VERB(verbose, printf("Display closed\n"));
+}
+
+void freeDebugContext(ContextBuilder* builder, bool verbose)
+{
+#ifdef DEBUG
+  VERB(verbose, printf("Destroying debug window ...\n"));
+  XDestroyWindow(builder->display, builder->debug_window);
+  VERB(verbose, printf("Debug window destroyed\n"));
+#endif
+
+  freeContext(builder, verbose);
+}
+
+bool initContext(ContextBuilder* builder, bool verbose)
+{
+  VERB(verbose, printf("  Opening X Display ...\n"));
+  builder->display = XOpenDisplay(NULL);
+
+  if (!builder->display)
+  {
+    fprintf(stderr, "Failed to open X display\n");
+    return false;
+  }
+  VERB(verbose, printf("  X Display opened\n"));
+
+  if (!queryingGlxVersion(builder, verbose))
+  {
+    return false;
+  }
+
+  GLXFBConfig bestFbc;
+  XVisualInfo* vi;
+
+  if (!searchingBestFbc(builder, &vi, &bestFbc, verbose))
+  {
+    return false;
+  }
+
+  if (!initWindow(builder, &vi, verbose))
+  {
+    return false;
+  }
 
   VERB(verbose, printf("  Querying the default screen's GLX extensions list \
 ...\n"));

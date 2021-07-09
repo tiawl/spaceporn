@@ -41,11 +41,11 @@ texture paths\n");
   VERB(verbose, printf("Fragment shader, vertex shader and texture paths \
 are initialized\n"));
 
-  ContextBuilder builder;
-  builder.context = 0;
+  Context context;
+  context.glx_context = 0;
 
   VERB(verbose, printf("Creating OpenGL context ...\n"));
-  if (!initContext(&builder, verbose))
+  if (!initContext(&context, verbose))
   {
     fprintf(stderr, "Failed to create an OpenGL context\n");
     freePaths(&fshaderpath, &vshaderpath, &texturepath, verbose);
@@ -59,7 +59,7 @@ are initialized\n"));
   {
     fprintf(stderr, "\n\tShader program failed to load\n\n");
     freePaths(&fshaderpath, &vshaderpath, &texturepath, verbose);
-    freeDebugContext(&builder, verbose);
+    freeDebugContext(&context, verbose);
     return EXIT_FAILURE;
   }
   VERB(verbose, printf("OpenGL program loaded\n"));
@@ -73,8 +73,8 @@ are initialized\n"));
 
   GLuint uniformIds[UNIFORM_COUNT];
 
-  uniform_values.width = builder.window_attribs.width;
-  uniform_values.height = builder.window_attribs.height;
+  uniform_values.width = context.window_attribs.width;
+  uniform_values.height = context.window_attribs.height;
 
   VERB(verbose, printf("Loading PNG texture ...\n"));
   GLuint texture;
@@ -87,7 +87,7 @@ are initialized\n"));
     GL_CHECK(glDeleteProgram(program));
     VERB(verbose, printf("OpenGL program deleted\n"));
 
-    freeDebugContext(&builder, verbose);
+    freeDebugContext(&context, verbose);
     return EXIT_FAILURE;
   }
   VERB(verbose, printf("PNG texture loaded\n"));
@@ -102,8 +102,8 @@ rendering state...\n"));
   VERB(verbose, printf("OpenGL program installed\n"));
 
   VERB(verbose, printf("Specifying viewport ...\n"));
-  GL_CHECK(glViewport(0, 0, builder.window_attribs.width,
-    builder.window_attribs.height));
+  GL_CHECK(glViewport(0, 0, context.window_attribs.width,
+    context.window_attribs.height));
   VERB(verbose, printf("Viewport specified\n"));
 
   GLuint vertexarray;
@@ -126,15 +126,15 @@ initialized\n"));
     VERB(verbose, printf("Window drawing done\n"));
 
     VERB(verbose, printf("Swapping front and back buffers ...\n"));
-    glXSwapBuffers(builder.display, builder.window);
+    glXSwapBuffers(context.display, context.window);
     VERB(verbose, printf("Front and back buffers swapped\n"));
 
 #if DEBUG
 #define ESCAPE 0x09
     VERB(verbose, printf("Searching for key press event ...\n"));
-    if (XCheckMaskEvent(builder.display, KeyPressMask, &builder.event))
+    if (XCheckMaskEvent(context.display, KeyPressMask, &context.event))
     {
-      if (builder.event.xkey.keycode == ESCAPE)
+      if (context.event.xkey.keycode == ESCAPE)
       {
         VERB(verbose, printf("Escape key press event occured\n"));
         break;
@@ -161,7 +161,7 @@ initialized\n"));
   GL_CHECK(glDeleteProgram(program));
   VERB(verbose, printf("OpenGL program deleted\n"));
 
-  freeDebugContext(&builder, verbose);
+  freeDebugContext(&context, verbose);
 
   return EXIT_SUCCESS;
 }

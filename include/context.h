@@ -18,7 +18,7 @@ typedef GLXContext (*glXCreateContextAttribsARBProc)(Display*, GLXFBConfig,
 typedef struct
 {
   Display *display;
-  GLXContext context;
+  GLXContext glx_context;
   Window window;
 #ifdef DEBUG
   Window debug_window;
@@ -26,18 +26,18 @@ typedef struct
 #endif
   XWindowAttributes window_attribs;
   Colormap cmap;
-} ContextBuilder;
+} Context;
 
 bool isExtensionSupported(const char* extList, const char* extension,
   bool verbose);
 int contextErrorHandler(Display* display, XErrorEvent* event);
-bool queryingGlxVersion(ContextBuilder* builder, bool verbose);
-bool searchingBestFbc(ContextBuilder* builder, XVisualInfo** vi,
+bool queryingGlxVersion(Context* context, bool verbose);
+bool searchingBestFbc(Context* context, XVisualInfo** vi,
   GLXFBConfig* bestFbc, bool verbose);
-bool initWindow(ContextBuilder* builder, XVisualInfo** vi, bool verbose);
-bool initDebugWindow(ContextBuilder* builder, bool verbose);
-void freeContext(ContextBuilder* builder, bool verbose);
-void freeDebugContext(ContextBuilder* builder, bool verbose);
-bool initContext(ContextBuilder* builder, bool verbose);
+bool initWindow(Context* context, XVisualInfo** vi, bool verbose);
+bool initDebugWindow(Context* context, bool verbose);
+void freeContext(Context* context, bool verbose);
+void freeDebugContext(Context* context, bool verbose);
+bool initContext(Context* context, bool verbose);
 
 #endif

@@ -56,20 +56,20 @@ int contextErrorHandler(Display* display, XErrorEvent* event)
   return 0;
 }
 
-bool queryingGlxVersion(ContextBuilder* builder, bool verbose)
+bool queryingGlxVersion(Context* context, bool verbose)
 {
   int glx_major;
   int glx_minor;
 
   // FBConfigs were added in GLX version 1.3.
   VERB(verbose, printf("  Querying GLX version ...\n"));
-  if (!glXQueryVersion(builder->display, &glx_major, &glx_minor) ||
+  if (!glXQueryVersion(context->display, &glx_major, &glx_minor) ||
     ((glx_major == 1) && (glx_minor < 3)) || (glx_major < 1))
   {
     fprintf(stderr, "Invalid GLX version\n");
 
     VERB(verbose, printf("  Closing display ...\n"));
-    XCloseDisplay(builder->display);
+    XCloseDisplay(context->display);
     VERB(verbose, printf("  Display closed\n"));
 
     return false;
@@ -79,7 +79,7 @@ bool queryingGlxVersion(ContextBuilder* builder, bool verbose)
   return true;
 }
 
-bool searchingBestFbc(ContextBuilder* builder, XVisualInfo** vi,
+bool searchingBestFbc(Context* context, XVisualInfo** vi,
   GLXFBConfig* bestFbc, bool verbose)
 {
   // Get a matching FB config
@@ -101,15 +101,15 @@ bool searchingBestFbc(ContextBuilder* builder, XVisualInfo** vi,
 
   int fbcount;
   VERB(verbose, printf("  Querying GLX framebuffer config ...\n"));
-  GLXFBConfig* fbc = glXChooseFBConfig(builder->display,
-    DefaultScreen(builder->display), visual_attribs, &fbcount);
+  GLXFBConfig* fbc = glXChooseFBConfig(context->display,
+    DefaultScreen(context->display), visual_attribs, &fbcount);
 
   if (!fbc)
   {
     fprintf(stderr, "Failed to found a GLX framebuffer config\n");
 
     VERB(verbose, printf("  Closing display ...\n"));
-    XCloseDisplay(builder->display);
+    XCloseDisplay(context->display);
     VERB(verbose, printf("  Display closed\n"));
 
     return false;
@@ -128,7 +128,7 @@ bool searchingBestFbc(ContextBuilder* builder, XVisualInfo** vi,
 samples per pixel ... %d/%d\n", i, fbcount));
     VERB(verbose, printf("  Querying visual from GLX framebuffer config \
 ... \n"));
-    *vi = glXGetVisualFromFBConfig(builder->display, fbc[i]);
+    *vi = glXGetVisualFromFBConfig(context->display, fbc[i]);
     if (*vi)
     {
       VERB(verbose, printf("  Corresponding visual found\n"));
@@ -136,13 +136,13 @@ samples per pixel ... %d/%d\n", i, fbcount));
       int samp_buf, samples;
 
       VERB(verbose, printf("  Querying GLX_SAMPLE_BUFFERS attribute ...\n"));
-      glXGetFBConfigAttrib(builder->display, fbc[i],
+      glXGetFBConfigAttrib(context->display, fbc[i],
         GLX_SAMPLE_BUFFERS, &samp_buf);
       VERB(verbose, printf("  Current visual GLX_SAMPLE_BUFFERS value: %d\n",
         samp_buf));
 
       VERB(verbose, printf("  Querying GLX_SAMPLES attribute ...\n"));
-      glXGetFBConfigAttrib(builder->display, fbc[i], GLX_SAMPLES, &samples);
+      glXGetFBConfigAttrib(context->display, fbc[i], GLX_SAMPLES, &samples);
       VERB(verbose, printf("  Current visual GLX_SAMPLES value: %d\n",
         samples));
 
@@ -184,24 +184,24 @@ samples per pixel ... %d/%d\n", fbcount, fbcount));
 
   VERB(verbose, printf("  Querying visual from best GLX framebuffer config \
 ... \n"));
-  *vi = glXGetVisualFromFBConfig(builder->display, *bestFbc);
+  *vi = glXGetVisualFromFBConfig(context->display, *bestFbc);
   VERB(verbose, printf("  Corresponding visual found\n"));
 
   return true;
 }
 
-bool initWindow(ContextBuilder* builder, XVisualInfo** vi, bool verbose)
+bool initWindow(Context* context, XVisualInfo** vi, bool verbose)
 {
   VERB(verbose, printf("  Searching X root window from visual's screen \
 ...\n"));
-  Window root = RootWindow(builder->display, (*vi)->screen);
+  Window root = RootWindow(context->display, (*vi)->screen);
   VERB(verbose, printf("  X root window: 0x%lx\n", root));
 
   XSetWindowAttributes swa;
 
   VERB(verbose, printf("  Creating color map from visual and root window \
 ...\n"));
-  swa.colormap = builder->cmap = XCreateColormap(builder->display, root,
+  swa.colormap = context->cmap = XCreateColormap(context->display, root,
     (*vi)->visual, AllocNone);
   VERB(verbose, printf("  Color map created\n"));
 
@@ -211,18 +211,18 @@ bool initWindow(ContextBuilder* builder, XVisualInfo** vi, bool verbose)
   VERB(verbose, printf("  XSetWindowAttributes structure initialized\n"));
 
   VERB(verbose, printf("  Querying root window attributes ...\n"));
-  XGetWindowAttributes(builder->display, root, &(builder->window_attribs));
+  XGetWindowAttributes(context->display, root, &(context->window_attribs));
   VERB(verbose, printf("  Root window dimensions are: %ux%u\n",
-    builder->window_attribs.width, builder->window_attribs.height));
+    context->window_attribs.width, context->window_attribs.height));
 
   VERB(verbose, printf("  Creating new window ...\n"));
-  builder->window = XCreateWindow(builder->display, root,
-    builder->window_attribs.x, builder->window_attribs.y,
-    builder->window_attribs.width, builder->window_attribs.height, 0,
+  context->window = XCreateWindow(context->display, root,
+    context->window_attribs.x, context->window_attribs.y,
+    context->window_attribs.width, context->window_attribs.height, 0,
     (*vi)->depth, InputOutput, (*vi)->visual,
     CWBorderPixel | CWColormap | CWEventMask, &swa);
 
-  if (!builder->window)
+  if (!context->window)
   {
     fprintf(stderr, "Failed to create window\n");
 
@@ -231,12 +231,12 @@ bool initWindow(ContextBuilder* builder, XVisualInfo** vi, bool verbose)
     VERB(verbose, printf("  Current visual freed\n"));
 
     VERB(verbose, printf("  Closing Display ...\n"));
-    XCloseDisplay(builder->display);
+    XCloseDisplay(context->display);
     VERB(verbose, printf("  Display closed\n"));
 
     return false;
   }
-  VERB(verbose, printf("  Window created: 0x%lx\n", builder->window));
+  VERB(verbose, printf("  Window created: 0x%lx\n", context->window));
 
   VERB(verbose, printf("  Allocating window manager hints ...\n"));
   XWMHints* wmHint = XAllocWMHints();
@@ -248,25 +248,25 @@ bool initWindow(ContextBuilder* builder, XVisualInfo** vi, bool verbose)
   VERB(verbose, printf("  Window manager hints declared\n"));
 
   VERB(verbose, printf("  Setting window manager properties ...\n"));
-  XSetWMProperties(builder->display, builder->window, NULL, NULL,
+  XSetWMProperties(context->display, context->window, NULL, NULL,
     NULL, 0, NULL, wmHint, NULL);
   VERB(verbose, printf("  Window manager properties set\n"));
 
   VERB(verbose, printf("  Querying _NET_WM_WINDOW_TYPE atom identifier \
 ...\n"));
-  Atom xa = XInternAtom(builder->display, "_NET_WM_WINDOW_TYPE", False);
+  Atom xa = XInternAtom(context->display, "_NET_WM_WINDOW_TYPE", False);
   VERB(verbose, printf("  _NET_WM_WINDOW_TYPE atom identifier found\n"));
 
   VERB(verbose, printf("  Querying _NET_WM_WINDOW_TYPE_DESKTOP atom \
 identifier ...\n"));
   Atom prop =
-    XInternAtom(builder->display, "_NET_WM_WINDOW_TYPE_DESKTOP", False);
+    XInternAtom(context->display, "_NET_WM_WINDOW_TYPE_DESKTOP", False);
   VERB(verbose, printf("  _NET_WM_WINDOW_TYPE_DESKTOP atom identifier \
 found\n"));
 
   VERB(verbose, printf("  Discarding _NET_WM_WINDOW_TYPE property value and \
 storing the new _NET_WM_WINDOW_TYPE_DESKTOP ...\n"));
-  XChangeProperty(builder->display, builder->window, xa, XA_ATOM, 32,
+  XChangeProperty(context->display, context->window, xa, XA_ATOM, 32,
     PropModeReplace, (unsigned char *)&prop, 1);
   VERB(verbose, printf("  _NET_WM_WINDOW_TYPE discarded and \
 _NET_WM_WINDOW_TYPE_DESKTOP stored\n"));
@@ -280,22 +280,22 @@ _NET_WM_WINDOW_TYPE_DESKTOP stored\n"));
   VERB(verbose, printf("  Current visual freed\n"));
 
   VERB(verbose, printf("  Mapping the newly created window ...\n"));
-  XMapWindow(builder->display, builder->window);
+  XMapWindow(context->display, context->window);
   VERB(verbose, printf("  Newly created window mapped\n"));
 
   return true;
 }
 
-bool initDebugWindow(ContextBuilder* builder, bool verbose)
+bool initDebugWindow(Context* context, bool verbose)
 {
   VERB(verbose, printf("Creating a debug window to catch key press events \
 ...\n"));
-  builder->debug_window = XCreateSimpleWindow(builder->display,
-    RootWindow(builder->display, DefaultScreen(builder->display)), 0, 0, 1, 1,
-    1, BlackPixel(builder->display, DefaultScreen(builder->display)),
-    WhitePixel(builder->display, DefaultScreen(builder->display)));
+  context->debug_window = XCreateSimpleWindow(context->display,
+    RootWindow(context->display, DefaultScreen(context->display)), 0, 0, 1, 1,
+    1, BlackPixel(context->display, DefaultScreen(context->display)),
+    WhitePixel(context->display, DefaultScreen(context->display)));
 
-  if (!builder->debug_window)
+  if (!context->debug_window)
   {
     fprintf(stderr, "Failed to create debug window\n");
     return false;
@@ -304,64 +304,64 @@ bool initDebugWindow(ContextBuilder* builder, bool verbose)
 
   VERB(verbose, printf("Requesting X server to report key press events for \
 debug window ...\n"));
-  XSelectInput(builder->display, builder->debug_window, KeyPressMask);
+  XSelectInput(context->display, context->debug_window, KeyPressMask);
   VERB(verbose, printf("X server is now reporting key press events for debug \
 window\n"));
 
   VERB(verbose, printf("Mapping debug window ...\n"));
-  XMapWindow(builder->display, builder->debug_window);
+  XMapWindow(context->display, context->debug_window);
   VERB(verbose, printf("Debug window mapped\n"));
 
   return true;
 }
 
-void freeContext(ContextBuilder* builder, bool verbose)
+void freeContext(Context* context, bool verbose)
 {
   VERB(verbose, printf("Detaching current rendering context ...\n"));
-  glXMakeCurrent(builder->display, 0, 0);
+  glXMakeCurrent(context->display, 0, 0);
   VERB(verbose, printf("Current rendering context detached\n"));
 
   VERB(verbose, printf("Destroying detached rendering context ...\n"));
-  glXDestroyContext(builder->display, builder->context);
+  glXDestroyContext(context->display, context->glx_context);
   VERB(verbose, printf("Detached rendering context destroyed\n"));
 
   VERB(verbose, printf("Destroying current window ...\n"));
-  XDestroyWindow(builder->display, builder->window);
+  XDestroyWindow(context->display, context->window);
   VERB(verbose, printf("Current window destroyed\n"));
 
   VERB(verbose, printf("Freeing colormap ...\n"));
-  XFreeColormap(builder->display, builder->cmap);
+  XFreeColormap(context->display, context->cmap);
   VERB(verbose, printf("Colormap freed\n"));
 
   VERB(verbose, printf("Closing Display ...\n"));
-  XCloseDisplay(builder->display);
+  XCloseDisplay(context->display);
   VERB(verbose, printf("Display closed\n"));
 }
 
-void freeDebugContext(ContextBuilder* builder, bool verbose)
+void freeDebugContext(Context* context, bool verbose)
 {
 #ifdef DEBUG
   VERB(verbose, printf("Destroying debug window ...\n"));
-  XDestroyWindow(builder->display, builder->debug_window);
+  XDestroyWindow(context->display, context->debug_window);
   VERB(verbose, printf("Debug window destroyed\n"));
 #endif
 
-  freeContext(builder, verbose);
+  freeContext(context, verbose);
 }
 
-bool initContext(ContextBuilder* builder, bool verbose)
+bool initContext(Context* context, bool verbose)
 {
   VERB(verbose, printf("  Opening X Display ...\n"));
-  builder->display = XOpenDisplay(NULL);
+  context->display = XOpenDisplay(NULL);
 
-  if (!builder->display)
+  if (!context->display)
   {
     fprintf(stderr, "Failed to open X display\n");
     return false;
   }
   VERB(verbose, printf("  X Display opened\n"));
 
-  if (!queryingGlxVersion(builder, verbose))
+  if (!queryingGlxVersion(context, verbose))
   {
     return false;
   }
@@ -369,20 +369,20 @@ bool initContext(ContextBuilder* builder, bool verbose)
   GLXFBConfig bestFbc;
   XVisualInfo* vi;
 
-  if (!searchingBestFbc(builder, &vi, &bestFbc, verbose))
+  if (!searchingBestFbc(context, &vi, &bestFbc, verbose))
   {
     return false;
   }
 
-  if (!initWindow(builder, &vi, verbose))
+  if (!initWindow(context, &vi, verbose))
   {
     return false;
   }
 
   VERB(verbose, printf("  Querying the default screen's GLX extensions list \
 ...\n"));
-  const char* glxExts = glXQueryExtensionsString(builder->display,
-    DefaultScreen(builder->display));
+  const char* glxExts = glXQueryExtensionsString(context->display,
+    DefaultScreen(context->display));
   VERB(verbose, printf("  Default screen's GLX extensions list is: %s\n",
     glxExts));
 
@@ -407,7 +407,7 @@ function found\n"));
     fprintf(stderr, "glXCreateContextAttribsARB() not found\n");
 
     VERB(verbose, printf("  Closing Display ...\n"));
-    XCloseDisplay(builder->display);
+    XCloseDisplay(context->display);
     VERB(verbose, printf("  Display closed\n"));
 
     return false;
@@ -422,7 +422,7 @@ function found\n"));
 
     VERB(verbose, printf("  Initializing the context to the initial state \
 defined by the OpenGL specification ...\n"));
-    builder->context = glXCreateContextAttribsARB(builder->display, bestFbc,
+    context->glx_context = glXCreateContextAttribsARB(context->display, bestFbc,
       0, True, context_attribs);
     VERB(verbose, printf("  Context initialized to the initial state defined \
 by the OpenGL specification\n"));
@@ -430,7 +430,7 @@ by the OpenGL specification\n"));
 
   // Sync to ensure any errors generated are processed.
   VERB(verbose, printf("  Synchronizing generated errors ... \n"));
-  XSync(builder->display, False);
+  XSync(context->display, False);
   VERB(verbose, printf("  Generated errors synchronized\n"));
 
   VERB(verbose, printf("  Restoring original error handler ...\n"));
@@ -439,12 +439,12 @@ by the OpenGL specification\n"));
 
   VERB(verbose, printf("  Testing error generation during context \
 creation ...\n"));
-  if (contextErrorOccurred || !builder->context)
+  if (contextErrorOccurred || !context->glx_context)
   {
     fprintf(stderr, "An error occured during creation context\n");
 
     VERB(verbose, printf("  Closing Display ...\n"));
-    XCloseDisplay(builder->display);
+    XCloseDisplay(context->display);
     VERB(verbose, printf("  Display closed\n"));
 
     return false;
@@ -453,13 +453,13 @@ creation ...\n"));
 
   VERB(verbose, printf("  Attaching the current rendering context to the \
 newly created window ...\n"));
-  glXMakeCurrent(builder->display, builder->window, builder->context);
+  glXMakeCurrent(context->display, context->window, context->glx_context);
   VERB(verbose, printf("  Current rendering context attached to the newly \
 created window\n"));
 
   VERB(verbose, printf("Requesting X server to report exposure events for \
 current window ...\n"));
-  XSelectInput(builder->display, builder->window, ExposureMask);
+  XSelectInput(context->display, context->window, ExposureMask);
   VERB(verbose, printf("X server is now reporting exposure events for \
 current window\n"));
 
@@ -469,7 +469,7 @@ current window\n"));
   if (glewInit())
   {
     fprintf(stderr, "glewInit() failed\n");
-    freeContext(builder, verbose);
+    freeContext(context, verbose);
     return false;
   }
   VERB(verbose, printf("GLEW initialized\n"));
@@ -485,9 +485,9 @@ window ...\n"));
 window\n"));
 
 #if DEBUG
-  if (!initDebugWindow(builder, verbose))
+  if (!initDebugWindow(context, verbose))
   {
-    freeContext(builder, verbose);
+    freeContext(context, verbose);
     return EXIT_FAILURE;
   }
 #endif

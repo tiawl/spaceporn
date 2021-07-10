@@ -10,7 +10,7 @@
 #define DEFAULT_DELAY 30000
 
 void help();
-bool parsing_options(bool* verbose, int* delay,
-  UniformValues* uniform_values, int* roadmap, int* argc, char** argv);
+bool parsing_options(bool* verbose, int* delay, UniformValues* uniform_values,
+  enum Roadmap* roadmap, int* argc, char** argv);
 
 #endif

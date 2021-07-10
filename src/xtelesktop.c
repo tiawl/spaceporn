@@ -6,7 +6,7 @@ int main(int argc, char** argv)
 
   bool verbose = false;
   int delay = DEFAULT_DELAY;
-  int roadmap = EXIT_SUCCESS_RM;
+  enum Roadmap roadmap = EXIT_SUCCESS_RM;
 
   UniformValues uniform_values;
   uniform_values.time = 0.0f;
@@ -33,9 +33,9 @@ int main(int argc, char** argv)
 
   VERB(verbose, printf("Initializing fragment shader, vertex shader and \
 texture paths ...\n"));
-  if (!initPaths(&shaders, &texturepath, verbose))
+  if (!initPaths(&shaders, &texturepath, verbose, roadmap))
   {
-    fprintf(stderr, "Failed to initialize fragment shader, vertex shader and \
+    fprintf(stderr, "Failed to initialize fragment shader, vertex shader or \
 texture paths\n");
     return EXIT_FAILURE;
   }
@@ -43,20 +43,21 @@ texture paths\n");
 are initialized\n"));
 
   Context context;
+  context.display = NULL;
 
   VERB(verbose, printf("Creating GLX context ...\n"));
-  if (!initContext(&context, verbose))
+  if (!initContext(&context, verbose, roadmap))
   {
-    fprintf(stderr, "Failed to create an GLX context\n");
+    fprintf(stderr, "Failed to create a GLX context\n");
     freePaths(&shaders, &texturepath, verbose);
     return EXIT_FAILURE;
   }
   VERB(verbose, printf("GLX context created\n"));
 
   VERB(verbose, printf("Loading OpenGL program ...\n"));
-  if (!loadProgram(&context, &shaders, verbose))
+  if (!loadProgram(&context, &shaders, verbose, roadmap))
   {
-    fprintf(stderr, "\n\tShader program failed to load\n\n");
+    fprintf(stderr, "OpenGL program failed to load\n");
     freePaths(&shaders, &texturepath, verbose);
     freeDebugContext(&context, verbose);
     return EXIT_FAILURE;
@@ -77,9 +78,9 @@ are initialized\n"));
 
   VERB(verbose, printf("Loading PNG texture ...\n"));
   GLuint texture;
-  if (!loadPng(&texture, texturepath, verbose))
+  if (!loadPng(&texture, texturepath, verbose, roadmap))
   {
-    fprintf(stderr, "Failed to load PNG file %s\n", texturepath);
+    fprintf(stderr, "Failed to load PNG file \"%s\"\n", texturepath);
     freePaths(&shaders, &texturepath, verbose);
 
     VERB(verbose, printf("Deleting OpenGL program ...\n"));
@@ -137,6 +138,11 @@ initialized\n"));
     VERB(verbose, printf("Sleeping for %d ms ...\n", delay));
     usleep(delay);
     VERB(verbose, printf("Ready to loop again\n"));
+
+    if (roadmap == BREAK_SUCCESS_RM)
+    {
+      break;
+    }
   }
 
   freePaths(&shaders, &texturepath, verbose);

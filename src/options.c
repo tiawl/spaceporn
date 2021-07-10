@@ -20,7 +20,7 @@ void help()
 }
 
 bool parsing_options(bool* verbose, int* delay, UniformValues* uniform_values,
-  int* roadmap, int* argc, char** argv)
+  enum Roadmap* roadmap, int* argc, char** argv)
 {
   for (int i = 1; i < *argc; i++)
   {
@@ -58,7 +58,7 @@ bool parsing_options(bool* verbose, int* delay, UniformValues* uniform_values,
       if (++i < *argc)
       {
         *roadmap = atoi(argv[i]);
-        if ((*roadmap < EXIT_SUCCESS_RM) || (*roadmap > EXIT_FAILURE_RM))
+        if ((*roadmap < EXIT_SUCCESS_RM) || (*roadmap >= RM_NB))
         {
           help();
           return false;

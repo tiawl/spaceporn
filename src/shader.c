@@ -1,11 +1,17 @@
 #include "shader.h"
 
-bool readFile(char** filepath, char** buffer, bool verbose)
+bool readFile(char** filepath, char** buffer, bool verbose,
+  enum Roadmap roadmap)
 {
   long length;
 
   VERB(verbose, printf("    Opening \"%s\" ...\n", *filepath));
-  FILE* f = fopen(*filepath, "r");
+  FILE* f = NULL;
+
+  if (roadmap != FOPEN_FAILED_RM)
+  {
+    f = fopen(*filepath, "r");
+  }
 
   if (f)
   {
@@ -27,7 +33,11 @@ beginning ...\n"));
 
     VERB(verbose, printf("    Allocating memory for reading file buffer \
 ...\n"));
-    *buffer = malloc(length + 1);
+    if (roadmap != BUFFER_MALLOC_FAILED_RM)
+    {
+      *buffer = malloc(length + 1);
+    }
+
     if (*buffer)
     {
       VERB(verbose, printf("    Memory for reading file buffer allocated\n"));
@@ -37,7 +47,7 @@ beginning ...\n"));
       VERB(verbose, printf("    Buffer filled\n"))
 
     } else {
-      fprintf(stderr, "Buffer malloc() failed\n");
+      fprintf(stderr, "    Buffer malloc() failed\n");
       return false;
     }
 
@@ -47,7 +57,7 @@ beginning ...\n"));
 
     (*buffer)[length] = '\0'; // fread does not 0 terminate strings
   } else {
-    fprintf(stderr, "Failed to read inside \"%s\": %s\n", *filepath,
+    fprintf(stderr, "    Failed to read inside \"%s\": %s\n", *filepath,
       strerror(errno));
     return false;
   }
@@ -55,11 +65,23 @@ beginning ...\n"));
   return true;
 }
 
-bool readVertexShaderFile(Context* context, Shaders* shaders, bool verbose)
+bool readVertexShaderFile(Context* context, Shaders* shaders, bool verbose,
+  enum Roadmap roadmap)
 {
-  if (!readFile(&(shaders->vshaderpath), &(shaders->vertex_file), verbose))
+  if (roadmap == FOPEN_VERTEX_FILE_FAILED_RM)
   {
-    fprintf(stderr, "Failed to read in vertex shader file\n");
+    roadmap = FOPEN_FAILED_RM;
+  }
+
+  if (roadmap == BUFFER_VERTEX_FILE_MALLOC_FAILED_RM)
+  {
+    roadmap = BUFFER_MALLOC_FAILED_RM;
+  }
+
+  if (!readFile(&(shaders->vshaderpath), &(shaders->vertex_file), verbose,
+    roadmap))
+  {
+    fprintf(stderr, "  Failed to read in vertex shader file\n");
 
     VERB(verbose, printf("  Deleting OpenGL program ...\n"));
     GL_CHECK(glDeleteProgram(context->program));
@@ -71,11 +93,23 @@ bool readVertexShaderFile(Context* context, Shaders* shaders, bool verbose)
   return true;
 }
 
-bool readFragmentShaderFile(Context* context, Shaders* shaders, bool verbose)
+bool readFragmentShaderFile(Context* context, Shaders* shaders, bool verbose,
+  enum Roadmap roadmap)
 {
-  if (!readFile(&(shaders->fshaderpath), &(shaders->fragment_file), verbose))
+  if (roadmap == FOPEN_FRAGMENT_FILE_FAILED_RM)
   {
-    fprintf(stderr, "Failed to read in fragment shader file\n");
+    roadmap = FOPEN_FAILED_RM;
+  }
+
+  if (roadmap == BUFFER_FRAGMENT_FILE_MALLOC_FAILED_RM)
+  {
+    roadmap = BUFFER_MALLOC_FAILED_RM;
+  }
+
+  if (!readFile(&(shaders->fshaderpath), &(shaders->fragment_file), verbose,
+    roadmap))
+  {
+    fprintf(stderr, "  Failed to read in fragment shader file\n");
 
     freeShaders(shaders, verbose);
 
@@ -156,13 +190,18 @@ GLuint loadShader(const char* shaderSource, GLenum shaderType, bool verbose)
   return shader;
 }
 
-bool loadVertexShader(Context* context, Shaders* shaders, bool verbose)
+bool loadVertexShader(Context* context, Shaders* shaders, bool verbose,
+  enum Roadmap roadmap)
 {
-  shaders->vertex_shader =
-    loadShader(shaders->vertex_file, GL_VERTEX_SHADER, verbose);
+  if (roadmap != LOAD_VERTEX_SHADER_FAILED_RM)
+  {
+    shaders->vertex_shader =
+      loadShader(shaders->vertex_file, GL_VERTEX_SHADER, verbose);
+  }
+
   if (shaders->vertex_shader == 0)
   {
-    fprintf(stderr, "Failed to load vertex shader\n");
+    fprintf(stderr, "  Failed to load vertex shader\n");
 
     freeShaders(shaders, verbose);
 
@@ -176,13 +215,18 @@ bool loadVertexShader(Context* context, Shaders* shaders, bool verbose)
   return true;
 }
 
-bool loadFragmentShader(Context* context, Shaders* shaders, bool verbose)
+bool loadFragmentShader(Context* context, Shaders* shaders, bool verbose,
+  enum Roadmap roadmap)
 {
-  shaders->fragment_shader =
-    loadShader(shaders->fragment_file, GL_FRAGMENT_SHADER, verbose);
+  if (roadmap != LOAD_FRAGMENT_SHADER_FAILED_RM)
+  {
+    shaders->fragment_shader =
+      loadShader(shaders->fragment_file, GL_FRAGMENT_SHADER, verbose);
+  }
+
   if (shaders->fragment_shader == 0)
   {
-    fprintf(stderr, "Failed to load fragment shader\n");
+    fprintf(stderr, "  Failed to load fragment shader\n");
 
     freeShaders(shaders, verbose);
     shaders->vertex_shader = 0;
@@ -199,28 +243,28 @@ bool loadFragmentShader(Context* context, Shaders* shaders, bool verbose)
 
 void freeShaders(Shaders* shaders, bool verbose)
 {
-  if (!shaders->vertex_file)
+  if (shaders->vertex_file)
   {
     VERB(verbose, printf("  Freeing vertex file ...\n"));
     free(shaders->vertex_file);
     VERB(verbose, printf("  Vertex file freed\n"));
   }
 
-  if (!shaders->fragment_file)
+  if (shaders->fragment_file)
   {
     VERB(verbose, printf("  Freeing fragment file ...\n"));
     free(shaders->fragment_file);
     VERB(verbose, printf("  Fragment file freed\n"));
   }
 
-  if (!shaders->vertex_shader)
+  if (shaders->vertex_shader)
   {
     VERB(verbose, printf("  Deleting vertex shader ...\n"));
     GL_CHECK(glDeleteShader(shaders->vertex_shader));
     VERB(verbose, printf("  Vertex shader deleted\n"));
   }
 
-  if (!shaders->fragment_shader)
+  if (shaders->fragment_shader)
   {
     VERB(verbose, printf("  Deleting fragment shader ...\n"));
     GL_CHECK(glDeleteShader(shaders->fragment_shader));
@@ -228,30 +272,43 @@ void freeShaders(Shaders* shaders, bool verbose)
   }
 }
 
-bool checkingLogProgram(Context* context, Shaders* shaders, bool verbose)
+bool checkingLogProgram(Context* context, Shaders* shaders, bool verbose,
+  enum Roadmap roadmap)
 {
+  VERB(verbose, printf("  Checking linking status of OpenGL program ...\n"));
+
   GLint programSuccess = GL_TRUE;
   GL_CHECK(glGetProgramiv(context->program, GL_LINK_STATUS, &programSuccess));
+
+  if (roadmap == LINKING_PROGRAM_FAILED_RM)
+  {
+    programSuccess = GL_FALSE;
+  }
+
   if (programSuccess != GL_TRUE)
   {
-    fprintf(stderr, "Unable to link OpenGL program \n");
+    fprintf(stderr, "  Unable to link OpenGL program \n");
 
-    GLint maxLength = 0;
+    if (roadmap != LINKING_PROGRAM_FAILED_RM)
+    {
+      GLint maxLength = 0;
 
-    VERB(verbose, printf("  Querying log length of OpenGL program ...\n"));
-    GL_CHECK(glGetProgramiv(context->program, GL_INFO_LOG_LENGTH,
-      &maxLength));
-    VERB(verbose, printf("  Log length of OpenGL program is %d\n",
-      maxLength));
+      VERB(verbose, printf("  Querying log length of OpenGL program \
+...\n"));
+      GL_CHECK(glGetProgramiv(context->program, GL_INFO_LOG_LENGTH,
+        &maxLength));
+      VERB(verbose, printf("  Log length of OpenGL program is %d\n",
+        maxLength));
 
-    char message[maxLength];
+      char message[maxLength];
 
-    VERB(verbose, printf("  Querying log info of OpenGL program ...\n"));
-    GL_CHECK(glGetShaderInfoLog(context->program, maxLength, &maxLength,
-      message));
-    VERB(verbose, printf("  Log info of OpenGL program found\n"));
+      VERB(verbose, printf("  Querying log info of OpenGL program ...\n"));
+      GL_CHECK(glGetShaderInfoLog(context->program, maxLength, &maxLength,
+        message));
+      VERB(verbose, printf("  Log info of OpenGL program found\n"));
 
-    fprintf(stderr, "%s\n", &(message[0]));
+      fprintf(stderr, "%s\n", &(message[0]));
+    }
 
     freeShaders(shaders, verbose);
     shaders->vertex_shader = 0;
@@ -267,35 +324,36 @@ bool checkingLogProgram(Context* context, Shaders* shaders, bool verbose)
   return true;
 }
 
-bool loadProgram(Context* context, Shaders* shaders, bool verbose)
+bool loadProgram(Context* context, Shaders* shaders, bool verbose,
+  enum Roadmap roadmap)
 {
   VERB(verbose, printf("  Creating OpenGL Program ...\n"));
   GL_CHECK(context->program = glCreateProgram());
   VERB(verbose, printf("  OpenGL Program %d created\n", context->program));
 
   VERB(verbose, printf("  Reading in vertex shader file ...\n"));
-  if (!readVertexShaderFile(context, shaders, verbose))
+  if (!readVertexShaderFile(context, shaders, verbose, roadmap))
   {
     return false;
   }
   VERB(verbose, printf("  Vertex shader file read\n"));
 
   VERB(verbose, printf("  Reading in fragment shader file ...\n"));
-  if (!readFragmentShaderFile(context, shaders, verbose))
+  if (!readFragmentShaderFile(context, shaders, verbose, roadmap))
   {
     return false;
   }
   VERB(verbose, printf("  Fragment shader file read\n"));
 
   VERB(verbose, printf("  Loading vertex shader ...\n"));
-  if (!loadVertexShader(context, shaders, verbose))
+  if (!loadVertexShader(context, shaders, verbose, roadmap))
   {
     return false;
   }
   VERB(verbose, printf("  Vertex shader loaded\n"));
 
   VERB(verbose, printf("  Loading fragment shader ...\n"));
-  if (!loadFragmentShader(context, shaders, verbose))
+  if (!loadFragmentShader(context, shaders, verbose, roadmap))
   {
     return false;
   }
@@ -312,9 +370,9 @@ bool loadProgram(Context* context, Shaders* shaders, bool verbose)
 
   VERB(verbose, printf("  Linking OpenGL program ...\n"));
   GL_CHECK(glLinkProgram(context->program));
+  VERB(verbose, printf("  OpenGL program probably linked\n"));
 
-  VERB(verbose, printf("  Checking linking status of OpenGL program ...\n"));
-  if (!checkingLogProgram(context, shaders, verbose))
+  if (!checkingLogProgram(context, shaders, verbose, roadmap))
   {
     return false;
   }

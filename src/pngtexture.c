@@ -5,9 +5,9 @@ void cleanup(png_structp* parser, png_infop* info, png_bytep** row_pointers,
 {
   if(*parser)
   {
-    VERB(verbose, printf("  Freeing information about PNG file ...\n"));
+    VERB(verbose, printf("  Destroying png_read_struct ...\n"));
     png_destroy_read_struct(parser, *info ? info : 0, 0);
-    VERB(verbose, printf("  Information freed\n"));
+    VERB(verbose, printf("  png_read_struct destroyed \n"));
   }
 
   if(*row_pointers)
@@ -32,54 +32,63 @@ void cleanup(png_structp* parser, png_infop* info, png_bytep** row_pointers,
   }
 }
 
-bool loadPng(GLuint* texture, char const* const filename, bool verbose)
+bool loadPng(GLuint* texture, char const* const filename, bool verbose,
+  enum Roadmap roadmap)
 {
-  FILE* file = 0;
-  uint8_t* data = 0;
+  FILE* file = NULL;
+  uint8_t* data = NULL;
   png_structp parser = 0;
   png_infop info = 0;
-  png_bytep* row_pointers = 0;
+  png_bytep* row_pointers = NULL;
 
   png_uint_32 w, h;
   int bit_depth;
   int color_type;
 
-  if (!filename)
+  if (!filename || (roadmap == NO_PNG_FILENAME_RM))
   {
-    fprintf(stderr, "One or more loadPng() pointers arguments are null\n");
-    cleanup(&parser, &info, &row_pointers, &data, &file, filename, verbose);
-    fprintf(stderr, "Failed to load PNG file\n");
+    fprintf(stderr, "  PNG filename is null\n");
     return false;
   }
 
   VERB(verbose, printf("  Opening PNG file \"%s\"...\n", filename));
-  file = fopen(filename, "rb");
+  if (roadmap != FOPEN_PNG_FILE_FAILED_RM)
+  {
+    file = fopen(filename, "rb");
+  }
+
   if (!file)
   {
-    fprintf(stderr, "Failed to open \"%s\"\n", filename);
+    fprintf(stderr, "  Failed to open \"%s\"\n", filename);
     cleanup(&parser, &info, &row_pointers, &data, &file, filename, verbose);
     return false;
   }
   VERB(verbose, printf("  PNG file opened\n"));
 
   VERB(verbose, printf("  Creating structure for reading PNG file ...\n"));
-  parser = png_create_read_struct(PNG_LIBPNG_VER_STRING, 0, 0, 0);
+  if (roadmap != PNGCREATEREADSTRUCT_FAILED_RM)
+  {
+    parser = png_create_read_struct(PNG_LIBPNG_VER_STRING, 0, 0, 0);
+  }
+
   if (!parser)
   {
-    fprintf(stderr, "png_create_read_struct() failed\n");
+    fprintf(stderr, "  png_create_read_struct() failed\n");
     cleanup(&parser, &info, &row_pointers, &data, &file, filename, verbose);
-    fprintf(stderr, "Failed to load \"%s\"\n", filename);
     return false;
   }
   VERB(verbose, printf("  Structure for reading PNG file created\n"));
 
   VERB(verbose, printf("  Creating PNG info structure ...\n"));
-  info = png_create_info_struct(parser);
+  if (roadmap != PNGCREATEINFOSTRUCT_FAILED_RM)
+  {
+    info = png_create_info_struct(parser);
+  }
+
   if (!info)
   {
-    fprintf(stderr, "png_create_info_struct() failed\n");
+    fprintf(stderr, "  png_create_info_struct() failed\n");
     cleanup(&parser, &info, &row_pointers, &data, &file, filename, verbose);
-    fprintf(stderr, "Failed to load \"%s\"\n", filename);
     return false;
   }
   VERB(verbose, printf("  PNG info structure created\n"));
@@ -89,7 +98,6 @@ bool loadPng(GLuint* texture, char const* const filename, bool verbose)
   {
     fprintf(stderr, "Routine problem: libPNG encountered an error\n");
     cleanup(&parser, &info, &row_pointers, &data, &file, filename, verbose);
-    fprintf(stderr, "Failed to load \"%s\"\n", filename);
     return false;
   }
   VERB(verbose, printf("  No error found\n"));
@@ -113,7 +121,6 @@ structure ...\n"));
     fprintf(stderr, "PNG images with dimensions that are not power of two \
 or smaller than 8 failed to load in OpenGL\n");
     cleanup(&parser, &info, &row_pointers, &data, &file, filename, verbose);
-    fprintf(stderr, "Failed to load \"%s\"\n", filename);
     return false;
   }
   VERB(verbose, printf("  Valid PNG images dimensions\n"));
@@ -163,7 +170,6 @@ done\n"));
   {
     fprintf(stderr, "data malloc() failed\n");
     cleanup(&parser, &info, &row_pointers, &data, &file, filename, verbose);
-    fprintf(stderr, "Failed to load \"%s\"\n", filename);
     return false;
   }
   VERB(verbose, printf("  Memory allocated for data\n"));
@@ -174,7 +180,6 @@ done\n"));
   {
     fprintf(stderr, "row_pointers malloc() failed\n");
     cleanup(&parser, &info, &row_pointers, &data, &file, filename, verbose);
-    fprintf(stderr, "Failed to load \"%s\"\n", filename);
     return false;
   }
   VERB(verbose, printf("  Memory allocated for row_pointers\n"));

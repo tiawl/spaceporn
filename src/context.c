@@ -136,11 +136,12 @@ samples per pixel ... %d/%d\n", i, fbcount));
 
       int samp_buf, samples;
 
-      VERB(verbose, printf("    Querying GLX_SAMPLE_BUFFERS attribute ...\n"));
+      VERB(verbose, printf("    Querying GLX_SAMPLE_BUFFERS attribute \
+...\n"));
       glXGetFBConfigAttrib(context->display, fbc[i],
         GLX_SAMPLE_BUFFERS, &samp_buf);
-      VERB(verbose, printf("    Current visual GLX_SAMPLE_BUFFERS value: %d\n",
-        samp_buf));
+      VERB(verbose, printf("    Current visual GLX_SAMPLE_BUFFERS \
+value: %d\n", samp_buf));
 
       VERB(verbose, printf("    Querying GLX_SAMPLES attribute ...\n"));
       glXGetFBConfigAttrib(context->display, fbc[i], GLX_SAMPLES, &samples);
@@ -149,7 +150,8 @@ samples per pixel ... %d/%d\n", i, fbcount));
 
       if ((best_fbc < 0) || (samp_buf && (samples > best_num_samp)))
       {
-        VERB(verbose, printf("    Setting best GLX framebuffer config ...\n"));
+        VERB(verbose, printf("    Setting best GLX framebuffer config \
+...\n"));
         best_fbc = i;
         best_num_samp = samples;
         VERB(verbose, printf("    Current best GLX framebuffer config index \
@@ -159,7 +161,8 @@ is: %d\n", best_fbc));
       }
       if ((worst_fbc < 0) || (!samp_buf || (samples < worst_num_samp)))
       {
-        VERB(verbose, printf("    Setting worst GLX framebuffer config ...\n"));
+        VERB(verbose, printf("    Setting worst GLX framebuffer config \
+...\n"));
         worst_fbc = i;
         worst_num_samp = samples;
         VERB(verbose, printf("    Current worst GLX framebuffer config index \

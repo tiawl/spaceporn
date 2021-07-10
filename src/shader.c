@@ -55,6 +55,80 @@ beginning ...\n"));
   return true;
 }
 
+bool readVertexShaderFile(Context* context, Shaders* shaders, bool verbose)
+{
+  if (!readFile(&(shaders->vshaderpath), &(shaders->vertex_file), verbose))
+  {
+    fprintf(stderr, "Failed to read in vertex shader file\n");
+
+    VERB(verbose, printf("  Deleting OpenGL program ...\n"));
+    GL_CHECK(glDeleteProgram(context->program));
+    context->program = 0;
+    VERB(verbose, printf("  OpenGL program deleted\n"));
+
+    return false;
+  }
+  return true;
+}
+
+bool readFragmentShaderFile(Context* context, Shaders* shaders, bool verbose)
+{
+  if (!readFile(&(shaders->fshaderpath), &(shaders->fragment_file), verbose))
+  {
+    fprintf(stderr, "Failed to read in fragment shader file\n");
+
+    freeShaders(shaders, verbose);
+
+    VERB(verbose, printf("  Deleting OpenGL program ...\n"));
+    GL_CHECK(glDeleteProgram(context->program));
+    context->program = 0;
+
+    VERB(verbose, printf("  OpenGL program deleted\n"));
+
+    return false;
+  }
+  return true;
+}
+
+void checkingLogShader(GLuint* shader, GLenum shaderType, bool verbose)
+{
+  GLint shaderCompiled = GL_FALSE;
+  GL_CHECK(glGetShaderiv(*shader, GL_COMPILE_STATUS, &shaderCompiled));
+  if (shaderCompiled != GL_TRUE)
+  {
+    fprintf(stderr, "Unable to compile %s shader\n",
+      shaderType == GL_FRAGMENT_SHADER ? "Fragment" : "Vertex");
+
+    GLint maxLength = 0;
+
+    VERB(verbose, printf("    Querying log length of %s shader ...\n",
+      shaderType == GL_FRAGMENT_SHADER ? "fragment" : "vertex"));
+    GL_CHECK(glGetShaderiv(*shader, GL_INFO_LOG_LENGTH, &maxLength));
+    VERB(verbose, printf("    Log length of %s shader is %d\n",
+      shaderType == GL_FRAGMENT_SHADER ? "fragment" : "vertex", maxLength));
+
+    char message[maxLength];
+
+    VERB(verbose, printf("    Querying log info of %s shader ...\n",
+      shaderType == GL_FRAGMENT_SHADER ? "fragment" : "vertex"));
+    GL_CHECK(glGetShaderInfoLog(*shader, maxLength, &maxLength, message));
+    VERB(verbose, printf("    Log info of %s shader found\n",
+      shaderType == GL_FRAGMENT_SHADER ? "fragment" : "vertex"));
+
+    fprintf(stderr, "%s\n", &(message[0]));
+
+    VERB(verbose, printf("    Deleting %s shader ...\n",
+      shaderType == GL_FRAGMENT_SHADER ? "fragment" : "vertex"));
+    GL_CHECK(glDeleteShader(*shader));
+    *shader = 0;
+    VERB(verbose, printf("    %s shader deleted\n",
+      shaderType == GL_FRAGMENT_SHADER ? "Fragment" : "Vertex"));
+  } else {
+    VERB(verbose, printf("    %s shader compiled\n",
+      shaderType == GL_FRAGMENT_SHADER ? "Fragment" : "Vertex"));
+  }
+}
+
 GLuint loadShader(const char* shaderSource, GLenum shaderType, bool verbose)
 {
   GLuint shader;
@@ -75,156 +149,89 @@ GLuint loadShader(const char* shaderSource, GLenum shaderType, bool verbose)
     shaderType == GL_FRAGMENT_SHADER ? "fragment" : "vertex"));
   GL_CHECK(glCompileShader(shader));
 
-  GLint shaderCompiled = GL_FALSE;
-
   VERB(verbose, printf("    Checking compile status of %s shader ...\n",
     shaderType == GL_FRAGMENT_SHADER ? "fragment" : "vertex"));
-  GL_CHECK(glGetShaderiv(shader, GL_COMPILE_STATUS, &shaderCompiled));
-  if (shaderCompiled != GL_TRUE)
-  {
-    fprintf(stderr, "Unable to compile %s shader\n",
-      shaderType == GL_FRAGMENT_SHADER ? "Fragment" : "Vertex");
-
-    GLint maxLength = 0;
-
-    VERB(verbose, printf("    Querying log length of %s shader ...\n",
-      shaderType == GL_FRAGMENT_SHADER ? "fragment" : "vertex"));
-    GL_CHECK(glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &maxLength));
-    VERB(verbose, printf("    Log length of %s shader is %d\n",
-      shaderType == GL_FRAGMENT_SHADER ? "fragment" : "vertex", maxLength));
-
-    char message[maxLength];
-
-    VERB(verbose, printf("    Querying log info of %s shader ...\n",
-      shaderType == GL_FRAGMENT_SHADER ? "fragment" : "vertex"));
-    GL_CHECK(glGetShaderInfoLog(shader, maxLength, &maxLength, message));
-    VERB(verbose, printf("    Log info of %s shader found\n",
-      shaderType == GL_FRAGMENT_SHADER ? "fragment" : "vertex"));
-
-    fprintf(stderr, "%s\n", &(message[0]));
-
-    VERB(verbose, printf("    Deleting %s shader ...\n",
-      shaderType == GL_FRAGMENT_SHADER ? "fragment" : "vertex"));
-    GL_CHECK(glDeleteShader(shader));
-    shader = 0;
-    VERB(verbose, printf("    %s shader deleted\n",
-      shaderType == GL_FRAGMENT_SHADER ? "Fragment" : "Vertex"));
-  } else {
-    VERB(verbose, printf("    %s shader compiled\n",
-      shaderType == GL_FRAGMENT_SHADER ? "Fragment" : "Vertex"));
-  }
+  checkingLogShader(&shader, shaderType, verbose);
 
   return shader;
 }
 
-bool loadProgram(GLuint* program, GLuint* vertex_shader,
-  char** vshaderpath, GLuint* fragment_shader, char** fshaderpath,
-  bool verbose)
+bool loadVertexShader(Context* context, Shaders* shaders, bool verbose)
 {
-  VERB(verbose, printf("  Creating OpenGL Program ...\n"));
-  GL_CHECK(*program = glCreateProgram());
-  VERB(verbose, printf("  OpenGL Program %d created\n", *program));
-
-  VERB(verbose, printf("  Reading in vertex shader file ...\n"));
-  char* vertex_file = 0;
-  if (!readFile(vshaderpath, &vertex_file, verbose))
-  {
-    fprintf(stderr, "Failed to read in vertex shader file\n");
-
-    VERB(verbose, printf("  Deleting OpenGL program ...\n"));
-    GL_CHECK(glDeleteProgram(*program));
-    *program = 0;
-    VERB(verbose, printf("  OpenGL program deleted\n"));
-
-    return false;
-  }
-  VERB(verbose, printf("  Vertex shader file read\n"));
-
-  VERB(verbose, printf("  Reading in fragment shader file ...\n"));
-  char* fragment_file = 0;
-  if (!readFile(fshaderpath, &fragment_file, verbose))
-  {
-    fprintf(stderr, "Failed to read in fragment shader file\n");
-
-    VERB(verbose, printf("  Freeing vertex file ...\n"));
-    free(vertex_file);
-    VERB(verbose, printf("  Vertex file freed\n"));
-
-    VERB(verbose, printf("  Deleting OpenGL program ...\n"));
-    GL_CHECK(glDeleteProgram(*program));
-    *program = 0;
-    VERB(verbose, printf("  OpenGL program deleted\n"));
-
-    return false;
-  }
-  VERB(verbose, printf("  Fragment shader file read\n"));
-
-  VERB(verbose, printf("  Loading vertex shader ...\n"));
-  *vertex_shader = loadShader(vertex_file, GL_VERTEX_SHADER, verbose);
-  if (*vertex_shader == 0)
+  shaders->vertex_shader =
+    loadShader(shaders->vertex_file, GL_VERTEX_SHADER, verbose);
+  if (shaders->vertex_shader == 0)
   {
     fprintf(stderr, "Failed to load vertex shader\n");
 
-    VERB(verbose, printf("  Freeing vertex file ...\n"));
-    free(vertex_file);
-    VERB(verbose, printf("  Vertex file freed\n"));
-
-    VERB(verbose, printf("  Freeing fragment file ...\n"));
-    free(fragment_file);
-    VERB(verbose, printf("  Fragment file freed\n"));
+    freeShaders(shaders, verbose);
 
     VERB(verbose, printf("  Deleting OpenGL program ...\n"));
-    GL_CHECK(glDeleteProgram(*program));
-    *program = 0;
+    GL_CHECK(glDeleteProgram(context->program));
+    context->program = 0;
     VERB(verbose, printf("  OpenGL program deleted\n"));
 
     return false;
   }
-  VERB(verbose, printf("  Vertex shader loaded\n"));
+  return true;
+}
 
-  VERB(verbose, printf("  Loading fragment shader ...\n"));
-  *fragment_shader = loadShader(fragment_file, GL_FRAGMENT_SHADER, verbose);
-  if (*fragment_shader == 0)
+bool loadFragmentShader(Context* context, Shaders* shaders, bool verbose)
+{
+  shaders->fragment_shader =
+    loadShader(shaders->fragment_file, GL_FRAGMENT_SHADER, verbose);
+  if (shaders->fragment_shader == 0)
   {
     fprintf(stderr, "Failed to load fragment shader\n");
 
-    VERB(verbose, printf("  Freeing vertex file ...\n"));
-    free(vertex_file);
-    VERB(verbose, printf("  Vertex file freed\n"));
-
-    VERB(verbose, printf("  Freeing fragment file ...\n"));
-    free(fragment_file);
-    VERB(verbose, printf("  Fragment file freed\n"));
-
-    VERB(verbose, printf("  Deleting vertex shader ...\n"));
-    GL_CHECK(glDeleteShader(*vertex_shader));
-    *vertex_shader = 0;
-    VERB(verbose, printf("  Vertex shader deleted\n"));
+    freeShaders(shaders, verbose);
+    shaders->vertex_shader = 0;
 
     VERB(verbose, printf("  Deleting OpenGL program ...\n"));
-    GL_CHECK(glDeleteProgram(*program));
-    *program = 0;
+    GL_CHECK(glDeleteProgram(context->program));
+    context->program = 0;
     VERB(verbose, printf("  OpenGL program deleted\n"));
 
     return false;
   }
-  VERB(verbose, printf("  Fragment shader loaded\n"));
+  return true;
+}
 
-  VERB(verbose, printf("  Attaching vertex shader to OpenGL program ...\n"));
-  GL_CHECK(glAttachShader(*program, *vertex_shader));
-  VERB(verbose, printf("  Vertex shader attached\n"));
+void freeShaders(Shaders* shaders, bool verbose)
+{
+  if (!shaders->vertex_file)
+  {
+    VERB(verbose, printf("  Freeing vertex file ...\n"));
+    free(shaders->vertex_file);
+    VERB(verbose, printf("  Vertex file freed\n"));
+  }
 
-  VERB(verbose, printf("  Attaching fragment shader to OpenGL program \
-...\n"));
-  GL_CHECK(glAttachShader(*program, *fragment_shader));
-  VERB(verbose, printf("  Fragment shader attached\n"));
+  if (!shaders->fragment_file)
+  {
+    VERB(verbose, printf("  Freeing fragment file ...\n"));
+    free(shaders->fragment_file);
+    VERB(verbose, printf("  Fragment file freed\n"));
+  }
 
-  VERB(verbose, printf("  Linking OpenGL program ...\n"));
-  GL_CHECK(glLinkProgram(*program));
+  if (!shaders->vertex_shader)
+  {
+    VERB(verbose, printf("  Deleting vertex shader ...\n"));
+    GL_CHECK(glDeleteShader(shaders->vertex_shader));
+    VERB(verbose, printf("  Vertex shader deleted\n"));
+  }
 
-  VERB(verbose, printf("  Checking linking status of OpenGL program ...\n"));
+  if (!shaders->fragment_shader)
+  {
+    VERB(verbose, printf("  Deleting fragment shader ...\n"));
+    GL_CHECK(glDeleteShader(shaders->fragment_shader));
+    VERB(verbose, printf("  Fragment shader deleted\n"));
+  }
+}
+
+bool checkingLogProgram(Context* context, Shaders* shaders, bool verbose)
+{
   GLint programSuccess = GL_TRUE;
-  GL_CHECK(glGetProgramiv(*program, GL_LINK_STATUS, &programSuccess));
+  GL_CHECK(glGetProgramiv(context->program, GL_LINK_STATUS, &programSuccess));
   if (programSuccess != GL_TRUE)
   {
     fprintf(stderr, "Unable to link OpenGL program \n");
@@ -232,66 +239,111 @@ bool loadProgram(GLuint* program, GLuint* vertex_shader,
     GLint maxLength = 0;
 
     VERB(verbose, printf("  Querying log length of OpenGL program ...\n"));
-    GL_CHECK(glGetProgramiv(*program, GL_INFO_LOG_LENGTH, &maxLength));
+    GL_CHECK(glGetProgramiv(context->program, GL_INFO_LOG_LENGTH,
+      &maxLength));
     VERB(verbose, printf("  Log length of OpenGL program is %d\n",
       maxLength));
 
     char message[maxLength];
 
     VERB(verbose, printf("  Querying log info of OpenGL program ...\n"));
-    GL_CHECK(glGetShaderInfoLog(*program, maxLength, &maxLength, message));
+    GL_CHECK(glGetShaderInfoLog(context->program, maxLength, &maxLength,
+      message));
     VERB(verbose, printf("  Log info of OpenGL program found\n"));
 
     fprintf(stderr, "%s\n", &(message[0]));
 
-    VERB(verbose, printf("  Freeing vertex file ...\n"));
-    free(vertex_file);
-    VERB(verbose, printf("  Vertex file freed\n"));
-
-    VERB(verbose, printf("  Freeing fragment file ...\n"));
-    free(fragment_file);
-    VERB(verbose, printf("  Fragment file freed\n"));
-
-    VERB(verbose, printf("  Deleting vertex shader ...\n"));
-    GL_CHECK(glDeleteShader(*vertex_shader));
-    *vertex_shader = 0;
-    VERB(verbose, printf("  Vertex shader deleted\n"));
-
-    VERB(verbose, printf("  Deleting fragment shader ...\n"));
-    GL_CHECK(glDeleteShader(*fragment_shader));
-    *fragment_shader = 0;
-    VERB(verbose, printf("  Fragment shader deleted\n"));
+    freeShaders(shaders, verbose);
+    shaders->vertex_shader = 0;
+    shaders->fragment_shader = 0;
 
     VERB(verbose, printf("  Deleting OpenGL program ...\n"));
-    GL_CHECK(glDeleteProgram(*program));
-    *program = 0;
+    GL_CHECK(glDeleteProgram(context->program));
+    context->program = 0;
     VERB(verbose, printf("  OpenGL program deleted\n"));
 
     return false;
   }
+  return true;
+}
 
+bool loadProgram(Context* context, Shaders* shaders, bool verbose)
+{
+  VERB(verbose, printf("  Creating OpenGL Program ...\n"));
+  GL_CHECK(context->program = glCreateProgram());
+  VERB(verbose, printf("  OpenGL Program %d created\n", context->program));
+
+  VERB(verbose, printf("  Reading in vertex shader file ...\n"));
+  if (!readVertexShaderFile(context, shaders, verbose))
+  {
+    return false;
+  }
+  VERB(verbose, printf("  Vertex shader file read\n"));
+
+  VERB(verbose, printf("  Reading in fragment shader file ...\n"));
+  if (!readFragmentShaderFile(context, shaders, verbose))
+  {
+    return false;
+  }
+  VERB(verbose, printf("  Fragment shader file read\n"));
+
+  VERB(verbose, printf("  Loading vertex shader ...\n"));
+  if (!loadVertexShader(context, shaders, verbose))
+  {
+    return false;
+  }
+  VERB(verbose, printf("  Vertex shader loaded\n"));
+
+  VERB(verbose, printf("  Loading fragment shader ...\n"));
+  if (!loadFragmentShader(context, shaders, verbose))
+  {
+    return false;
+  }
+  VERB(verbose, printf("  Fragment shader loaded\n"));
+
+  VERB(verbose, printf("  Attaching vertex shader to OpenGL program ...\n"));
+  GL_CHECK(glAttachShader(context->program, shaders->vertex_shader));
+  VERB(verbose, printf("  Vertex shader attached\n"));
+
+  VERB(verbose, printf("  Attaching fragment shader to OpenGL program \
+...\n"));
+  GL_CHECK(glAttachShader(context->program, shaders->fragment_shader));
+  VERB(verbose, printf("  Fragment shader attached\n"));
+
+  VERB(verbose, printf("  Linking OpenGL program ...\n"));
+  GL_CHECK(glLinkProgram(context->program));
+
+  VERB(verbose, printf("  Checking linking status of OpenGL program ...\n"));
+  if (!checkingLogProgram(context, shaders, verbose))
+  {
+    return false;
+  }
   VERB(verbose, printf("  OpenGL program linked\n"));
 
   VERB(verbose, printf("  Checking OpenGL program execution ...\n"));
-  GL_CHECK(glValidateProgram(*program));
+  GL_CHECK(glValidateProgram(context->program));
   VERB(verbose, printf("  OpenGL program execution checked\n"));
 
+  VERB(verbose, printf("  Installing OpenGL program as part of current \
+rendering state...\n"));
+  GL_CHECK(glUseProgram(context->program));
+  VERB(verbose, printf("  OpenGL program installed\n"));
+
+  VERB(verbose, printf("  Specifying viewport ...\n"));
+  GL_CHECK(glViewport(0, 0, context->window_attribs.width,
+    context->window_attribs.height));
+  VERB(verbose, printf("  Viewport specified\n"));
+
   VERB(verbose, printf("  Detaching vertex shader to OpenGL program ...\n"));
-  GL_CHECK(glDetachShader(*program, *vertex_shader));
+  GL_CHECK(glDetachShader(context->program, shaders->vertex_shader));
   VERB(verbose, printf("  Vertex shader detached\n"));
 
   VERB(verbose, printf("  Detaching fragment shader to OpenGL program \
 ...\n"));
-  GL_CHECK(glDetachShader(*program, *fragment_shader));
+  GL_CHECK(glDetachShader(context->program, shaders->fragment_shader));
   VERB(verbose, printf("  Fragment shader detached\n"));
 
-  VERB(verbose, printf("  Deleting vertex shader ...\n"));
-  GL_CHECK(glDeleteShader(*vertex_shader));
-  VERB(verbose, printf("  Vertex shader deleted\n"));
-
-  VERB(verbose, printf("  Deleting fragment shader ...\n"));
-  GL_CHECK(glDeleteShader(*fragment_shader));
-  VERB(verbose, printf("  Fragment shader deleted\n"));
+  freeShaders(shaders, verbose);
 
   return true;
 }

@@ -25,4 +25,28 @@ void CheckOpenGLError(const char* stmt, const char* fname, int line);
   CheckOpenGLError(#stmt, __FILE__, __LINE__); \
 } while (0)
 
+typedef struct
+{
+  Display *display;
+  GLXContext glx_context;
+  Window window;
+#ifdef DEBUG
+  Window debug_window;
+  XEvent event;
+#endif
+  XWindowAttributes window_attribs;
+  Colormap cmap;
+  GLuint program;
+} Context;
+
+typedef struct
+{
+  char* fshaderpath;
+  char* vshaderpath;
+  GLuint vertex_shader;
+  GLuint fragment_shader;
+  char* vertex_file;
+  char* fragment_file;
+} Shaders;
+
 #endif

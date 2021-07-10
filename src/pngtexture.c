@@ -5,30 +5,30 @@ void cleanup(png_structp* parser, png_infop* info, png_bytep** row_pointers,
 {
   if(*parser)
   {
-    VERB(verbose, printf("    Freeing information about PNG file ...\n"));
+    VERB(verbose, printf("  Freeing information about PNG file ...\n"));
     png_destroy_read_struct(parser, *info ? info : 0, 0);
-    VERB(verbose, printf("    Information freed\n"));
+    VERB(verbose, printf("  Information freed\n"));
   }
 
   if(*row_pointers)
   {
-    VERB(verbose, printf("    Freeing row_pointers ...\n"));
+    VERB(verbose, printf("  Freeing row_pointers ...\n"));
     free(*row_pointers);
-    VERB(verbose, printf("    row_pointers freed\n"));
+    VERB(verbose, printf("  row_pointers freed\n"));
   }
 
   if(*data)
   {
-    VERB(verbose, printf("    Freeing PNG data ...\n"));
+    VERB(verbose, printf("  Freeing PNG data ...\n"));
     free(*data);
-    VERB(verbose, printf("    PNG data freed\n"));
+    VERB(verbose, printf("  PNG data freed\n"));
   }
 
   if(*file)
   {
-    VERB(verbose, printf("    Closing PNG file ...\n"));
+    VERB(verbose, printf("  Closing PNG file ...\n"));
     fclose(*file);
-    VERB(verbose, printf("    PNG file closed\n"));
+    VERB(verbose, printf("  PNG file closed\n"));
   }
 }
 

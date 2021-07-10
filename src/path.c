@@ -1,6 +1,6 @@
 #include "path.h"
 
-bool initFragShaderPath(char** fshaderpath, bool verbose)
+bool initFragShaderPath(Shaders* shaders, bool verbose)
 {
   VERB(verbose, printf("  Computing length of home directory path ...\n"));
   const size_t len1 = strlen(HOME_DIR);
@@ -19,14 +19,15 @@ bool initFragShaderPath(char** fshaderpath, bool verbose)
   const size_t len4 = strlen(SHADERS_DIR);
   VERB(verbose, printf("  Length of \"%s\" is %lu\n", SHADERS_DIR, len4));
 
-  VERB(verbose, printf("  Computing length of fragment shader filename ...\n"));
+  VERB(verbose, printf("  Computing length of fragment shader filename \
+...\n"));
   const size_t len6 = strlen(FSHADER_FILE);
   VERB(verbose, printf("  Length of \"%s\" is %lu\n", FSHADER_FILE, len6));
 
   VERB(verbose, printf("  Allocating memory for fragment shader path ...\n"));
-  *fshaderpath = malloc(len1 + len2 + len3 + len4 + len6 + 1);
+  shaders->fshaderpath = malloc(len1 + len2 + len3 + len4 + len6 + 1);
 
-  if (!*fshaderpath)
+  if (!shaders->fshaderpath)
   {
     fprintf(stderr, "fshaderpath malloc() failed\n");
     return false;
@@ -35,23 +36,24 @@ bool initFragShaderPath(char** fshaderpath, bool verbose)
 path ...\n"));
 
   VERB(verbose, printf("  Building fragment shader path string ... 0/5\n"));
-  memcpy(*fshaderpath, HOME_DIR, len1);
+  memcpy(shaders->fshaderpath, HOME_DIR, len1);
   VERB(verbose, printf("  Building fragment shader path string ... 1/5\n"));
-  memcpy(*fshaderpath + len1, getenv("USERNAME"), len2);
+  memcpy(shaders->fshaderpath + len1, getenv("USERNAME"), len2);
   VERB(verbose, printf("  Building fragment shader path string ... 2/5\n"));
-  memcpy(*fshaderpath + len1 + len2, BIN_DIR, len3);
+  memcpy(shaders->fshaderpath + len1 + len2, BIN_DIR, len3);
   VERB(verbose, printf("  Building fragment shader path string ... 3/5\n"));
-  memcpy(*fshaderpath + len1 + len2 + len3, SHADERS_DIR, len4);
+  memcpy(shaders->fshaderpath + len1 + len2 + len3, SHADERS_DIR, len4);
   VERB(verbose, printf("  Building fragment shader path string ... 4/5\n"));
-  memcpy(*fshaderpath + len1 + len2 + len3 + len4, FSHADER_FILE, len6 + 1);
+  memcpy(shaders->fshaderpath + len1 + len2 + len3 + len4, FSHADER_FILE,
+    len6 + 1);
   VERB(verbose, printf("  Building fragment shader path string ... 5/5\n"));
   VERB(verbose, printf("  Fragment shader path string built: %s\n",
-    *fshaderpath));
+    shaders->fshaderpath));
 
   return true;
 }
 
-bool initVertShaderPath(char** vshaderpath, bool verbose)
+bool initVertShaderPath(Shaders* shaders, bool verbose)
 {
   VERB(verbose, printf("  Computing length of home directory path ...\n"));
   const size_t len1 = strlen(HOME_DIR);
@@ -75,9 +77,9 @@ bool initVertShaderPath(char** vshaderpath, bool verbose)
   VERB(verbose, printf("  Length of \"%s\" is %lu\n", VSHADER_FILE, len7));
 
   VERB(verbose, printf("  Allocating memory for vertex shader path ...\n"));
-  *vshaderpath = malloc(len1 + len2 + len3 + len4 + len7 + 1);
+  shaders->vshaderpath = malloc(len1 + len2 + len3 + len4 + len7 + 1);
 
-  if (!*vshaderpath)
+  if (!shaders->vshaderpath)
   {
     fprintf(stderr, "vshaderpath malloc() failed\n");
     return false;
@@ -86,18 +88,19 @@ bool initVertShaderPath(char** vshaderpath, bool verbose)
 path\n"));
 
   VERB(verbose, printf("  Building vertex shader path string ... 0/5\n"));
-  memcpy(*vshaderpath, HOME_DIR, len1);
+  memcpy(shaders->vshaderpath, HOME_DIR, len1);
   VERB(verbose, printf("  Building vertex shader path string ... 1/5\n"));
-  memcpy(*vshaderpath + len1, getenv("USERNAME"), len2);
+  memcpy(shaders->vshaderpath + len1, getenv("USERNAME"), len2);
   VERB(verbose, printf("  Building vertex shader path string ... 2/5\n"));
-  memcpy(*vshaderpath + len1 + len2, BIN_DIR, len3);
+  memcpy(shaders->vshaderpath + len1 + len2, BIN_DIR, len3);
   VERB(verbose, printf("  Building vertex shader path string ... 3/5\n"));
-  memcpy(*vshaderpath + len1 + len2 + len3, SHADERS_DIR, len4);
+  memcpy(shaders->vshaderpath + len1 + len2 + len3, SHADERS_DIR, len4);
   VERB(verbose, printf("  Building vertex shader path string ... 4/5\n"));
-  memcpy(*vshaderpath + len1 + len2 + len3 + len4, VSHADER_FILE, len7 + 1);
+  memcpy(shaders->vshaderpath + len1 + len2 + len3 + len4, VSHADER_FILE,
+    len7 + 1);
   VERB(verbose, printf("  Building vertex shader path string ... 5/5\n"));
   VERB(verbose, printf("  Vertex shader path string built: %s\n",
-    *vshaderpath));
+    shaders->vshaderpath));
 
   return true;
 }
@@ -117,7 +120,8 @@ bool initTexturePath(char** texturepath, bool verbose)
   const size_t len3 = strlen(BIN_DIR);
   VERB(verbose, printf("  Length of \"%s\" is %lu\n", BIN_DIR, len3));
 
-  VERB(verbose, printf("  Computing length of textures directory path ...\n"));
+  VERB(verbose, printf("  Computing length of textures directory path \
+...\n"));
   const size_t len5 = strlen(TEXTURES_DIR);
   VERB(verbose, printf("  Length of \"%s\" is %lu\n", TEXTURES_DIR, len5));
 
@@ -151,28 +155,27 @@ bool initTexturePath(char** texturepath, bool verbose)
   return true;
 }
 
-bool initPaths(char** fshaderpath, char** vshaderpath, char** texturepath,
-  bool verbose)
+bool initPaths(Shaders* shaders, char** texturepath, bool verbose)
 {
-  if (initFragShaderPath(fshaderpath, verbose))
+  if (initFragShaderPath(shaders, verbose))
   {
-    if (initVertShaderPath(vshaderpath, verbose))
+    if (initVertShaderPath(shaders, verbose))
     {
       if (!initTexturePath(texturepath, verbose))
       {
         VERB(verbose, printf("  Freeing fshaderpath ...\n"));
-        free(fshaderpath);
+        free(shaders->fshaderpath);
         VERB(verbose, printf("  fshaderpath freed\n"));
 
         VERB(verbose, printf("  Freeing vshaderpath ...\n"));
-        free(vshaderpath);
+        free(shaders->vshaderpath);
         VERB(verbose, printf("  vshaderpath freed\n"));
 
         return false;
       }
     } else {
       VERB(verbose, printf("  Freeing fshaderpath ...\n"));
-      free(fshaderpath);
+      free(shaders->fshaderpath);
       VERB(verbose, printf("  fshaderpath freed\n"));
 
       return false;
@@ -183,15 +186,14 @@ bool initPaths(char** fshaderpath, char** vshaderpath, char** texturepath,
   return true;
 }
 
-void freePaths(char** fshaderpath, char** vshaderpath, char** texturepath,
-  bool verbose)
+void freePaths(Shaders* shaders, char** texturepath, bool verbose)
 {
   VERB(verbose, printf("Freeing fshaderpath ...\n"));
-  free(*fshaderpath);
+  free(shaders->fshaderpath);
   VERB(verbose, printf("fshaderpath freed\n"));
 
   VERB(verbose, printf("Freeing vshaderpath ...\n"));
-  free(*vshaderpath);
+  free(shaders->vshaderpath);
   VERB(verbose, printf("vshaderpath freed\n"));
 
   VERB(verbose, printf("Freeing texturepath ...\n"));

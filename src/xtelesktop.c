@@ -6,6 +6,7 @@ int main(int argc, char** argv)
 
   bool verbose = false;
   int delay = DEFAULT_DELAY;
+  int roadmap = EXIT_SUCCESS_RM;
 
   UniformValues uniform_values;
   uniform_values.time = 0.0f;
@@ -17,22 +18,22 @@ int main(int argc, char** argv)
   uniform_values.xseed = rand();
   uniform_values.yseed = rand();
 
-  if (!parsing_options(&verbose, &delay, &uniform_values, &argc, argv))
+  if (!parsing_options(&verbose, &delay, &uniform_values, &roadmap,
+    &argc, argv))
   {
     return EXIT_FAILURE;
   }
 
-  char* fshaderpath = NULL;
-  char* vshaderpath = NULL;
+  Shaders shaders;
+  shaders.vertex_file = NULL;
+  shaders.fragment_file = NULL;
+  shaders.fshaderpath = NULL;
+  shaders.vshaderpath = NULL;
   char* texturepath = NULL;
-
-  GLuint vertex_shader;
-  GLuint fragment_shader;
-  GLuint program;
 
   VERB(verbose, printf("Initializing fragment shader, vertex shader and \
 texture paths ...\n"));
-  if (!initPaths(&fshaderpath, &vshaderpath, &texturepath, verbose))
+  if (!initPaths(&shaders, &texturepath, verbose))
   {
     fprintf(stderr, "Failed to initialize fragment shader, vertex shader and \
 texture paths\n");
@@ -42,23 +43,21 @@ texture paths\n");
 are initialized\n"));
 
   Context context;
-  context.glx_context = 0;
 
-  VERB(verbose, printf("Creating OpenGL context ...\n"));
+  VERB(verbose, printf("Creating GLX context ...\n"));
   if (!initContext(&context, verbose))
   {
-    fprintf(stderr, "Failed to create an OpenGL context\n");
-    freePaths(&fshaderpath, &vshaderpath, &texturepath, verbose);
+    fprintf(stderr, "Failed to create an GLX context\n");
+    freePaths(&shaders, &texturepath, verbose);
     return EXIT_FAILURE;
   }
-  VERB(verbose, printf("OpenGL context created\n"));
+  VERB(verbose, printf("GLX context created\n"));
 
   VERB(verbose, printf("Loading OpenGL program ...\n"));
-  if (!loadProgram(&program, &vertex_shader, &vshaderpath, &fragment_shader,
-    &fshaderpath, verbose))
+  if (!loadProgram(&context, &shaders, verbose))
   {
     fprintf(stderr, "\n\tShader program failed to load\n\n");
-    freePaths(&fshaderpath, &vshaderpath, &texturepath, verbose);
+    freePaths(&shaders, &texturepath, verbose);
     freeDebugContext(&context, verbose);
     return EXIT_FAILURE;
   }
@@ -81,10 +80,10 @@ are initialized\n"));
   if (!loadPng(&texture, texturepath, verbose))
   {
     fprintf(stderr, "Failed to load PNG file %s\n", texturepath);
-    freePaths(&fshaderpath, &vshaderpath, &texturepath, verbose);
+    freePaths(&shaders, &texturepath, verbose);
 
     VERB(verbose, printf("Deleting OpenGL program ...\n"));
-    GL_CHECK(glDeleteProgram(program));
+    GL_CHECK(glDeleteProgram(context.program));
     VERB(verbose, printf("OpenGL program deleted\n"));
 
     freeDebugContext(&context, verbose);
@@ -93,18 +92,8 @@ are initialized\n"));
   VERB(verbose, printf("PNG texture loaded\n"));
 
   VERB(verbose, printf("Searching uniforms location ...\n"));
-  getUniforms(uniforms, uniformIds, &program, verbose);
+  getUniforms(uniforms, uniformIds, &context.program, verbose);
   VERB(verbose, printf("Uniforms location found\n"));
-
-  VERB(verbose, printf("Installing OpenGL program as part of current \
-rendering state...\n"));
-  GL_CHECK(glUseProgram(program));
-  VERB(verbose, printf("OpenGL program installed\n"));
-
-  VERB(verbose, printf("Specifying viewport ...\n"));
-  GL_CHECK(glViewport(0, 0, context.window_attribs.width,
-    context.window_attribs.height));
-  VERB(verbose, printf("Viewport specified\n"));
 
   GLuint vertexarray;
   GLuint vertexbuffer;
@@ -150,7 +139,7 @@ initialized\n"));
     VERB(verbose, printf("Ready to loop again\n"));
   }
 
-  freePaths(&fshaderpath, &vshaderpath, &texturepath, verbose);
+  freePaths(&shaders, &texturepath, verbose);
   freeVertices(&vertexbuffer, &vertexarray, verbose);
 
   VERB(verbose, printf("Deleting OpenGL texture ...\n"));
@@ -158,7 +147,7 @@ initialized\n"));
   VERB(verbose, printf("OpenGL texture deleted\n"));
 
   VERB(verbose, printf("Deleting OpenGL program ...\n"));
-  GL_CHECK(glDeleteProgram(program));
+  GL_CHECK(glDeleteProgram(context.program));
   VERB(verbose, printf("OpenGL program deleted\n"));
 
   freeDebugContext(&context, verbose);

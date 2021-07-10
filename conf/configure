@@ -4369,8 +4369,9 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "libPNG package is found but some declarations of this \
-package are not found. Update the libPNG developing package." "$LINENO" 5
+  as_fn_error $? "libPNG package is found but some \
+declarations of this package are not found. Update the libPNG developing \
+package." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "PNG_INFO_tRNS" "ac_cv_have_decl_PNG_INFO_tRNS" "#include <png.h>
 "
@@ -4386,8 +4387,9 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "libPNG package is found but some declarations of this \
-package are not found. Update the libPNG developing package." "$LINENO" 5
+  as_fn_error $? "libPNG package is found but some \
+declarations of this package are not found. Update the libPNG developing \
+package." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "PNG_COLOR_TYPE_GRAY" "ac_cv_have_decl_PNG_COLOR_TYPE_GRAY" "#include <png.h>
 "
@@ -4403,8 +4405,9 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "libPNG package is found but some declarations of this \
-package are not found. Update the libPNG developing package." "$LINENO" 5
+  as_fn_error $? "libPNG package is found but some \
+declarations of this package are not found. Update the libPNG developing \
+package." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "PNG_COLOR_TYPE_PALETTE" "ac_cv_have_decl_PNG_COLOR_TYPE_PALETTE" "#include <png.h>
 "
@@ -4420,8 +4423,9 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "libPNG package is found but some declarations of this \
-package are not found. Update the libPNG developing package." "$LINENO" 5
+  as_fn_error $? "libPNG package is found but some \
+declarations of this package are not found. Update the libPNG developing \
+package." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "PNG_COLOR_TYPE_GRAY_ALPHA" "ac_cv_have_decl_PNG_COLOR_TYPE_GRAY_ALPHA" "#include <png.h>
 "
@@ -4437,8 +4441,9 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "libPNG package is found but some declarations of this \
-package are not found. Update the libPNG developing package." "$LINENO" 5
+  as_fn_error $? "libPNG package is found but some \
+declarations of this package are not found. Update the libPNG developing \
+package." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "PNG_COLOR_MASK_ALPHA" "ac_cv_have_decl_PNG_COLOR_MASK_ALPHA" "#include <png.h>
 "
@@ -4454,8 +4459,9 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "libPNG package is found but some declarations of this \
-package are not found. Update the libPNG developing package." "$LINENO" 5
+  as_fn_error $? "libPNG package is found but some \
+declarations of this package are not found. Update the libPNG developing \
+package." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "png_jmpbuf" "ac_cv_have_decl_png_jmpbuf" "#include <png.h>
 "
@@ -4471,8 +4477,9 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "libPNG package is found but some declarations of this \
-package are not found. Update the libPNG developing package." "$LINENO" 5
+  as_fn_error $? "libPNG package is found but some \
+declarations of this package are not found. Update the libPNG developing \
+package." "$LINENO" 5
 fi
 
 ac_fn_c_check_decl "$LINENO" "GL_TEXTURE_2D" "ac_cv_have_decl_GL_TEXTURE_2D" "#include <GL/gl.h>
@@ -5729,9 +5736,9 @@ $as_echo "#define malloc rpl_malloc" >>confdefs.h
 fi
 
 
-for ac_func in strchr strerror strstr strlen strcmp getenv usleep memcpy \
-printf fprintf free srand rand atof atoi time clock abort fopen fseek fread \
-fclose setjmp
+for ac_func in strchr strerror strstr strlen strcmp strtok getenv usleep \
+memcpy printf fprintf free srand rand atof atoi time clock abort fopen fseek \
+fread fclose setjmp
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
 ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
@@ -5741,8 +5748,9 @@ if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
 _ACEOF
 
 else
-  as_fn_error $? "GLibC package is found but some functions \
-of this package are not found. Update the GLibC developing package." "$LINENO" 5
+  as_fn_error $? "GLibC package is found but some \
+functions of this package are not found. Update the GLibC developing \
+package." "$LINENO" 5
 fi
 done
 

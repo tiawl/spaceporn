@@ -15,19 +15,6 @@
 typedef GLXContext (*glXCreateContextAttribsARBProc)(Display*, GLXFBConfig,
   GLXContext, Bool, const int*);
 
-typedef struct
-{
-  Display *display;
-  GLXContext glx_context;
-  Window window;
-#ifdef DEBUG
-  Window debug_window;
-  XEvent event;
-#endif
-  XWindowAttributes window_attribs;
-  Colormap cmap;
-} Context;
-
 bool isExtensionSupported(const char* extList, const char* extension,
   bool verbose);
 int contextErrorHandler(Display* display, XErrorEvent* event);

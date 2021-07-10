@@ -15,16 +15,16 @@ string ...\n"));
   where = strchr(extension, ' ');
   if (where || (*extension == '\0'))
   {
-    VERB(verbose, printf("    Space in this OpenGL extension name: %s\n",
+    VERB(verbose, printf("    Space in this GLX extension name: %s\n",
       extension));
     return false;
   }
-  VERB(verbose, printf("    No space in OpenGL extension name\n"));
+  VERB(verbose, printf("    No space in GLX extension name\n"));
 
   /* It takes a bit of care to be fool-proof about parsing the
      OpenGL extensions string. Don't be fooled by sub-strings,
      etc. */
-  VERB(verbose, printf("    Parsing OpenGL extensions string ...\n"));
+  VERB(verbose, printf("    Parsing GLX extensions string ...\n"));
   for (start = extList;;)
   {
     where = strstr(start, extension);
@@ -39,6 +39,7 @@ string ...\n"));
     {
       if ((*terminator == ' ') || (*terminator == '\0'))
       {
+        VERB(verbose, printf("    GLX extension found\n"));
         return true;
       }
     }
@@ -126,50 +127,50 @@ bool searchingBestFbc(Context* context, XVisualInfo** vi,
   {
     VERB(verbose, printf("  Searching GLX framebuffer visual with the most \
 samples per pixel ... %d/%d\n", i, fbcount));
-    VERB(verbose, printf("  Querying visual from GLX framebuffer config \
+    VERB(verbose, printf("    Querying visual from GLX framebuffer config \
 ... \n"));
     *vi = glXGetVisualFromFBConfig(context->display, fbc[i]);
     if (*vi)
     {
-      VERB(verbose, printf("  Corresponding visual found\n"));
+      VERB(verbose, printf("    Corresponding visual found\n"));
 
       int samp_buf, samples;
 
-      VERB(verbose, printf("  Querying GLX_SAMPLE_BUFFERS attribute ...\n"));
+      VERB(verbose, printf("    Querying GLX_SAMPLE_BUFFERS attribute ...\n"));
       glXGetFBConfigAttrib(context->display, fbc[i],
         GLX_SAMPLE_BUFFERS, &samp_buf);
-      VERB(verbose, printf("  Current visual GLX_SAMPLE_BUFFERS value: %d\n",
+      VERB(verbose, printf("    Current visual GLX_SAMPLE_BUFFERS value: %d\n",
         samp_buf));
 
-      VERB(verbose, printf("  Querying GLX_SAMPLES attribute ...\n"));
+      VERB(verbose, printf("    Querying GLX_SAMPLES attribute ...\n"));
       glXGetFBConfigAttrib(context->display, fbc[i], GLX_SAMPLES, &samples);
-      VERB(verbose, printf("  Current visual GLX_SAMPLES value: %d\n",
+      VERB(verbose, printf("    Current visual GLX_SAMPLES value: %d\n",
         samples));
 
       if ((best_fbc < 0) || (samp_buf && (samples > best_num_samp)))
       {
-        VERB(verbose, printf("  Setting best GLX framebuffer config ...\n"));
+        VERB(verbose, printf("    Setting best GLX framebuffer config ...\n"));
         best_fbc = i;
         best_num_samp = samples;
-        VERB(verbose, printf("  Current best GLX framebuffer config index \
+        VERB(verbose, printf("    Current best GLX framebuffer config index \
 is: %d\n", best_fbc));
-        VERB(verbose, printf("  Current best GLX_SAMPLES value is: %d\n",
+        VERB(verbose, printf("    Current best GLX_SAMPLES value is: %d\n",
           best_num_samp));
       }
       if ((worst_fbc < 0) || (!samp_buf || (samples < worst_num_samp)))
       {
-        VERB(verbose, printf("  Setting worst GLX framebuffer config ...\n"));
+        VERB(verbose, printf("    Setting worst GLX framebuffer config ...\n"));
         worst_fbc = i;
         worst_num_samp = samples;
-        VERB(verbose, printf("  Current worst GLX framebuffer config index \
+        VERB(verbose, printf("    Current worst GLX framebuffer config index \
 is: %d\n", worst_fbc));
-        VERB(verbose, printf("  Current worst GLX_SAMPLES value is: %d\n",
+        VERB(verbose, printf("    Current worst GLX_SAMPLES value is: %d\n",
           worst_num_samp));
       }
     }
-    VERB(verbose, printf("  Freeing current visual ...\n"));
+    VERB(verbose, printf("    Freeing current visual ...\n"));
     XFree(*vi);
-    VERB(verbose, printf("  Current visual freed\n"));
+    VERB(verbose, printf("    Current visual freed\n"));
   }
 
   *bestFbc = fbc[best_fbc];
@@ -215,7 +216,7 @@ bool initWindow(Context* context, XVisualInfo** vi, bool verbose)
   VERB(verbose, printf("  Root window dimensions are: %ux%u\n",
     context->window_attribs.width, context->window_attribs.height));
 
-  VERB(verbose, printf("  Creating new window ...\n"));
+  VERB(verbose, printf("  Creating new X window ...\n"));
   context->window = XCreateWindow(context->display, root,
     context->window_attribs.x, context->window_attribs.y,
     context->window_attribs.width, context->window_attribs.height, 0,
@@ -224,7 +225,7 @@ bool initWindow(Context* context, XVisualInfo** vi, bool verbose)
 
   if (!context->window)
   {
-    fprintf(stderr, "Failed to create window\n");
+    fprintf(stderr, "Failed to create X window\n");
 
     VERB(verbose, printf("  Freeing current visual ...\n"));
     XFree(*vi);
@@ -236,7 +237,7 @@ bool initWindow(Context* context, XVisualInfo** vi, bool verbose)
 
     return false;
   }
-  VERB(verbose, printf("  Window created: 0x%lx\n", context->window));
+  VERB(verbose, printf("  X Window created: 0x%lx\n", context->window));
 
   VERB(verbose, printf("  Allocating window manager hints ...\n"));
   XWMHints* wmHint = XAllocWMHints();
@@ -288,7 +289,7 @@ _NET_WM_WINDOW_TYPE_DESKTOP stored\n"));
 
 bool initDebugWindow(Context* context, bool verbose)
 {
-  VERB(verbose, printf("Creating a debug window to catch key press events \
+  VERB(verbose, printf("  Creating a debug window to catch key press events \
 ...\n"));
   context->debug_window = XCreateSimpleWindow(context->display,
     RootWindow(context->display, DefaultScreen(context->display)), 0, 0, 1, 1,
@@ -300,17 +301,17 @@ bool initDebugWindow(Context* context, bool verbose)
     fprintf(stderr, "Failed to create debug window\n");
     return false;
   }
-  VERB(verbose, printf("Debug window created\n"));
+  VERB(verbose, printf("  Debug window created\n"));
 
-  VERB(verbose, printf("Requesting X server to report key press events for \
+  VERB(verbose, printf("  Requesting X server to report key press events for \
 debug window ...\n"));
   XSelectInput(context->display, context->debug_window, KeyPressMask);
-  VERB(verbose, printf("X server is now reporting key press events for debug \
-window\n"));
+  VERB(verbose, printf("  X server is now reporting key press events for \
+debug window\n"));
 
-  VERB(verbose, printf("Mapping debug window ...\n"));
+  VERB(verbose, printf("  Mapping debug window ...\n"));
   XMapWindow(context->display, context->debug_window);
-  VERB(verbose, printf("Debug window mapped\n"));
+  VERB(verbose, printf("  Debug window mapped\n"));
 
   return true;
 }
@@ -383,8 +384,13 @@ bool initContext(Context* context, bool verbose)
 ...\n"));
   const char* glxExts = glXQueryExtensionsString(context->display,
     DefaultScreen(context->display));
-  VERB(verbose, printf("  Default screen's GLX extensions list is: %s\n",
-    glxExts));
+  VERB(verbose, printf("  Default screen's GLX extensions list is:\n");
+    char* token = strtok((char *) glxExts, " ");
+    while (token != NULL)
+    {
+      printf("  - %s\n", token);
+      token = strtok(NULL, " ");
+    });
 
   VERB(verbose, printf("  Querying pointer to glXCreateContextAttribsARB() \
 function ...\n"));
@@ -422,22 +428,22 @@ function found\n"));
 
     VERB(verbose, printf("  Initializing the context to the initial state \
 defined by the OpenGL specification ...\n"));
-    context->glx_context = glXCreateContextAttribsARB(context->display, bestFbc,
-      0, True, context_attribs);
+    context->glx_context = glXCreateContextAttribsARB(context->display,
+      bestFbc, 0, True, context_attribs);
     VERB(verbose, printf("  Context initialized to the initial state defined \
 by the OpenGL specification\n"));
   }
 
   // Sync to ensure any errors generated are processed.
-  VERB(verbose, printf("  Synchronizing generated errors ... \n"));
+  VERB(verbose, printf("  Synchronizing generated X errors ... \n"));
   XSync(context->display, False);
-  VERB(verbose, printf("  Generated errors synchronized\n"));
+  VERB(verbose, printf("  Generated X errors synchronized\n"));
 
-  VERB(verbose, printf("  Restoring original error handler ...\n"));
+  VERB(verbose, printf("  Restoring original X error handler ...\n"));
   XSetErrorHandler(oldHandler);
-  VERB(verbose, printf("  Original error handler restored\n"));
+  VERB(verbose, printf("  Original X error handler restored\n"));
 
-  VERB(verbose, printf("  Testing error generation during context \
+  VERB(verbose, printf("  Testing X error generation during context \
 creation ...\n"));
   if (contextErrorOccurred || !context->glx_context)
   {
@@ -449,7 +455,7 @@ creation ...\n"));
 
     return false;
   }
-  VERB(verbose, printf("  No error occured during context creation\n"));
+  VERB(verbose, printf("  No X error occured during context creation\n"));
 
   VERB(verbose, printf("  Attaching the current rendering context to the \
 newly created window ...\n"));
@@ -457,13 +463,13 @@ newly created window ...\n"));
   VERB(verbose, printf("  Current rendering context attached to the newly \
 created window\n"));
 
-  VERB(verbose, printf("Requesting X server to report exposure events for \
+  VERB(verbose, printf("  Requesting X server to report exposure events for \
 current window ...\n"));
   XSelectInput(context->display, context->window, ExposureMask);
-  VERB(verbose, printf("X server is now reporting exposure events for \
+  VERB(verbose, printf("  X server is now reporting exposure events for \
 current window\n"));
 
-  VERB(verbose, printf("Initializing GLEW ...\n"));
+  VERB(verbose, printf("  Initializing GLEW ...\n"));
   glewExperimental = GL_TRUE;
 
   if (glewInit())
@@ -472,16 +478,16 @@ current window\n"));
     freeContext(context, verbose);
     return false;
   }
-  VERB(verbose, printf("GLEW initialized\n"));
+  VERB(verbose, printf("  GLEW initialized\n"));
 
-  VERB(verbose, printf("Enabling transparency for current window ...\n"));
+  VERB(verbose, printf("  Enabling transparency for current window ...\n"));
   GL_CHECK(glEnable(GL_BLEND));
-  VERB(verbose, printf("Transparency enabled for current window\n"));
+  VERB(verbose, printf("  Transparency enabled for current window\n"));
 
-  VERB(verbose, printf("Selecting transparency function for current \
+  VERB(verbose, printf("  Selecting transparency function for current \
 window ...\n"));
   GL_CHECK(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
-  VERB(verbose, printf("Transparency function selected for current \
+  VERB(verbose, printf("  Transparency function selected for current \
 window\n"));
 
 #if DEBUG

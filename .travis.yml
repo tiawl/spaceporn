@@ -7,19 +7,7 @@ maxtrix:
     - dist: focal
       env:
         - cc=gcc
-    - dist: bionic
-      env:
-        - cc=gcc
-    - dist: xenial
-      env:
-        - cc=gcc
     - dist: focal
-      env:
-        - cc=clang
-    - dist: bionic
-      env:
-        - cc=clang
-    - dist: xenial
       env:
         - cc=clang
 
@@ -30,4 +18,7 @@ before_script:
   - export CC=${cc}
 
 script:
-  - chmod 700 sh/configure.sh && ./sh/configure.sh && make clean all && chmod 700 sh/memcheck.sh && ./sh/memcheck.sh
+  - make clean all
+  - chmod 700 sh/memcheck.sh
+  - ./sh/memcheck.sh
+  - cat src/util.c

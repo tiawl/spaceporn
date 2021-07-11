@@ -30,9 +30,9 @@ You can not use this code for a non-personal usage without to be aware of its au
 ```
 xtelesktop v0.1
 
-Usage: xtelesktop [-a] [-m] [-p] [-x PIXELS] [-d MICROS]
+Usage: xtelesktop [-a] [-m] [-p] [-x PIXELS] [-d MICROS] [-V] [-R ROADMAP]
 
-Options:
+User options:
 
     -a  Enable shader animations
 
@@ -45,7 +45,14 @@ Options:
     -d  Delay value between each frame in microseconds (ex: -d 0)
         [default: 30000]
 
-    -v  Verbose
+Dev options:
+
+    -V  Verbose mode
+
+    -R  Run the corresponding predefined execution roadmap (ex: -R 0)
+        [default: 0]
+
+        ROADMAP values: - 0 -> Exit Success
 ```
 
 ## Installing
@@ -54,19 +61,18 @@ Options:
 2. `cd` into the directory.
 3. Run `./sh/configure.sh` and install requested dependencies. Repeat this step until `conf/config.status` is generated.
 4. Run `make`.
-5. Test the program by using options described in **Usage** section until you find a command which fits your needs.
+5. Test the program by using **User options** described in **Usage** section until you find a command which fits your needs.
    This command will be called `YOUR_XTELESKTOP_CLI` for following steps of this tutorial.
 6. Run `sudo make install`.
 
 7. Add this following line to your `.xinitrc`:
-   `YOUR_XTELESKTOP_CLI -v > ~/.xtelesktop.log 2>&1`
+   `YOUR_XTELESKTOP_CLI -V > ~/.xtelesktop.log 2>&1`
 8. Logout and log back in to update the background.
 
 ## Supported environments
 
 - UNIX:
-  - Ubuntu 20.04:
-    - GNOME         :heavy_check_mark:
+  - Ubuntu 20.04    :heavy_check_mark:
 - Windows OSs       :x:
 
 If you ran **xtelesktop** on a non-listed environment, contact me, I will add it here.

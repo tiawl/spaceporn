@@ -82,18 +82,14 @@ are initialized\n"));
   {
     fprintf(stderr, "Failed to load PNG file \"%s\"\n", texturepath);
     freePaths(&shaders, &texturepath, verbose);
-
-    VERB(verbose, printf("Deleting OpenGL program ...\n"));
-    GL_CHECK(glDeleteProgram(context.program));
-    VERB(verbose, printf("OpenGL program deleted\n"));
-
+    freeProgram(&shaders, "", verbose);
     freeDebugContext(&context, verbose);
     return EXIT_FAILURE;
   }
   VERB(verbose, printf("PNG texture loaded\n"));
 
   VERB(verbose, printf("Searching uniforms location ...\n"));
-  getUniforms(uniforms, uniformIds, &context.program, verbose);
+  getUniforms(uniforms, uniformIds, &shaders.program, verbose);
   VERB(verbose, printf("Uniforms location found\n"));
 
   GLuint vertexarray;
@@ -152,10 +148,7 @@ initialized\n"));
   GL_CHECK(glDeleteTextures(1, &texture));
   VERB(verbose, printf("OpenGL texture deleted\n"));
 
-  VERB(verbose, printf("Deleting OpenGL program ...\n"));
-  GL_CHECK(glDeleteProgram(context.program));
-  VERB(verbose, printf("OpenGL program deleted\n"));
-
+  freeProgram(&shaders, "", verbose);
   freeDebugContext(&context, verbose);
 
   return EXIT_SUCCESS;

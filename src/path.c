@@ -37,7 +37,7 @@ bool initFragShaderPath(Shaders* shaders, bool verbose, enum Roadmap roadmap)
     return false;
   }
   VERB(verbose, printf("  Successfull allocated memory for fragment shader \
-path ...\n"));
+path\n"));
 
   VERB(verbose, printf("  Building fragment shader path string ... 0/5\n"));
   memcpy(shaders->fshaderpath, HOME_DIR, len1);
@@ -195,6 +195,7 @@ void freePaths(Shaders* shaders, char** texturepath, bool verbose)
   {
     VERB(verbose, printf("Freeing fshaderpath ...\n"));
     free(shaders->fshaderpath);
+    shaders->fshaderpath = NULL;
     VERB(verbose, printf("fshaderpath freed\n"));
   }
 
@@ -202,6 +203,7 @@ void freePaths(Shaders* shaders, char** texturepath, bool verbose)
   {
     VERB(verbose, printf("Freeing vshaderpath ...\n"));
     free(shaders->vshaderpath);
+    shaders->vshaderpath = NULL;
     VERB(verbose, printf("vshaderpath freed\n"));
   }
 
@@ -209,6 +211,7 @@ void freePaths(Shaders* shaders, char** texturepath, bool verbose)
   {
     VERB(verbose, printf("Freeing texturepath ...\n"));
     free(*texturepath);
+    *texturepath = NULL;
     VERB(verbose, printf("texturepath freed\n"));
   }
 }

@@ -39,6 +39,10 @@ enum Roadmap
   FOPEN_PNG_FILE_FAILED_RM,
   PNGCREATEREADSTRUCT_FAILED_RM,
   PNGCREATEINFOSTRUCT_FAILED_RM, // ------------------  25
+  PNG_JMPBUF_FAILED_RM,
+  PNG_DIMENSIONS_FAILED_RM,
+  PNG_DATA_MALLOC_FAILED_RM,
+  PNG_ROWPOINTERS_MALLOC_FAILED_RM,
   RM_NB
 };
 
@@ -48,33 +52,37 @@ enum Roadmap
 
 void CheckOpenGLError(const char* stmt, const char* fname, int line);
 
-#define GL_CHECK(stmt) do { \
-  stmt; \
-  CheckOpenGLError(#stmt, __FILE__, __LINE__); \
-} while (0)
+#if DEBUG
+  #define GL_CHECK(stmt) do { \
+    stmt; \
+    CheckOpenGLError(#stmt, __FILE__, __LINE__); \
+  } while (0)
+#else
+  #define GL_CHECK(stmt) stmt
+#endif
 
 typedef struct
 {
   Display* display;
   GLXContext glx_context;
   Window window;
-#ifdef DEBUG
+#if DEBUG
   Window debug_window;
   XEvent event;
 #endif
   XWindowAttributes window_attribs;
   Colormap cmap;
-  GLuint program;
 } Context;
 
 typedef struct
 {
   char* fshaderpath;
   char* vshaderpath;
-  GLuint vertex_shader;
-  GLuint fragment_shader;
   char* vertex_file;
   char* fragment_file;
+  GLuint vertex_shader;
+  GLuint fragment_shader;
+  GLuint program;
 } Shaders;
 
 #endif

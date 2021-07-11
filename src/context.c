@@ -34,7 +34,7 @@ string ...\n"));
 
     if (!where)
     {
-      VERB(verbose, printf("    GLX extension not found\n"));
+      VERB(verbose, printf("    Unable to found GLX extension\n"));
       break;
     }
 
@@ -370,7 +370,7 @@ void freeContext(Context* context, char* spaces, bool verbose)
 
 void freeDebugContext(Context* context, bool verbose)
 {
-#ifdef DEBUG
+#if DEBUG
   VERB(verbose, printf("Destroying debug window ...\n"));
   XDestroyWindow(context->display, context->debug_window);
   VERB(verbose, printf("Debug window destroyed\n"));
@@ -434,15 +434,15 @@ function ...\n"));
       glXGetProcAddressARB((const GLubyte *) "glXCreateContextAttribsARB");
   }
 
-  VERB(verbose, printf("  Installing X error handler ...\n"));
+  VERB(verbose, printf("    Installing X error handler ...\n"));
   contextErrorOccurred = false;
   int (*oldHandler)(Display*, XErrorEvent*) =
     XSetErrorHandler(&contextErrorHandler);
-  VERB(verbose, printf("  X error handler installed\n"));
+  VERB(verbose, printf("    X error handler installed\n"));
 
   if (!glXCreateContextAttribsARB)
   {
-    fprintf(stderr, "  glXCreateContextAttribsARB() not found\n");
+    fprintf(stderr, "  Unable to found glXCreateContextAttribsARB()\n");
 
     VERB(verbose, printf("  Restoring original X error handler ...\n"));
     XSetErrorHandler(oldHandler);

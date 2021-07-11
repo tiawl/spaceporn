@@ -7,6 +7,7 @@ void cleanup(png_structp* parser, png_infop* info, png_bytep** row_pointers,
   {
     VERB(verbose, printf("  Destroying png_read_struct ...\n"));
     png_destroy_read_struct(parser, *info ? info : 0, 0);
+    *parser = 0;
     VERB(verbose, printf("  png_read_struct destroyed \n"));
   }
 
@@ -14,6 +15,7 @@ void cleanup(png_structp* parser, png_infop* info, png_bytep** row_pointers,
   {
     VERB(verbose, printf("  Freeing row_pointers ...\n"));
     free(*row_pointers);
+    *row_pointers = NULL;
     VERB(verbose, printf("  row_pointers freed\n"));
   }
 
@@ -21,6 +23,7 @@ void cleanup(png_structp* parser, png_infop* info, png_bytep** row_pointers,
   {
     VERB(verbose, printf("  Freeing PNG data ...\n"));
     free(*data);
+    *data = NULL;
     VERB(verbose, printf("  PNG data freed\n"));
   }
 
@@ -28,6 +31,7 @@ void cleanup(png_structp* parser, png_infop* info, png_bytep** row_pointers,
   {
     VERB(verbose, printf("  Closing PNG file ...\n"));
     fclose(*file);
+    *file = NULL;
     VERB(verbose, printf("  PNG file closed\n"));
   }
 }
@@ -94,9 +98,10 @@ bool loadPng(GLuint* texture, char const* const filename, bool verbose,
   VERB(verbose, printf("  PNG info structure created\n"));
 
   VERB(verbose, printf("  Searching libPNG error ...\n"));
-  if (setjmp(png_jmpbuf(parser)))
+  if (setjmp(png_jmpbuf(parser)) ||
+    (roadmap == PNG_JMPBUF_FAILED_RM))
   {
-    fprintf(stderr, "Routine problem: libPNG encountered an error\n");
+    fprintf(stderr, "  Routine problem: libPNG encountered an error\n");
     cleanup(&parser, &info, &row_pointers, &data, &file, filename, verbose);
     return false;
   }
@@ -115,10 +120,15 @@ structure ...\n"));
   png_get_IHDR(parser, info, &w, &h, &bit_depth, &color_type, 0, 0, 0);
   VERB(verbose, printf("  PNG_IHDR chunk information found\n"));
 
+  if (roadmap == PNG_DIMENSIONS_FAILED_RM)
+  {
+    w = 15;
+  }
+
   VERB(verbose, printf("  Testing PNG images dimensions ...\n"));
   if ((w & (w - 1)) || (h & (h - 1)) || (w < 8) || (h < 8))
   {
-    fprintf(stderr, "PNG images with dimensions that are not power of two \
+    fprintf(stderr, "  PNG images with dimensions that are not power of two \
 or smaller than 8 failed to load in OpenGL\n");
     cleanup(&parser, &info, &row_pointers, &data, &file, filename, verbose);
     return false;
@@ -165,20 +175,28 @@ done\n"));
   VERB(verbose, printf("  Number of bytes for a row is %d\n", rowbytes));
 
   VERB(verbose, printf("  Allocating memory for data ...\n"));
-  data = malloc(rowbytes * h * sizeof(png_byte) + 15);
+  if (roadmap != PNG_DATA_MALLOC_FAILED_RM)
+  {
+    data = malloc(rowbytes * h * sizeof(png_byte) + 15);
+  }
+
   if (!data)
   {
-    fprintf(stderr, "data malloc() failed\n");
+    fprintf(stderr, "  data malloc() failed\n");
     cleanup(&parser, &info, &row_pointers, &data, &file, filename, verbose);
     return false;
   }
   VERB(verbose, printf("  Memory allocated for data\n"));
 
   VERB(verbose, printf("  Allocating memory for row_pointers ...\n"));
-  row_pointers = malloc(h * sizeof(png_bytep));
+  if (roadmap != PNG_ROWPOINTERS_MALLOC_FAILED_RM)
+  {
+    row_pointers = malloc(h * sizeof(png_bytep));
+  }
+
   if (!row_pointers)
   {
-    fprintf(stderr, "row_pointers malloc() failed\n");
+    fprintf(stderr, "  row_pointers malloc() failed\n");
     cleanup(&parser, &info, &row_pointers, &data, &file, filename, verbose);
     return false;
   }

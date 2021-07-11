@@ -6,8 +6,21 @@ bool initFragShaderPath(Shaders* shaders, bool verbose, enum Roadmap roadmap)
   const size_t len1 = strlen(HOME_DIR);
   VERB(verbose, printf("  Length of \"%s\" is %lu\n", HOME_DIR, len1));
 
+  VERB(verbose, printf("  Querying username ...\n"));
+  char* user = NULL;
+  if (roadmap != FSHADERPATH_GETENV_USERNAME_FAILED_RM)
+  {
+    user = getenv("USERNAME");
+  }
+
+  if (!user)
+  {
+    fprintf(stderr, "  No username on this device\n");
+    return false;
+  }
+  VERB(verbose, printf("  Username is %s\n", user));
+
   VERB(verbose, printf("  Computing username length ...\n"));
-  const char* user = getenv("USERNAME");
   const size_t len2 = strlen(user);
   VERB(verbose, printf("  Length of \"%s\" is %lu\n", user, len2));
 
@@ -63,8 +76,21 @@ bool initVertShaderPath(Shaders* shaders, bool verbose, enum Roadmap roadmap)
   const size_t len1 = strlen(HOME_DIR);
   VERB(verbose, printf("  Length of \"%s\" is %lu\n", HOME_DIR, len1));
 
+  VERB(verbose, printf("  Querying username ...\n"));
+  char* user = NULL;
+  if (roadmap != VSHADERPATH_GETENV_USERNAME_FAILED_RM)
+  {
+    user = getenv("USERNAME");
+  }
+
+  if (!user)
+  {
+    fprintf(stderr, "  No username on this device\n");
+    return false;
+  }
+  VERB(verbose, printf("  Username is %s\n", user));
+
   VERB(verbose, printf("  Computing username length ...\n"));
-  const char* user = getenv("USERNAME");
   const size_t len2 = strlen(user);
   VERB(verbose, printf("  Length of \"%s\" is %lu\n", user, len2));
 
@@ -119,8 +145,21 @@ bool initTexturePath(char** texturepath, bool verbose, enum Roadmap roadmap)
   const size_t len1 = strlen(HOME_DIR);
   VERB(verbose, printf("  Length of \"%s\" is %lu\n", HOME_DIR, len1));
 
+  VERB(verbose, printf("  Querying username ...\n"));
+  char* user = NULL;
+  if (roadmap != TEXTUREPATH_GETENV_USERNAME_FAILED_RM)
+  {
+    user = getenv("USERNAME");
+  }
+
+  if (!user)
+  {
+    fprintf(stderr, "  No username on this device\n");
+    return false;
+  }
+  VERB(verbose, printf("  Username is %s\n", user));
+
   VERB(verbose, printf("  Computing username length ...\n"));
-  const char* user = getenv("USERNAME");
   const size_t len2 = strlen(user);
   VERB(verbose, printf("  Length of \"%s\" is %lu\n", user, len2));
 

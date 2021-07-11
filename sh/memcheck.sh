@@ -3,8 +3,11 @@
 declare -a ROADMAPS=(
   "Exit Success"
   "Break loop Success"
+  "No username fshaderpath Failure"
   "fshaderpath malloc() Failure"
+  "No username vshaderpath Failure"
   "vshaderpath malloc() Failure"
+  "No username texturepath Failure"
   "texturepath malloc() Failure"
   "XOpenDisplay() Failure"
   "Invalid GLX version"

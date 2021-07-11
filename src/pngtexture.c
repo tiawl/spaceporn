@@ -120,7 +120,7 @@ structure ...\n"));
   png_get_IHDR(parser, info, &w, &h, &bit_depth, &color_type, 0, 0, 0);
   VERB(verbose, printf("  PNG_IHDR chunk information found\n"));
 
-  if (roadmap == PNG_DIMENSIONS_FAILED_RM)
+  if (roadmap == BAD_PNG_DIMENSIONS_RM)
   {
     w = 15;
   }

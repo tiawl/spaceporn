@@ -29,6 +29,9 @@ int main(int argc, char** argv)
   shaders.fragment_file = NULL;
   shaders.fshaderpath = NULL;
   shaders.vshaderpath = NULL;
+  shaders.vertex_shader = 0;
+  shaders.fragment_shader = 0;
+  shaders.program = 0;
   char* texturepath = NULL;
 
   VERB(verbose, printf("Initializing fragment shader, vertex shader and \
@@ -44,6 +47,7 @@ are initialized\n"));
 
   Context context;
   context.display = NULL;
+  context.window = 0;
 
   VERB(verbose, printf("Creating GLX context ...\n"));
   if (!initContext(&context, verbose, roadmap))

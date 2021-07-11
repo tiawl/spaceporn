@@ -1,0 +1,202 @@
+{
+  glewInit-leak
+  Memcheck:Leak
+  ...
+  ...
+  fun:glXGetClientString
+  fun:glxewInit
+  fun:glewInit
+  fun:initContext
+  fun:main
+}
+
+{
+  pthread-possible-leak
+  Memcheck:Leak
+  fun:calloc
+  fun:allocate_dtv
+  fun:_dl_allocate_tls
+  fun:allocate_stack
+  fun:pthread_create@@GLIBC_2.2.5
+  obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+  obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+  obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+  obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+  obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+  obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+  obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+  ...
+  ...
+}
+
+{
+  glXCreateContextAttribsARB-leak-1
+  Memcheck:Leak
+  fun:calloc
+  ...
+  ...
+  obj:/usr/lib/x86_64-linux-gnu/libGLX.so.0.0.0
+  fun:initContext
+  fun:main
+}
+
+{
+  glXCreateContextAttribsARB-leak-2
+  Memcheck:Leak
+  fun:memalign
+  fun:posix_memalign
+  obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+  obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+  obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+  obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+  obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+  ...
+  ...
+  obj:/usr/lib/x86_64-linux-gnu/libGLX.so.0.0.0
+  fun:initContext
+}
+
+{
+  glXCreateContextAttribsARB-leak-3
+  Memcheck:Leak
+  fun:malloc
+  obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+  obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+  obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+  obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+  obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+  obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+  obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+  ...
+  ...
+  obj:/usr/lib/x86_64-linux-gnu/libGLX.so.0.0.0
+  fun:initContext
+}
+
+{
+  glXCreateContextAttribsARB-leak-4
+  Memcheck:Leak
+  fun:malloc
+  obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+  obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+  obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+  obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+  obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+  obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+  obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+  obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+  ...
+  ...
+  obj:/usr/lib/x86_64-linux-gnu/libGLX.so.0.0.0
+}
+
+{
+  glXCreateContextAttribsARB-leak-5
+  Memcheck:Leak
+  fun:malloc
+  obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+  obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+  obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+  obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+  obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+  obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+  obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+  obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+  obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+  ...
+  ...
+}
+
+{
+  glXCreateContextAttribsARB-leak-6
+  Memcheck:Leak
+  fun:calloc
+  obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+  obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+  obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+  obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+  obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+  obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+  obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+  obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+  obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+  obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+  ...
+}
+
+{
+  glXCreateContextAttribsARB-leak-7
+  Memcheck:Leak
+  fun:calloc
+  obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+  obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+  obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+  obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+  obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+  obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+  obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+  ...
+  ...
+  obj:/usr/lib/x86_64-linux-gnu/libGLX.so.0.0.0
+  fun:initContext
+}
+
+{
+  glXCreateContextAttribsARB-leak-8
+  Memcheck:Leak
+  fun:memalign
+  fun:posix_memalign
+  obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+  obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+  obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+  obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+  ...
+  ...
+  obj:/usr/lib/x86_64-linux-gnu/libGLX.so.0.0.0
+  fun:initContext
+  fun:main
+}
+
+{
+  glXCreateContextAttribsARB-leak-9
+  Memcheck:Leak
+  fun:malloc
+  fun:strdup
+  obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+  obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+  obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+  obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+  ...
+  ...
+  obj:/usr/lib/x86_64-linux-gnu/libGLX.so.0.0.0
+  fun:initContext
+  fun:main
+}
+
+{
+  glXCreateContextAttribsARB-leak-10
+  Memcheck:Leak
+  fun:malloc
+  obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+  obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+  ...
+  ...
+  obj:/usr/lib/x86_64-linux-gnu/libGLX.so.0.0.0
+  fun:initContext
+  fun:main
+}
+
+{
+  glXCreateContextAttribsARB-leak-11
+  Memcheck:Leak
+  fun:malloc
+  obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+  obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+  obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+  obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+  ...
+  ...
+  obj:/usr/lib/x86_64-linux-gnu/libGLX.so.0.0.0
+  fun:initContext
+  fun:main
+}

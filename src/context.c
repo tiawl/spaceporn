@@ -310,6 +310,7 @@ _NET_WM_WINDOW_TYPE_DESKTOP stored\n"));
   return true;
 }
 
+#if DEBUG
 bool initDebugWindow(Context* context, bool verbose, enum Roadmap roadmap)
 {
   VERB(verbose, printf("  Creating a debug window to catch key press events \
@@ -342,6 +343,7 @@ debug window\n"));
 
   return true;
 }
+#endif
 
 void freeContext(Context* context, char* spaces, bool verbose)
 {
@@ -517,7 +519,7 @@ by the OpenGL specification\n"));
   VERB(verbose, printf("  Testing X error generation during context \
 creation ...\n"));
   if (contextErrorOccurred || !context->glx_context ||
-    (roadmap == CREATION_CONTEXT_FAILED_RM))
+    (roadmap == CONTEXT_CREATION_FAILED_RM))
   {
     fprintf(stderr, "  An X error occured during creation context\n");
 
@@ -552,9 +554,11 @@ current window\n"));
   VERB(verbose, printf("  Initializing GLEW ...\n"));
   glewExperimental = GL_TRUE;
 
-  if (glewInit() || (roadmap == GLEWINIT_FAILED_RM))
+  GLenum err=glewInit();
+
+  if ((err != GLEW_OK) || (roadmap == GLEWINIT_FAILED_RM))
   {
-    fprintf(stderr, "  glewInit() failed\n");
+    fprintf(stderr, "  glewInit() failed: %s\n", glewGetErrorString(err));
     freeContext(context, "  ", verbose);
     return false;
   }

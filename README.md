@@ -51,8 +51,6 @@ Dev options:
 
     -R  Run the corresponding predefined execution roadmap (ex: -R 0)
         [default: 0]
-
-        ROADMAP values: - 0 -> Exit Success
 ```
 
 ## Installing

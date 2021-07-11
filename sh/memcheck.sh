@@ -50,10 +50,10 @@ for ROADMAP in {1..28}; do
   done;
 
   echo "===== ${ROADMAPS[$ROADMAP]} =====" && echo
-  echo "$VALGRIND_OUTPUT"
-  #echo "$VALGRIND_OUTPUT" | grep -E -A 2 "HEAP SUMMARY" && echo
-  #echo "$VALGRIND_OUTPUT" | grep -E -A 5 "LEAK SUMMARY" && echo
-  #echo "$VALGRIND_OUTPUT" | grep -E "ERROR SUMMARY" && echo
+  #echo "$VALGRIND_OUTPUT"
+  echo "$VALGRIND_OUTPUT" | grep -E -A 2 "HEAP SUMMARY" && echo
+  echo "$VALGRIND_OUTPUT" | grep -E -A 5 "LEAK SUMMARY" && echo
+  echo "$VALGRIND_OUTPUT" | grep -E "ERROR SUMMARY" && echo
 
   if [ $STATUS -ne 0 ]; then
     break;

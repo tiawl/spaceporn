@@ -7,9 +7,9 @@ bool initFragShaderPath(Shaders* shaders, bool verbose, enum Roadmap roadmap)
   VERB(verbose, printf("  Length of \"%s\" is %lu\n", HOME_DIR, len1));
 
   VERB(verbose, printf("  Computing username length ...\n"));
-  const size_t len2 = strlen(getenv("USERNAME"));
-  VERB(verbose, printf("  Length of \"%s\" is %lu\n",
-    getenv("USERNAME"), len2));
+  const char* user = getenv("USERNAME");
+  const size_t len2 = strlen(user);
+  VERB(verbose, printf("  Length of \"%s\" is %lu\n", user, len2));
 
   VERB(verbose, printf("  Computing length of binary directory path ...\n"));
   const size_t len3 = strlen(BIN_DIR);
@@ -42,7 +42,7 @@ path\n"));
   VERB(verbose, printf("  Building fragment shader path string ... 0/5\n"));
   memcpy(shaders->fshaderpath, HOME_DIR, len1);
   VERB(verbose, printf("  Building fragment shader path string ... 1/5\n"));
-  memcpy(shaders->fshaderpath + len1, getenv("USERNAME"), len2);
+  memcpy(shaders->fshaderpath + len1, user, len2);
   VERB(verbose, printf("  Building fragment shader path string ... 2/5\n"));
   memcpy(shaders->fshaderpath + len1 + len2, BIN_DIR, len3);
   VERB(verbose, printf("  Building fragment shader path string ... 3/5\n"));
@@ -64,9 +64,9 @@ bool initVertShaderPath(Shaders* shaders, bool verbose, enum Roadmap roadmap)
   VERB(verbose, printf("  Length of \"%s\" is %lu\n", HOME_DIR, len1));
 
   VERB(verbose, printf("  Computing username length ...\n"));
-  const size_t len2 = strlen(getenv("USERNAME"));
-  VERB(verbose, printf("  Length of \"%s\" is %lu\n",
-    getenv("USERNAME"), len2));
+  const char* user = getenv("USERNAME");
+  const size_t len2 = strlen(user);
+  VERB(verbose, printf("  Length of \"%s\" is %lu\n", user, len2));
 
   VERB(verbose, printf("  Computing length of binary directory path ...\n"));
   const size_t len3 = strlen(BIN_DIR);
@@ -98,7 +98,7 @@ path\n"));
   VERB(verbose, printf("  Building vertex shader path string ... 0/5\n"));
   memcpy(shaders->vshaderpath, HOME_DIR, len1);
   VERB(verbose, printf("  Building vertex shader path string ... 1/5\n"));
-  memcpy(shaders->vshaderpath + len1, getenv("USERNAME"), len2);
+  memcpy(shaders->vshaderpath + len1, user, len2);
   VERB(verbose, printf("  Building vertex shader path string ... 2/5\n"));
   memcpy(shaders->vshaderpath + len1 + len2, BIN_DIR, len3);
   VERB(verbose, printf("  Building vertex shader path string ... 3/5\n"));
@@ -120,9 +120,9 @@ bool initTexturePath(char** texturepath, bool verbose, enum Roadmap roadmap)
   VERB(verbose, printf("  Length of \"%s\" is %lu\n", HOME_DIR, len1));
 
   VERB(verbose, printf("  Computing username length ...\n"));
-  const size_t len2 = strlen(getenv("USERNAME"));
-  VERB(verbose, printf("  Length of \"%s\" is %lu\n",
-    getenv("USERNAME"), len2));
+  const char* user = getenv("USERNAME");
+  const size_t len2 = strlen(user);
+  VERB(verbose, printf("  Length of \"%s\" is %lu\n", user, len2));
 
   VERB(verbose, printf("  Computing length of binary directory path ...\n"));
   const size_t len3 = strlen(BIN_DIR);
@@ -154,7 +154,7 @@ bool initTexturePath(char** texturepath, bool verbose, enum Roadmap roadmap)
   VERB(verbose, printf("  Building texture path string ... 0/5\n"));
   memcpy(*texturepath, HOME_DIR, len1);
   VERB(verbose, printf("  Building texture path string ... 1/5\n"));
-  memcpy(*texturepath + len1, getenv("USERNAME"), len2);
+  memcpy(*texturepath + len1, user, len2);
   VERB(verbose, printf("  Building texture path string ... 2/5\n"));
   memcpy(*texturepath + len1 + len2, BIN_DIR, len3);
   VERB(verbose, printf("  Building texture path string ... 3/5\n"));

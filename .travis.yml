@@ -18,7 +18,4 @@ before_script:
   - export CC=${cc}
 
 script:
-  - make clean all
-  - chmod 700 sh/memcheck.sh
-  - ./sh/memcheck.sh
-  - cat src/util.c
+  - make clean all && chmod 700 sh/memcheck.sh && ./sh/memcheck.sh && ls

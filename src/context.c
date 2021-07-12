@@ -74,11 +74,6 @@ bool queryingGlxVersion(Context* context, bool verbose, enum Roadmap roadmap)
     (roadmap == INVALID_GLX_VERSION_RM))
   {
     fprintf(stderr, "  Invalid GLX version\n");
-
-    VERB(verbose, printf("  Closing display ...\n"));
-    XCloseDisplay(context->display);
-    VERB(verbose, printf("  Display closed\n"));
-
     return false;
   }
   VERB(verbose, printf("  Valid GLX version: %d.%d\n", glx_major, glx_minor));
@@ -86,8 +81,8 @@ bool queryingGlxVersion(Context* context, bool verbose, enum Roadmap roadmap)
   return true;
 }
 
-bool searchingBestFbc(Context* context, XVisualInfo** vi,
-  GLXFBConfig* bestFbc, bool verbose, enum Roadmap roadmap)
+bool searchingBestFbc(Context* context, GLXFBConfig* bestFbc, bool verbose,
+  enum Roadmap roadmap)
 {
   // Get a matching FB config
   int visual_attribs[] =
@@ -119,11 +114,6 @@ bool searchingBestFbc(Context* context, XVisualInfo** vi,
   if (!fbc)
   {
     fprintf(stderr, "  Failed to found a GLX framebuffer config\n");
-
-    VERB(verbose, printf("  Closing display ...\n"));
-    XCloseDisplay(context->display);
-    VERB(verbose, printf("  Display closed\n"));
-
     return false;
   }
   VERB(verbose, printf("  GLX framebuffer config found\n"));
@@ -140,8 +130,8 @@ bool searchingBestFbc(Context* context, XVisualInfo** vi,
 samples per pixel ... %d/%d\n", i, fbcount));
     VERB(verbose, printf("    Querying visual from GLX framebuffer config \
 ... \n"));
-    *vi = glXGetVisualFromFBConfig(context->display, fbc[i]);
-    if (*vi)
+    context->visual_info = glXGetVisualFromFBConfig(context->display, fbc[i]);
+    if (context->visual_info)
     {
       VERB(verbose, printf("    Corresponding visual found\n"));
 
@@ -183,7 +173,7 @@ is: %d\n", worst_fbc));
       }
     }
     VERB(verbose, printf("    Freeing current visual ...\n"));
-    XFree(*vi);
+    XFree(context->visual_info);
     VERB(verbose, printf("    Current visual freed\n"));
   }
 
@@ -199,18 +189,17 @@ samples per pixel ... %d/%d\n", fbcount, fbcount));
 
   VERB(verbose, printf("  Querying visual from best GLX framebuffer config \
 ... \n"));
-  *vi = glXGetVisualFromFBConfig(context->display, *bestFbc);
+  context->visual_info = glXGetVisualFromFBConfig(context->display, *bestFbc);
   VERB(verbose, printf("  Corresponding visual found\n"));
 
   return true;
 }
 
-bool initWindow(Context* context, XVisualInfo** vi, bool verbose,
-  enum Roadmap roadmap)
+bool initWindow(Context* context, bool verbose, enum Roadmap roadmap)
 {
   VERB(verbose, printf("  Searching X root window from visual's screen \
 ...\n"));
-  Window root = RootWindow(context->display, (*vi)->screen);
+  Window root = RootWindow(context->display, context->visual_info->screen);
   VERB(verbose, printf("  X root window: 0x%lx\n", root));
 
   XSetWindowAttributes swa;
@@ -218,7 +207,7 @@ bool initWindow(Context* context, XVisualInfo** vi, bool verbose,
   VERB(verbose, printf("  Creating color map from visual and root window \
 ...\n"));
   swa.colormap = context->cmap = XCreateColormap(context->display, root,
-    (*vi)->visual, AllocNone);
+    context->visual_info->visual, AllocNone);
   VERB(verbose, printf("  Color map created\n"));
 
   swa.background_pixmap = None;
@@ -238,26 +227,13 @@ bool initWindow(Context* context, XVisualInfo** vi, bool verbose,
     context->window = XCreateWindow(context->display, root,
       context->window_attribs.x, context->window_attribs.y,
       context->window_attribs.width, context->window_attribs.height, 0,
-      (*vi)->depth, InputOutput, (*vi)->visual,
+      context->visual_info->depth, InputOutput, context->visual_info->visual,
       CWBorderPixel | CWColormap | CWEventMask, &swa);
   }
 
   if (!context->window)
   {
     fprintf(stderr, "  Failed to create X window\n");
-
-    VERB(verbose, printf("  Freeing current visual ...\n"));
-    XFree(*vi);
-    VERB(verbose, printf("  Current visual freed\n"));
-
-    VERB(verbose, printf("  Freeing colormap ...\n"));
-    XFreeColormap(context->display, context->cmap);
-    VERB(verbose, printf("  Colormap freed\n"));
-
-    VERB(verbose, printf("  Closing Display ...\n"));
-    XCloseDisplay(context->display);
-    VERB(verbose, printf("  Display closed\n"));
-
     return false;
   }
   VERB(verbose, printf("  X Window created: 0x%lx\n", context->window));
@@ -298,10 +274,6 @@ _NET_WM_WINDOW_TYPE_DESKTOP stored\n"));
   VERB(verbose, printf("  Freeing window manager hints ...\n"));
   XFree(wmHint);
   VERB(verbose, printf("  Window manager hints freed\n"));
-
-  VERB(verbose, printf("  Freeing current visual ...\n"));
-  XFree(*vi);
-  VERB(verbose, printf("  Current visual freed\n"));
 
   VERB(verbose, printf("  Mapping the newly created window ...\n"));
   XMapWindow(context->display, context->window);
@@ -345,40 +317,63 @@ debug window\n"));
 }
 #endif
 
-void freeContext(Context* context, char* spaces, bool verbose)
+void freeContext(Context* context, bool verbose)
 {
-  VERB(verbose, printf("%sDetaching current rendering context ...\n",
-    spaces));
-  glXMakeCurrent(context->display, 0, 0);
-  VERB(verbose, printf("%sCurrent rendering context detached\n", spaces));
+  if (context->glx_context)
+  {
+    VERB(verbose, printf("Detaching current rendering context ...\n"));
+    glXMakeCurrent(context->display, 0, 0);
+    VERB(verbose, printf("Current rendering context detached\n"));
 
-  VERB(verbose, printf("%sDestroying detached rendering context ...\n",
-    spaces));
-  glXDestroyContext(context->display, context->glx_context);
-  VERB(verbose, printf("%sDetached rendering context destroyed\n", spaces));
+    VERB(verbose, printf("Destroying detached rendering context ...\n"));
+    glXDestroyContext(context->display, context->glx_context);
+    VERB(verbose, printf("Detached rendering context destroyed\n"));
+  }
 
-  VERB(verbose, printf("%sDestroying current window ...\n", spaces));
-  XDestroyWindow(context->display, context->window);
-  VERB(verbose, printf("%sCurrent window destroyed\n", spaces));
-
-  VERB(verbose, printf("%sFreeing colormap ...\n", spaces));
-  XFreeColormap(context->display, context->cmap);
-  VERB(verbose, printf("%sColormap freed\n", spaces));
-
-  VERB(verbose, printf("%sClosing Display ...\n", spaces));
-  XCloseDisplay(context->display);
-  VERB(verbose, printf("%sDisplay closed\n", spaces));
-}
-
-void freeDebugContext(Context* context, bool verbose)
-{
 #if DEBUG
-  VERB(verbose, printf("Destroying debug window ...\n"));
-  XDestroyWindow(context->display, context->debug_window);
-  VERB(verbose, printf("Debug window destroyed\n"));
+  if (context->debug_window)
+  {
+    VERB(verbose, printf("Unmapping debug window ...\n"));
+    XUnmapWindow(context->display, context->debug_window);
+    VERB(verbose, printf("Debug window unmapped\n"));
+
+    VERB(verbose, printf("Destroying debug window ...\n"));
+    XDestroyWindow(context->display, context->debug_window);
+    VERB(verbose, printf("Debug window destroyed\n"));
+  }
 #endif
 
-  freeContext(context, "", verbose);
+  if (context->visual_info)
+  {
+    VERB(verbose, printf("Freeing current visual ...\n"));
+    XFree(context->visual_info);
+    VERB(verbose, printf("Current visual freed\n"));
+  }
+
+  if (context->cmap)
+  {
+    VERB(verbose, printf("Freeing colormap ...\n"));
+    XFreeColormap(context->display, context->cmap);
+    VERB(verbose, printf("Colormap freed\n"));
+  }
+
+  if (context->window)
+  {
+    VERB(verbose, printf("Unmapping current window ...\n"));
+    XUnmapWindow(context->display, context->window);
+    VERB(verbose, printf("Current window unmapped\n"));
+
+    VERB(verbose, printf("Destroying current window ...\n"));
+    XDestroyWindow(context->display, context->window);
+    VERB(verbose, printf("Current window destroyed\n"));
+  }
+
+  if (context->display)
+  {
+    VERB(verbose, printf("Closing Display ...\n"));
+    XCloseDisplay(context->display);
+    VERB(verbose, printf("Display closed\n"));
+  }
 }
 
 bool initContext(Context* context, bool verbose, enum Roadmap roadmap)
@@ -403,14 +398,13 @@ bool initContext(Context* context, bool verbose, enum Roadmap roadmap)
   }
 
   GLXFBConfig bestFbc;
-  XVisualInfo* vi = NULL;
 
-  if (!searchingBestFbc(context, &vi, &bestFbc, verbose, roadmap))
+  if (!searchingBestFbc(context, &bestFbc, verbose, roadmap))
   {
     return false;
   }
 
-  if (!initWindow(context, &vi, verbose, roadmap))
+  if (!initWindow(context, verbose, roadmap))
   {
     return false;
   }
@@ -450,18 +444,6 @@ function ...\n"));
     XSetErrorHandler(oldHandler);
     VERB(verbose, printf("  Original X error handler restored\n"));
 
-    VERB(verbose, printf("  Destroying current window ...\n"));
-    XDestroyWindow(context->display, context->window);
-    VERB(verbose, printf("  Current window destroyed\n"));
-
-    VERB(verbose, printf("  Freeing colormap ...\n"));
-    XFreeColormap(context->display, context->cmap);
-    VERB(verbose, printf("  Colormap freed\n"));
-
-    VERB(verbose, printf("  Closing Display ...\n"));
-    XCloseDisplay(context->display);
-    VERB(verbose, printf("  Display closed\n"));
-
     return false;
   }
   VERB(verbose, printf("  Pointer to glXCreateContextAttribsARB() \
@@ -477,18 +459,6 @@ found\n"));
     XSetErrorHandler(oldHandler);
     VERB(verbose, printf("  Original X error handler restored\n"));
 
-    VERB(verbose, printf("  Destroying current window ...\n"));
-    XDestroyWindow(context->display, context->window);
-    VERB(verbose, printf("  Current window destroyed\n"));
-
-    VERB(verbose, printf("  Freeing colormap ...\n"));
-    XFreeColormap(context->display, context->cmap);
-    VERB(verbose, printf("  Colormap freed\n"));
-
-    VERB(verbose, printf("  Closing Display ...\n"));
-    XCloseDisplay(context->display);
-    VERB(verbose, printf("  Display closed\n"));
-
     return false;
   }
   VERB(verbose, printf("  Extension supported\n"));
@@ -502,8 +472,11 @@ found\n"));
 
   VERB(verbose, printf("  Initializing the context to the initial state \
 defined by the OpenGL specification ...\n"));
-  context->glx_context = glXCreateContextAttribsARB(context->display,
-    bestFbc, 0, True, context_attribs);
+  if (roadmap != CONTEXT_CREATION_FAILED_RM)
+  {
+    context->glx_context = glXCreateContextAttribsARB(context->display,
+      bestFbc, 0, True, context_attribs);
+  }
   VERB(verbose, printf("  Context initialized to the initial state defined \
 by the OpenGL specification\n"));
 
@@ -518,23 +491,9 @@ by the OpenGL specification\n"));
 
   VERB(verbose, printf("  Testing X error generation during context \
 creation ...\n"));
-  if (contextErrorOccurred || !context->glx_context ||
-    (roadmap == CONTEXT_CREATION_FAILED_RM))
+  if (contextErrorOccurred || !context->glx_context)
   {
     fprintf(stderr, "  An X error occured during creation context\n");
-
-    VERB(verbose, printf("  Destroying current window ...\n"));
-    XDestroyWindow(context->display, context->window);
-    VERB(verbose, printf("  Current window destroyed\n"));
-
-    VERB(verbose, printf("  Freeing colormap ...\n"));
-    XFreeColormap(context->display, context->cmap);
-    VERB(verbose, printf("  Colormap freed\n"));
-
-    VERB(verbose, printf("  Closing Display ...\n"));
-    XCloseDisplay(context->display);
-    VERB(verbose, printf("  Display closed\n"));
-
     return false;
   }
   VERB(verbose, printf("  No X error occured during context creation\n"));
@@ -559,7 +518,6 @@ current window\n"));
   if ((err != GLEW_OK) || (roadmap == GLEWINIT_FAILED_RM))
   {
     fprintf(stderr, "  glewInit() failed: %s\n", glewGetErrorString(err));
-    freeContext(context, "  ", verbose);
     return false;
   }
   VERB(verbose, printf("  GLEW initialized\n"));
@@ -577,7 +535,6 @@ window\n"));
 #if DEBUG
   if (!initDebugWindow(context, verbose, roadmap))
   {
-    freeContext(context, "  ", verbose);
     return false;
   }
 #endif

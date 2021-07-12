@@ -13,11 +13,14 @@
 #define VSHADER_FILE "/vertex.glsl"
 #define TEXTURE_FILE "/big_stars.png"
 
-bool initFragShaderPath(Shaders* shaders, bool verbose, enum Roadmap roadmap);
-bool initVertShaderPath(Shaders* shaders, bool verbose, enum Roadmap roadmap);
-bool initTexturePath(char** texturepath, bool verbose, enum Roadmap roadmap);
-bool initPaths(Shaders* shaders, char** texturepath, bool verbose,
+bool initFragShaderPath(Shaders* shaders, size_t len[5], char* user,
+  bool verbose, enum Roadmap roadmap);
+bool initVertShaderPath(Shaders* shaders, size_t len[5], char* user,
+  bool verbose, enum Roadmap roadmap);
+bool initTexturePath(PNG* png, size_t len[5], char* user, bool verbose,
   enum Roadmap roadmap);
-void freePaths(Shaders* shaders, char** texturepath, bool verbose);
+bool initPaths(Shaders* shaders, PNG* png, bool verbose,
+  enum Roadmap roadmap);
+void freePaths(Shaders* shaders, PNG* png, bool verbose);
 
 #endif

@@ -18,37 +18,35 @@ void help()
         [default: 0]\n\n\
         ROADMAP values: -  0 -> Exit Success\n\
                         -  1 -> Break loop Success\n\
-                        -  2 -> No username fshaderpath Failure\n\
+                        -  2 -> No username Failure\n\
                         -  3 -> fshaderpath malloc() Failure\n\
-                        -  4 -> No username vshaderpath Failure\n\
-                        -  5 -> vshaderpath malloc() Failure\n\
-                        -  6 -> No username texturepath Failure\n\
-                        -  7 -> texturepath malloc() Failure\n\
-                        -  8 -> XOpenDisplay() Failure\n\
-                        -  9 -> Invalid GLX version\n\
-                        - 10 -> glXChooseFBConfig() Failure\n\
-                        - 11 -> XCreateWindow() Failure\n\
-                        - 12 -> Unfoundable glXCreateContextAttribsARB()\n\
-                        - 13 -> Spaces in GLX extension name\n\
-                        - 14 -> Unsupported GLX extension\n\
-                        - 15 -> Unable to create context\n\
-                        - 16 -> glewInit() Failure\n\
-                        - 17 -> Vertex shader file fopen() Failure\n\
-                        - 18 -> vertex_file malloc() Failure\n\
-                        - 19 -> Fragment shader file fopen() Failure\n\
-                        - 20 -> fragment_file malloc() Failure\n\
-                        - 21 -> Unable to load vertex shader\n\
-                        - 22 -> Unable to load fragment shader\n\
-                        - 23 -> Unable to link program\n\
-                        - 24 -> No PNG filename\n\
-                        - 25 -> PNG file fopen() Failure\n\
-                        - 26 -> png_create_read_struct() Failure\n\
-                        - 27 -> png_create_info_struct() Failure\n\
-                        - 28 -> png_jmpbuf() Failure\n\
-                        - 29 -> Bad PNG dimensions\n\
-                        - 30 -> PNG data malloc() Failure\n\
-                        - 31 -> PNG row_pointers malloc() Failure\n\
-                        - 32 -> (if DEBUG true) XCreateWindow() Failure\n\n");
+                        -  4 -> vshaderpath malloc() Failure\n\
+                        -  5 -> texturepath malloc() Failure\n\
+                        -  6 -> XOpenDisplay() Failure\n\
+                        -  7 -> Invalid GLX version\n\
+                        -  8 -> glXChooseFBConfig() Failure\n\
+                        -  9 -> XCreateWindow() Failure\n\
+                        - 10 -> Unfoundable glXCreateContextAttribsARB()\n\
+                        - 11 -> Spaces in GLX extension name\n\
+                        - 12 -> Unsupported GLX extension\n\
+                        - 13 -> Unable to create context\n\
+                        - 14 -> glewInit() Failure\n\
+                        - 15 -> Vertex shader file fopen() Failure\n\
+                        - 16 -> vertex_file malloc() Failure\n\
+                        - 17 -> Fragment shader file fopen() Failure\n\
+                        - 18 -> fragment_file malloc() Failure\n\
+                        - 19 -> Unable to load vertex shader\n\
+                        - 20 -> Unable to load fragment shader\n\
+                        - 21 -> Unable to link program\n\
+                        - 22 -> No PNG filename\n\
+                        - 23 -> PNG file fopen() Failure\n\
+                        - 24 -> png_create_read_struct() Failure\n\
+                        - 25 -> png_create_info_struct() Failure\n\
+                        - 26 -> png_jmpbuf() Failure\n\
+                        - 27 -> Bad PNG dimensions\n\
+                        - 28 -> PNG data malloc() Failure\n\
+                        - 29 -> PNG row_pointers malloc() Failure\n\
+                        - 30 -> (if DEBUG true) XCreateWindow() Failure\n\n");
 }
 
 bool parsing_options(bool* verbose, int* delay, UniformValues* uniform_values,

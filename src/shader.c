@@ -82,7 +82,6 @@ bool readVertexShaderFile(Shaders* shaders, bool verbose,
     roadmap))
   {
     fprintf(stderr, "  Failed to read in vertex shader file\n");
-    freeProgram(shaders, "  ", verbose);
     return false;
   }
   return true;
@@ -105,7 +104,6 @@ bool readFragmentShaderFile(Shaders* shaders, bool verbose,
     roadmap))
   {
     fprintf(stderr, "  Failed to read in fragment shader file\n");
-    freeProgram(shaders, "  ", verbose);
     return false;
   }
   return true;
@@ -188,7 +186,6 @@ bool loadVertexShader(Shaders* shaders, bool verbose, enum Roadmap roadmap)
   if (shaders->vertex_shader == 0)
   {
     fprintf(stderr, "  Failed to load vertex shader\n");
-    freeProgram(shaders, "  ", verbose);
     return false;
   }
   return true;
@@ -205,57 +202,51 @@ bool loadFragmentShader(Shaders* shaders, bool verbose, enum Roadmap roadmap)
   if (shaders->fragment_shader == 0)
   {
     fprintf(stderr, "  Failed to load fragment shader\n");
-    freeProgram(shaders, "  ", verbose);
     return false;
   }
   return true;
 }
 
-void freeShaders(Shaders* shaders, bool verbose)
+void freeProgram(Shaders* shaders, bool verbose)
 {
   if (shaders->vertex_file)
   {
-    VERB(verbose, printf("  Freeing vertex file ...\n"));
+    VERB(verbose, printf("Freeing vertex file ...\n"));
     free(shaders->vertex_file);
     shaders->vertex_file = NULL;
-    VERB(verbose, printf("  Vertex file freed\n"));
+    VERB(verbose, printf("Vertex file freed\n"));
   }
 
   if (shaders->fragment_file)
   {
-    VERB(verbose, printf("  Freeing fragment file ...\n"));
+    VERB(verbose, printf("Freeing fragment file ...\n"));
     free(shaders->fragment_file);
     shaders->fragment_file = NULL;
-    VERB(verbose, printf("  Fragment file freed\n"));
+    VERB(verbose, printf("Fragment file freed\n"));
   }
 
   if (shaders->vertex_shader)
   {
-    VERB(verbose, printf("  Deleting vertex shader ...\n"));
+    VERB(verbose, printf("Deleting vertex shader ...\n"));
     GL_CHECK(glDeleteShader(shaders->vertex_shader));
     shaders->vertex_shader = 0;
-    VERB(verbose, printf("  Vertex shader deleted\n"));
+    VERB(verbose, printf("Vertex shader deleted\n"));
   }
 
   if (shaders->fragment_shader)
   {
-    VERB(verbose, printf("  Deleting fragment shader ...\n"));
+    VERB(verbose, printf("Deleting fragment shader ...\n"));
     GL_CHECK(glDeleteShader(shaders->fragment_shader));
     shaders->fragment_shader = 0;
-    VERB(verbose, printf("  Fragment shader deleted\n"));
+    VERB(verbose, printf("Fragment shader deleted\n"));
   }
-}
-
-void freeProgram(Shaders* shaders, char* spaces, bool verbose)
-{
-  freeShaders(shaders, verbose);
 
   if (shaders->program)
   {
-    VERB(verbose, printf("%sDeleting OpenGL program ...\n", spaces));
+    VERB(verbose, printf("Deleting OpenGL program ...\n"));
     GL_CHECK(glDeleteProgram(shaders->program));
     shaders->program = 0;
-    VERB(verbose, printf("%sOpenGL program deleted\n", spaces));
+    VERB(verbose, printf("OpenGL program deleted\n"));
   }
 }
 
@@ -296,7 +287,6 @@ bool checkingLogProgram(Shaders* shaders, bool verbose, enum Roadmap roadmap)
       fprintf(stderr, "%s\n", &(message[0]));
     }
 
-    freeProgram(shaders, "  ", verbose);
     return false;
   }
   return true;
@@ -378,8 +368,6 @@ rendering state...\n"));
 ...\n"));
   GL_CHECK(glDetachShader(shaders->program, shaders->fragment_shader));
   VERB(verbose, printf("  Fragment shader detached\n"));
-
-  freeShaders(shaders, verbose);
 
   return true;
 }

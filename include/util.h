@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <png.h>
 #include <GL/glew.h>
 #include <GL/glx.h>
 
@@ -15,38 +16,36 @@ enum Roadmap
   BUFFER_MALLOC_FAILED_RM = -1,
   EXIT_SUCCESS_RM = 0, // ----------------------------   0
   BREAK_SUCCESS_RM,
-  FSHADERPATH_GETENV_USERNAME_FAILED_RM,
+  GETENV_USERNAME_FAILED_RM,
   FSHADERPATH_MALLOC_FAILED_RM,
-  VSHADERPATH_GETENV_USERNAME_FAILED_RM,
-  VSHADERPATH_MALLOC_FAILED_RM, // -------------------   5
-  TEXTUREPATH_GETENV_USERNAME_FAILED_RM,
-  TEXTUREPATH_MALLOC_FAILED_RM,
+  VSHADERPATH_MALLOC_FAILED_RM,
+  TEXTUREPATH_MALLOC_FAILED_RM, // -------------------   5
   XOPENDISPLAY_FAILED_RM,
   INVALID_GLX_VERSION_RM,
-  GLXCHOOSEFBCONFIG_FAILED_RM, // --------------------  10
+  GLXCHOOSEFBCONFIG_FAILED_RM,
   XCREATEWINDOW_FAILED_RM,
-  GLXCREATECONTEXTATTRIBSARB_UNFOUNDABLE_RM,
+  GLXCREATECONTEXTATTRIBSARB_UNFOUNDABLE_RM, // ------  10
   SPACE_IN_GLX_EXT_RM,
   UNSUPPORTED_GLX_EXT_RM,
-  CONTEXT_CREATION_FAILED_RM, // ---------------------  15
+  CONTEXT_CREATION_FAILED_RM,
   GLEWINIT_FAILED_RM,
-  FOPEN_VERTEX_FILE_FAILED_RM,
+  FOPEN_VERTEX_FILE_FAILED_RM, // --------------------  15
   BUFFER_VERTEX_FILE_MALLOC_FAILED_RM,
   FOPEN_FRAGMENT_FILE_FAILED_RM,
-  BUFFER_FRAGMENT_FILE_MALLOC_FAILED_RM, // ----------  20
+  BUFFER_FRAGMENT_FILE_MALLOC_FAILED_RM,
   LOAD_VERTEX_SHADER_FAILED_RM,
-  LOAD_FRAGMENT_SHADER_FAILED_RM,
+  LOAD_FRAGMENT_SHADER_FAILED_RM, // -----------------  20
   LINKING_PROGRAM_FAILED_RM,
   NO_PNG_FILENAME_RM,
-  FOPEN_PNG_FILE_FAILED_RM, // -----------------------  25
+  FOPEN_PNG_FILE_FAILED_RM,
   PNGCREATEREADSTRUCT_FAILED_RM,
-  PNGCREATEINFOSTRUCT_FAILED_RM,
+  PNGCREATEINFOSTRUCT_FAILED_RM, // ------------------  25
   PNG_JMPBUF_FAILED_RM,
   BAD_PNG_DIMENSIONS_RM,
-  PNG_DATA_MALLOC_FAILED_RM, // ----------------------  30
+  PNG_DATA_MALLOC_FAILED_RM,
   PNG_ROWPOINTERS_MALLOC_FAILED_RM,
 #if DEBUG
-  XCREATEDEBUGWINDOW_FAILED_RM,
+  XCREATEDEBUGWINDOW_FAILED_RM, // -------------------  30
 #endif
   RM_NB
 };
@@ -76,6 +75,7 @@ typedef struct
   XEvent event;
 #endif
   XWindowAttributes window_attribs;
+  XVisualInfo* visual_info;
   Colormap cmap;
 } Context;
 
@@ -89,5 +89,16 @@ typedef struct
   GLuint fragment_shader;
   GLuint program;
 } Shaders;
+
+typedef struct
+{
+  png_structp parser;
+  png_infop info;
+  png_bytep* row_pointers;
+  uint8_t* data;
+  FILE* file;
+  char* path;
+  GLuint texture;
+} PNG;
 
 #endif

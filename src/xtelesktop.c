@@ -32,14 +32,23 @@ int main(int argc, char** argv)
   shaders.vertex_shader = 0;
   shaders.fragment_shader = 0;
   shaders.program = 0;
-  char* texturepath = NULL;
+
+  PNG png;
+  png.file = NULL;
+  png.data = NULL;
+  png.parser = 0;
+  png.info = 0;
+  png.row_pointers = NULL;
+  png.path = NULL;
+  png.texture = 0;
 
   VERB(verbose, printf("Initializing fragment shader, vertex shader and \
 texture paths ...\n"));
-  if (!initPaths(&shaders, &texturepath, verbose, roadmap))
+  if (!initPaths(&shaders, &png, verbose, roadmap))
   {
     fprintf(stderr, "Failed to initialize fragment shader, vertex shader or \
 texture paths\n");
+    freePaths(&shaders, &png, verbose);
     return EXIT_FAILURE;
   }
   VERB(verbose, printf("Fragment shader, vertex shader and texture paths \
@@ -47,13 +56,20 @@ are initialized\n"));
 
   Context context;
   context.display = NULL;
+  context.glx_context = 0;
   context.window = 0;
+#if DEBUG
+  context.debug_window = 0;
+#endif
+  context.visual_info = NULL;
+  context.cmap = 0;
 
   VERB(verbose, printf("Creating GLX context ...\n"));
   if (!initContext(&context, verbose, roadmap))
   {
     fprintf(stderr, "Failed to create a GLX context\n");
-    freePaths(&shaders, &texturepath, verbose);
+    freePaths(&shaders, &png, verbose);
+    freeContext(&context, verbose);
     return EXIT_FAILURE;
   }
   VERB(verbose, printf("GLX context created\n"));
@@ -62,8 +78,9 @@ are initialized\n"));
   if (!loadProgram(&context, &shaders, verbose, roadmap))
   {
     fprintf(stderr, "OpenGL program failed to load\n");
-    freePaths(&shaders, &texturepath, verbose);
-    freeDebugContext(&context, verbose);
+    freePaths(&shaders, &png, verbose);
+    freeProgram(&shaders, verbose);
+    freeContext(&context, verbose);
     return EXIT_FAILURE;
   }
   VERB(verbose, printf("OpenGL program loaded\n"));
@@ -81,13 +98,13 @@ are initialized\n"));
   uniform_values.height = context.window_attribs.height;
 
   VERB(verbose, printf("Loading PNG texture ...\n"));
-  GLuint texture;
-  if (!loadPng(&texture, texturepath, verbose, roadmap))
+  if (!loadPng(&png, verbose, roadmap))
   {
-    fprintf(stderr, "Failed to load PNG file \"%s\"\n", texturepath);
-    freePaths(&shaders, &texturepath, verbose);
-    freeProgram(&shaders, "", verbose);
-    freeDebugContext(&context, verbose);
+    fprintf(stderr, "Failed to load PNG file \"%s\"\n", png.path);
+    freePaths(&shaders, &png, verbose);
+    freePng(&png, verbose);
+    freeProgram(&shaders, verbose);
+    freeContext(&context, verbose);
     return EXIT_FAILURE;
   }
   VERB(verbose, printf("PNG texture loaded\n"));
@@ -145,15 +162,11 @@ initialized\n"));
     }
   }
 
-  freePaths(&shaders, &texturepath, verbose);
+  freePaths(&shaders, &png, verbose);
   freeVertices(&vertexbuffer, &vertexarray, verbose);
-
-  VERB(verbose, printf("Deleting OpenGL texture ...\n"));
-  GL_CHECK(glDeleteTextures(1, &texture));
-  VERB(verbose, printf("OpenGL texture deleted\n"));
-
-  freeProgram(&shaders, "", verbose);
-  freeDebugContext(&context, verbose);
+  freePng(&png, verbose);
+  freeProgram(&shaders, verbose);
+  freeContext(&context, verbose);
 
   return EXIT_SUCCESS;
 }

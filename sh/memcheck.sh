@@ -3,11 +3,9 @@
 declare -a ROADMAPS=(
   "Exit Success"
   "Break loop Success"
-  "No username fshaderpath Failure"
+  "No username Failure"
   "fshaderpath malloc() Failure"
-  "No username vshaderpath Failure"
   "vshaderpath malloc() Failure"
-  "No username texturepath Failure"
   "texturepath malloc() Failure"
   "XOpenDisplay() Failure"
   "Invalid GLX version"
@@ -33,11 +31,12 @@ declare -a ROADMAPS=(
   "Bad PNG dimensions"
   "PNG data malloc() Failure"
   "PNG row_pointers malloc() Failure"
+  "Debug XCreateWindow() Failure"
 );
 
 STATUS=0;
 
-for ROADMAP in {1..28}; do
+for ROADMAP in {1..30}; do
 
   VALGRIND_OUTPUT=$(valgrind --leak-check=summary --show-leak-kinds=all \
 --suppressions=amd.supp ./bin/xtelesktop -R $ROADMAP 2>&1 > /dev/null \
@@ -53,10 +52,9 @@ for ROADMAP in {1..28}; do
   done;
 
   echo "===== ${ROADMAPS[$ROADMAP]} =====" && echo
-  echo "$VALGRIND_OUTPUT"
-  #echo "$VALGRIND_OUTPUT" | grep -E -A 2 "HEAP SUMMARY" && echo
-  #echo "$VALGRIND_OUTPUT" | grep -E -A 5 "LEAK SUMMARY" && echo
-  #echo "$VALGRIND_OUTPUT" | grep -E "ERROR SUMMARY" && echo
+  echo "$VALGRIND_OUTPUT" | grep -E -A 2 "HEAP SUMMARY" && echo
+  echo "$VALGRIND_OUTPUT" | grep -E -A 5 "LEAK SUMMARY" && echo
+  echo "$VALGRIND_OUTPUT" | grep -E "ERROR SUMMARY" && echo
 
   if [ $STATUS -ne 0 ]; then
     break;

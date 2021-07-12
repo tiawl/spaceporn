@@ -15,12 +15,17 @@ CPPFLAGS := -Wall -g -I ./$(HEAD_DIR)
 
 all: directories $(BIN_DIR)/$(BIN)
 
+coverage: directories cov $(BIN_DIR)/$(BIN)
+
+cov:
+	$(eval COVFLAGS := --coverage)
+
 directories:
 	mkdir -p $(OBJ_DIR) $(BIN_DIR)
 
 $(BIN_DIR)/$(BIN): $(OBJ_FILES)
 	$(mkdir -p $(BIN_DIR))
-	$(CC) -o $(BIN_DIR)/$(BIN) $^ $(FLAGS)
+	$(CC) $(COVFLAGS) -o $(BIN_DIR)/$(BIN) $^ $(FLAGS)
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	$(mkdir -p $(OBJ_DIR))

@@ -1,6 +1,6 @@
 AC_PREREQ([2.69])
 AC_INIT([xtelesktop], [0.1], [pabtomas@protonmail.com])
-AC_CONFIG_SRCDIR([../src/xtelesktop.c])
+AC_CONFIG_SRCDIR([../../src/xtelesktop.c])
 
 AC_LANG(C)
 
@@ -135,8 +135,8 @@ are not found. Update the GLX developing package.]))
 AC_CHECK_FUNCS([XOpenDisplay XCloseDisplay XFree XCreateColormap \
 XAllocWMHints XSetWMProperties XInternAtom XChangeProperty XMapWindow \
 XGetWindowAttributes XCreateWindow XSetErrorHandler XSync XDestroyWindow \
-XFreeColormap XSelectInput XCreateSimpleWindow XCheckMaskEvent], [],
-AC_MSG_ERROR([X11 package is found but some functions of this package are \
-not found. Update the X11 developing package.]))
+XFreeColormap XSelectInput XCreateSimpleWindow XCheckMaskEvent XUnmapWindow],
+[], AC_MSG_ERROR([X11 package is found but some functions of this package \
+are not found. Update the X11 developing package.]))
 
 AC_OUTPUT

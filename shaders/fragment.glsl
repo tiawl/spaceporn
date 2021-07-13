@@ -804,9 +804,5 @@ void main()
       dust(uv, psdith)) * (sin(time * 2500.) * 0.025 + 1.)));
   }
 
-  float yu = mod(abs(uv.x * 5.), planets_density);
-  float yv = mod(abs(uv.y * 5.), planets_density);
-  if ((yu < .001) || (yv < 0.001)) col = vec4(0., 1., 0., 1.);
-
   fragColor = col;
 }

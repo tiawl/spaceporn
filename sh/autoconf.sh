@@ -1,5 +1,11 @@
 #!/bin/bash
 
-cd conf
+PWD_DIR=$PWD
+
+mkdir -p bin/conf
+cp conf/configure.ac bin/conf
+cd bin/conf
 autoconf
-cd ..
+rm configure.ac
+cd $PWD_DIR
+mv bin/conf/configure conf/

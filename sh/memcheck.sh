@@ -32,32 +32,54 @@ declare -a ROADMAPS=(
   "PNG data malloc() Failure"
   "PNG row_pointers malloc() Failure"
   "Debug XCreateWindow() Failure"
-);
+)
 
-STATUS=0;
+STATUS=0
+EQUALS=0
+
+make clean all > /dev/null 2>&1
+echo
 
 for ROADMAP in {1..30}; do
 
   VALGRIND_OUTPUT=$(valgrind --leak-check=summary --show-leak-kinds=all \
---suppressions=amd.supp ./bin/xtelesktop -R $ROADMAP 2>&1 > /dev/null \
-| sed 's/==[[:digit:]]*==/ /g');
+--suppressions=amd.supp ./bin/all/xtelesktop -R $ROADMAP 2>&1 > /dev/null \
+| sed 's/==[[:digit:]]*==/ /g')
 
   for ITEM in $( echo "$VALGRIND_OUTPUT" | tee \
 >(grep -E -A 3 "LEAK SUMMARY") >(grep -E "ERROR SUMMARY") > /dev/null \
 | grep -Po '^\D+\K(\d,?)+' | sed 's/,//g' ); do
     if [ $ITEM -ne 0 ]; then
-      STATUS=1;
-      break;
+      STATUS=1
+      break
     fi
-  done;
+  done
 
-  echo "===== ${ROADMAPS[$ROADMAP]} =====" && echo
+  CURRENT_ROADMAP=${ROADMAPS[$ROADMAP]}
+
+  ((EQUALS=(78 - ${#CURRENT_ROADMAP}) / 2))
+
+  for I in $(eval echo {1..$EQUALS}); do
+    printf =
+  done
+  printf " "
+  printf "$CURRENT_ROADMAP"
+  printf " "
+  for I in $(eval echo {1..$EQUALS}); do
+    printf =
+  done
+  if [ $((${#CURRENT_ROADMAP} % 2)) -eq 1 ]; then
+    printf =
+  fi
+
+  echo && echo
+
   echo "$VALGRIND_OUTPUT" | grep -E -A 2 "HEAP SUMMARY" && echo
   echo "$VALGRIND_OUTPUT" | grep -E -A 5 "LEAK SUMMARY" && echo
   echo "$VALGRIND_OUTPUT" | grep -E "ERROR SUMMARY" && echo
 
   if [ $STATUS -ne 0 ]; then
-    break;
+    break
   fi
 
 done

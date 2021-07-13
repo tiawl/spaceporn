@@ -20,6 +20,8 @@ declare -a ROADMAPS=(
   "vertex_file malloc() Failure"
   "Fragment shader file fopen() Failure"
   "fragment_file malloc() Failure"
+  "Unable to compile vertex shader"
+  "Unable to compile fragment shader"
   "Unable to load vertex shader"
   "Unable to load fragment shader"
   "Unable to link program"
@@ -45,10 +47,14 @@ make coverage > /dev/null 2>&1
 cd ./bin/cov
 
 ./xtelesktop -h > /dev/null 2>&1
+./xtelesktop -x -1 > /dev/null 2>&1
+./xtelesktop -d -1 > /dev/null 2>&1
+./xtelesktop -V -R -1 > /dev/null 2>&1
 
 echo
 
-for ROADMAP in {1..30}; do
+for ROADMAP in $(eval echo {1..$(( ${#ROADMAPS[@]} - 1 ))}); do
+  echo $ROADMAP
   for I in {1..80}; do
     printf =
   done
@@ -63,5 +69,5 @@ for I in {1..80}; do
 done
 echo && echo
 
-gcov -a -b -c -f -u $SRC_FILES -o .
+gcov -f $SRC_FILES -o .
 cd $PWD_DIR

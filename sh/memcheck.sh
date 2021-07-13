@@ -20,6 +20,8 @@ declare -a ROADMAPS=(
   "vertex_file malloc() Failure"
   "Fragment shader file fopen() Failure"
   "fragment_file malloc() Failure"
+  "Unable to compile vertex shader"
+  "Unable to compile fragment shader"
   "Unable to load vertex shader"
   "Unable to load fragment shader"
   "Unable to link program"
@@ -40,7 +42,7 @@ EQUALS=0
 make clean all > /dev/null 2>&1
 echo
 
-for ROADMAP in {1..30}; do
+for ROADMAP in $(eval echo {1..$(( ${#ROADMAPS[@]} - 1 ))}); do
 
   VALGRIND_OUTPUT=$(valgrind --leak-check=summary --show-leak-kinds=all \
 --suppressions=amd.supp ./bin/all/xtelesktop -R $ROADMAP 2>&1 > /dev/null \
@@ -59,6 +61,7 @@ for ROADMAP in {1..30}; do
 
   ((EQUALS=(78 - ${#CURRENT_ROADMAP}) / 2))
 
+  echo $ROADMAP
   for I in $(eval echo {1..$EQUALS}); do
     printf =
   done

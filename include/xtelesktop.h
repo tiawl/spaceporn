@@ -4,8 +4,8 @@
 #include "context.h"
 #include "options.h"
 #include "path.h"
-#include "pngtexture.h"
 #include "shader.h"
+#include "texture.h"
 #include "uniform.h"
 #include "vertex.h"
 

@@ -1,4 +1,4 @@
-#include "pngtexture.h"
+#include "texture.h"
 
 void freePng(PNG* png, bool verbose)
 {
@@ -129,36 +129,6 @@ or smaller than 8 failed to load in OpenGL\n");
     return false;
   }
   VERB(verbose, printf("  Valid PNG images dimensions\n"));
-
-  VERB(verbose, printf("  Testing validity of chunk data ...\n"));
-  if (png_get_valid(png->parser, png->info, PNG_INFO_tRNS) ||
-    (color_type == PNG_COLOR_TYPE_GRAY && bit_depth < 8) ||
-    color_type == PNG_COLOR_TYPE_PALETTE)
-  {
-    VERB(verbose, printf("  Valid chunk data\n"));
-
-    VERB(verbose, printf("  Setting expansion transformation ...\n"));
-    png_set_expand(png->parser);
-    VERB(verbose, printf("  Expansion transformation set\n"));
-  } else {
-    VERB(verbose, printf("  Unvalid chunk data\n"));
-  }
-
-  if (bit_depth == 16)
-  {
-    VERB(verbose, printf("  Striping 16 bit PNG file to 8 bit depth ...\n"));
-    png_set_strip_16(png->parser);
-    VERB(verbose, printf("  16 bit PNG file to 8 bit depth modification \
-done\n"));
-  }
-
-  if (color_type == PNG_COLOR_TYPE_GRAY ||
-    color_type == PNG_COLOR_TYPE_GRAY_ALPHA)
-  {
-    VERB(verbose, printf("  Expanding grayscale image to 24-bit RGB ...\n"));
-    png_set_gray_to_rgb(png->parser);
-    VERB(verbose, printf("  Grayscale image expanded\n"));
-  }
 
   VERB(verbose, printf("  Updating PNG info structure ...\n"));
   png_read_update_info(png->parser, png->info);

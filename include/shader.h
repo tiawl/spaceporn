@@ -13,8 +13,10 @@ bool readVertexShaderFile(Shaders* shaders, bool verbose,
 bool readFragmentShaderFile(Shaders* shaders, bool verbose,
   enum Roadmap roadmap);
 void freeProgram(Shaders* shaders, bool verbose);
-void checkingLogShader(GLuint* shader, GLenum shaderType, bool verbose);
-GLuint loadShader(const char* shaderSource, GLenum shaderType, bool verbose);
+bool checkingLogShader(GLuint* shader, GLenum shaderType, bool verbose,
+  enum Roadmap roadmap);
+bool loadShader(Shaders* shaders, GLenum shaderType, bool verbose,
+  enum Roadmap roadmap);
 bool loadVertexShader(Shaders* shaders, bool verbose, enum Roadmap roadmap);
 bool loadFragmentShader(Shaders* shaders, bool verbose, enum Roadmap roadmap);
 bool checkingLogProgram(Shaders* shaders, bool verbose, enum Roadmap roadmap);

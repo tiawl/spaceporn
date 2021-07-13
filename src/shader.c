@@ -109,13 +109,20 @@ bool readFragmentShaderFile(Shaders* shaders, bool verbose,
   return true;
 }
 
-void checkingLogShader(GLuint* shader, GLenum shaderType, bool verbose)
+bool checkingLogShader(GLuint* shader, GLenum shaderType, bool verbose,
+  enum Roadmap roadmap)
 {
   GLint shaderCompiled = GL_FALSE;
   GL_CHECK(glGetShaderiv(*shader, GL_COMPILE_STATUS, &shaderCompiled));
+
+  if (roadmap == SHADER_COMPILATION_FAILED_RM)
+  {
+    shaderCompiled = GL_FALSE;
+  }
+
   if (shaderCompiled != GL_TRUE)
   {
-    fprintf(stderr, "Unable to compile %s shader\n",
+    fprintf(stderr, "    Unable to compile %s shader\n",
       shaderType == GL_FRAGMENT_SHADER ? "Fragment" : "Vertex");
 
     GLint maxLength = 0;
@@ -126,64 +133,87 @@ void checkingLogShader(GLuint* shader, GLenum shaderType, bool verbose)
     VERB(verbose, printf("    Log length of %s shader is %d\n",
       shaderType == GL_FRAGMENT_SHADER ? "fragment" : "vertex", maxLength));
 
-    char message[maxLength];
+    if (maxLength > 0)
+    {
+      char message[maxLength];
 
-    VERB(verbose, printf("    Querying log info of %s shader ...\n",
-      shaderType == GL_FRAGMENT_SHADER ? "fragment" : "vertex"));
-    GL_CHECK(glGetShaderInfoLog(*shader, maxLength, &maxLength, message));
-    VERB(verbose, printf("    Log info of %s shader found\n",
-      shaderType == GL_FRAGMENT_SHADER ? "fragment" : "vertex"));
+      VERB(verbose, printf("    Querying log info of %s shader ...\n",
+        shaderType == GL_FRAGMENT_SHADER ? "fragment" : "vertex"));
+      GL_CHECK(glGetShaderInfoLog(*shader, maxLength, &maxLength, message));
+      VERB(verbose, printf("    Log info of %s shader found\n",
+        shaderType == GL_FRAGMENT_SHADER ? "fragment" : "vertex"));
 
-    fprintf(stderr, "%s\n", &(message[0]));
+      fprintf(stderr, "%s\n", &(message[0]));
+    }
 
-    VERB(verbose, printf("    Deleting %s shader ...\n",
-      shaderType == GL_FRAGMENT_SHADER ? "fragment" : "vertex"));
-    GL_CHECK(glDeleteShader(*shader));
-    *shader = 0;
-    VERB(verbose, printf("    %s shader deleted\n",
-      shaderType == GL_FRAGMENT_SHADER ? "Fragment" : "Vertex"));
-  } else {
-    VERB(verbose, printf("    %s shader compiled\n",
-      shaderType == GL_FRAGMENT_SHADER ? "Fragment" : "Vertex"));
+    return false;
   }
+
+  return true;
 }
 
-GLuint loadShader(const char* shaderSource, GLenum shaderType, bool verbose)
+bool loadShader(Shaders* shaders, GLenum shaderType, bool verbose,
+  enum Roadmap roadmap)
 {
-  GLuint shader;
+  GLuint* shader = shaderType == GL_FRAGMENT_SHADER ?
+    &(shaders->fragment_shader) : &(shaders->vertex_shader);
 
   VERB(verbose, printf("    Creating %s shader ...\n",
     shaderType == GL_FRAGMENT_SHADER ? "fragment" : "vertex"));
-  GL_CHECK(shader = glCreateShader(shaderType));
+  GL_CHECK(*shader = glCreateShader(shaderType));
   VERB(verbose, printf("    %s shader %d created\n",
-    shaderType == GL_FRAGMENT_SHADER ? "Fragment" : "Vertex", shader));
+    shaderType == GL_FRAGMENT_SHADER ? "Fragment" : "Vertex", *shader));
 
   VERB(verbose, printf("    Setting source code in %s shader ...\n",
     shaderType == GL_FRAGMENT_SHADER ? "fragment" : "vertex"));
-  GL_CHECK(glShaderSource(shader, 1, (const GLchar**)&shaderSource, NULL));
+  GL_CHECK(glShaderSource(*shader, 1, shaderType == GL_FRAGMENT_SHADER ?
+    (const GLchar**) &(shaders->fragment_file) :
+      (const GLchar**) &(shaders->vertex_file), NULL));
   VERB(verbose, printf("    Source code in %s shader set\n",
     shaderType == GL_FRAGMENT_SHADER ? "fragment" : "vertex"));
 
   VERB(verbose, printf("    Compiling %s shader ...\n",
     shaderType == GL_FRAGMENT_SHADER ? "fragment" : "vertex"));
-  GL_CHECK(glCompileShader(shader));
+  GL_CHECK(glCompileShader(*shader));
+  VERB(verbose, printf("    %s shader probably compiled\n",
+    shaderType == GL_FRAGMENT_SHADER ? "Fragment" : "Vertex"));
 
   VERB(verbose, printf("    Checking compile status of %s shader ...\n",
     shaderType == GL_FRAGMENT_SHADER ? "fragment" : "vertex"));
-  checkingLogShader(&shader, shaderType, verbose);
+  if (!checkingLogShader(shader, shaderType, verbose, roadmap))
+  {
+    return false;
+  }
+  VERB(verbose, printf("    %s shader compiled\n",
+    shaderType == GL_FRAGMENT_SHADER ? "Fragment" : "Vertex"));
 
-  return shader;
+  if (roadmap == SHADER_LOAD_FAILED_RM)
+  {
+    *shader = 0;
+  }
+
+  return true;
 }
 
 bool loadVertexShader(Shaders* shaders, bool verbose, enum Roadmap roadmap)
 {
-  if (roadmap != LOAD_VERTEX_SHADER_FAILED_RM)
+  if (roadmap == VERTEX_SHADER_COMPILATION_FAILED_RM)
   {
-    shaders->vertex_shader =
-      loadShader(shaders->vertex_file, GL_VERTEX_SHADER, verbose);
+    roadmap = SHADER_COMPILATION_FAILED_RM;
   }
 
-  if (shaders->vertex_shader == 0)
+  if (roadmap == LOAD_VERTEX_SHADER_FAILED_RM)
+  {
+    roadmap = SHADER_LOAD_FAILED_RM;
+  }
+
+  if (!loadShader(shaders, GL_VERTEX_SHADER, verbose, roadmap))
+  {
+    fprintf(stderr, "  Failed to compile vertex shader\n");
+    return false;
+  }
+
+  if (!shaders->vertex_shader)
   {
     fprintf(stderr, "  Failed to load vertex shader\n");
     return false;
@@ -193,13 +223,23 @@ bool loadVertexShader(Shaders* shaders, bool verbose, enum Roadmap roadmap)
 
 bool loadFragmentShader(Shaders* shaders, bool verbose, enum Roadmap roadmap)
 {
-  if (roadmap != LOAD_FRAGMENT_SHADER_FAILED_RM)
+  if (roadmap == FRAGMENT_SHADER_COMPILATION_FAILED_RM)
   {
-    shaders->fragment_shader =
-      loadShader(shaders->fragment_file, GL_FRAGMENT_SHADER, verbose);
+    roadmap = SHADER_COMPILATION_FAILED_RM;
   }
 
-  if (shaders->fragment_shader == 0)
+  if (roadmap == LOAD_FRAGMENT_SHADER_FAILED_RM)
+  {
+    roadmap = SHADER_LOAD_FAILED_RM;
+  }
+
+  if (!loadShader(shaders, GL_FRAGMENT_SHADER, verbose, roadmap))
+  {
+    fprintf(stderr, "  Failed to compile fragment shader\n");
+    return false;
+  }
+
+  if (!shaders->fragment_shader)
   {
     fprintf(stderr, "  Failed to load fragment shader\n");
     return false;
@@ -266,17 +306,17 @@ bool checkingLogProgram(Shaders* shaders, bool verbose, enum Roadmap roadmap)
   {
     fprintf(stderr, "  Unable to link OpenGL program \n");
 
-    if (roadmap != LINKING_PROGRAM_FAILED_RM)
-    {
-      GLint maxLength = 0;
+    GLint maxLength = 0;
 
-      VERB(verbose, printf("  Querying log length of OpenGL program \
+    VERB(verbose, printf("  Querying log length of OpenGL program \
 ...\n"));
-      GL_CHECK(glGetProgramiv(shaders->program, GL_INFO_LOG_LENGTH,
-        &maxLength));
-      VERB(verbose, printf("  Log length of OpenGL program is %d\n",
-        maxLength));
+    GL_CHECK(glGetProgramiv(shaders->program, GL_INFO_LOG_LENGTH,
+      &maxLength));
+    VERB(verbose, printf("  Log length of OpenGL program is %d\n",
+      maxLength));
 
+    if (maxLength > 0)
+    {
       char message[maxLength];
 
       VERB(verbose, printf("  Querying log info of OpenGL program ...\n"));

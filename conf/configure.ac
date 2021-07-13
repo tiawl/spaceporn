@@ -68,8 +68,7 @@ package.]), [[#include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
 #include <errno.h>]])
-AC_CHECK_DECLS([PNG_LIBPNG_VER_STRING, PNG_INFO_tRNS, PNG_COLOR_TYPE_GRAY,
-  PNG_COLOR_TYPE_PALETTE, PNG_COLOR_TYPE_GRAY_ALPHA, PNG_COLOR_MASK_ALPHA,
+AC_CHECK_DECLS([PNG_LIBPNG_VER_STRING, PNG_INFO_tRNS, PNG_COLOR_MASK_ALPHA, \
   png_jmpbuf], [], AC_MSG_ERROR([libPNG package is found but some \
 declarations of this package are not found. Update the libPNG developing \
 package.]), [[#include <png.h>]])
@@ -109,7 +108,6 @@ functions of this package are not found. Update the GLibC developing \
 package.]))
 AC_CHECK_FUNCS([png_destroy_read_struct png_create_read_struct \
 png_create_info_struct png_init_io png_read_info png_get_IHDR \
-png_get_valid png_set_expand png_set_strip_16 png_set_gray_to_rgb \
 png_read_update_info png_get_rowbytes png_read_image], [],
   AC_MSG_ERROR([libPNG package is found but some functions of this package \
 are not found. Update the libPNG developing package.]))

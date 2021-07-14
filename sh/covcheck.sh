@@ -22,8 +22,6 @@ declare -a ROADMAPS=(
   "fragment_file malloc() Failure"
   "Unable to compile vertex shader"
   "Unable to compile fragment shader"
-  "Unable to load vertex shader"
-  "Unable to load fragment shader"
   "Unable to link program"
   "No PNG filename"
   "PNG file fopen() Failure"

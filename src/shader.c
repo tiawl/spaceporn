@@ -187,11 +187,6 @@ bool loadShader(Shaders* shaders, GLenum shaderType, bool verbose,
   VERB(verbose, printf("    %s shader compiled\n",
     shaderType == GL_FRAGMENT_SHADER ? "Fragment" : "Vertex"));
 
-  if (roadmap == SHADER_LOAD_FAILED_RM)
-  {
-    *shader = 0;
-  }
-
   return true;
 }
 
@@ -202,22 +197,12 @@ bool loadVertexShader(Shaders* shaders, bool verbose, enum Roadmap roadmap)
     roadmap = SHADER_COMPILATION_FAILED_RM;
   }
 
-  if (roadmap == LOAD_VERTEX_SHADER_FAILED_RM)
-  {
-    roadmap = SHADER_LOAD_FAILED_RM;
-  }
-
   if (!loadShader(shaders, GL_VERTEX_SHADER, verbose, roadmap))
   {
     fprintf(stderr, "  Failed to compile vertex shader\n");
     return false;
   }
 
-  if (!shaders->vertex_shader)
-  {
-    fprintf(stderr, "  Failed to load vertex shader\n");
-    return false;
-  }
   return true;
 }
 
@@ -228,22 +213,12 @@ bool loadFragmentShader(Shaders* shaders, bool verbose, enum Roadmap roadmap)
     roadmap = SHADER_COMPILATION_FAILED_RM;
   }
 
-  if (roadmap == LOAD_FRAGMENT_SHADER_FAILED_RM)
-  {
-    roadmap = SHADER_LOAD_FAILED_RM;
-  }
-
   if (!loadShader(shaders, GL_FRAGMENT_SHADER, verbose, roadmap))
   {
     fprintf(stderr, "  Failed to compile fragment shader\n");
     return false;
   }
 
-  if (!shaders->fragment_shader)
-  {
-    fprintf(stderr, "  Failed to load fragment shader\n");
-    return false;
-  }
   return true;
 }
 

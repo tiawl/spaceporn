@@ -37,18 +37,16 @@ void help()
                         - 18 -> fragment_file malloc() Failure\n\
                         - 19 -> Unable to compile vertex shader\n\
                         - 20 -> Unable to compile fragment shader\n\
-                        - 21 -> Unable to load vertex shader\n\
-                        - 22 -> Unable to load fragment shader\n\
-                        - 23 -> Unable to link program\n\
-                        - 24 -> No PNG filename\n\
-                        - 25 -> PNG file fopen() Failure\n\
-                        - 26 -> png_create_read_struct() Failure\n\
-                        - 27 -> png_create_info_struct() Failure\n\
-                        - 28 -> png_jmpbuf() Failure\n\
-                        - 29 -> Bad PNG dimensions\n\
-                        - 30 -> PNG data malloc() Failure\n\
-                        - 31 -> PNG row_pointers malloc() Failure\n\
-                        - 32 -> (if DEBUG true) XCreateWindow() Failure\n\n");
+                        - 21 -> Unable to link program\n\
+                        - 22 -> No PNG filename\n\
+                        - 23 -> PNG file fopen() Failure\n\
+                        - 24 -> png_create_read_struct() Failure\n\
+                        - 25 -> png_create_info_struct() Failure\n\
+                        - 26 -> png_jmpbuf() Failure\n\
+                        - 27 -> Bad PNG dimensions\n\
+                        - 28 -> PNG data malloc() Failure\n\
+                        - 29 -> PNG row_pointers malloc() Failure\n\
+                        - 30 -> (if DEBUG true) XCreateWindow() Failure\n\n");
 }
 
 bool parsing_options(bool* verbose, int* delay, UniformValues* uniform_values,

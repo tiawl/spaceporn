@@ -5,6 +5,7 @@ int main(int argc, char** argv)
   srand(time(NULL));
 
   bool verbose = false;
+  aggregateVerbose(&verbose);
   int delay = DEFAULT_DELAY;
   enum Roadmap roadmap = EXIT_SUCCESS_RM;
 
@@ -25,6 +26,7 @@ int main(int argc, char** argv)
   }
 
   Shaders shaders;
+  aggregateShaders(&shaders);
   shaders.vertex_file = NULL;
   shaders.fragment_file = NULL;
   shaders.fshaderpath = NULL;
@@ -34,6 +36,7 @@ int main(int argc, char** argv)
   shaders.program = 0;
 
   PNG png;
+  aggregatePng(&png);
   png.file = NULL;
   png.data = NULL;
   png.parser = 0;
@@ -41,6 +44,22 @@ int main(int argc, char** argv)
   png.row_pointers = NULL;
   png.path = NULL;
   png.texture = 0;
+
+  Context context;
+  aggregateContext(&context);
+  context.display = NULL;
+  context.glx_context = 0;
+  context.window = 0;
+#if DEBUG
+  context.debug_window = 0;
+#endif
+  context.visual_info = NULL;
+  context.cmap = 0;
+
+  Vertices vertices;
+  aggregateVertices(&vertices);
+  vertices.array = 0;
+  vertices.buffer = 0;
 
   VERB(verbose, printf("Initializing fragment shader, vertex shader and \
 texture paths ...\n"));
@@ -53,16 +72,6 @@ texture paths\n");
   }
   VERB(verbose, printf("Fragment shader, vertex shader and texture paths \
 are initialized\n"));
-
-  Context context;
-  context.display = NULL;
-  context.glx_context = 0;
-  context.window = 0;
-#if DEBUG
-  context.debug_window = 0;
-#endif
-  context.visual_info = NULL;
-  context.cmap = 0;
 
   VERB(verbose, printf("Creating GLX context ...\n"));
   if (!initContext(&context, verbose, roadmap))
@@ -84,6 +93,11 @@ are initialized\n"));
     return EXIT_FAILURE;
   }
   VERB(verbose, printf("OpenGL program loaded\n"));
+
+  if (roadmap == OPENGL_ERROR_RM)
+  {
+    GL_CHECK(glBindBuffer(0, -1));
+  }
 
   /* array of all uniforms to pass to the shader */
   const Uniform uniforms[] =
@@ -113,12 +127,9 @@ are initialized\n"));
   getUniforms(uniforms, uniformIds, &shaders.program, verbose);
   VERB(verbose, printf("Uniforms location found\n"));
 
-  GLuint vertexarray;
-  GLuint vertexbuffer;
-
   VERB(verbose, printf("Initializing vertex buffer object and vertex array \
 object ...\n"));
-  initVertices(&vertexbuffer, &vertexarray, verbose);
+  initVertices(&vertices, verbose);
   VERB(verbose, printf("Vertex buffer object and vertex array object \
 initialized\n"));
 
@@ -163,7 +174,7 @@ initialized\n"));
   }
 
   freePaths(&shaders, &png, verbose);
-  freeVertices(&vertexbuffer, &vertexarray, verbose);
+  freeVertices(&vertices, verbose);
   freePng(&png, verbose);
   freeProgram(&shaders, verbose);
   freeContext(&context, verbose);

@@ -12,7 +12,6 @@
 
 enum Roadmap
 {
-  SHADER_COMPILATION_FAILED_RM = -3,
   FOPEN_FAILED_RM = -2,
   BUFFER_MALLOC_FAILED_RM = -1,
   EXIT_SUCCESS_RM = 0, // ----------------------------   0
@@ -45,8 +44,9 @@ enum Roadmap
   BAD_PNG_DIMENSIONS_RM,
   PNG_DATA_MALLOC_FAILED_RM,
   PNG_ROWPOINTERS_MALLOC_FAILED_RM,
+  OPENGL_ERROR_RM, // --------------------------------  30
 #if DEBUG
-  XCREATEDEBUGWINDOW_FAILED_RM, // -------------------  30
+  XCREATEDEBUGWINDOW_FAILED_RM,
 #endif
   RM_NB
 };
@@ -54,17 +54,6 @@ enum Roadmap
 #define VERB(v, stmt) if (v) { \
   stmt; \
 }
-
-void CheckOpenGLError(const char* stmt, const char* fname, int line);
-
-#if DEBUG
-  #define GL_CHECK(stmt) do { \
-    stmt; \
-    CheckOpenGLError(#stmt, __FILE__, __LINE__); \
-  } while (0)
-#else
-  #define GL_CHECK(stmt) stmt
-#endif
 
 typedef struct
 {
@@ -101,5 +90,40 @@ typedef struct
   char* path;
   GLuint texture;
 } PNG;
+
+typedef struct
+{
+  GLuint array;
+  GLuint buffer;
+} Vertices;
+
+typedef struct
+{
+  Context* context;
+  Shaders* shaders;
+  PNG* png;
+  Vertices* vertices;
+  bool* verbose;
+} Aggregate;
+
+void freeContext(Context* context, bool verbose);
+void freeProgram(Shaders* shaders, bool verbose);
+void freePng(PNG* png, bool verbose);
+void freePaths(Shaders* shaders, PNG* png, bool verbose);
+void freeVertices(Vertices* vertices, bool verbose);
+
+void aggregateContext(Context* context);
+void aggregateShaders(Shaders* shaders);
+void aggregatePng(PNG* png);
+void aggregateVertices(Vertices* vertices);
+void aggregateVerbose(bool* verbose);
+
+void exitHandler();
+void checkOpenGLError(const char* stmt, const char* fname, int line);
+
+#define GL_CHECK(stmt) do { \
+  stmt; \
+  checkOpenGLError(#stmt, __FILE__, __LINE__); \
+} while (0)
 
 #endif

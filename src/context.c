@@ -317,65 +317,6 @@ debug window\n"));
 }
 #endif
 
-void freeContext(Context* context, bool verbose)
-{
-  if (context->glx_context)
-  {
-    VERB(verbose, printf("Detaching current rendering context ...\n"));
-    glXMakeCurrent(context->display, 0, 0);
-    VERB(verbose, printf("Current rendering context detached\n"));
-
-    VERB(verbose, printf("Destroying detached rendering context ...\n"));
-    glXDestroyContext(context->display, context->glx_context);
-    VERB(verbose, printf("Detached rendering context destroyed\n"));
-  }
-
-#if DEBUG
-  if (context->debug_window)
-  {
-    VERB(verbose, printf("Unmapping debug window ...\n"));
-    XUnmapWindow(context->display, context->debug_window);
-    VERB(verbose, printf("Debug window unmapped\n"));
-
-    VERB(verbose, printf("Destroying debug window ...\n"));
-    XDestroyWindow(context->display, context->debug_window);
-    VERB(verbose, printf("Debug window destroyed\n"));
-  }
-#endif
-
-  if (context->visual_info)
-  {
-    VERB(verbose, printf("Freeing current visual ...\n"));
-    XFree(context->visual_info);
-    VERB(verbose, printf("Current visual freed\n"));
-  }
-
-  if (context->cmap)
-  {
-    VERB(verbose, printf("Freeing colormap ...\n"));
-    XFreeColormap(context->display, context->cmap);
-    VERB(verbose, printf("Colormap freed\n"));
-  }
-
-  if (context->window)
-  {
-    VERB(verbose, printf("Unmapping current window ...\n"));
-    XUnmapWindow(context->display, context->window);
-    VERB(verbose, printf("Current window unmapped\n"));
-
-    VERB(verbose, printf("Destroying current window ...\n"));
-    XDestroyWindow(context->display, context->window);
-    VERB(verbose, printf("Current window destroyed\n"));
-  }
-
-  if (context->display)
-  {
-    VERB(verbose, printf("Closing Display ...\n"));
-    XCloseDisplay(context->display);
-    VERB(verbose, printf("Display closed\n"));
-  }
-}
-
 bool initContext(Context* context, bool verbose, enum Roadmap roadmap)
 {
   VERB(verbose, printf("  Opening X Display ...\n"));

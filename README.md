@@ -53,19 +53,22 @@ Dev options:
         [default: 0]
 ```
 
-## Installing
+## Installing (not finished section)
 
 1. Clone the repository.
 2. `cd` into the directory.
-3. Run `./sh/configure.sh` and install requested dependencies. Repeat this step until `conf/config.status` is generated.
-4. Run `make`.
-5. Test the program by using **User options** described in **Usage** section until you find a command which fits your needs.
+3. Run `chmod 700 ./sh/configure.sh`
+4. Run `./sh/configure.sh` and install requested dependencies. Repeat this step until `bin/conf/config.status` is generated.
+5. Run `make`.
+6. Test the program by using **User options** described in **Usage** section until you find a command which fits your needs.
    This command will be called `YOUR_XTELESKTOP_CLI` for following steps of this tutorial.
-6. Run `sudo make install`.
+7. Run `sudo make install`.
 
-7. Add this following line to your `.xinitrc`:
+---
+8. Add this following line to your `.xinitrc`:
    `YOUR_XTELESKTOP_CLI -V > ~/.xtelesktop.log 2>&1`
-8. Logout and log back in to update the background.
+9. Logout and log back in to update the background.
+---
 
 ## Supported environments
 

@@ -29,8 +29,14 @@ path\n"));
   memcpy(shaders->fshaderpath + len[0] + len[1] + len[2], SHADERS_DIR,
     len[3]);
   VERB(verbose, printf("  Building fragment shader path string ... 4/5\n"));
-  memcpy(shaders->fshaderpath + len[0] + len[1] + len[2] + len[3],
-    FSHADER_FILE, len[4] + 1);
+  if (roadmap == FRAGMENT_SHADER_COMPILATION_FAILED_RM)
+  {
+    memcpy(shaders->fshaderpath + len[0] + len[1] + len[2] + len[3],
+      UNCOMPILING_FSHADER_FILE, len[4] + 1);
+  } else {
+    memcpy(shaders->fshaderpath + len[0] + len[1] + len[2] + len[3],
+      FSHADER_FILE, len[4] + 1);
+  }
   VERB(verbose, printf("  Building fragment shader path string ... 5/5\n"));
   VERB(verbose, printf("  Fragment shader path string built: %s\n",
     shaders->fshaderpath));
@@ -67,8 +73,14 @@ path\n"));
   memcpy(shaders->vshaderpath + len[0] + len[1] + len[2], SHADERS_DIR,
     len[3]);
   VERB(verbose, printf("  Building vertex shader path string ... 4/5\n"));
-  memcpy(shaders->vshaderpath + len[0] + len[1] + len[2] + len[3],
-    VSHADER_FILE, len[4] + 1);
+  if (roadmap == VERTEX_SHADER_COMPILATION_FAILED_RM)
+  {
+    memcpy(shaders->vshaderpath + len[0] + len[1] + len[2] + len[3],
+      UNCOMPILING_VSHADER_FILE, len[4] + 1);
+  } else {
+    memcpy(shaders->vshaderpath + len[0] + len[1] + len[2] + len[3],
+      VSHADER_FILE, len[4] + 1);
+  }
   VERB(verbose, printf("  Building vertex shader path string ... 5/5\n"));
   VERB(verbose, printf("  Vertex shader path string built: %s\n",
     shaders->vshaderpath));
@@ -150,11 +162,23 @@ bool initPaths(Shaders* shaders, PNG* png, bool verbose, enum Roadmap roadmap)
 
   VERB(verbose, printf("  Computing length of fragment shader filename \
 ...\n"));
-  const size_t len6 = strlen(FSHADER_FILE);
+  size_t len6;
+  if (roadmap == FRAGMENT_SHADER_COMPILATION_FAILED_RM)
+  {
+    len6 = strlen(UNCOMPILING_FSHADER_FILE);
+  } else {
+    len6 = strlen(FSHADER_FILE);
+  }
   VERB(verbose, printf("  Length of \"%s\" is %lu\n", FSHADER_FILE, len6));
 
   VERB(verbose, printf("  Computing length of vertex shader filename ...\n"));
-  const size_t len7 = strlen(VSHADER_FILE);
+  size_t len7 ;
+  if (roadmap == VERTEX_SHADER_COMPILATION_FAILED_RM)
+  {
+    len7 = strlen(UNCOMPILING_VSHADER_FILE);
+  } else {
+    len7 = strlen(VSHADER_FILE);
+  }
   VERB(verbose, printf("  Length of \"%s\" is %lu\n", VSHADER_FILE, len7));
 
   VERB(verbose, printf("  Computing length of texture filename ...\n"));
@@ -193,31 +217,4 @@ bool initPaths(Shaders* shaders, PNG* png, bool verbose, enum Roadmap roadmap)
     return false;
   }
   return true;
-}
-
-void freePaths(Shaders* shaders, PNG* png, bool verbose)
-{
-  if (shaders->fshaderpath)
-  {
-    VERB(verbose, printf("Freeing fshaderpath ...\n"));
-    free(shaders->fshaderpath);
-    shaders->fshaderpath = NULL;
-    VERB(verbose, printf("fshaderpath freed\n"));
-  }
-
-  if (shaders->vshaderpath)
-  {
-    VERB(verbose, printf("Freeing vshaderpath ...\n"));
-    free(shaders->vshaderpath);
-    shaders->vshaderpath = NULL;
-    VERB(verbose, printf("vshaderpath freed\n"));
-  }
-
-  if (png->path)
-  {
-    VERB(verbose, printf("Freeing texturepath ...\n"));
-    free(png->path);
-    png->path = NULL;
-    VERB(verbose, printf("texturepath freed\n"));
-  }
 }

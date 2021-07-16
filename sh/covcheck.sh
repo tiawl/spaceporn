@@ -31,6 +31,7 @@ declare -a ROADMAPS=(
   "Bad PNG dimensions"
   "PNG data malloc() Failure"
   "PNG row_pointers malloc() Failure"
+  "OpenGL Error"
   "Debug XCreateWindow() Failure"
 )
 
@@ -52,11 +53,10 @@ cd ./bin/cov
 echo
 
 for ROADMAP in $(eval echo {1..$(( ${#ROADMAPS[@]} - 1 ))}); do
-  echo $ROADMAP
   for I in {1..80}; do
     printf =
   done
-  echo && echo
+  echo && echo $ROADMAP && echo
   echo "Covering ${ROADMAPS[$ROADMAP]} ..."
   ./xtelesktop -R $ROADMAP -a -m -p -x 500 -d 30000 > /dev/null 2>&1
   echo "${ROADMAPS[$ROADMAP]} covered" && echo

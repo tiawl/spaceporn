@@ -1,29 +1,14 @@
 #include "vertex.h"
 
-void freeVertices(GLuint* vertexbuffer, GLuint* vertexarray, bool verbose)
-{
-  VERB(verbose, printf("Disabling vertex attribute array ...\n"));
-  GL_CHECK(glDisableVertexAttribArray(0));
-  VERB(verbose, printf("Vertex attribute array disabled\n"));
-
-  VERB(verbose, printf("Deleting vertex buffer object ...\n"));
-  GL_CHECK(glDeleteBuffers(1, vertexbuffer));
-  VERB(verbose, printf("Vertex buffer object deleted\n"));
-
-  VERB(verbose, printf("Deleting vertex array object ...\n"));
-  GL_CHECK(glDeleteVertexArrays(1, vertexarray));
-  VERB(verbose, printf("Vertex array object deleted\n"));
-}
-
-void initVertices(GLuint* vertexbuffer, GLuint* vertexarray, bool verbose)
+void initVertices(Vertices* vertices, bool verbose)
 {
   VERB(verbose, printf("  Generating vertex array object ...\n"));
-  GL_CHECK(glGenVertexArrays(1, vertexarray));
+  GL_CHECK(glGenVertexArrays(1, &(vertices->array)));
   VERB(verbose, printf("  Vertex array object generated is %d\n",
-    *vertexarray));
+    vertices->array));
 
   VERB(verbose, printf("  Binding vertex array object ...\n"));
-  GL_CHECK(glBindVertexArray(*vertexarray));
+  GL_CHECK(glBindVertexArray(vertices->array));
   VERB(verbose, printf("  Vertex array object binded\n"));
 
   const GLfloat g_vertex_buffer_data[] =
@@ -35,12 +20,12 @@ void initVertices(GLuint* vertexbuffer, GLuint* vertexarray, bool verbose)
   };
 
   VERB(verbose, printf("  Generating vertex buffer object ...\n"));
-  GL_CHECK(glGenBuffers(1, vertexbuffer));
+  GL_CHECK(glGenBuffers(1, &(vertices->buffer)));
   VERB(verbose, printf("  Vertex buffer object generated is %d\n",
-    *vertexbuffer));
+    vertices->buffer));
 
   VERB(verbose, printf("  Binding vertex buffer object ...\n"));
-  GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, *vertexbuffer));
+  GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vertices->buffer));
   VERB(verbose, printf("  Vertex buffer object binded\n"));
 
   VERB(verbose, printf("  Initializing vertex buffer object's data store \

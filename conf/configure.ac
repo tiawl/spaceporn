@@ -102,9 +102,9 @@ developing package.]), [[#include <X11/Xutil.h>
 # Checks for library functions.
 AC_FUNC_MALLOC
 AC_CHECK_FUNCS([strchr strerror strstr strlen strcmp strtok getenv usleep \
-memcpy printf fprintf free srand rand atof atoi time clock abort fopen fseek \
-fread fclose setjmp], [], AC_MSG_ERROR([GLibC package is found but some \
-functions of this package are not found. Update the GLibC developing \
+memcpy printf fprintf free srand rand atof atoi time clock fopen fseek fread \
+fclose setjmp exit atexit], [], AC_MSG_ERROR([GLibC package is found but \
+some functions of this package are not found. Update the GLibC developing \
 package.]))
 AC_CHECK_FUNCS([png_destroy_read_struct png_create_read_struct \
 png_create_info_struct png_init_io png_read_info png_get_IHDR \
@@ -119,9 +119,9 @@ glDeleteShader glAttachShader glLinkProgram glGetProgramiv glValidateProgram \
 glDetachShader glGetUniformLocation glGenVertexArrays glBindVertexArray \
 glGenBuffers glBindBuffer glBufferData glEnableVertexAttribArray \
 glVertexAttribPointer glClearColor glClear glDrawArrays glGenTextures \
-glBindTexture glTexImage2D glTexParameteri], [], AC_MSG_ERROR([GL \
-package is found but some functions of this package are not found. Update \
-the GL developing package.]))
+glBindTexture glTexImage2D glTexParameteri glGetProgramInfoLog], [],
+AC_MSG_ERROR([GL package is found but some functions of this package are not \
+found. Update the GL developing package.]))
 AC_CHECK_FUNC(glewInit, [], AC_MSG_ERROR([GLEW package is found but some \
 functions of this package are not found. Update the GLEW developing \
 package.]))

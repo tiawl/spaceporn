@@ -4391,60 +4391,6 @@ else
 declarations of this package are not found. Update the libPNG developing \
 package." "$LINENO" 5
 fi
-ac_fn_c_check_decl "$LINENO" "PNG_COLOR_TYPE_GRAY" "ac_cv_have_decl_PNG_COLOR_TYPE_GRAY" "#include <png.h>
-"
-if test "x$ac_cv_have_decl_PNG_COLOR_TYPE_GRAY" = xyes; then :
-  ac_have_decl=1
-else
-  ac_have_decl=0
-fi
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE_DECL_PNG_COLOR_TYPE_GRAY $ac_have_decl
-_ACEOF
-if test $ac_have_decl = 1; then :
-
-else
-  as_fn_error $? "libPNG package is found but some \
-declarations of this package are not found. Update the libPNG developing \
-package." "$LINENO" 5
-fi
-ac_fn_c_check_decl "$LINENO" "PNG_COLOR_TYPE_PALETTE" "ac_cv_have_decl_PNG_COLOR_TYPE_PALETTE" "#include <png.h>
-"
-if test "x$ac_cv_have_decl_PNG_COLOR_TYPE_PALETTE" = xyes; then :
-  ac_have_decl=1
-else
-  ac_have_decl=0
-fi
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE_DECL_PNG_COLOR_TYPE_PALETTE $ac_have_decl
-_ACEOF
-if test $ac_have_decl = 1; then :
-
-else
-  as_fn_error $? "libPNG package is found but some \
-declarations of this package are not found. Update the libPNG developing \
-package." "$LINENO" 5
-fi
-ac_fn_c_check_decl "$LINENO" "PNG_COLOR_TYPE_GRAY_ALPHA" "ac_cv_have_decl_PNG_COLOR_TYPE_GRAY_ALPHA" "#include <png.h>
-"
-if test "x$ac_cv_have_decl_PNG_COLOR_TYPE_GRAY_ALPHA" = xyes; then :
-  ac_have_decl=1
-else
-  ac_have_decl=0
-fi
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE_DECL_PNG_COLOR_TYPE_GRAY_ALPHA $ac_have_decl
-_ACEOF
-if test $ac_have_decl = 1; then :
-
-else
-  as_fn_error $? "libPNG package is found but some \
-declarations of this package are not found. Update the libPNG developing \
-package." "$LINENO" 5
-fi
 ac_fn_c_check_decl "$LINENO" "PNG_COLOR_MASK_ALPHA" "ac_cv_have_decl_PNG_COLOR_MASK_ALPHA" "#include <png.h>
 "
 if test "x$ac_cv_have_decl_PNG_COLOR_MASK_ALPHA" = xyes; then :
@@ -4463,16 +4409,20 @@ else
 declarations of this package are not found. Update the libPNG developing \
 package." "$LINENO" 5
 fi
-ac_fn_c_check_decl "$LINENO" "png_jmpbuf" "ac_cv_have_decl_png_jmpbuf" "#include <png.h>
+as_ac_Symbol=`$as_echo "ac_cv_have_decl_\\
+  png_jmpbuf" | $as_tr_sh`
+ac_fn_c_check_decl "$LINENO" "\
+  png_jmpbuf" "$as_ac_Symbol" "#include <png.h>
 "
-if test "x$ac_cv_have_decl_png_jmpbuf" = xyes; then :
+if eval test \"x\$"$as_ac_Symbol"\" = x"yes"; then :
   ac_have_decl=1
 else
   ac_have_decl=0
 fi
 
 cat >>confdefs.h <<_ACEOF
-#define HAVE_DECL_PNG_JMPBUF $ac_have_decl
+#define `$as_echo "HAVE_DECL_\\
+  png_jmpbuf" | $as_tr_cpp` $ac_have_decl
 _ACEOF
 if test $ac_have_decl = 1; then :
 
@@ -5756,7 +5706,6 @@ done
 
 for ac_func in png_destroy_read_struct png_create_read_struct \
 png_create_info_struct png_init_io png_read_info png_get_IHDR \
-png_get_valid png_set_expand png_set_strip_16 png_set_gray_to_rgb \
 png_read_update_info png_get_rowbytes png_read_image
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
@@ -5780,7 +5729,7 @@ glDeleteShader glAttachShader glLinkProgram glGetProgramiv glValidateProgram \
 glDetachShader glGetUniformLocation glGenVertexArrays glBindVertexArray \
 glGenBuffers glBindBuffer glBufferData glEnableVertexAttribArray \
 glVertexAttribPointer glClearColor glClear glDrawArrays glGenTextures \
-glBindTexture glTexImage2D glTexParameteri
+glBindTexture glTexImage2D glTexParameteri glGetProgramInfoLog
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
 ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
@@ -5790,9 +5739,8 @@ if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
 _ACEOF
 
 else
-  as_fn_error $? "GL \
-package is found but some functions of this package are not found. Update \
-the GL developing package." "$LINENO" 5
+  as_fn_error $? "GL package is found but some functions of this package are not \
+found. Update the GL developing package." "$LINENO" 5
 fi
 done
 

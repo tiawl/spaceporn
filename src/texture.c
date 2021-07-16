@@ -1,47 +1,5 @@
 #include "texture.h"
 
-void freePng(PNG* png, bool verbose)
-{
-  if(png->parser)
-  {
-    VERB(verbose, printf("Destroying png_read_struct ...\n"));
-    png_destroy_read_struct(&(png->parser), png->info ? &(png->info) : 0, 0);
-    png->parser = 0;
-    VERB(verbose, printf("png_read_struct destroyed \n"));
-  }
-
-  if(png->row_pointers)
-  {
-    VERB(verbose, printf("Freeing row_pointers ...\n"));
-    free(png->row_pointers);
-    png->row_pointers = NULL;
-    VERB(verbose, printf("row_pointers freed\n"));
-  }
-
-  if(png->data)
-  {
-    VERB(verbose, printf("Freeing PNG data ...\n"));
-    free(png->data);
-    png->data = NULL;
-    VERB(verbose, printf("PNG data freed\n"));
-  }
-
-  if(png->file)
-  {
-    VERB(verbose, printf("Closing PNG file ...\n"));
-    fclose(png->file);
-    png->file = NULL;
-    VERB(verbose, printf("PNG file closed\n"));
-  }
-
-  if (png->texture)
-  {
-    VERB(verbose, printf("Deleting OpenGL texture ...\n"));
-    GL_CHECK(glDeleteTextures(1, &(png->texture)));
-    VERB(verbose, printf("OpenGL texture deleted\n"));
-  }
-}
-
 bool loadPng(PNG* png, bool verbose, enum Roadmap roadmap)
 {
   png_uint_32 w, h;

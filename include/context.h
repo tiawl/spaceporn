@@ -23,7 +23,6 @@ bool searchingBestFbc(Context* context, GLXFBConfig* bestFbc, bool verbose,
   enum Roadmap roadmap);
 bool initWindow(Context* context, bool verbose, enum Roadmap roadmap);
 bool initDebugWindow(Context* context, bool verbose, enum Roadmap roadmap);
-void freeContext(Context* context, bool verbose);
 bool initContext(Context* context, bool verbose, enum Roadmap roadmap);
 
 #endif

@@ -3,8 +3,7 @@
 
 #include "util.h"
 
-void initVertices(GLuint* vertexbuffer, GLuint* vertexarray, bool verbose);
-void freeVertices(GLuint* vertexbuffer, GLuint* vertexarray, bool verbose);
+void initVertices(Vertices* vertices, bool verbose);
 void draw(bool verbose);
 
 #endif

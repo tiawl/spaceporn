@@ -12,7 +12,6 @@ bool readVertexShaderFile(Shaders* shaders, bool verbose,
   enum Roadmap roadmap);
 bool readFragmentShaderFile(Shaders* shaders, bool verbose,
   enum Roadmap roadmap);
-void freeProgram(Shaders* shaders, bool verbose);
 bool checkingLogShader(GLuint* shader, GLenum shaderType, bool verbose,
   enum Roadmap roadmap);
 bool loadShader(Shaders* shaders, GLenum shaderType, bool verbose,

@@ -12,6 +12,7 @@
 
 enum Roadmap
 {
+  SHADER_COMPILATION_FAILED_RM = -3,
   FOPEN_FAILED_RM = -2,
   BUFFER_MALLOC_FAILED_RM = -1,
   EXIT_SUCCESS_RM = 0, // ----------------------------   0
@@ -104,10 +105,11 @@ typedef struct
   PNG* png;
   Vertices* vertices;
   bool* verbose;
+  enum Roadmap* roadmap;
 } Aggregate;
 
 void freeContext(Context* context, bool verbose);
-void freeProgram(Shaders* shaders, bool verbose);
+void freeProgram(Shaders* shaders, bool verbose, enum Roadmap roadmap);
 void freePng(PNG* png, bool verbose);
 void freePaths(Shaders* shaders, PNG* png, bool verbose);
 void freeVertices(Vertices* vertices, bool verbose);
@@ -117,6 +119,7 @@ void aggregateShaders(Shaders* shaders);
 void aggregatePng(PNG* png);
 void aggregateVertices(Vertices* vertices);
 void aggregateVerbose(bool* verbose);
+void aggregateRoadmap(enum Roadmap* roadmap);
 
 void exitHandler();
 void checkOpenGLError(const char* stmt, const char* fname, int line);

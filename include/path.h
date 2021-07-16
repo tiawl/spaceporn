@@ -10,9 +10,7 @@
 #define SHADERS_DIR "/shaders"
 #define TEXTURES_DIR "/textures"
 #define FSHADER_FILE "/fragment.glsl"
-#define UNCOMPILING_FSHADER_FILE "/uncompiling_fragment.glsl"
 #define VSHADER_FILE "/vertex.glsl"
-#define UNCOMPILING_VSHADER_FILE "/uncompiling_vertex.glsl"
 #define TEXTURE_FILE "/big_stars.png"
 
 bool initFragShaderPath(Shaders* shaders, size_t len[5], char* user,

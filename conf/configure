@@ -5687,8 +5687,8 @@ fi
 
 
 for ac_func in strchr strerror strstr strlen strcmp strtok getenv usleep \
-memcpy printf fprintf free srand rand atof atoi time clock abort fopen fseek \
-fread fclose setjmp
+memcpy printf fprintf free srand rand atof atoi time clock fopen fseek fread \
+fclose setjmp exit atexit
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
 ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
@@ -5698,8 +5698,8 @@ if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
 _ACEOF
 
 else
-  as_fn_error $? "GLibC package is found but some \
-functions of this package are not found. Update the GLibC developing \
+  as_fn_error $? "GLibC package is found but \
+some functions of this package are not found. Update the GLibC developing \
 package." "$LINENO" 5
 fi
 done

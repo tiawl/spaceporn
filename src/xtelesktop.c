@@ -4,10 +4,13 @@ int main(int argc, char** argv)
 {
   srand(time(NULL));
 
+  int delay = DEFAULT_DELAY;
+
   bool verbose = false;
   aggregateVerbose(&verbose);
-  int delay = DEFAULT_DELAY;
+
   enum Roadmap roadmap = EXIT_SUCCESS_RM;
+  aggregateRoadmap(&roadmap);
 
   UniformValues uniform_values;
   uniform_values.time = 0.0f;
@@ -88,7 +91,7 @@ are initialized\n"));
   {
     fprintf(stderr, "OpenGL program failed to load\n");
     freePaths(&shaders, &png, verbose);
-    freeProgram(&shaders, verbose);
+    freeProgram(&shaders, verbose, roadmap);
     freeContext(&context, verbose);
     return EXIT_FAILURE;
   }
@@ -117,7 +120,7 @@ are initialized\n"));
     fprintf(stderr, "Failed to load PNG file \"%s\"\n", png.path);
     freePaths(&shaders, &png, verbose);
     freePng(&png, verbose);
-    freeProgram(&shaders, verbose);
+    freeProgram(&shaders, verbose, roadmap);
     freeContext(&context, verbose);
     return EXIT_FAILURE;
   }
@@ -176,7 +179,7 @@ initialized\n"));
   freePaths(&shaders, &png, verbose);
   freeVertices(&vertices, verbose);
   freePng(&png, verbose);
-  freeProgram(&shaders, verbose);
+  freeProgram(&shaders, verbose, roadmap);
   freeContext(&context, verbose);
 
   return EXIT_SUCCESS;

@@ -33,7 +33,9 @@ beginning ...\n"));
 
     VERB(verbose, printf("    Allocating memory for reading file buffer \
 ...\n"));
-    if (roadmap != BUFFER_MALLOC_FAILED_RM)
+    if ((roadmap != BUFFER_MALLOC_FAILED_RM) &&
+      (roadmap != SHADER_COMPILATION_FAILED_RM) &&
+      (roadmap != LINKING_PROGRAM_FAILED_RM))
     {
       *buffer = malloc(length + 1);
     }
@@ -43,8 +45,16 @@ beginning ...\n"));
       VERB(verbose, printf("    Memory for reading file buffer allocated\n"));
 
       VERB(verbose, printf("    Reading file into buffer ...\n"))
-      fread(*buffer, 1, length, f);
-      VERB(verbose, printf("    Buffer filled\n"))
+      if ((roadmap != SHADER_COMPILATION_FAILED_RM) &&
+        (roadmap != LINKING_PROGRAM_FAILED_RM))
+      {
+        fread(*buffer, 1, length, f);
+      }
+      VERB(verbose, printf("    Buffer filled with:\n\
+------------------------------------------------------------------------------\
+\n%s\n\
+------------------------------------------------------------------------------\
+\n", *buffer))
 
     } else {
       fprintf(stderr, "    Buffer malloc() failed\n");
@@ -55,7 +65,12 @@ beginning ...\n"));
     fclose(f);
     VERB(verbose, printf("    \"%s\" closed\n", *filepath));
 
-    (*buffer)[length] = '\0'; // fread does not 0 terminate strings
+    if ((roadmap != SHADER_COMPILATION_FAILED_RM) &&
+      (roadmap != LINKING_PROGRAM_FAILED_RM))
+    {
+      (*buffer)[length] = '\0'; // fread does not 0 terminate strings
+    }
+
   } else {
     fprintf(stderr, "    Failed to read inside \"%s\": %s\n", *filepath,
       strerror(errno));
@@ -78,12 +93,21 @@ bool readVertexShaderFile(Shaders* shaders, bool verbose,
     roadmap = BUFFER_MALLOC_FAILED_RM;
   }
 
+  if (roadmap == VERTEX_SHADER_COMPILATION_FAILED_RM)
+  {
+    roadmap = SHADER_COMPILATION_FAILED_RM;
+    shaders->vertex_file = ERRONEOUS_VERTEX_SHADER;
+  } else if (roadmap == LINKING_PROGRAM_FAILED_RM) {
+    shaders->vertex_file = MISSINGMAIN_VERTEX_SHADER;
+  }
+
   if (!readFile(&(shaders->vshaderpath), &(shaders->vertex_file), verbose,
     roadmap))
   {
     fprintf(stderr, "  Failed to read in vertex shader file\n");
     return false;
   }
+
   return true;
 }
 
@@ -100,12 +124,21 @@ bool readFragmentShaderFile(Shaders* shaders, bool verbose,
     roadmap = BUFFER_MALLOC_FAILED_RM;
   }
 
+  if (roadmap == FRAGMENT_SHADER_COMPILATION_FAILED_RM)
+  {
+    roadmap = SHADER_COMPILATION_FAILED_RM;
+    shaders->fragment_file = ERRONEOUS_FRAGMENT_SHADER;
+  } else if (roadmap == LINKING_PROGRAM_FAILED_RM) {
+    roadmap = EXIT_SUCCESS_RM;
+  }
+
   if (!readFile(&(shaders->fshaderpath), &(shaders->fragment_file), verbose,
     roadmap))
   {
     fprintf(stderr, "  Failed to read in fragment shader file\n");
     return false;
   }
+
   return true;
 }
 
@@ -138,7 +171,11 @@ bool checkingLogShader(GLuint* shader, GLenum shaderType, bool verbose,
       VERB(verbose, printf("    Log info of %s shader found:\n",
         shaderType == GL_FRAGMENT_SHADER ? "fragment" : "vertex"));
 
-      fprintf(stderr, "\n\"\n%s\"\n\n", &(message[0]));
+      fprintf(stderr, "\
+------------------------------------------------------------------------------\
+\n%s\
+------------------------------------------------------------------------------\
+\n", &(message[0]));
     }
 
     return false;
@@ -214,11 +251,6 @@ bool checkingLogProgram(Shaders* shaders, bool verbose, enum Roadmap roadmap)
   GLint programSuccess = GL_TRUE;
   GL_CHECK(glGetProgramiv(shaders->program, GL_LINK_STATUS, &programSuccess));
 
-  if (roadmap == LINKING_PROGRAM_FAILED_RM)
-  {
-    programSuccess = GL_FALSE;
-  }
-
   if (programSuccess != GL_TRUE)
   {
     fprintf(stderr, "  Unable to link OpenGL program \n");
@@ -241,7 +273,11 @@ bool checkingLogProgram(Shaders* shaders, bool verbose, enum Roadmap roadmap)
         message));
       VERB(verbose, printf("  Log info of OpenGL program found:\n"));
 
-      fprintf(stderr, "\n\"\n%s\"\n\n", &(message[0]));
+      fprintf(stderr, "\
+------------------------------------------------------------------------------\
+\n%s\
+------------------------------------------------------------------------------\
+\n", &(message[0]));
     }
 
     return false;

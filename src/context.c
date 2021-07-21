@@ -240,7 +240,7 @@ bool initWindow(Context* context, bool verbose, enum Roadmap roadmap)
 
   VERB(verbose, printf("  Allocating window manager hints ...\n"));
   XWMHints* wmHint = XAllocWMHints();
-  VERB(verbose, printf("  Window manager hints allocated\n"));
+  VERB(verbose, printf("  Window manager hints allocated successfully\n"));
 
   wmHint->flags = InputHint | StateHint;
   wmHint->input = false;

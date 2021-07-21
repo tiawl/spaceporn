@@ -3,6 +3,7 @@
 
 #include <errno.h>
 #include <string.h>
+#include <regex.h>
 
 #define ERRONEOUS_VERTEX_SHADER "# version 330 core\n\
 \n\
@@ -29,11 +30,14 @@ void main()\n\
 
 #include "util.h"
 
-bool readFile(char** filepath, char** buffer, bool verbose,
+bool regex_replace(char** str, const char* pattern, const char* replace);
+bool readFile(char** filepath, char** buffer, char* spaces, bool verbose,
   enum Roadmap roadmap);
-bool readVertexShaderFile(Shaders* shaders, bool verbose,
+bool buildFile(char** filepath, char** buffer, bool verbose,
   enum Roadmap roadmap);
-bool readFragmentShaderFile(Shaders* shaders, bool verbose,
+bool buildVertexShaderFile(Shaders* shaders, bool verbose,
+  enum Roadmap roadmap);
+bool buildFragmentShaderFile(Shaders* shaders, bool verbose,
   enum Roadmap roadmap);
 bool checkingLogShader(GLuint* shader, GLenum shaderType, bool verbose,
   enum Roadmap roadmap);

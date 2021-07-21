@@ -1,11 +1,11 @@
 #include "shader.h"
 
-bool readFile(char** filepath, char** buffer, bool verbose,
+bool readFile(char** filepath, char** buffer, char* spaces, bool verbose,
   enum Roadmap roadmap)
 {
   long length;
 
-  VERB(verbose, printf("    Opening \"%s\" ...\n", *filepath));
+  VERB(verbose, printf("%s      Opening \"%s\" ...\n", spaces, *filepath));
   FILE* f = NULL;
 
   if (roadmap != FOPEN_FAILED_RM)
@@ -15,24 +15,26 @@ bool readFile(char** filepath, char** buffer, bool verbose,
 
   if (f)
   {
-    VERB(verbose, printf("    \"%s\" opened\n", *filepath));
+    VERB(verbose, printf("%s      \"%s\" opened\n", spaces, *filepath));
 
-    VERB(verbose, printf("    Setting file position of the stream to the end \
-...\n"));
+    VERB(verbose, printf("%s      Setting file position of the stream to the \
+end ...\n", spaces));
     fseek(f, 0, SEEK_END);
-    VERB(verbose, printf("    Stream positionned\n"));
+    VERB(verbose, printf("%s      Stream positionned\n", spaces));
 
-    VERB(verbose, printf("    Computing file position of the stream ...\n"));
+    VERB(verbose, printf("%s      Computing file position of the stream \
+...\n", spaces));
     length = ftell(f);
-    VERB(verbose, printf("    File position of the stream computed\n"));
+    VERB(verbose, printf("%s      File position of the stream computed\n",
+      spaces));
 
-    VERB(verbose, printf("    Setting file position of the stream to the \
-beginning ...\n"));
+    VERB(verbose, printf("%s      Setting file position of the stream to the \
+beginning ...\n", spaces));
     fseek(f, 0, SEEK_SET);
-    VERB(verbose, printf("    Stream positionned\n"));
+    VERB(verbose, printf("%s      Stream positionned\n", spaces));
 
-    VERB(verbose, printf("    Allocating memory for reading file buffer \
-...\n"));
+    VERB(verbose, printf("%s      Allocating memory for reading file buffer \
+...\n", spaces));
     if ((roadmap != BUFFER_MALLOC_FAILED_RM) &&
       (roadmap != SHADER_COMPILATION_FAILED_RM) &&
       (roadmap != LINKING_PROGRAM_FAILED_RM))
@@ -42,28 +44,29 @@ beginning ...\n"));
 
     if (*buffer)
     {
-      VERB(verbose, printf("    Memory for reading file buffer allocated\n"));
+      VERB(verbose, printf("%s      Memory for reading file buffer \
+allocated\n", spaces));
 
-      VERB(verbose, printf("    Reading file into buffer ...\n"))
+      VERB(verbose, printf("%s      Reading file into buffer ...\n", spaces))
       if ((roadmap != SHADER_COMPILATION_FAILED_RM) &&
         (roadmap != LINKING_PROGRAM_FAILED_RM))
       {
         fread(*buffer, 1, length, f);
       }
-      VERB(verbose, printf("    Buffer filled with:\n\
+      VERB(verbose, printf("%s      Buffer filled with:\n\
 ------------------------------------------------------------------------------\
 \n%s\n\
 ------------------------------------------------------------------------------\
-\n", *buffer))
+\n", spaces, *buffer))
 
     } else {
-      fprintf(stderr, "    Buffer malloc() failed\n");
+      fprintf(stderr, "%s      Buffer malloc() failed\n", spaces);
       return false;
     }
 
-    VERB(verbose, printf("    Closing \"%s\" ...\n", *filepath));
+    VERB(verbose, printf("%s      Closing \"%s\" ...\n", spaces, *filepath));
     fclose(f);
-    VERB(verbose, printf("    \"%s\" closed\n", *filepath));
+    VERB(verbose, printf("%s      \"%s\" closed\n", spaces, *filepath));
 
     if ((roadmap != SHADER_COMPILATION_FAILED_RM) &&
       (roadmap != LINKING_PROGRAM_FAILED_RM))
@@ -72,15 +75,338 @@ beginning ...\n"));
     }
 
   } else {
-    fprintf(stderr, "    Failed to read inside \"%s\": %s\n", *filepath,
-      strerror(errno));
+    fprintf(stderr, "%s      Failed to read inside \"%s\": %s\n", spaces,
+      *filepath, strerror(errno));
     return false;
   }
 
   return true;
 }
 
-bool readVertexShaderFile(Shaders* shaders, bool verbose,
+/* replaces regex in pattern with replacement observing capture groups
+   *str MUST be free-able, i.e. obtained by strdup, malloc, ...
+   back references are indicated by char codes 1-31 and none of those chars
+      can be used in the replacement string such as a tab.
+   will not search for matches within replaced text, this will begin searching
+      for the next match after the end of prev match
+   returns:
+     false if pattern cannot be compiled OR
+           if count of back references and capture groups don't match
+*/
+bool regex_replace(char** str, const char* pattern, const char* replace)
+{
+  regex_t reg;
+  unsigned int replacements = 0;
+
+  if(!regcomp(&reg, pattern, REG_EXTENDED))
+  {
+    size_t nmatch = reg.re_nsub;
+    regmatch_t m[nmatch + 1];
+    const char *rpl, *p;
+
+    // count back references in replace
+    p = replace;
+
+    // look for matches and replace
+    char *new;
+    char *search_start = *str;
+
+    // replace only first occurence
+    if (!regexec(&reg, search_start, nmatch + 1, m, REG_NOTBOL))
+    {
+      // make enough room
+      new = malloc(strlen(*str) + strlen(replace));
+      if (!new)
+      {
+        fprintf(stderr, "new malloc() failed\n");
+        return false;
+      }
+      *new = '\0';
+      strncat(new, *str, search_start - *str);
+      p = rpl = replace;
+      int c;
+      strncat(new, search_start, m[0].rm_so); // test before pattern
+      for(int k=0; k<nmatch; k++)
+      {
+        while(*++p > 31); // skip printable char
+        c = *p;  // back reference (e.g. \1, \2, ...)
+        strncat(new, rpl, p - rpl); // add head of rpl
+
+        // concat match
+        strncat(new, search_start + m[c].rm_so, m[c].rm_eo - m[c].rm_so);
+        rpl = p++; // skip back reference, next match
+      }
+      strcat(new, p); // trailing of rpl
+      unsigned int new_start_offset = strlen(new);
+      strcat(new, search_start + m[0].rm_eo); // trailing text in *str
+      free(*str);
+      *str = malloc(strlen(new)+1);
+      if (!*str)
+      {
+        fprintf(stderr, "*str malloc() failed\n");
+        return false;
+      }
+      strcpy(*str,new);
+      search_start = *str + new_start_offset;
+      free(new);
+      replacements++;
+    }
+    regfree(&reg);
+
+    // ajust size
+    *str = realloc(*str, strlen(*str) + 1);
+    if (!*str)
+    {
+      fprintf(stderr, "*str realloc() failed\n");
+      return false;
+    }
+    return true;
+  } else {
+    fprintf(stderr, "Regex compilation failed\n");
+    return false;
+  }
+}
+
+bool buildFile(char** filepath, char** buffer, bool verbose,
+  enum Roadmap roadmap)
+{
+  VERB(verbose, printf("    Reading file %s ... \n", *filepath));
+  if (!readFile(filepath, buffer, "", verbose, roadmap))
+  {
+    fprintf(stderr, "      Failed to read file\n");
+    return false;
+  }
+  VERB(verbose, printf("    File read successfully\n"));
+
+  regex_t regex;
+  char* pattern_include = "#include \"[-_[:alnum:]]+\\.glsl\"";
+  char* pattern_main = "main.glsl$";
+
+  VERB(verbose, printf("    Compiling regex pattern: \"%s\" ...\n",
+    pattern_include));
+  int regex_error = regcomp(&regex, pattern_include, REG_EXTENDED);
+
+  char* tmp_buffer;
+
+  if (regex_error == 0)
+  {
+    VERB(verbose, printf("    Regex pattern compiled successfully\n"));
+
+    size_t nmatch = regex.re_nsub;
+    regmatch_t m[nmatch + 1];
+
+    VERB(verbose, printf("    Comparing regex pattern to buffer file ...\n"));
+    int match = regexec(&regex, *buffer, nmatch + 1, m, REG_NOTBOL);
+    VERB(verbose, printf("    Regex pattern compared successfully\n"));
+
+    bool is_already_included = false;
+
+    VERB(verbose, printf("    Allocating memory for includes ...\n");)
+    char** includes = malloc(sizeof(char*));
+    if (!includes)
+    {
+      fprintf (stderr, "    includes malloc() failed\n");
+      return false;
+    }
+    VERB(verbose, printf("    Memory allocated successfully\n"));
+
+    size_t includes_length = 1;
+    VERB(verbose, printf("    Allocating memory for includes[0] ...\n");)
+    includes[0] = malloc(sizeof(char) * (strlen("main.glsl") + 1));
+    if (!includes[includes_length - 1])
+    {
+      fprintf (stderr, "    includes[0] malloc() failed\n");
+      return false;
+    }
+    VERB(verbose, printf("    Memory allocated successfully\n"));
+
+    VERB(verbose, printf("    Copying string into includes[0] ...\n"));
+    strcpy(includes[0], "main.glsl");
+    includes[0][strlen(includes[0])] = '\0';
+    VERB(verbose, printf("    \"%s\" successfully copied\n", includes[0]));
+
+    size_t start_include;
+    size_t end_include;
+
+    char* first_match;
+    char* header_filepath;
+
+    VERB(verbose, printf("    Searching regex pattern into buffer file \
+...\n"));
+    while (match == 0)
+    {
+      start_include = m[0].rm_so + 10;
+      end_include = m[0].rm_eo - 1;
+
+      VERB(verbose, printf("      Allocating memory for first_match ...\n");)
+      first_match = malloc(sizeof(char) * (end_include - start_include + 1));
+      if (!first_match)
+      {
+        fprintf (stderr, "      first_match malloc() failed\n");
+        return false;
+      }
+      VERB(verbose, printf("      Memory allocated successfully\n"));
+
+      VERB(verbose, printf("      Copying into first_match ...\n"));
+      strncpy(first_match, (*buffer) + start_include,
+        end_include - start_include);
+      first_match[end_include - start_include] = '\0';
+      VERB(verbose, printf("      \"%s\" successfully copied\n",
+        first_match));
+
+      VERB(verbose, printf("      Comparing first_match to the cache ...\n"));
+      is_already_included = false;
+      for (size_t i = 0; (i < includes_length) && !is_already_included; ++i)
+      {
+        VERB(verbose, printf("        Comparing \"%s\" to \"%s\" ...\n",
+          includes[i], first_match));
+        is_already_included |= strcmp(includes[i], first_match) == 0;
+        VERB(verbose, printf("        %s\n",
+          is_already_included ? "Same string" : "Not the same string"));
+      }
+
+      if (is_already_included)
+      {
+        VERB(verbose, printf("      \"%s\" was already included\n",
+          first_match));
+
+        VERB(verbose, printf("      Deleting first occurence of #include \
+\"%s\" line into buffer file with regex_replace() ...\n", first_match));
+        if (!regex_replace(buffer, pattern_include, ""))
+        {
+          fprintf(stderr, "      regex_replace() failed\n");
+          return false;
+        }
+        VERB(verbose, printf("      Line successfully deleted\n"));
+      } else {
+
+        VERB(verbose, printf("      \"%s\" is not already included\n",
+          first_match));
+
+        includes_length++;
+
+        VERB(verbose, printf("      Reallocating memory for includes ...\n");)
+        includes = realloc(includes, sizeof(char*) * includes_length);
+        if (!includes)
+        {
+          fprintf (stderr, "      includes realloc() failed\n");
+          return false;
+        }
+        VERB(verbose, printf("      Memory reallocated successfully\n"));
+
+        VERB(verbose, printf("      Allocating memory for includes[%lu] \
+...\n", includes_length - 1);)
+        includes[includes_length - 1] =
+          malloc(sizeof(char) * (end_include - start_include + 1));
+        if (!includes[includes_length - 1])
+        {
+          fprintf (stderr, "      includes[%lu] malloc() failed\n",
+            includes_length - 1);
+          return false;
+        }
+        VERB(verbose, printf("      Memory allocated successfully\n"));
+
+        VERB(verbose, printf("      Copying string into includes[%lu] ...\n",
+          includes_length - 1));
+        strncpy(includes[includes_length - 1], first_match,
+          end_include - start_include);
+        includes[includes_length - 1][end_include - start_include] = '\0';
+        VERB(verbose, printf("      \"%s\" successfully copied\n",
+          includes[includes_length - 1]));
+
+        VERB(verbose, printf("      Allocating memory for header_filepath \
+...\n");)
+        header_filepath = malloc(sizeof(char) * (strlen(*filepath) + 1));
+        if (!header_filepath)
+        {
+          fprintf(stderr, "      header_filepath malloc() failed\n");
+          return false;
+        }
+        VERB(verbose, printf("      Memory allocated successfully\n"));
+
+        VERB(verbose, printf("      Copying string into header_filepath \
+...\n"));
+        strcpy(header_filepath, *filepath);
+        VERB(verbose, printf("      \"%s\" successfully copied\n",
+          header_filepath));
+
+        VERB(verbose, printf("      Replacing first occurence of \"%s\" by \
+\"%s\" into \"%s\" ...\n", pattern_main, first_match, header_filepath));
+        if (!regex_replace(&header_filepath, pattern_main, first_match))
+        {
+          fprintf(stderr, "      regex_replace() failed\n");
+          return false;
+        }
+        VERB(verbose, printf("      Regex replacement done: %s\n",
+          header_filepath));
+
+        VERB(verbose, printf("      Reading file %s ... \n",
+          header_filepath));
+        if (!readFile(&header_filepath, &tmp_buffer, "  ", verbose, roadmap))
+        {
+          free(header_filepath);
+          free(first_match);
+          for (size_t i = 0; i < includes_length; ++i)
+          {
+            free(includes[i]);
+          }
+          free(includes);
+          regfree(&regex);
+          return false;
+        }
+        VERB(verbose, printf("      File read successfully\n"));
+
+        if (!regex_replace(buffer, pattern_include, tmp_buffer))
+        {
+          fprintf(stderr, "regex_replace() failed\n");
+          free(header_filepath);
+          free(tmp_buffer);
+          free(first_match);
+          for (size_t i = 0; i < includes_length; ++i)
+          {
+            free(includes[i]);
+          }
+          free(includes);
+          regfree(&regex);
+          return false;
+        }
+        free(header_filepath);
+        free(tmp_buffer);
+      }
+
+      free(first_match);
+      match = regexec(&regex, *buffer, nmatch + 1, m, REG_NOTBOL);
+    }
+
+    for (size_t i = 0; i < includes_length; ++i)
+    {
+      free(includes[i]);
+    }
+    free(includes);
+    regfree(&regex);
+
+    if (match != REG_NOMATCH)
+    {
+      size_t size = regerror(regex_error, &regex, NULL, 0);
+      char* text = malloc(sizeof(*text) * size);
+      if (!text)
+      {
+        fprintf (stderr, "text malloc() failed\n");
+        return false;
+      }
+      regerror(regex_error, &regex, text, size);
+      fprintf(stderr, "%s\n", text);
+      free(text);
+    }
+  } else {
+    fprintf(stderr, "Regex compilation failed\n");
+    return false;
+  }
+
+  return true;
+}
+
+bool buildVertexShaderFile(Shaders* shaders, bool verbose,
   enum Roadmap roadmap)
 {
   if (roadmap == FOPEN_VERTEX_FILE_FAILED_RM)
@@ -101,17 +427,17 @@ bool readVertexShaderFile(Shaders* shaders, bool verbose,
     shaders->vertex_file = MISSINGMAIN_VERTEX_SHADER;
   }
 
-  if (!readFile(&(shaders->vshaderpath), &(shaders->vertex_file), verbose,
+  if (!buildFile(&(shaders->vshaderpath), &(shaders->vertex_file), verbose,
     roadmap))
   {
-    fprintf(stderr, "  Failed to read in vertex shader file\n");
+    fprintf(stderr, "  Failed to build vertex shader file\n");
     return false;
   }
 
   return true;
 }
 
-bool readFragmentShaderFile(Shaders* shaders, bool verbose,
+bool buildFragmentShaderFile(Shaders* shaders, bool verbose,
   enum Roadmap roadmap)
 {
   if (roadmap == FOPEN_FRAGMENT_FILE_FAILED_RM)
@@ -132,10 +458,10 @@ bool readFragmentShaderFile(Shaders* shaders, bool verbose,
     roadmap = EXIT_SUCCESS_RM;
   }
 
-  if (!readFile(&(shaders->fshaderpath), &(shaders->fragment_file), verbose,
+  if (!buildFile(&(shaders->fshaderpath), &(shaders->fragment_file), verbose,
     roadmap))
   {
-    fprintf(stderr, "  Failed to read in fragment shader file\n");
+    fprintf(stderr, "  Failed to build fragment shader file\n");
     return false;
   }
 
@@ -292,19 +618,19 @@ bool loadProgram(Context* context, Shaders* shaders, bool verbose,
   GL_CHECK(shaders->program = glCreateProgram());
   VERB(verbose, printf("  OpenGL Program %d created\n", shaders->program));
 
-  VERB(verbose, printf("  Reading in vertex shader file ...\n"));
-  if (!readVertexShaderFile(shaders, verbose, roadmap))
+  VERB(verbose, printf("  Building vertex shader file ...\n"));
+  if (!buildVertexShaderFile(shaders, verbose, roadmap))
   {
     return false;
   }
-  VERB(verbose, printf("  Vertex shader file read\n"));
+  VERB(verbose, printf("  Vertex shader file built\n"));
 
-  VERB(verbose, printf("  Reading in fragment shader file ...\n"));
-  if (!readFragmentShaderFile(shaders, verbose, roadmap))
+  VERB(verbose, printf("  Building fragment shader file ...\n"));
+  if (!buildFragmentShaderFile(shaders, verbose, roadmap))
   {
     return false;
   }
-  VERB(verbose, printf("  Fragment shader file read\n"));
+  VERB(verbose, printf("  Fragment shader file built\n"));
 
   VERB(verbose, printf("  Loading vertex shader ...\n"));
   if (!loadVertexShader(shaders, verbose, roadmap))

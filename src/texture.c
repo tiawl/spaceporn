@@ -108,7 +108,7 @@ or smaller than 8 failed to load in OpenGL\n");
     fprintf(stderr, "  data malloc() failed\n");
     return false;
   }
-  VERB(verbose, printf("  Memory allocated for data\n"));
+  VERB(verbose, printf("  Memory allocated successfully\n"));
 
   VERB(verbose, printf("  Allocating memory for row_pointers ...\n"));
   if (roadmap != PNG_ROWPOINTERS_MALLOC_FAILED_RM)
@@ -121,7 +121,7 @@ or smaller than 8 failed to load in OpenGL\n");
     fprintf(stderr, "  row_pointers malloc() failed\n");
     return false;
   }
-  VERB(verbose, printf("  Memory allocated for row_pointers\n"));
+  VERB(verbose, printf("  Memory allocated successfully\n"));
 
   for(png_uint_32 i = 0; i < h; ++i)
   {

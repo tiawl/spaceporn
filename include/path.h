@@ -9,8 +9,8 @@
 #define BIN_DIR "/Workspace/Perso/xtelesktop" //  "/.local/bin"
 #define SHADERS_DIR "/shaders"
 #define TEXTURES_DIR "/textures"
-#define FSHADER_FILE "/fragment.glsl"
-#define VSHADER_FILE "/vertex.glsl"
+#define FSHADER_FILE "/fragment/main.glsl"
+#define VSHADER_FILE "/vertex/main.glsl"
 #define TEXTURE_FILE "/big_stars.png"
 
 bool initFragShaderPath(Shaders* shaders, size_t len[5], char* user,

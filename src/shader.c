@@ -174,7 +174,7 @@ bool buildFile(char** filepath, char** buffer, bool verbose,
   VERB(verbose, printf("    File read successfully\n"));
 
   regex_t regex;
-  char* pattern_include = "^#include \"[-_[:alnum:]]+\\.glsl\"";
+  char* pattern_include = "^#include \"[/-_[:alnum:]]+\\.glsl\"";
   char* pattern_main = "main.glsl$";
 
   VERB(verbose, printf("    Compiling regex pattern: \"%s\" ...\n",

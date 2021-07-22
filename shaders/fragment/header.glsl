@@ -32,3 +32,16 @@ struct Planet
 
 #define TEXTURE_SIZE vec2(256., 32.)
 #define NB_COL 7.
+
+vec2 rotate(vec2 vec, vec2 center, float angle)
+{
+  vec -= center;
+  vec *= mat2(vec2(cos(angle), -sin(angle)), vec2(sin(angle), cos(angle)));
+  vec += center;
+  return vec;
+}
+
+bool dither(float dither_size, vec2 uv1, vec2 uv2)
+{
+  return mod(uv1.x + uv2.y, 2.0 / pixels) * dither_size <= 1.0 / pixels;
+}

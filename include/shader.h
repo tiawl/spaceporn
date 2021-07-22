@@ -30,7 +30,8 @@ void main()\n\
 
 #include "util.h"
 
-bool regex_replace(char** str, const char* pattern, const char* replace);
+bool regex_replace(char** str, const char* pattern, const char* replace,
+  bool verbose, enum Roadmap roadmap);
 bool readFile(char** filepath, char** buffer, char* spaces, bool verbose,
   enum Roadmap roadmap);
 bool buildFile(char** filepath, char** buffer, bool verbose,

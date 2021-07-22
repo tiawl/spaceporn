@@ -88,76 +88,106 @@ allocated successfully\n", spaces));
      false if pattern cannot be compiled OR
            if count of back references and capture groups don't match
 */
-bool regex_replace(char** str, const char* pattern, const char* replace)
+bool regex_replace(char** str, const char* pattern, const char* replace,
+  bool verbose, enum Roadmap roadmap)
 {
   regex_t reg;
   unsigned int replacements = 0;
 
-  if(!regcomp(&reg, pattern, REG_EXTENDED | REG_NEWLINE))
+  VERB(verbose, printf("        Compiling regex pattern: \"%s\" ...\n",
+    pattern));
+  if (regcomp(&reg, pattern, REG_EXTENDED | REG_NEWLINE) == 0)
   {
+    VERB(verbose, printf("        Regex pattern compiled successfully\n"));
+
     size_t nmatch = reg.re_nsub;
     regmatch_t m[nmatch + 1];
-    const char *rpl, *p;
+    const char* rpl;
+    const char* p = replace;
 
-    // count back references in replace
-    p = replace;
-
-    // look for matches and replace
-    char *new;
-    char *search_start = *str;
+    char* new;
+    char* search_start = *str;
 
     // replace only first occurence
-    if (!regexec(&reg, search_start, nmatch + 1, m, REG_NOTBOL))
+    VERB(verbose, printf("        Comparing regex pattern ...\n"));
+    if (regexec(&reg, search_start, nmatch + 1, m, REG_NOTBOL) == 0)
     {
-      // make enough room
+      VERB(verbose, printf("        Regex pattern compared successfully\n"));
+
+      VERB(verbose, printf("        Allocating memore for new ...\n"));
       new = malloc(sizeof(char) * (strlen(*str) + strlen(replace)));
       if (!new)
       {
-        fprintf(stderr, "new malloc() failed\n");
+        fprintf(stderr, "        new malloc() failed\n");
         return false;
       }
       *new = '\0';
-      strncat(new, *str, search_start - *str);
-      p = rpl = replace;
-      int c;
-      strncat(new, search_start, m[0].rm_so); // test before pattern
-      for(int k=0; k<nmatch; k++)
-      {
-        while(*++p > 31); // skip printable char
-        c = *p;  // back reference (e.g. \1, \2, ...)
-        strncat(new, rpl, p - rpl); // add head of rpl
+      VERB(verbose, printf("        Memory allocated successfully\n"));
 
-        // concat match
-        strncat(new, search_start + m[c].rm_so, m[c].rm_eo - m[c].rm_so);
-        rpl = p++; // skip back reference, next match
-      }
+      VERB(verbose, printf("        Concatenating strings 1 ...\n"));
+      strncat(new, *str, search_start - *str);
+      VERB(verbose, printf("        Strings concatenated successfully\n"));
+
+      p = rpl = replace;
+
+      VERB(verbose, printf("        Concatenating strings 2 ...\n"));
+      strncat(new, search_start, m[0].rm_so); // test before pattern
+      VERB(verbose, printf("        Strings concatenated successfully\n"));
+
+      VERB(verbose, printf("        Adding rpl a last time ...\n"));
       strcat(new, p); // trailing of rpl
+      VERB(verbose, printf("        rpl added successfully\n"));
+
+      VERB(verbose, printf("        Computing length of new ...\n"));
       unsigned int new_start_offset = strlen(new);
-      strcat(new, search_start + m[0].rm_eo); // trailing text in *str
+      VERB(verbose, printf("        Length of new is %u\n",
+        new_start_offset));
+
+      VERB(verbose, printf("        Trailing *str ...\n"));
+      strcat(new, search_start + m[0].rm_eo);
+      VERB(verbose, printf("        *str trailed successfully\n"));
+
+      VERB(verbose, printf("        Freeing *str ...\n"));
       free(*str);
+      VERB(verbose, printf("        Memory freed successfully\n"));
+
+      VERB(verbose, printf("        Allocating memory for *str ...\n"));
       *str = malloc(sizeof(char) * (strlen(new) + 1));
       if (!*str)
       {
-        fprintf(stderr, "*str malloc() failed\n");
+        fprintf(stderr, "        *str malloc() failed\n");
         return false;
       }
+      VERB(verbose, printf("        Memory allocated successfully\n"));
+
+      VERB(verbose, printf("        Copying new in *str ...\n"));
       strcpy(*str, new);
+      VERB(verbose, printf("        Copied successfully\n"));
+
       search_start = *str + new_start_offset;
+
+      VERB(verbose, printf("        Freeing new ...\n"));
       free(new);
+      VERB(verbose, printf("        Memory freed successfully\n"));
+
       replacements++;
     }
+    VERB(verbose, printf("        Freeing regex structure ...\n"));
     regfree(&reg);
+    VERB(verbose, printf("        Memory freed successfully\n"));
 
-    // ajust size
+    VERB(verbose, printf("        Reallocating memory for *str ...\n"));
     *str = realloc(*str, sizeof(char) * (strlen(*str) + 1));
     if (!*str)
     {
-      fprintf(stderr, "*str realloc() failed\n");
+      fprintf(stderr, "        *str realloc() failed\n");
       return false;
     }
+    VERB(verbose, printf("        Memory reallocated successfully\n"));
+
     return true;
   } else {
-    fprintf(stderr, "Regex compilation failed\n");
+    fprintf(stderr, "        Regex compilation failed\n");
     return false;
   }
 }
@@ -268,7 +298,7 @@ bool buildFile(char** filepath, char** buffer, bool verbose,
 
         VERB(verbose, printf("      Deleting first occurence of #include \
 \"%s\" line into buffer file with regex_replace() ...\n", first_match));
-        if (!regex_replace(buffer, pattern_include, ""))
+        if (!regex_replace(buffer, pattern_include, "", verbose, roadmap))
         {
           fprintf(stderr, "      regex_replace() failed\n");
           return false;
@@ -328,7 +358,8 @@ bool buildFile(char** filepath, char** buffer, bool verbose,
 
         VERB(verbose, printf("      Replacing first occurence of \"%s\" by \
 \"%s\" into \"%s\" ...\n", pattern_main, first_match, header_filepath));
-        if (!regex_replace(&header_filepath, pattern_main, first_match))
+        if (!regex_replace(&header_filepath, pattern_main, first_match,
+          verbose, roadmap))
         {
           fprintf(stderr, "      regex_replace() failed\n");
           return false;
@@ -352,7 +383,8 @@ bool buildFile(char** filepath, char** buffer, bool verbose,
         }
         VERB(verbose, printf("      File read successfully\n"));
 
-        if (!regex_replace(buffer, pattern_include, tmp_buffer))
+        if (!regex_replace(buffer, pattern_include, tmp_buffer, verbose,
+          roadmap))
         {
           fprintf(stderr, "      regex_replace() failed\n");
 

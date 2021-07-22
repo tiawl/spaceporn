@@ -43,8 +43,10 @@ AC_CHECK_HEADER_STDBOOL
 AC_C_CONST
 AC_TYPE_SIZE_T
 AC_TYPE_UINT8_T
-AC_CHECK_TYPE(FILE, [], AC_MSG_ERROR([GLibC package is found but some types \
-of this package are not found. Update the GLibC developing package.]))
+AC_CHECK_TYPES([FILE, regex_t, regmatch_t], [], AC_MSG_ERROR([GLibC package \
+is found but some types of this package are not found. Update the GLibC \
+developing package.]), [[#include <stdio.h>
+#include <regex.h>]])
 AC_CHECK_TYPES([png_infop, png_byte, png_bytep, png_uint_32, png_structp],
   [], AC_MSG_ERROR([libPNG package is found but some types and structures \
 of this package are not found. Update the libPNG developing package.]),
@@ -62,12 +64,14 @@ developing package.]), [[#include <X11/Xutil.h>]])
 
 # Checks for predefined macros and variables.
 AC_CHECK_DECLS([NULL, EXIT_FAILURE, EXIT_SUCCESS, SEEK_END, SEEK_SET,
-  CLOCKS_PER_SEC, errno], [], AC_MSG_ERROR([GLibC package is found but some \
-declarations of this package are not found. Update the GLibC developing \
-package.]), [[#include <stdlib.h>
+  CLOCKS_PER_SEC, errno, REG_EXTENDED, REG_NEWLINE, REG_NOTBOL, REG_NOMATCH],
+[], AC_MSG_ERROR([GLibC package is found but some declarations of this \
+package are not found. Update the GLibC developing package.]),
+[[#include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
-#include <errno.h>]])
+#include <errno.h>
+#include <regex.h>]])
 AC_CHECK_DECLS([PNG_LIBPNG_VER_STRING, PNG_INFO_tRNS, PNG_COLOR_MASK_ALPHA, \
   png_jmpbuf], [], AC_MSG_ERROR([libPNG package is found but some \
 declarations of this package are not found. Update the libPNG developing \
@@ -101,9 +105,10 @@ developing package.]), [[#include <X11/Xutil.h>
 
 # Checks for library functions.
 AC_FUNC_MALLOC
-AC_CHECK_FUNCS([strchr strerror strstr strlen strcmp strtok getenv usleep \
-memcpy printf fprintf free srand rand atof atoi time clock fopen fseek fread \
-fclose setjmp exit atexit], [], AC_MSG_ERROR([GLibC package is found but \
+AC_CHECK_FUNCS([strchr strerror strstr strlen strcmp strtok strcpy strcat \
+strncpy strncat getenv usleep memcpy printf fprintf free srand rand atof \
+atoi time clock fopen fseek fread fclose setjmp exit atexit realloc regcomp \
+regexec regerror regfree], [], AC_MSG_ERROR([GLibC package is found but \
 some functions of this package are not found. Update the GLibC developing \
 package.]))
 AC_CHECK_FUNCS([png_destroy_read_struct png_create_read_struct \

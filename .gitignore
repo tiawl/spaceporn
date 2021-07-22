@@ -1,6 +1,3 @@
-/conf/autom4te.cache
-/conf/config.log
-/conf/config.status
 /bin
 /obj
 .*.swp

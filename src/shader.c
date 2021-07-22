@@ -39,19 +39,20 @@ beginning ...\n", spaces));
       (roadmap != SHADER_COMPILATION_FAILED_RM) &&
       (roadmap != LINKING_PROGRAM_FAILED_RM))
     {
-      *buffer = malloc(length + 1);
+      *buffer = malloc(length);
     }
 
     if (*buffer)
     {
       VERB(verbose, printf("%s      Memory for reading file buffer \
-allocated\n", spaces));
+allocated successfully\n", spaces));
 
       VERB(verbose, printf("%s      Reading file into buffer ...\n", spaces))
       if ((roadmap != SHADER_COMPILATION_FAILED_RM) &&
         (roadmap != LINKING_PROGRAM_FAILED_RM))
       {
-        fread(*buffer, 1, length, f);
+        fread(*buffer, 1, length - 1, f);
+        (*buffer)[length - 1] = '\0'; // fread does not 0 terminate strings
       }
       VERB(verbose, printf("%s      Buffer filled with:\n\
 ------------------------------------------------------------------------------\
@@ -67,12 +68,6 @@ allocated\n", spaces));
     VERB(verbose, printf("%s      Closing \"%s\" ...\n", spaces, *filepath));
     fclose(f);
     VERB(verbose, printf("%s      \"%s\" closed\n", spaces, *filepath));
-
-    if ((roadmap != SHADER_COMPILATION_FAILED_RM) &&
-      (roadmap != LINKING_PROGRAM_FAILED_RM))
-    {
-      (*buffer)[length] = '\0'; // fread does not 0 terminate strings
-    }
 
   } else {
     fprintf(stderr, "%s      Failed to read inside \"%s\": %s\n", spaces,
@@ -98,7 +93,7 @@ bool regex_replace(char** str, const char* pattern, const char* replace)
   regex_t reg;
   unsigned int replacements = 0;
 
-  if(!regcomp(&reg, pattern, REG_EXTENDED))
+  if(!regcomp(&reg, pattern, REG_EXTENDED | REG_NEWLINE))
   {
     size_t nmatch = reg.re_nsub;
     regmatch_t m[nmatch + 1];
@@ -115,7 +110,7 @@ bool regex_replace(char** str, const char* pattern, const char* replace)
     if (!regexec(&reg, search_start, nmatch + 1, m, REG_NOTBOL))
     {
       // make enough room
-      new = malloc(strlen(*str) + strlen(replace));
+      new = malloc(sizeof(char) * (strlen(*str) + strlen(replace)));
       if (!new)
       {
         fprintf(stderr, "new malloc() failed\n");
@@ -140,13 +135,13 @@ bool regex_replace(char** str, const char* pattern, const char* replace)
       unsigned int new_start_offset = strlen(new);
       strcat(new, search_start + m[0].rm_eo); // trailing text in *str
       free(*str);
-      *str = malloc(strlen(new)+1);
+      *str = malloc(sizeof(char) * (strlen(new) + 1));
       if (!*str)
       {
         fprintf(stderr, "*str malloc() failed\n");
         return false;
       }
-      strcpy(*str,new);
+      strcpy(*str, new);
       search_start = *str + new_start_offset;
       free(new);
       replacements++;
@@ -154,7 +149,7 @@ bool regex_replace(char** str, const char* pattern, const char* replace)
     regfree(&reg);
 
     // ajust size
-    *str = realloc(*str, strlen(*str) + 1);
+    *str = realloc(*str, sizeof(char) * (strlen(*str) + 1));
     if (!*str)
     {
       fprintf(stderr, "*str realloc() failed\n");
@@ -179,12 +174,13 @@ bool buildFile(char** filepath, char** buffer, bool verbose,
   VERB(verbose, printf("    File read successfully\n"));
 
   regex_t regex;
-  char* pattern_include = "#include \"[-_[:alnum:]]+\\.glsl\"";
+  char* pattern_include = "^#include \"[-_[:alnum:]]+\\.glsl\"";
   char* pattern_main = "main.glsl$";
 
   VERB(verbose, printf("    Compiling regex pattern: \"%s\" ...\n",
     pattern_include));
-  int regex_error = regcomp(&regex, pattern_include, REG_EXTENDED);
+  int regex_error =
+    regcomp(&regex, pattern_include, REG_EXTENDED | REG_NEWLINE);
 
   char* tmp_buffer;
 
@@ -358,48 +354,100 @@ bool buildFile(char** filepath, char** buffer, bool verbose,
 
         if (!regex_replace(buffer, pattern_include, tmp_buffer))
         {
-          fprintf(stderr, "regex_replace() failed\n");
+          fprintf(stderr, "      regex_replace() failed\n");
+
+          VERB(verbose, printf("      Freeing header_filepath memory ...\n"));
           free(header_filepath);
+          VERB(verbose, printf("      Memory freed successfully\n"));
+
+          VERB(verbose, printf("      Freeing tmp_buffer memory ...\n"));
           free(tmp_buffer);
+          VERB(verbose, printf("      Memory freed successfully\n"));
+
+          VERB(verbose, printf("      Freeing first_match memory ...\n"));
           free(first_match);
+          VERB(verbose, printf("      Memory freed successfully\n"));
+
           for (size_t i = 0; i < includes_length; ++i)
           {
+            VERB(verbose, printf("      Freeing includes[%lu] memory ...\n",
+              i));
             free(includes[i]);
+            VERB(verbose, printf("      Memory freed successfully\n"));
           }
+
+          VERB(verbose, printf("      Freeing includes memory ...\n"));
           free(includes);
+          VERB(verbose, printf("      Memory freed successfully\n"));
+
+          VERB(verbose, printf("      Freeing regex structure ...\n"));
           regfree(&regex);
+          VERB(verbose, printf("      Memory freed successfully\n"));
+
           return false;
         }
+        VERB(verbose, printf("      Freeing header_filepath memory ...\n"));
         free(header_filepath);
+        VERB(verbose, printf("      Memory freed successfully\n"));
+
+        VERB(verbose, printf("      Freeing tmp_buffer memory ...\n"));
         free(tmp_buffer);
+        VERB(verbose, printf("      Memory freed successfully\n"));
       }
 
+      VERB(verbose, printf("      Freeing first_match memory ...\n"));
       free(first_match);
+      VERB(verbose, printf("      Memory freed successfully\n"));
+
+      VERB(verbose,
+        printf("      Comparing regex pattern to buffer file ...\n"));
       match = regexec(&regex, *buffer, nmatch + 1, m, REG_NOTBOL);
+      VERB(verbose, printf("      Regex pattern compared successfully\n"));
     }
+    VERB(verbose, printf("    File buffer is now:\n\
+------------------------------------------------------------------------------\
+\n%s\n\
+------------------------------------------------------------------------------\
+\n", *buffer));
 
     for (size_t i = 0; i < includes_length; ++i)
     {
+      VERB(verbose, printf("    Freeing includes[%lu] memory ...\n", i));
+      VERB(verbose, printf("    Memory freed successfully\n"));
       free(includes[i]);
     }
+
+    VERB(verbose, printf("    Freeing includes memory ...\n"));
     free(includes);
+    VERB(verbose, printf("    Memory freed successfully\n"));
+
+    VERB(verbose, printf("    Freeing regex structure ...\n"));
     regfree(&regex);
+    VERB(verbose, printf("    Memory freed successfully\n"));
 
     if (match != REG_NOMATCH)
     {
+      VERB(verbose, printf("    Searching for regex errors ...\n"));
       size_t size = regerror(regex_error, &regex, NULL, 0);
+
+      VERB(verbose, printf("      Allocating text memory ...\n"));
       char* text = malloc(sizeof(*text) * size);
       if (!text)
       {
-        fprintf (stderr, "text malloc() failed\n");
+        fprintf (stderr, "      text malloc() failed\n");
         return false;
       }
+      VERB(verbose, printf("      Memory allocated successfully\n"));
+
       regerror(regex_error, &regex, text, size);
-      fprintf(stderr, "%s\n", text);
+      fprintf(stderr, "    Regex error: %s\n", text);
+
+      VERB(verbose, printf("    Freeing text memory ...\n"));
       free(text);
+      VERB(verbose, printf("    Memory freed successfully\n"));
     }
   } else {
-    fprintf(stderr, "Regex compilation failed\n");
+    fprintf(stderr, "    Regex compilation failed\n");
     return false;
   }
 

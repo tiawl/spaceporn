@@ -12,10 +12,12 @@ if test "$ac_cv_prog_cc_g" = "no"; then
 fi
 
 # Checks for libraries and headers
-AC_CHECK_HEADERS([time.h errno.h stdio.h stdlib.h string.h unistd.h string.h],
-  [], AC_MSG_ERROR([Some GLibC headers are not found. Install or check the \
-GLibC developing package.]))
+AC_CHECK_HEADERS([time.h errno.h stdio.h stdlib.h string.h unistd.h string.h \
+regex.h math.h], [], AC_MSG_ERROR([Some GLibC headers are not found. Install \
+or check the GLibC developing package.]))
 
+AC_CHECK_LIB([m], [pow], [], [AC_MSG_ERROR([lib math linking flag (-lm) is \
+not found. Install or check GLibC developing package.])])
 AC_CHECK_LIB([png], [png_create_read_struct], [], [AC_MSG_ERROR([libPNG \
 linking flag (-lpng) is not found. Install or check libPNG developing \
 package.])])
@@ -106,11 +108,11 @@ developing package.]), [[#include <X11/Xutil.h>
 # Checks for library functions.
 AC_FUNC_MALLOC
 AC_CHECK_FUNCS([strchr strerror strstr strlen strcmp strtok strcpy strcat \
-strncpy strncat getenv usleep memcpy printf fprintf free srand rand atof \
-atoi time clock fopen fseek fread fclose setjmp exit atexit realloc regcomp \
-regexec regerror regfree], [], AC_MSG_ERROR([GLibC package is found but \
-some functions of this package are not found. Update the GLibC developing \
-package.]))
+strncpy strncat getenv usleep memcpy printf fprintf snprintf free srand rand \
+atof atoi time clock fopen fseek fread fclose fgetc setjmp exit atexit \
+realloc regcomp regexec regerror regfree log10 floor], [],
+AC_MSG_ERROR([GLibC package is found but some functions of this package are \
+not found. Update the GLibC developing package.]))
 AC_CHECK_FUNCS([png_destroy_read_struct png_create_read_struct \
 png_create_info_struct png_init_io png_read_info png_get_IHDR \
 png_read_update_info png_get_rowbytes png_read_image], [],

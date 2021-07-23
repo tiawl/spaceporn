@@ -17,7 +17,7 @@ SRC_FILES := $(wildcard $(SRC_DIR)/*.c)
 OBJ_FILES := $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(SRC_FILES))
 
 OBJ_FLAGS := -Wall -g -I ./$(HEAD_DIR)
-ALL_FLAGS := -lX11 -lGL -lGLEW -lpng
+ALL_FLAGS := -lX11 -lGL -lGLEW -lpng -lm
 COV_FLAGS := --coverage $(patsubst %.c, $(PWD_DIR)/%.c, $(SRC_FILES)) \
   -I $(PWD_DIR)/$(HEAD_DIR) $(ALL_FLAGS)
 

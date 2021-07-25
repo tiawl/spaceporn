@@ -147,18 +147,21 @@ bool regex_replace(char** str, const char* pattern, const char* replace,
 
     size_t nmatch = regex.re_nsub;
     regmatch_t m[nmatch + 1];
-    const char* rpl;
-    const char* p = replace;
 
     char* new;
-    char* search_start = *str;
+
+    size_t start;
+    size_t end;
 
     // replace only first occurence
     VERB(verbose, printf("%s      Comparing regex pattern ...\n", spaces));
-    if (regexec(&regex, search_start, nmatch + 1, m, REG_NOTBOL) == 0)
+    if (regexec(&regex, *str, nmatch + 1, m, 0) == 0)
     {
       VERB(verbose, printf("%s      Regex pattern compared successfully\n",
         spaces));
+
+      start = m[0].rm_so;
+      end = m[0].rm_eo;
 
       VERB(verbose, printf("%s      Allocating memore for new ...\n",
         spaces));
@@ -172,25 +175,23 @@ bool regex_replace(char** str, const char* pattern, const char* replace,
       VERB(verbose, printf("%s      Memory allocated successfully\n",
         spaces));
 
-      VERB(verbose, printf("%s      Concatenating strings 1 ...\n", spaces));
-      strncat(new, *str, search_start - *str);
+      VERB(verbose, printf("%s      Concatenating first part of the original \
+string ...\n", spaces));
+      strncat(new, *str, start);
       VERB(verbose, printf("%s      Strings concatenated successfully\n",
         spaces));
 
-      p = rpl = replace;
-
-      VERB(verbose, printf("%s      Concatenating strings 2 ...\n", spaces));
-      strncat(new, search_start, m[0].rm_so); // test before pattern
-      VERB(verbose, printf("%s      Strings concatenated successfully\n",
+      VERB(verbose, printf("%s      Concanenating replaced part \
+...\n", spaces));
+      strcat(new, replace);
+      VERB(verbose, printf("%s      Replaced part added successfully\n",
         spaces));
 
-      VERB(verbose, printf("%s      Adding rpl ...\n", spaces));
-      strcat(new, p); // trailing of rpl
-      VERB(verbose, printf("%s      rpl added successfully\n", spaces));
-
-      VERB(verbose, printf("%s      Trailing *str ...\n", spaces));
-      strcat(new, search_start + m[0].rm_eo);
-      VERB(verbose, printf("%s      *str trailed successfully\n", spaces));
+      VERB(verbose, printf("%s      Concatenating last part of the original \
+string ...\n", spaces));
+      strncat(new, *str + end, strlen(*str) - end);
+      VERB(verbose, printf("%s      Strings concatenated successfully\n",
+        spaces));
 
       VERB(verbose, printf("%s      Reallocating memory for *str ...\n",
         spaces));
@@ -385,7 +386,7 @@ bool buildFile(char** filepath, char** buffer, bool verbose,
     size_t nmatch = regex.regex.re_nsub;
     regmatch_t m[nmatch + 1];
 
-    bool is_already_headerd = false;
+    bool is_already_header = false;
 
     VERB(verbose, printf("    Allocating memory for headers ...\n");)
     regex.headers = malloc(sizeof(char*));
@@ -426,7 +427,7 @@ bool buildFile(char** filepath, char** buffer, bool verbose,
     VERB(verbose, printf("    Markers added\n"));
 
     VERB(verbose, printf("    Comparing regex pattern to buffer file ...\n"));
-    int match = regexec(&(regex.regex), *buffer, nmatch + 1, m, REG_NOTBOL);
+    int match = regexec(&(regex.regex), *buffer, nmatch + 1, m, 0);
     VERB(verbose, printf("    Regex pattern compared successfully\n"));
 
     size_t start_header;
@@ -458,21 +459,21 @@ bool buildFile(char** filepath, char** buffer, bool verbose,
         regex.first_match));
 
       VERB(verbose, printf("      Comparing first_match to the cache ...\n"));
-      is_already_headerd = false;
+      is_already_header = false;
       for (size_t i = 0; (i < regex.headers_length) &&
-        !is_already_headerd; ++i)
+        !is_already_header; ++i)
       {
         VERB(verbose, printf("        Comparing \"%s\" to \"%s\" ...\n",
           (regex.headers)[i], regex.first_match));
-        is_already_headerd |=
+        is_already_header |=
           (strcmp((regex.headers)[i], regex.first_match) == 0);
         VERB(verbose, printf("        %s\n",
-          is_already_headerd ? "Same string" : "Not the same string"));
+          is_already_header ? "Same string" : "Not the same string"));
       }
 
-      if (is_already_headerd)
+      if (is_already_header)
       {
-        VERB(verbose, printf("      \"%s\" was already headerd\n",
+        VERB(verbose, printf("      \"%s\" was already header\n",
           regex.first_match));
 
         VERB(verbose, printf("      Deleting first occurence of #header \
@@ -487,7 +488,7 @@ bool buildFile(char** filepath, char** buffer, bool verbose,
         VERB(verbose, printf("      Line successfully deleted\n"));
       } else {
 
-        VERB(verbose, printf("      \"%s\" is not already headerd\n",
+        VERB(verbose, printf("      \"%s\" is not already header\n",
           regex.first_match));
 
         regex.headers_length++;
@@ -603,7 +604,7 @@ bool buildFile(char** filepath, char** buffer, bool verbose,
 
       VERB(verbose,
         printf("      Comparing regex pattern to buffer file ...\n"));
-      match = regexec(&(regex.regex), *buffer, nmatch + 1, m, REG_NOTBOL);
+      match = regexec(&(regex.regex), *buffer, nmatch + 1, m, 0);
       VERB(verbose, printf("      Regex pattern compared successfully\n"));
     }
     VERB(verbose, printf("    File buffer is now:\n\
@@ -705,7 +706,7 @@ bool buildFragmentShaderFile(Shaders* shaders, bool verbose,
   return true;
 }
 
-bool checkingLogShader(GLuint* shader, GLenum shaderType, bool verbose,
+bool checkLogShader(GLuint* shader, GLenum shaderType, bool verbose,
   enum Roadmap roadmap)
 {
   GLint shaderCompiled = GL_FALSE;
@@ -726,7 +727,7 @@ bool checkingLogShader(GLuint* shader, GLenum shaderType, bool verbose,
 
     if (maxLength > 0)
     {
-      char message[maxLength];
+      char* message = malloc(sizeof(char) * maxLength);
 
       VERB(verbose, printf("    Querying log info of %s shader ...\n",
         shaderType == GL_FRAGMENT_SHADER ? "fragment" : "vertex"));
@@ -734,11 +735,51 @@ bool checkingLogShader(GLuint* shader, GLenum shaderType, bool verbose,
       VERB(verbose, printf("    Log info of %s shader found:\n",
         shaderType == GL_FRAGMENT_SHADER ? "fragment" : "vertex"));
 
+      regex_t regex;
+      char* pattern_startlinelog =
+        "^[[:digit:]]+:([[:digit:]]+)\\([[:digit:]]+\\):";
+
+      VERB(verbose, printf("    Compiling regex pattern: \"%s\" ...\n",
+        pattern_startlinelog));
+      if (regcomp(&regex, pattern_startlinelog, REG_EXTENDED | REG_NEWLINE)
+        == 0)
+      {
+        VERB(verbose, printf("    Regex pattern compiled successfully\n"));
+
+        size_t nmatch = regex.re_nsub;
+        regmatch_t m[nmatch + 1];
+        int match = regexec(&regex, message, nmatch + 1, m, 0);
+
+        size_t start;
+        size_t end;
+
+        char* line;
+
+        if (match == 0)
+        {
+          start = m[1].rm_so;
+          end = m[1].rm_eo;
+
+          line = malloc(sizeof(char) * (end - start + 1));
+          *line = '\0';
+          strncat(line, message + start, end - start);
+
+          printf("%s\ns = %lu\ne = %lu\n", line, start, end);
+
+          free(line);
+          //match = regexec(&regex, message, nmatch + 1, m, 0);
+        }
+      } else {
+      }
+
       fprintf(stderr, "\
 ------------------------------------------------------------------------------\
 \n%s\
 ------------------------------------------------------------------------------\
-\n", &(message[0]));
+\n", message);
+
+      free(message);
+      regfree(&regex);
     }
 
     return false;
@@ -775,7 +816,7 @@ bool loadShader(Shaders* shaders, GLenum shaderType, bool verbose,
 
   VERB(verbose, printf("    Checking compile status of %s shader ...\n",
     shaderType == GL_FRAGMENT_SHADER ? "fragment" : "vertex"));
-  if (!checkingLogShader(shader, shaderType, verbose, roadmap))
+  if (!checkLogShader(shader, shaderType, verbose, roadmap))
   {
     return false;
   }
@@ -807,7 +848,7 @@ bool loadFragmentShader(Shaders* shaders, bool verbose, enum Roadmap roadmap)
   return true;
 }
 
-bool checkingLogProgram(Shaders* shaders, bool verbose, enum Roadmap roadmap)
+bool checkLogProgram(Shaders* shaders, bool verbose, enum Roadmap roadmap)
 {
   VERB(verbose, printf("  Checking linking status of OpenGL program ...\n"));
 
@@ -896,7 +937,7 @@ bool loadProgram(Context* context, Shaders* shaders, bool verbose,
   GL_CHECK(glLinkProgram(shaders->program));
   VERB(verbose, printf("  OpenGL program probably linked\n"));
 
-  if (!checkingLogProgram(shaders, verbose, roadmap))
+  if (!checkLogProgram(shaders, verbose, roadmap))
   {
     return false;
   }

@@ -66,9 +66,9 @@ developing package.]), [[#include <X11/Xutil.h>]])
 
 # Checks for predefined macros and variables.
 AC_CHECK_DECLS([NULL, EXIT_FAILURE, EXIT_SUCCESS, SEEK_END, SEEK_SET,
-  CLOCKS_PER_SEC, errno, REG_EXTENDED, REG_NEWLINE, REG_NOTBOL, REG_NOMATCH],
-[], AC_MSG_ERROR([GLibC package is found but some declarations of this \
-package are not found. Update the GLibC developing package.]),
+  CLOCKS_PER_SEC, errno, REG_EXTENDED, REG_NEWLINE, REG_NOMATCH], [],
+  AC_MSG_ERROR([GLibC package is found but some declarations of this package \
+are not found. Update the GLibC developing package.]),
 [[#include <stdlib.h>
 #include <stdio.h>
 #include <time.h>

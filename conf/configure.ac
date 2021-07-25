@@ -108,9 +108,9 @@ developing package.]), [[#include <X11/Xutil.h>
 # Checks for library functions.
 AC_FUNC_MALLOC
 AC_CHECK_FUNCS([strchr strerror strstr strlen strcmp strtok strcpy strcat \
-strncpy strncat getenv usleep memcpy printf fprintf snprintf free srand rand \
-atof atoi time clock fopen fseek fread fclose fgetc setjmp exit atexit \
-realloc regcomp regexec regerror regfree log10 floor], [],
+strncpy strncat strtoul getenv usleep memcpy printf fprintf snprintf free \
+srand rand atof atoi time clock fopen fseek fread fclose fgetc setjmp exit \
+atexit realloc regcomp regexec regerror regfree log10 floor], [],
 AC_MSG_ERROR([GLibC package is found but some functions of this package are \
 not found. Update the GLibC developing package.]))
 AC_CHECK_FUNCS([png_destroy_read_struct png_create_read_struct \

@@ -55,8 +55,8 @@ bool buildVertexShaderFile(Shaders* shaders, bool verbose,
   enum Roadmap roadmap);
 bool buildFragmentShaderFile(Shaders* shaders, bool verbose,
   enum Roadmap roadmap);
-bool checkLogShader(GLuint* shader, GLenum shaderType, bool verbose,
-  enum Roadmap roadmap);
+bool checkLogShader(GLuint* shader, GLenum shaderType, char* buffer,
+  bool verbose, enum Roadmap roadmap);
 bool loadShader(Shaders* shaders, GLenum shaderType, bool verbose,
   enum Roadmap roadmap);
 bool loadVertexShader(Shaders* shaders, bool verbose, enum Roadmap roadmap);

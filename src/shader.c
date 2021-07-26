@@ -61,7 +61,8 @@ allocated successfully\n", spaces));
 \n", spaces, *buffer))
 
     } else {
-      fprintf(stderr, "%s      Buffer malloc() failed\n", spaces);
+      VERB(verbose, fprintf(stderr, "%s      ", spaces));
+      fprintf(stderr, "Buffer malloc() failed\n");
       return false;
     }
 
@@ -70,8 +71,9 @@ allocated successfully\n", spaces));
     VERB(verbose, printf("%s      \"%s\" closed\n", spaces, *filepath));
 
   } else {
-    fprintf(stderr, "%s      Failed to read inside \"%s\": %s\n", spaces,
-      *filepath, strerror(errno));
+    VERB(verbose, fprintf(stderr, "%s      ", spaces));
+    fprintf(stderr, "Failed to read inside \"%s\": %s\n", *filepath,
+      strerror(errno));
     return false;
   }
 
@@ -80,35 +82,11 @@ allocated successfully\n", spaces));
 
 void freeRegex(Regex* regex, bool verbose)
 {
-  if (regex->dir_path)
-  {
-    VERB(verbose, printf("      Freeing dir_path memory ...\n"));
-    free(regex->dir_path);
-    regex->dir_path = NULL;
-    VERB(verbose, printf("      Memory freed successfully\n"));
-  }
-
-  if (regex->header_filepath)
-  {
-    VERB(verbose, printf("      Freeing header_filepath memory ...\n"));
-    free(regex->header_filepath);
-    regex->header_filepath = NULL;
-    VERB(verbose, printf("      Memory freed successfully\n"));
-  }
-
   if (regex->header_buffer)
   {
     VERB(verbose, printf("      Freeing header_buffer memory ...\n"));
     free(regex->header_buffer);
     regex->header_buffer = NULL;
-    VERB(verbose, printf("      Memory freed successfully\n"));
-  }
-
-  if (regex->first_match)
-  {
-    VERB(verbose, printf("      Freeing first_match memory ...\n"));
-    free(regex->first_match);
-    regex->first_match = NULL;
     VERB(verbose, printf("      Memory freed successfully\n"));
   }
 
@@ -187,7 +165,8 @@ string ...\n", spaces));
       *str = realloc(*str, sizeof(char) * (strlen(new) + 1));
       if (!*str)
       {
-        fprintf(stderr, "        *str realloc() failed\n");
+        VERB(verbose, fprintf(stderr, "%s      ", spaces));
+        fprintf(stderr, "*str realloc() failed\n");
         return false;
       }
       VERB(verbose, printf("%s      Memory reallocated successfully\n",
@@ -204,7 +183,8 @@ string ...\n", spaces));
 
     return true;
   } else {
-    fprintf(stderr, "%s      Regex compilation failed\n", spaces);
+    VERB(verbose, fprintf(stderr, "%s      ", spaces));
+    fprintf(stderr, "Regex compilation failed\n");
     return false;
   }
 }
@@ -281,7 +261,7 @@ bool addMarkers(char** filename, char** buffer, const char* dir_path,
         }
 
         header_length = j - i;
-        header = malloc(sizeof(char) * header_length);
+        header = malloc(sizeof(char) * (header_length + 1));
         *header = '\0';
         strncat(header, *buffer + i, header_length);
 
@@ -323,40 +303,30 @@ bool buildFile(char** filepath, char** buffer, bool verbose,
   VERB(verbose, printf("    Reading file %s ... \n", *filepath));
   if (!readFile(filepath, buffer, "", verbose, roadmap))
   {
-    fprintf(stderr, "    Failed to read file\n");
+    VERB(verbose, fprintf(stderr, "    "));
+    fprintf(stderr, "Failed to read file\n");
     return false;
   }
   VERB(verbose, printf("    File read successfully\n"));
 
   Regex regex;
-  regex.dir_path = NULL;
-  regex.header_filepath = NULL;
   regex.header_buffer = NULL;
-  regex.first_match = NULL;
   regex.headers = NULL;
   regex.headers_length = 1;
 
   char* pattern_header = "^#include \"[/-_[:alnum:]]+\\.glsl\"";
-  char* pattern_main = "main.glsl$";
 
   VERB(verbose, printf("    Compiling regex pattern: \"%s\" ...\n",
     pattern_header));
   int regex_error =
     regcomp(&(regex.regex), pattern_header, REG_EXTENDED | REG_NEWLINE);
 
-  VERB(verbose, printf("    Allocating memory for dir_path ...\n");)
-  regex.dir_path = malloc(sizeof(char) * (strlen(*filepath)));
-  if (!regex.dir_path)
-  {
-    fprintf (stderr, "    dir_path malloc() failed\n");
-    return false;
-  }
-  *(regex.dir_path) = '\0';
-  VERB(verbose, printf("    Memory allocated successfully\n"));
+  char dir_path[strlen(*filepath) - 9];
+  dir_path[0] = '\0';
 
   VERB(verbose, printf("    Copying string into dir_path ...\n"));
-  strncat(regex.dir_path, *filepath, strlen(*filepath) - 9);
-  VERB(verbose, printf("    \"%s\" successfully copied\n", regex.dir_path));
+  strncat(dir_path, *filepath, strlen(*filepath) - 9);
+  VERB(verbose, printf("    \"%s\" successfully copied\n", dir_path));
 
   if (regex_error == 0)
   {
@@ -371,7 +341,8 @@ bool buildFile(char** filepath, char** buffer, bool verbose,
     regex.headers = malloc(sizeof(char*));
     if (!regex.headers)
     {
-      fprintf (stderr, "    headers malloc() failed\n");
+      VERB(verbose, fprintf(stderr, "    "));
+      fprintf (stderr, "headers malloc() failed\n");
       freeRegex(&regex, verbose);
       return false;
     }
@@ -379,10 +350,11 @@ bool buildFile(char** filepath, char** buffer, bool verbose,
 
     regex.headers_length = 1;
     VERB(verbose, printf("    Allocating memory for headers[0] ...\n");)
-    (regex.headers)[0] = malloc(sizeof(char) * (strlen("main.glsl")));
+    (regex.headers)[0] = malloc(sizeof(char) * (strlen("main.glsl") + 1));
     if (!(regex.headers)[0])
     {
-      fprintf (stderr, "    headers[0] malloc() failed\n");
+      VERB(verbose, fprintf(stderr, "    "));
+      fprintf (stderr, "headers[0] malloc() failed\n");
       freeRegex(&regex, verbose);
       return false;
     }
@@ -396,10 +368,11 @@ bool buildFile(char** filepath, char** buffer, bool verbose,
 
     VERB(verbose, printf("    Adding markers to \"%s\" ...\n",
       (regex.headers)[0]));
-    if (!addMarkers(&((regex.headers)[0]), buffer, regex.dir_path, true,
-      verbose, roadmap))
+    if (!addMarkers(&((regex.headers)[0]), buffer, dir_path, true, verbose,
+      roadmap))
     {
-      fprintf(stderr, "    Unable to mark the file\n");
+      VERB(verbose, fprintf(stderr, "    "));
+      fprintf(stderr, "Unable to mark the file\n");
       freeRegex(&regex, verbose);
       return false;
     }
@@ -419,22 +392,14 @@ bool buildFile(char** filepath, char** buffer, bool verbose,
       start_header = m[0].rm_so + 10;
       end_header = m[0].rm_eo - 1;
 
-      VERB(verbose, printf("      Allocating memory for first_match ...\n");)
-      regex.first_match = malloc(sizeof(char) * (end_header - start_header));
-      if (!regex.first_match)
-      {
-        fprintf (stderr, "      first_match malloc() failed\n");
-        freeRegex(&regex, verbose);
-        return false;
-      }
-      VERB(verbose, printf("      Memory allocated successfully\n"));
+      char first_match[end_header - start_header];
+      first_match[0] = '\0';
 
       VERB(verbose, printf("      Copying into first_match ...\n"));
-      strncpy(regex.first_match, (*buffer) + start_header,
+      strncat(first_match, (*buffer) + start_header,
         end_header - start_header);
-      (regex.first_match)[end_header - start_header] = '\0';
       VERB(verbose, printf("      \"%s\" successfully copied\n",
-        regex.first_match));
+        first_match));
 
       VERB(verbose, printf("      Comparing first_match to the cache ...\n"));
       is_already_header = false;
@@ -442,9 +407,8 @@ bool buildFile(char** filepath, char** buffer, bool verbose,
         !is_already_header; ++i)
       {
         VERB(verbose, printf("        Comparing \"%s\" to \"%s\" ...\n",
-          (regex.headers)[i], regex.first_match));
-        is_already_header |=
-          (strcmp((regex.headers)[i], regex.first_match) == 0);
+          (regex.headers)[i], first_match));
+        is_already_header |= (strcmp((regex.headers)[i], first_match) == 0);
         VERB(verbose, printf("        %s\n",
           is_already_header ? "Same string" : "Not the same string"));
       }
@@ -452,14 +416,15 @@ bool buildFile(char** filepath, char** buffer, bool verbose,
       if (is_already_header)
       {
         VERB(verbose, printf("      \"%s\" was already header\n",
-          regex.first_match));
+          first_match));
 
         VERB(verbose, printf("      Deleting first occurence of #header \
-\"%s\" line into buffer file with regex_replace() ...\n", regex.first_match));
+\"%s\" line into buffer file with regex_replace() ...\n", first_match));
         if (!regex_replace(buffer, pattern_header, "", "  ", verbose,
           roadmap))
         {
-          fprintf(stderr, "      regex_replace() failed\n");
+          VERB(verbose, fprintf(stderr, "      "));
+          fprintf(stderr, "regex_replace() failed\n");
           freeRegex(&regex, verbose);
           return false;
         }
@@ -467,7 +432,7 @@ bool buildFile(char** filepath, char** buffer, bool verbose,
       } else {
 
         VERB(verbose, printf("      \"%s\" is not already header\n",
-          regex.first_match));
+          first_match));
 
         regex.headers_length++;
 
@@ -476,7 +441,8 @@ bool buildFile(char** filepath, char** buffer, bool verbose,
           sizeof(char*) * regex.headers_length);
         if (!regex.headers)
         {
-          fprintf (stderr, "      headers realloc() failed\n");
+          VERB(verbose, fprintf(stderr, "      "));
+          fprintf (stderr, "headers realloc() failed\n");
           freeRegex(&regex, verbose);
           return false;
         }
@@ -485,10 +451,11 @@ bool buildFile(char** filepath, char** buffer, bool verbose,
         VERB(verbose, printf("      Allocating memory for headers[%lu] \
 ...\n", regex.headers_length - 1);)
         (regex.headers)[regex.headers_length - 1] =
-          malloc(sizeof(char) * (end_header - start_header));
+          malloc(sizeof(char) * (end_header - start_header + 1));
         if (!(regex.headers)[regex.headers_length - 1])
         {
-          fprintf (stderr, "      headers[%lu] malloc() failed\n",
+          VERB(verbose, fprintf(stderr, "      "));
+          fprintf (stderr, "headers[%lu] malloc() failed\n",
             regex.headers_length - 1);
           freeRegex(&regex, verbose);
           return false;
@@ -497,49 +464,35 @@ bool buildFile(char** filepath, char** buffer, bool verbose,
 
         VERB(verbose, printf("      Copying string into headers[%lu] ...\n",
           regex.headers_length - 1));
-        strncpy((regex.headers)[regex.headers_length - 1],
-          regex.first_match, end_header - start_header);
+        strncpy((regex.headers)[regex.headers_length - 1], first_match,
+          end_header - start_header);
         (regex.headers)[regex.headers_length - 1]
           [end_header - start_header] = '\0';
         VERB(verbose, printf("      \"%s\" successfully copied\n",
           (regex.headers)[regex.headers_length - 1]));
 
-        VERB(verbose, printf("      Allocating memory for header_filepath \
-...\n");)
-        regex.header_filepath =
-          malloc(sizeof(char) * (strlen(*filepath) + 1));
-        if (!regex.header_filepath)
-        {
-          fprintf(stderr, "      header_filepath malloc() failed\n");
-          freeRegex(&regex, verbose);
-          return false;
-        }
-        VERB(verbose, printf("      Memory allocated successfully\n"));
+        char header_filepath[strlen(dir_path) + strlen(first_match) + 1];
 
         VERB(verbose, printf("      Copying string into header_filepath \
 ...\n"));
-        strcpy(regex.header_filepath, *filepath);
+        strcpy(header_filepath, dir_path);
         VERB(verbose, printf("      \"%s\" successfully copied\n",
-          regex.header_filepath));
+          header_filepath));
 
-        VERB(verbose, printf("      Replacing first occurence of \"%s\" by \
-\"%s\" into \"%s\" ...\n", pattern_main, regex.first_match,
-          regex.header_filepath));
-        if (!regex_replace(&(regex.header_filepath), pattern_main,
-          regex.first_match, "  ", verbose, roadmap))
-        {
-          fprintf(stderr, "      regex_replace() failed\n");
-          freeRegex(&regex, verbose);
-          return false;
-        }
-        VERB(verbose, printf("      Regex replacement done: %s\n",
-          regex.header_filepath));
+        VERB(verbose, printf("      Concatenating string into \
+header_filepath ...\n"));
+        strcat(header_filepath, first_match);
+        VERB(verbose, printf("      \"%s\" successfully copied\n",
+          header_filepath));
+
         VERB(verbose, printf("      Reading file %s ... \n",
-          regex.header_filepath));
-        if (!readFile(&(regex.header_filepath), &(regex.header_buffer),
-          "  ", verbose, roadmap))
+          header_filepath));
+        char* header_filepath_p = &(header_filepath[0]);
+        if (!readFile(&header_filepath_p, &(regex.header_buffer), "  ", verbose,
+          roadmap))
         {
-          fprintf(stderr, "      Failed to read file\n");
+          VERB(verbose, fprintf(stderr, "      "));
+          fprintf(stderr, "Failed to read file\n");
           freeRegex(&regex, verbose);
           return false;
         }
@@ -548,9 +501,10 @@ bool buildFile(char** filepath, char** buffer, bool verbose,
         VERB(verbose, printf("      Adding markers to \"%s\" ...\n",
           (regex.headers)[regex.headers_length - 1]));
         if (!addMarkers(&((regex.headers)[regex.headers_length - 1]),
-          &(regex.header_buffer), regex.dir_path, false, verbose, roadmap))
+          &(regex.header_buffer), dir_path, false, verbose, roadmap))
         {
-          fprintf(stderr, "      Unable to mark the file\n");
+          VERB(verbose, fprintf(stderr, "      "));
+          fprintf(stderr, "Unable to mark the file\n");
           freeRegex(&regex, verbose);
           return false;
         }
@@ -559,26 +513,17 @@ bool buildFile(char** filepath, char** buffer, bool verbose,
         if (!regex_replace(buffer, pattern_header, regex.header_buffer,
           "  ", verbose, roadmap))
         {
-          fprintf(stderr, "      regex_replace() failed\n");
+          VERB(verbose, fprintf(stderr, "      "));
+          fprintf(stderr, "regex_replace() failed\n");
           freeRegex(&regex, verbose);
           return false;
         }
-
-        VERB(verbose, printf("      Freeing header_filepath memory ...\n"));
-        free(regex.header_filepath);
-        regex.header_filepath = NULL;
-        VERB(verbose, printf("      Memory freed successfully\n"));
 
         VERB(verbose, printf("      Freeing header_buffer memory ...\n"));
         free(regex.header_buffer);
         regex.header_buffer = NULL;
         VERB(verbose, printf("      Memory freed successfully\n"));
       }
-
-      VERB(verbose, printf("      Freeing first_match memory ...\n"));
-      free(regex.first_match);
-      regex.first_match = NULL;
-      VERB(verbose, printf("      Memory freed successfully\n"));
 
       VERB(verbose,
         printf("      Comparing regex pattern to buffer file ...\n"));
@@ -601,10 +546,12 @@ bool buildFile(char** filepath, char** buffer, bool verbose,
       char text[size];
 
       regerror(regex_error, &(regex.regex), &(text[0]), size);
-      fprintf(stderr, "    Regex error: %s\n", text);
+      VERB(verbose, fprintf(stderr, "    "));
+      fprintf(stderr, "Regex error: %s\n", text);
     }
   } else {
-    fprintf(stderr, "    Regex compilation failed\n");
+    VERB(verbose, fprintf(stderr, "    "));
+    fprintf(stderr, "Regex compilation failed\n");
     return false;
   }
 
@@ -635,7 +582,8 @@ bool buildVertexShaderFile(Shaders* shaders, bool verbose,
   if (!buildFile(&(shaders->vshaderpath), &(shaders->vertex_file), verbose,
     roadmap))
   {
-    fprintf(stderr, "  Failed to build vertex shader file\n");
+    VERB(verbose, fprintf(stderr, "  "));
+    fprintf(stderr, "Failed to build vertex shader file\n");
     return false;
   }
 
@@ -666,7 +614,8 @@ bool buildFragmentShaderFile(Shaders* shaders, bool verbose,
   if (!buildFile(&(shaders->fshaderpath), &(shaders->fragment_file), verbose,
     roadmap))
   {
-    fprintf(stderr, "  Failed to build fragment shader file\n");
+    VERB(verbose, fprintf(stderr, "  "));
+    fprintf(stderr, "Failed to build fragment shader file\n");
     return false;
   }
 
@@ -681,7 +630,8 @@ bool checkLogShader(GLuint* shader, GLenum shaderType, char* buffer,
 
   if (shaderCompiled != GL_TRUE)
   {
-    fprintf(stderr, "    Unable to compile %s shader\n",
+    VERB(verbose, fprintf(stderr, "    "));
+    fprintf(stderr, "Unable to compile %s shader\n",
       shaderType == GL_FRAGMENT_SHADER ? "Fragment" : "Vertex");
 
     GLint maxLength = 0;
@@ -741,9 +691,11 @@ bool checkLogShader(GLuint* shader, GLenum shaderType, char* buffer,
             {
               ++i;
             }
-            ++end;
+            if (i < l)
+            {
+              ++end;
+            }
           }
-          //--end;
 
           start = end;
           while (buffer[start] != '/')
@@ -823,7 +775,8 @@ bool loadVertexShader(Shaders* shaders, bool verbose, enum Roadmap roadmap)
 {
   if (!loadShader(shaders, GL_VERTEX_SHADER, verbose, roadmap))
   {
-    fprintf(stderr, "  Failed to compile vertex shader\n");
+    VERB(verbose, fprintf(stderr, "  "));
+    fprintf(stderr, "Failed to compile vertex shader\n");
     return false;
   }
 
@@ -834,7 +787,8 @@ bool loadFragmentShader(Shaders* shaders, bool verbose, enum Roadmap roadmap)
 {
   if (!loadShader(shaders, GL_FRAGMENT_SHADER, verbose, roadmap))
   {
-    fprintf(stderr, "  Failed to compile fragment shader\n");
+    VERB(verbose, fprintf(stderr, "  "));
+    fprintf(stderr, "Failed to compile fragment shader\n");
     return false;
   }
 
@@ -850,7 +804,8 @@ bool checkLogProgram(Shaders* shaders, bool verbose, enum Roadmap roadmap)
 
   if (programSuccess != GL_TRUE)
   {
-    fprintf(stderr, "  Unable to link OpenGL program \n");
+    VERB(verbose, fprintf(stderr, "  "));
+    fprintf(stderr, "Unable to link OpenGL program \n");
 
     GLint maxLength = 0;
 

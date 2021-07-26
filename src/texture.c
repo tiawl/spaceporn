@@ -8,7 +8,8 @@ bool loadPng(PNG* png, bool verbose, enum Roadmap roadmap)
 
   if (!png->path || (roadmap == NO_PNG_FILENAME_RM))
   {
-    fprintf(stderr, "  PNG filename is null\n");
+    VERB(verbose, fprintf(stderr, "  "));
+    fprintf(stderr, "PNG filename is null\n");
     return false;
   }
 
@@ -20,7 +21,8 @@ bool loadPng(PNG* png, bool verbose, enum Roadmap roadmap)
 
   if (!png->file)
   {
-    fprintf(stderr, "  Failed to open \"%s\"\n", png->path);
+    VERB(verbose, fprintf(stderr, "  "));
+    fprintf(stderr, "Failed to open \"%s\"\n", png->path);
     return false;
   }
   VERB(verbose, printf("  PNG file opened\n"));
@@ -33,7 +35,8 @@ bool loadPng(PNG* png, bool verbose, enum Roadmap roadmap)
 
   if (!png->parser)
   {
-    fprintf(stderr, "  png_create_read_struct() failed\n");
+    VERB(verbose, fprintf(stderr, "  "));
+    fprintf(stderr, "png_create_read_struct() failed\n");
     return false;
   }
   VERB(verbose, printf("  Structure for reading PNG file created\n"));
@@ -46,7 +49,8 @@ bool loadPng(PNG* png, bool verbose, enum Roadmap roadmap)
 
   if (!png->info)
   {
-    fprintf(stderr, "  png_create_info_struct() failed\n");
+    VERB(verbose, fprintf(stderr, "  "));
+    fprintf(stderr, "png_create_info_struct() failed\n");
     return false;
   }
   VERB(verbose, printf("  PNG info structure created\n"));
@@ -55,7 +59,8 @@ bool loadPng(PNG* png, bool verbose, enum Roadmap roadmap)
   if (setjmp(png_jmpbuf(png->parser)) ||
     (roadmap == PNG_JMPBUF_FAILED_RM))
   {
-    fprintf(stderr, "  Routine problem: libPNG encountered an error\n");
+    VERB(verbose, fprintf(stderr, "  "));
+    fprintf(stderr, "Routine problem: libPNG encountered an error\n");
     return false;
   }
   VERB(verbose, printf("  No error found\n"));
@@ -82,7 +87,8 @@ structure ...\n"));
   VERB(verbose, printf("  Testing PNG images dimensions ...\n"));
   if ((w & (w - 1)) || (h & (h - 1)) || (w < 8) || (h < 8))
   {
-    fprintf(stderr, "  PNG images with dimensions that are not power of two \
+    VERB(verbose, fprintf(stderr, "  "));
+    fprintf(stderr, "PNG images with dimensions that are not power of two \
 or smaller than 8 failed to load in OpenGL\n");
     return false;
   }
@@ -105,7 +111,8 @@ or smaller than 8 failed to load in OpenGL\n");
 
   if (!png->data)
   {
-    fprintf(stderr, "  data malloc() failed\n");
+    VERB(verbose, fprintf(stderr, "  "));
+    fprintf(stderr, "data malloc() failed\n");
     return false;
   }
   VERB(verbose, printf("  Memory allocated successfully\n"));
@@ -118,7 +125,8 @@ or smaller than 8 failed to load in OpenGL\n");
 
   if (!png->row_pointers)
   {
-    fprintf(stderr, "  row_pointers malloc() failed\n");
+    VERB(verbose, fprintf(stderr, "  "));
+    fprintf(stderr, "row_pointers malloc() failed\n");
     return false;
   }
   VERB(verbose, printf("  Memory allocated successfully\n"));

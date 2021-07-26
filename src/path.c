@@ -13,7 +13,8 @@ bool initFragShaderPath(Shaders* shaders, size_t len[5], char* user,
 
   if (!shaders->fshaderpath)
   {
-    fprintf(stderr, "  fshaderpath malloc() failed\n");
+    VERB(verbose, fprintf(stderr, "  "));
+    fprintf(stderr, "fshaderpath malloc() failed\n");
     return false;
   }
   VERB(verbose, printf("  Successfull allocated memory for fragment shader \
@@ -51,7 +52,8 @@ bool initVertShaderPath(Shaders* shaders, size_t len[5], char* user,
 
   if (!shaders->vshaderpath)
   {
-    fprintf(stderr, "  vshaderpath malloc() failed\n");
+    VERB(verbose, fprintf(stderr, "  "));
+    fprintf(stderr, "vshaderpath malloc() failed\n");
     return false;
   }
   VERB(verbose, printf("  Successfull allocated memory for vertex shader \
@@ -89,7 +91,8 @@ bool initTexturePath(PNG* png, size_t len[5], char* user, bool verbose,
 
   if (!png->path)
   {
-    fprintf(stderr, "  texturepath malloc() failed\n");
+    VERB(verbose, fprintf(stderr, "  "));
+    fprintf(stderr, "texturepath malloc() failed\n");
     return false;
   }
   VERB(verbose, printf("  Successfull allocated memory for texture path\n"));
@@ -126,7 +129,8 @@ bool initPaths(Shaders* shaders, PNG* png, bool verbose, enum Roadmap roadmap)
 
   if (!user)
   {
-    fprintf(stderr, "  No username on this device\n");
+    VERB(verbose, fprintf(stderr, "  "));
+    fprintf(stderr, "No username on this device\n");
     return false;
   }
   VERB(verbose, printf("  Username is \"%s\"\n", user));

@@ -73,7 +73,8 @@ bool queryingGlxVersion(Context* context, bool verbose, enum Roadmap roadmap)
     ((glx_major == 1) && (glx_minor < 3)) || (glx_major < 1)) ||
     (roadmap == INVALID_GLX_VERSION_RM))
   {
-    fprintf(stderr, "  Invalid GLX version\n");
+    VERB(verbose, fprintf(stderr, "  "));
+    fprintf(stderr, "Invalid GLX version\n");
     return false;
   }
   VERB(verbose, printf("  Valid GLX version: %d.%d\n", glx_major, glx_minor));
@@ -113,7 +114,8 @@ bool searchingBestFbc(Context* context, GLXFBConfig* bestFbc, bool verbose,
 
   if (!fbc)
   {
-    fprintf(stderr, "  Failed to found a GLX framebuffer config\n");
+    VERB(verbose, fprintf(stderr, "  "));
+    fprintf(stderr, "Failed to found a GLX framebuffer config\n");
     return false;
   }
   VERB(verbose, printf("  GLX framebuffer config found\n"));
@@ -233,7 +235,8 @@ bool initWindow(Context* context, bool verbose, enum Roadmap roadmap)
 
   if (!context->window)
   {
-    fprintf(stderr, "  Failed to create X window\n");
+    VERB(verbose, fprintf(stderr, "  "));
+    fprintf(stderr, "Failed to create X window\n");
     return false;
   }
   VERB(verbose, printf("  X Window created: 0x%lx\n", context->window));
@@ -298,7 +301,8 @@ bool initDebugWindow(Context* context, bool verbose, enum Roadmap roadmap)
 
   if (!context->debug_window)
   {
-    fprintf(stderr, "  Failed to create debug window\n");
+    VERB(verbose, fprintf(stderr, "  "));
+    fprintf(stderr, "Failed to create debug window\n");
     return false;
   }
   VERB(verbose, printf("  Debug window created\n"));
@@ -328,7 +332,8 @@ bool initContext(Context* context, bool verbose, enum Roadmap roadmap)
 
   if (!context->display)
   {
-    fprintf(stderr, "  Failed to open X display\n");
+    VERB(verbose, fprintf(stderr, "  "));
+    fprintf(stderr, "Failed to open X display\n");
     return false;
   }
   VERB(verbose, printf("  X Display opened\n"));
@@ -379,7 +384,8 @@ function ...\n"));
 
   if (!glXCreateContextAttribsARB)
   {
-    fprintf(stderr, "  Unable to found glXCreateContextAttribsARB()\n");
+    VERB(verbose, fprintf(stderr, "  "));
+    fprintf(stderr, "Unable to found glXCreateContextAttribsARB()\n");
 
     VERB(verbose, printf("  Restoring original X error handler ...\n"));
     XSetErrorHandler(oldHandler);
@@ -394,7 +400,8 @@ found\n"));
   if (!isExtensionSupported(glxExts, "GLX_ARB_create_context", verbose,
     roadmap))
   {
-    fprintf(stderr, "  GLX extension not supported\n");
+    VERB(verbose, fprintf(stderr, "  "));
+    fprintf(stderr, "GLX extension not supported\n");
 
     VERB(verbose, printf("  Restoring original X error handler ...\n"));
     XSetErrorHandler(oldHandler);
@@ -434,7 +441,8 @@ by the OpenGL specification\n"));
 creation ...\n"));
   if (contextErrorOccurred || !context->glx_context)
   {
-    fprintf(stderr, "  An X error occured during creation context\n");
+    VERB(verbose, fprintf(stderr, "  "));
+    fprintf(stderr, "An X error occured during creation context\n");
     return false;
   }
   VERB(verbose, printf("  No X error occured during context creation\n"));
@@ -458,7 +466,8 @@ current window\n"));
 
   if ((err != GLEW_OK) || (roadmap == GLEWINIT_FAILED_RM))
   {
-    fprintf(stderr, "  glewInit() failed: %s\n", glewGetErrorString(err));
+    VERB(verbose, fprintf(stderr, "  "));
+    fprintf(stderr, "glewInit() failed: %s\n", glewGetErrorString(err));
     return false;
   }
   VERB(verbose, printf("  GLEW initialized\n"));

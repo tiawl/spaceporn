@@ -1,6 +1,7 @@
 #ifndef XTELESKTOP_SHADER_H
 #define XTELESKTOP_SHADER_H
 
+#include <ctype.h>
 #include <errno.h>
 #include <math.h>
 #include <string.h>
@@ -33,10 +34,7 @@ void main()\n\
 
 typedef struct
 {
-  char* dir_path;
-  char* header_filepath;
   char* header_buffer;
-  char* first_match;
   char** headers;
   size_t headers_length;
   regex_t regex;

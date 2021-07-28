@@ -1,7 +1,6 @@
 #ifndef XTELESKTOP_SHADER_H
 #define XTELESKTOP_SHADER_H
 
-#include <ctype.h>
 #include <errno.h>
 #include <math.h>
 #include <string.h>
@@ -40,11 +39,11 @@ typedef struct
   regex_t regex;
 } Regex;
 
-void freeRegex(Regex* regex, bool verbose);
+void freeRegex(Regex* regex, const char* spaces, bool verbose);
 bool regex_replace(char** str, const char* pattern, const char* replace,
   const char* spaces, bool verbose, enum Roadmap roadmap);
 bool addMarkers(char** filename, char** buffer, const char* dir_path,
-  bool is_main, bool verbose, enum Roadmap roadmap);
+  bool is_main, const char* spaces, bool verbose, enum Roadmap roadmap);
 bool readFile(char** filepath, char** buffer, const char* spaces,
   bool verbose, enum Roadmap roadmap);
 bool buildFile(char** filepath, char** buffer, bool verbose,

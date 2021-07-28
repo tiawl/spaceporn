@@ -50,7 +50,7 @@ void updateUniforms(const Uniform uniforms[UNIFORM_COUNT],
 {
   for (int i = 0; i < UNIFORM_COUNT; i++)
   {
-    VERB(verbose, printf("  Updating %s ... \n", uniforms[i].name));
+    VERB(verbose, printf("  Updating %s...\n", uniforms[i].name));
     uniforms[i].update(uniformIds[i], values, verbose);
     VERB(verbose, printf("  %s updated\n", uniforms[i].name));
   }

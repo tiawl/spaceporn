@@ -165,7 +165,7 @@ void freePng(PNG* png, bool verbose)
     VERB(verbose, printf("Destroying png_read_struct ...\n"));
     png_destroy_read_struct(&(png->parser), png->info ? &(png->info) : 0, 0);
     png->parser = 0;
-    VERB(verbose, printf("png_read_struct destroyed \n"));
+    VERB(verbose, printf("png_read_struct destroyed\n"));
   }
 
   if(png->row_pointers)

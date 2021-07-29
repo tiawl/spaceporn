@@ -25,5 +25,7 @@ bool addMarkers(char** filename, char** buffer, const char* dir_path,
   bool is_main, const char* spaces, bool verbose, enum Roadmap roadmap);
 bool searchAndReplaceHeaders(char** filepath, char** buffer, bool verbose,
   enum Roadmap roadmap);
+bool improveLogShader(char** message, char** buffer, size_t maxLength,
+  bool verbose, enum Roadmap roadmap);
 
 #endif

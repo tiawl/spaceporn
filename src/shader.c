@@ -114,68 +114,9 @@ bool checkLogShader(GLuint* shader, GLenum shaderType, char* buffer,
       VERB(verbose, printf("    Log info of %s shader found:\n",
         shaderType == GL_FRAGMENT_SHADER ? "fragment" : "vertex"));
 
-      regex_t regex;
-      char* pattern_startlinelog =
-        "^[[:digit:]]+:([[:digit:]]+)\\([[:digit:]]+\\)";
-
-      VERB(verbose, printf("    Compiling regex pattern: \"%s\" ...\n",
-        pattern_startlinelog));
-      if (regcomp(&regex, pattern_startlinelog, REG_EXTENDED | REG_NEWLINE)
-        == 0)
+      if (!improveLogShader(&message, &buffer, maxLength, verbose, roadmap))
       {
-        VERB(verbose, printf("    Regex pattern compiled successfully\n"));
-
-        size_t nmatch = regex.re_nsub;
-        regmatch_t m[nmatch + 1];
-        int match = regexec(&regex, message, nmatch + 1, m, 0);
-
-        size_t start;
-        size_t end;
-
-        unsigned l;
-
-        while (match == 0)
-        {
-          start = m[1].rm_so;
-          end = m[1].rm_eo;
-
-          char line[end - start];
-          line[0] = '\0';
-          strncat(line, message + start, end - start);
-          l = strtoul(line, NULL, 10);
-
-          unsigned i = 0;
-          end = 0;
-
-          while ((i < l) && (buffer[end] != '\0'))
-          {
-            if (buffer[end] == '\n')
-            {
-              ++i;
-            }
-            if (i < l)
-            {
-              ++end;
-            }
-          }
-
-          start = end;
-          while (buffer[start] != '/')
-          {
-            --start;
-          }
-          start += 2;
-
-          char marker[end - start];
-          marker[0] = '\0';
-          strncat(marker, buffer + start, end - start);
-
-          regex_replace(&message, pattern_startlinelog, marker, "", verbose,
-            roadmap);
-
-          match = regexec(&regex, message, nmatch + 1, m, 0);
-        }
-      } else {
+        return false;
       }
 
       fprintf(stderr, "\
@@ -185,7 +126,6 @@ bool checkLogShader(GLuint* shader, GLenum shaderType, char* buffer,
 \n", message);
 
       free(message);
-      regfree(&regex);
     }
 
     return false;

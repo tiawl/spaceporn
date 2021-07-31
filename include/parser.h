@@ -6,6 +6,10 @@
 #include <regex.h>
 #include <string.h>
 
+#define INCLUDE_HEADER_PATTERN "^#include \"[/-_[:alnum:]]+\\.glsl\""
+#define STARTLINE_SHADERLOG_PATTERN \
+  "^[[:digit:]]+:([[:digit:]]+)\\([[:digit:]]+\\)"
+
 #include "util.h"
 
 typedef struct

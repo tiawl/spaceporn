@@ -44,6 +44,9 @@ bool regex_replace(char** str, const char* pattern, const char* replace,
       spaces));
 
     size_t nmatch = regex.re_nsub;
+    VERB(verbose, printf("%s      Regex subexpressions found: %lu\n", spaces,
+      nmatch));
+
     regmatch_t m[nmatch + 1];
 
     size_t start;
@@ -53,11 +56,14 @@ bool regex_replace(char** str, const char* pattern, const char* replace,
     VERB(verbose, printf("%s      Comparing regex pattern ...\n", spaces));
     if (regexec(&regex, *str, nmatch + 1, m, 0) == 0)
     {
-      VERB(verbose, printf("%s      Regex pattern compared successfully\n",
-        spaces));
+      VERB(verbose, printf("%s      Regex pattern found\n", spaces));
 
       start = m[0].rm_so;
+      VERB(verbose, printf("%s      Start index of first match is %lu\n",
+        spaces, start));
       end = m[0].rm_eo;
+      VERB(verbose, printf("%s      End index of first match is %lu\n",
+        spaces, end));
 
       char new[strlen(*str) + strlen(replace)];
       new[0] = '\0';
@@ -202,8 +208,8 @@ bool addMarkers(char** filename, char** buffer, const char* dir_path,
   size_t header_length = 0;
   unsigned line = 1;
 
-  FILE* f = NULL;
-  char ch;
+  FILE* file = NULL;
+  char tmp_ch;
   unsigned lines_header;
 
   VERB(verbose, printf("%s    Computing length of buffer file ...\n",
@@ -290,8 +296,8 @@ successfully\n", spaces));
       VERB(verbose, printf("%s      Length of buffer files is %lu\n",
         spaces, buffer_length));
 
-      VERB(verbose, printf("%s      Iterating until the end of the marker \
-...\n", spaces));
+      VERB(verbose, printf("%s      Iterating until the end of the newly \
+created marker ...\n", spaces));
       while (((*buffer)[i] != '\n') && ((*buffer)[i] != '\0'))
       {
         ++i;
@@ -317,6 +323,8 @@ successfully\n", spaces));
         ((*buffer)[i - 2] == ' ') && ((*buffer)[i - 1] == '\"'))
       {
         VERB(verbose, printf("%s      Header line detected\n", spaces));
+        VERB(verbose, printf("%s      First index of the header name \
+at %lu\n", spaces, i));
 
         VERB(verbose, printf("%s      Iterating until the second double \
 quotes character ...\n", spaces));
@@ -326,9 +334,11 @@ quotes character ...\n", spaces));
           ++j;
         }
         VERB(verbose, printf("%s      Second double quotes of header line \
-found\n", spaces));
+found at %lu\n", spaces, j));
 
         header_length = j - i;
+        VERB(verbose, printf("%s      Header length is %lu\n", spaces,
+          header_length));
 
         VERB(verbose, printf("%s      Allocating memory for header file \
 name ...\n", spaces));
@@ -365,8 +375,8 @@ temporary variable ...\n", spaces));
 successfully\n", spaces));
 
         VERB(verbose, printf("%s      Opening \"%s\" ...\n", spaces, new));
-        f = fopen(new, "r");
-        if (!f)
+        file = fopen(new, "r");
+        if (!file)
         {
           VERB(verbose, fprintf(stderr, "%s      ", spaces));
           fprintf(stderr, "Failed to read inside \"%s\": %s\n", new,
@@ -378,9 +388,9 @@ successfully\n", spaces));
         VERB(verbose, printf("%s      Computing number of line into \"%s\" \
 ...\n", spaces, new));
         lines_header = 0;
-        while ((ch = fgetc(f)) != EOF)
+        while ((tmp_ch = fgetc(file)) != EOF)
         {
-          if (ch == '\n')
+          if (tmp_ch == '\n')
           {
             lines_header++;
           }
@@ -389,7 +399,7 @@ successfully\n", spaces));
           lines_header));
 
         VERB(verbose, printf("%s      Closing \"%s\" ...\n", spaces, new));
-        fclose(f);
+        fclose(file);
         VERB(verbose, printf("%s      File closed successfully\n", spaces));
 
         i = j;
@@ -416,18 +426,18 @@ bool searchAndReplaceHeaders(char** filepath, char** buffer, bool verbose,
   strncat(dir_path, *filepath, strlen(*filepath) - 9);
   VERB(verbose, printf("    \"%s\" successfully copied\n", dir_path));
 
-  char* pattern_header = "^#include \"[/-_[:alnum:]]+\\.glsl\"";
-
   VERB(verbose, printf("    Compiling regex pattern: \"%s\" ...\n",
-    pattern_header));
-  int regex_error =
-    regcomp(&(regex.regex), pattern_header, REG_EXTENDED | REG_NEWLINE);
+    INCLUDE_HEADER_PATTERN));
+  int regex_error = regcomp(&(regex.regex), INCLUDE_HEADER_PATTERN,
+    REG_EXTENDED | REG_NEWLINE);
 
   if (regex_error == 0)
   {
     VERB(verbose, printf("    Regex pattern compiled successfully\n"));
 
     size_t nmatch = regex.regex.re_nsub;
+    VERB(verbose, printf("    Regex subexpressions found: %lu\n", nmatch));
+
     regmatch_t m[nmatch + 1];
 
     bool is_already_included = false;
@@ -475,19 +485,23 @@ bool searchAndReplaceHeaders(char** filepath, char** buffer, bool verbose,
 
     VERB(verbose, printf("    Comparing regex pattern to buffer file ...\n"));
     int match = regexec(&(regex.regex), *buffer, nmatch + 1, m, 0);
-    VERB(verbose, printf("    Regex pattern compared successfully\n"));
 
     size_t start_header;
     size_t end_header;
 
-    VERB(verbose, printf("    Searching regex pattern into buffer file \
-...\n"));
     while (match == 0)
     {
+      VERB(verbose, printf("    Regex pattern found into buffer file\n"));
       start_header = m[0].rm_so + 10;
+      VERB(verbose, printf("    Start index of header is %lu\n",
+        start_header));
       end_header = m[0].rm_eo - 1;
+      VERB(verbose, printf("    End index of header is %lu\n", end_header));
 
       char first_match[end_header - start_header];
+      VERB(verbose, printf("    Header length is %lu\n",
+        end_header - start_header));
+
       first_match[0] = '\0';
 
       VERB(verbose, printf("      Copying into first_match ...\n"));
@@ -505,7 +519,7 @@ bool searchAndReplaceHeaders(char** filepath, char** buffer, bool verbose,
           (regex.headers)[i], first_match));
         is_already_included |= (strcmp((regex.headers)[i], first_match) == 0);
         VERB(verbose, printf("        %s\n",
-          is_already_included ? "Same string" : "Not same strings"));
+          is_already_included ? "Same strings" : "Not same strings"));
       }
 
       if (is_already_included)
@@ -515,7 +529,7 @@ bool searchAndReplaceHeaders(char** filepath, char** buffer, bool verbose,
 
         VERB(verbose, printf("      Deleting first occurence of #header \
 \"%s\" line into buffer file with regex_replace() ...\n", first_match));
-        if (!regex_replace(buffer, pattern_header, "", "  ", verbose,
+        if (!regex_replace(buffer, INCLUDE_HEADER_PATTERN, "", "  ", verbose,
           roadmap))
         {
           VERB(verbose, fprintf(stderr, "      "));
@@ -583,8 +597,8 @@ header_filepath ...\n"));
         VERB(verbose, printf("      Reading file \"%s\" ... \n",
           header_filepath));
         char* header_filepath_p = &(header_filepath[0]);
-        if (!readFile(&header_filepath_p, &(regex.header_buffer), "  ", verbose,
-          roadmap))
+        if (!readFile(&header_filepath_p, &(regex.header_buffer), "  ",
+          verbose, roadmap))
         {
           VERB(verbose, fprintf(stderr, "      "));
           fprintf(stderr, "Failed to read file\n");
@@ -607,8 +621,8 @@ header_filepath ...\n"));
 
         VERB(verbose, printf("      Replacing header \"%s\" by its content \
 into buffer file ...\n", first_match));
-        if (!regex_replace(buffer, pattern_header, regex.header_buffer,
-          "  ", verbose, roadmap))
+        if (!regex_replace(buffer, INCLUDE_HEADER_PATTERN,
+          regex.header_buffer, "  ", verbose, roadmap))
         {
           VERB(verbose, fprintf(stderr, "      "));
           fprintf(stderr, "regex_replace() failed\n");
@@ -626,7 +640,6 @@ into buffer file ...\n", first_match));
       VERB(verbose,
         printf("      Comparing regex pattern to buffer file ...\n"));
       match = regexec(&(regex.regex), *buffer, nmatch + 1, m, 0);
-      VERB(verbose, printf("      Regex pattern compared successfully\n"));
     }
     VERB(verbose, printf("    File buffer is now:\n\
 ------------------------------------------------------------------------------\
@@ -638,8 +651,9 @@ into buffer file ...\n", first_match));
 
     if (match != REG_NOMATCH)
     {
-      VERB(verbose, printf("    Searching for regex errors ...\n"));
+      VERB(verbose, printf("    Searching for regex error ...\n"));
       size_t size = regerror(regex_error, &(regex.regex), NULL, 0);
+      VERB(verbose, printf("    Size of regex error is %lu\n", size));
 
       char text[size];
 
@@ -660,18 +674,20 @@ bool improveLogShader(char** message, char** buffer, size_t maxLength,
   bool verbose, enum Roadmap roadmap)
 {
   regex_t regex;
-  char* pattern_startlinelog =
-    "^[[:digit:]]+:([[:digit:]]+)\\([[:digit:]]+\\)";
 
   VERB(verbose, printf("    Compiling regex pattern: \"%s\" ...\n",
-    pattern_startlinelog));
-  if (regcomp(&regex, pattern_startlinelog, REG_EXTENDED | REG_NEWLINE)
+    STARTLINE_SHADERLOG_PATTERN));
+  if (regcomp(&regex, STARTLINE_SHADERLOG_PATTERN, REG_EXTENDED | REG_NEWLINE)
     == 0)
   {
     VERB(verbose, printf("    Regex pattern compiled successfully\n"));
 
     size_t nmatch = regex.re_nsub;
+    VERB(verbose, printf("    Regex subexpressions found: %lu\n", nmatch));
+
     regmatch_t m[nmatch + 1];
+
+    VERB(verbose, printf("    Comparing regex pattern ...\n"));
     int match = regexec(&regex, *message, nmatch + 1, m, 0);
 
     size_t start;
@@ -681,17 +697,35 @@ bool improveLogShader(char** message, char** buffer, size_t maxLength,
 
     while (match == 0)
     {
+      VERB(verbose, printf("    Regex pattern found\n"));
+
       start = m[1].rm_so;
+      VERB(verbose, printf("    Start index of parenthesis expression is \
+%lu\n", start));
       end = m[1].rm_eo;
+      VERB(verbose, printf("    End index of parenthesis expression is %lu\n",
+        end));
 
       char line[end - start];
       line[0] = '\0';
+
+      VERB(verbose, printf("    Copying line number of buffer file error \
+...\n"));
       strncat(line, *message + start, end - start);
+      VERB(verbose, printf("    Line number successfully copied\n"));
+
+      VERB(verbose, printf("    Casting line number string to unsigned int \
+...\n"));
       l = strtoul(line, NULL, 10);
+      VERB(verbose, printf("    Line number successfully casted\n"));
+
+      VERB(verbose, printf("    Line number is %u\n", l));
 
       unsigned i = 0;
       end = 0;
 
+      VERB(verbose, printf("    Searching corresponding line into buffer \
+file ...\n"));
       while ((i < l) && ((*buffer)[end] != '\0'))
       {
         if ((*buffer)[end] == '\n')
@@ -703,6 +737,15 @@ bool improveLogShader(char** message, char** buffer, size_t maxLength,
           ++end;
         }
       }
+      VERB(verbose, start = end - 1;
+        while ((*buffer)[start] != '\n')
+        {
+          start--;
+        }
+        char buffer_line[end - start - 1];
+        buffer_line[0] = '\0';
+        strncat(buffer_line, (*buffer) + start + 1, end - start - 1);
+        printf("    Corresponding line is \"%s\"\n", buffer_line););
 
       start = end;
       while ((*buffer)[start] != '/')
@@ -715,12 +758,15 @@ bool improveLogShader(char** message, char** buffer, size_t maxLength,
       marker[0] = '\0';
       strncat(marker, (*buffer) + start, end - start);
 
-      regex_replace(message, pattern_startlinelog, marker, "", verbose,
+      regex_replace(message, STARTLINE_SHADERLOG_PATTERN, marker, "", verbose,
         roadmap);
 
       match = regexec(&regex, *message, nmatch + 1, m, 0);
     }
   } else {
+    VERB(verbose, fprintf(stderr, "    "));
+    fprintf(stderr, "Regex compilation failed\n");
+    return false;
   }
 
   regfree(&regex);

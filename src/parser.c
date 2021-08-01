@@ -678,19 +678,19 @@ bool improveLogShader(char** message, char** buffer, size_t maxLength,
 {
   regex_t regex;
 
-  VERB(verbose, printf("    Compiling regex pattern: \"%s\" ...\n",
+  VERB(verbose, printf("      Compiling regex pattern: \"%s\" ...\n",
     STARTLINE_SHADERLOG_PATTERN));
   if (regcomp(&regex, STARTLINE_SHADERLOG_PATTERN, REG_EXTENDED | REG_NEWLINE)
     == 0)
   {
-    VERB(verbose, printf("    Regex pattern compiled successfully\n"));
+    VERB(verbose, printf("      Regex pattern compiled successfully\n"));
 
     size_t nmatch = regex.re_nsub;
-    VERB(verbose, printf("    Regex subexpressions found: %lu\n", nmatch));
+    VERB(verbose, printf("      Regex subexpressions found: %lu\n", nmatch));
 
     regmatch_t m[nmatch + 1];
 
-    VERB(verbose, printf("    Comparing regex pattern ...\n"));
+    VERB(verbose, printf("      Comparing regex pattern ...\n"));
     int match = regexec(&regex, *message, nmatch + 1, m, 0);
 
     size_t start;
@@ -700,34 +700,34 @@ bool improveLogShader(char** message, char** buffer, size_t maxLength,
 
     while (match == 0)
     {
-      VERB(verbose, printf("    Regex pattern found\n"));
+      VERB(verbose, printf("      Regex pattern found\n"));
 
       start = m[1].rm_so;
-      VERB(verbose, printf("    Start index of parenthesis expression is \
+      VERB(verbose, printf("      Start index of parenthesis expression is \
 %lu\n", start));
       end = m[1].rm_eo;
-      VERB(verbose, printf("    End index of parenthesis expression is %lu\n",
+      VERB(verbose, printf("      End index of parenthesis expression is %lu\n",
         end));
 
       char line[end - start];
       line[0] = '\0';
 
-      VERB(verbose, printf("    Copying line number of buffer file error \
+      VERB(verbose, printf("      Copying line number of buffer file error \
 ...\n"));
       strncat(line, *message + start, end - start);
-      VERB(verbose, printf("    Line number successfully copied\n"));
+      VERB(verbose, printf("      Line number successfully copied\n"));
 
-      VERB(verbose, printf("    Casting line number string to unsigned int \
+      VERB(verbose, printf("      Casting line number string to unsigned int \
 ...\n"));
       l = strtoul(line, NULL, 10);
-      VERB(verbose, printf("    Line number successfully casted\n"));
+      VERB(verbose, printf("      Line number successfully casted\n"));
 
-      VERB(verbose, printf("    Line number is %u\n", l));
+      VERB(verbose, printf("      Line number is %u\n", l));
 
       unsigned i = 0;
       end = 0;
 
-      VERB(verbose, printf("    Searching corresponding line into buffer \
+      VERB(verbose, printf("      Searching corresponding line into buffer \
 file ...\n"));
       while ((i < l) && ((*buffer)[end] != '\0'))
       {
@@ -748,51 +748,51 @@ file ...\n"));
         char buffer_line[end - start - 1];
         buffer_line[0] = '\0';
         strncat(buffer_line, (*buffer) + start + 1, end - start - 1);
-        printf("    Corresponding line is \"%s\"\n", buffer_line););
+        printf("      Corresponding line is \"%s\"\n", buffer_line););
 
       start = end;
 
-      VERB(verbose, printf("    Searching marker into line ...\n"));
+      VERB(verbose, printf("      Searching marker into line ...\n"));
       while (((*buffer)[start - 3] != ' ') || ((*buffer)[start - 2] != '/') ||
         ((*buffer)[start - 1] != '/') || ((*buffer)[start] != ' '))
       {
         --start;
       }
       start++;
-      VERB(verbose, printf("    Corresponding marker found\n"));
+      VERB(verbose, printf("      Corresponding marker found\n"));
 
       char marker[end - start];
       marker[0] = '\0';
 
-      VERB(verbose, printf("    Copying marker ...\n"));
+      VERB(verbose, printf("      Copying marker ...\n"));
       strncat(marker, (*buffer) + start, end - start);
-      VERB(verbose, printf("    Marker successfully copied\n"));
+      VERB(verbose, printf("      Marker successfully copied\n"));
 
-      VERB(verbose, printf("    Replacing original log data by marker \
+      VERB(verbose, printf("      Replacing original log data by marker \
 ...\n"));
-      if (!regex_replace(message, STARTLINE_SHADERLOG_PATTERN, marker, "",
+      if (!regex_replace(message, STARTLINE_SHADERLOG_PATTERN, marker, "  ",
         verbose, roadmap))
       {
-          VERB(verbose, fprintf(stderr, "    "));
+          VERB(verbose, fprintf(stderr, "      "));
           fprintf(stderr, "regex_replace() failed\n");
           return false;
       }
-      VERB(verbose, printf("    Log data replaced\n"));
+      VERB(verbose, printf("      Log data replaced\n"));
 
-      VERB(verbose, printf("    Comparing regex pattern ...\n"));
+      VERB(verbose, printf("      Comparing regex pattern ...\n"));
       match = regexec(&regex, *message, nmatch + 1, m, 0);
     }
 
-    VERB(verbose, printf("    Regex pattern not found\n"));
+    VERB(verbose, printf("      Regex pattern not found\n"));
   } else {
-    VERB(verbose, fprintf(stderr, "    "));
+    VERB(verbose, fprintf(stderr, "      "));
     fprintf(stderr, "Regex compilation failed\n");
     return false;
   }
 
-  VERB(verbose, printf("    Freeing regex structure ...\n"));
+  VERB(verbose, printf("      Freeing regex structure ...\n"));
   regfree(&regex);
-  VERB(verbose, printf("    Memory freed successfully\n"));
+  VERB(verbose, printf("      Memory freed successfully\n"));
 
   return true;
 }

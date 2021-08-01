@@ -111,14 +111,14 @@ bool checkLogShader(GLuint* shader, GLenum shaderType, char* buffer,
       VERB(verbose, printf("    Querying log info of %s shader ...\n",
         shaderType == GL_FRAGMENT_SHADER ? "fragment" : "vertex"));
       GL_CHECK(glGetShaderInfoLog(*shader, maxLength, &maxLength, message));
-      VERB(verbose, printf("    Log info of %s shader found:\n",
-        shaderType == GL_FRAGMENT_SHADER ? "fragment" : "vertex"));
 
       if (!improveLogShader(&message, &buffer, maxLength, verbose, roadmap))
       {
         return false;
       }
 
+      VERB(verbose, printf("    Log info of %s shader found:\n",
+        shaderType == GL_FRAGMENT_SHADER ? "fragment" : "vertex"));
       fprintf(stderr, "\
 ------------------------------------------------------------------------------\
 \n%s\

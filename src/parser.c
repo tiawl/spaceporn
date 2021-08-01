@@ -103,6 +103,8 @@ original string ...\n", spaces));
       VERB(verbose, printf("%s      Copying new in *str ...\n", spaces));
       strcpy(*str, new);
       VERB(verbose, printf("%s      Copied successfully\n", spaces));
+    } else {
+      VERB(verbose, printf("%s      Regex pattern not found\n", spaces));
     }
 
     VERB(verbose, printf("%s      Freeing regex structure ...\n", spaces));
@@ -641,6 +643,7 @@ into buffer file ...\n", first_match));
         printf("      Comparing regex pattern to buffer file ...\n"));
       match = regexec(&(regex.regex), *buffer, nmatch + 1, m, 0);
     }
+    VERB(verbose, printf("    Regex pattern not found\n"));
     VERB(verbose, printf("    File buffer is now:\n\
 ------------------------------------------------------------------------------\
 \n%s\n\
@@ -748,28 +751,48 @@ file ...\n"));
         printf("    Corresponding line is \"%s\"\n", buffer_line););
 
       start = end;
-      while ((*buffer)[start] != '/')
+
+      VERB(verbose, printf("    Searching marker into line ...\n"));
+      while (((*buffer)[start - 3] != ' ') || ((*buffer)[start - 2] != '/') ||
+        ((*buffer)[start - 1] != '/') || ((*buffer)[start] != ' '))
       {
         --start;
       }
-      start += 2;
+      start++;
+      VERB(verbose, printf("    Corresponding marker found\n"));
 
       char marker[end - start];
       marker[0] = '\0';
+
+      VERB(verbose, printf("    Copying marker ...\n"));
       strncat(marker, (*buffer) + start, end - start);
+      VERB(verbose, printf("    Marker successfully copied\n"));
 
-      regex_replace(message, STARTLINE_SHADERLOG_PATTERN, marker, "", verbose,
-        roadmap);
+      VERB(verbose, printf("    Replacing original log data by marker \
+...\n"));
+      if (!regex_replace(message, STARTLINE_SHADERLOG_PATTERN, marker, "",
+        verbose, roadmap))
+      {
+          VERB(verbose, fprintf(stderr, "    "));
+          fprintf(stderr, "regex_replace() failed\n");
+          return false;
+      }
+      VERB(verbose, printf("    Log data replaced\n"));
 
+      VERB(verbose, printf("    Comparing regex pattern ...\n"));
       match = regexec(&regex, *message, nmatch + 1, m, 0);
     }
+
+    VERB(verbose, printf("    Regex pattern not found\n"));
   } else {
     VERB(verbose, fprintf(stderr, "    "));
     fprintf(stderr, "Regex compilation failed\n");
     return false;
   }
 
+  VERB(verbose, printf("    Freeing regex structure ...\n"));
   regfree(&regex);
+  VERB(verbose, printf("    Memory freed successfully\n"));
 
   return true;
 }

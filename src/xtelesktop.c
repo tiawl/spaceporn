@@ -9,7 +9,8 @@ int main(int argc, char** argv)
   bool verbose = false;
   aggregateVerbose(&verbose);
 
-  enum Roadmap roadmap = EXIT_SUCCESS_RM;
+  Roadmap roadmap;
+  roadmap.id = EXIT_SUCCESS_RM;
   aggregateRoadmap(&roadmap);
 
   UniformValues uniform_values;
@@ -66,7 +67,7 @@ int main(int argc, char** argv)
 
   VERB(verbose, printf("Initializing fragment shader, vertex shader and \
 texture paths ...\n"));
-  if (!initPaths(&shaders, &png, verbose, roadmap))
+  if (!initPaths(&shaders, &png, verbose, &roadmap))
   {
     fprintf(stderr, "Failed to initialize fragment shader, vertex shader or \
 texture paths\n");
@@ -77,7 +78,7 @@ texture paths\n");
 are initialized\n"));
 
   VERB(verbose, printf("Creating GLX context ...\n"));
-  if (!initContext(&context, verbose, roadmap))
+  if (!initContext(&context, verbose, &roadmap))
   {
     fprintf(stderr, "Failed to create a GLX context\n");
     freePaths(&shaders, &png, verbose);
@@ -87,17 +88,17 @@ are initialized\n"));
   VERB(verbose, printf("GLX context created\n"));
 
   VERB(verbose, printf("Loading OpenGL program ...\n"));
-  if (!loadProgram(&context, &shaders, verbose, roadmap))
+  if (!loadProgram(&context, &shaders, verbose, &roadmap))
   {
     fprintf(stderr, "OpenGL program failed to load\n");
     freePaths(&shaders, &png, verbose);
-    freeProgram(&shaders, verbose, roadmap);
+    freeProgram(&shaders, verbose, &roadmap);
     freeContext(&context, verbose);
     return EXIT_FAILURE;
   }
   VERB(verbose, printf("OpenGL program loaded\n"));
 
-  if (roadmap == OPENGL_ERROR_RM)
+  if (roadmap.id == OPENGL_ERROR_RM)
   {
     GL_CHECK(glBindBuffer(0, -1));
   }
@@ -115,12 +116,12 @@ are initialized\n"));
   uniform_values.height = context.window_attribs.height;
 
   VERB(verbose, printf("Loading PNG texture ...\n"));
-  if (!loadPng(&png, verbose, roadmap))
+  if (!loadPng(&png, verbose, &roadmap))
   {
     fprintf(stderr, "Failed to load PNG file \"%s\"\n", png.path);
     freePaths(&shaders, &png, verbose);
     freePng(&png, verbose);
-    freeProgram(&shaders, verbose, roadmap);
+    freeProgram(&shaders, verbose, &roadmap);
     freeContext(&context, verbose);
     return EXIT_FAILURE;
   }
@@ -170,7 +171,7 @@ initialized\n"));
     usleep(delay);
     VERB(verbose, printf("Ready to loop again\n"));
 
-    if (roadmap == BREAK_SUCCESS_RM)
+    if (roadmap.id == BREAK_SUCCESS_RM)
     {
       break;
     }
@@ -179,7 +180,7 @@ initialized\n"));
   freePaths(&shaders, &png, verbose);
   freeVertices(&vertices, verbose);
   freePng(&png, verbose);
-  freeProgram(&shaders, verbose, roadmap);
+  freeProgram(&shaders, verbose, &roadmap);
   freeContext(&context, verbose);
 
   return EXIT_SUCCESS;

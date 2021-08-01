@@ -27,19 +27,18 @@ void main()\n\
 #include "parser.h"
 
 bool buildFile(char** filepath, char** buffer, bool verbose,
-  enum Roadmap roadmap);
-bool buildVertexShaderFile(Shaders* shaders, bool verbose,
-  enum Roadmap roadmap);
+  Roadmap* roadmap);
+bool buildVertexShaderFile(Shaders* shaders, bool verbose, Roadmap* roadmap);
 bool buildFragmentShaderFile(Shaders* shaders, bool verbose,
-  enum Roadmap roadmap);
+  Roadmap* roadmap);
 bool checkLogShader(GLuint* shader, GLenum shaderType, char* buffer,
-  bool verbose, enum Roadmap roadmap);
+  bool verbose, Roadmap* roadmap);
 bool loadShader(Shaders* shaders, GLenum shaderType, bool verbose,
-  enum Roadmap roadmap);
-bool loadVertexShader(Shaders* shaders, bool verbose, enum Roadmap roadmap);
-bool loadFragmentShader(Shaders* shaders, bool verbose, enum Roadmap roadmap);
-bool checkLogProgram(Shaders* shaders, bool verbose, enum Roadmap roadmap);
+  Roadmap* roadmap);
+bool loadVertexShader(Shaders* shaders, bool verbose, Roadmap* roadmap);
+bool loadFragmentShader(Shaders* shaders, bool verbose, Roadmap* roadmap);
+bool checkLogProgram(Shaders* shaders, bool verbose, Roadmap* roadmap);
 bool loadProgram(Context* context, Shaders* shaders, bool verbose,
-  enum Roadmap roadmap);
+  Roadmap* roadmap);
 
 #endif

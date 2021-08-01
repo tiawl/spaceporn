@@ -27,7 +27,7 @@ void aggregateVerbose(bool* verbose)
   xtel.verbose = verbose;
 }
 
-void aggregateRoadmap(enum Roadmap* roadmap)
+void aggregateRoadmap(Roadmap* roadmap)
 {
   xtel.roadmap = roadmap;
 }
@@ -37,7 +37,7 @@ void exitHandler()
   freePaths(xtel.shaders, xtel.png, *(xtel.verbose));
   freeVertices(xtel.vertices, *(xtel.verbose));
   freePng(xtel.png, *(xtel.verbose));
-  freeProgram(xtel.shaders, *(xtel.verbose), *(xtel.roadmap));
+  freeProgram(xtel.shaders, *(xtel.verbose), xtel.roadmap);
   freeContext(xtel.context, *(xtel.verbose));
 }
 
@@ -112,10 +112,10 @@ void freeContext(Context* context, bool verbose)
   }
 }
 
-void freeProgram(Shaders* shaders, bool verbose, enum Roadmap roadmap)
+void freeProgram(Shaders* shaders, bool verbose, Roadmap* roadmap)
 {
-  if (shaders->vertex_file && (roadmap !=
-    VERTEX_SHADER_COMPILATION_FAILED_RM) && (roadmap !=
+  if (shaders->vertex_file && (roadmap->id !=
+    VERTEX_SHADER_COMPILATION_FAILED_RM) && (roadmap->id !=
     LINKING_PROGRAM_FAILED_RM))
   {
     VERB(verbose, printf("Freeing vertex file ...\n"));
@@ -124,7 +124,7 @@ void freeProgram(Shaders* shaders, bool verbose, enum Roadmap roadmap)
     VERB(verbose, printf("Vertex file freed\n"));
   }
 
-  if (shaders->fragment_file && (roadmap !=
+  if (shaders->fragment_file && (roadmap->id !=
     FRAGMENT_SHADER_COMPILATION_FAILED_RM))
   {
     VERB(verbose, printf("Freeing fragment file ...\n"));

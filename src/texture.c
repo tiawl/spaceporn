@@ -1,12 +1,12 @@
 #include "texture.h"
 
-bool loadPng(PNG* png, bool verbose, enum Roadmap roadmap)
+bool loadPng(PNG* png, bool verbose, Roadmap* roadmap)
 {
   png_uint_32 w, h;
   int bit_depth;
   int color_type;
 
-  if (!png->path || (roadmap == NO_PNG_FILENAME_RM))
+  if (!png->path || (roadmap->id == NO_PNG_FILENAME_RM))
   {
     VERB(verbose, fprintf(stderr, "  "));
     fprintf(stderr, "PNG filename is null\n");
@@ -14,7 +14,7 @@ bool loadPng(PNG* png, bool verbose, enum Roadmap roadmap)
   }
 
   VERB(verbose, printf("  Opening PNG file \"%s\"...\n", png->path));
-  if (roadmap != FOPEN_PNG_FILE_FAILED_RM)
+  if (roadmap->id != FOPEN_PNG_FILE_FAILED_RM)
   {
     png->file = fopen(png->path, "rb");
   }
@@ -28,7 +28,7 @@ bool loadPng(PNG* png, bool verbose, enum Roadmap roadmap)
   VERB(verbose, printf("  PNG file opened\n"));
 
   VERB(verbose, printf("  Creating structure for reading PNG file ...\n"));
-  if (roadmap != PNGCREATEREADSTRUCT_FAILED_RM)
+  if (roadmap->id != PNGCREATEREADSTRUCT_FAILED_RM)
   {
     png->parser = png_create_read_struct(PNG_LIBPNG_VER_STRING, 0, 0, 0);
   }
@@ -42,7 +42,7 @@ bool loadPng(PNG* png, bool verbose, enum Roadmap roadmap)
   VERB(verbose, printf("  Structure for reading PNG file created\n"));
 
   VERB(verbose, printf("  Creating PNG info structure ...\n"));
-  if (roadmap != PNGCREATEINFOSTRUCT_FAILED_RM)
+  if (roadmap->id != PNGCREATEINFOSTRUCT_FAILED_RM)
   {
     png->info = png_create_info_struct(png->parser);
   }
@@ -57,7 +57,7 @@ bool loadPng(PNG* png, bool verbose, enum Roadmap roadmap)
 
   VERB(verbose, printf("  Searching libPNG error ...\n"));
   if (setjmp(png_jmpbuf(png->parser)) ||
-    (roadmap == PNG_JMPBUF_FAILED_RM))
+    (roadmap->id == PNG_JMPBUF_FAILED_RM))
   {
     VERB(verbose, fprintf(stderr, "  "));
     fprintf(stderr, "Routine problem: libPNG encountered an error\n");
@@ -79,7 +79,7 @@ structure ...\n"));
     png->parser, png->info, &w, &h, &bit_depth, &color_type, 0, 0, 0);
   VERB(verbose, printf("  PNG_IHDR chunk information found\n"));
 
-  if (roadmap == BAD_PNG_DIMENSIONS_RM)
+  if (roadmap->id == BAD_PNG_DIMENSIONS_RM)
   {
     w = 15;
   }
@@ -104,7 +104,7 @@ or smaller than 8 failed to load in OpenGL\n");
   VERB(verbose, printf("  Number of bytes for a row is %d\n", rowbytes));
 
   VERB(verbose, printf("  Allocating memory for data ...\n"));
-  if (roadmap != PNG_DATA_MALLOC_FAILED_RM)
+  if (roadmap->id != PNG_DATA_MALLOC_FAILED_RM)
   {
     png->data = malloc(rowbytes * h * sizeof(png_byte) + 15);
   }
@@ -118,7 +118,7 @@ or smaller than 8 failed to load in OpenGL\n");
   VERB(verbose, printf("  Memory allocated successfully\n"));
 
   VERB(verbose, printf("  Allocating memory for row_pointers ...\n"));
-  if (roadmap != PNG_ROWPOINTERS_MALLOC_FAILED_RM)
+  if (roadmap->id != PNG_ROWPOINTERS_MALLOC_FAILED_RM)
   {
     png->row_pointers = malloc(h * sizeof(png_bytep));
   }

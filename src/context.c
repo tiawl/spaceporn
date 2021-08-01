@@ -3,7 +3,7 @@
 // Helper to check for extension string presence.  Adapted from:
 //   http://www.opengl.org/resources/features/OGLextensions/
 bool isExtensionSupported(const char* extList, const char* extension,
-  bool verbose, enum Roadmap roadmap)
+  bool verbose, Roadmap* roadmap)
 {
   const char* start = NULL;
   const char* where = NULL;
@@ -13,7 +13,7 @@ bool isExtensionSupported(const char* extList, const char* extension,
   VERB(verbose, printf("    Testing presence of space in GLX extension \
 string ...\n"));
   where = strchr(extension, ' ');
-  if (where || (*extension == '\0') || (roadmap == SPACE_IN_GLX_EXT_RM))
+  if (where || (*extension == '\0') || (roadmap->id == SPACE_IN_GLX_EXT_RM))
   {
     VERB(verbose, printf("    Space in this GLX extension name: %s\n",
       extension));
@@ -27,7 +27,7 @@ string ...\n"));
 ...\n"));
   for (start = extList;;)
   {
-    if (roadmap != UNSUPPORTED_GLX_EXT_RM)
+    if (roadmap->id != UNSUPPORTED_GLX_EXT_RM)
     {
       where = strstr(start, extension);
     }
@@ -62,7 +62,7 @@ int contextErrorHandler(Display* display, XErrorEvent* event)
   return 0;
 }
 
-bool queryingGlxVersion(Context* context, bool verbose, enum Roadmap roadmap)
+bool queryingGlxVersion(Context* context, bool verbose, Roadmap* roadmap)
 {
   int glx_major;
   int glx_minor;
@@ -71,7 +71,7 @@ bool queryingGlxVersion(Context* context, bool verbose, enum Roadmap roadmap)
   VERB(verbose, printf("  Querying GLX version ...\n"));
   if ((!glXQueryVersion(context->display, &glx_major, &glx_minor) ||
     ((glx_major == 1) && (glx_minor < 3)) || (glx_major < 1)) ||
-    (roadmap == INVALID_GLX_VERSION_RM))
+    (roadmap->id == INVALID_GLX_VERSION_RM))
   {
     VERB(verbose, fprintf(stderr, "  "));
     fprintf(stderr, "Invalid GLX version\n");
@@ -83,7 +83,7 @@ bool queryingGlxVersion(Context* context, bool verbose, enum Roadmap roadmap)
 }
 
 bool searchingBestFbc(Context* context, GLXFBConfig* bestFbc, bool verbose,
-  enum Roadmap roadmap)
+  Roadmap* roadmap)
 {
   // Get a matching FB config
   int visual_attribs[] =
@@ -106,7 +106,7 @@ bool searchingBestFbc(Context* context, GLXFBConfig* bestFbc, bool verbose,
   VERB(verbose, printf("  Querying GLX framebuffer config ...\n"));
   GLXFBConfig* fbc = NULL;
 
-  if (roadmap != GLXCHOOSEFBCONFIG_FAILED_RM)
+  if (roadmap->id != GLXCHOOSEFBCONFIG_FAILED_RM)
   {
     fbc = glXChooseFBConfig(context->display,
       DefaultScreen(context->display), visual_attribs, &fbcount);
@@ -197,7 +197,7 @@ samples per pixel ... %d/%d\n", fbcount, fbcount));
   return true;
 }
 
-bool initWindow(Context* context, bool verbose, enum Roadmap roadmap)
+bool initWindow(Context* context, bool verbose, Roadmap* roadmap)
 {
   VERB(verbose, printf("  Searching X root window from visual's screen \
 ...\n"));
@@ -224,7 +224,7 @@ bool initWindow(Context* context, bool verbose, enum Roadmap roadmap)
 
   VERB(verbose, printf("  Creating new X window ...\n"));
 
-  if (roadmap != XCREATEWINDOW_FAILED_RM)
+  if (roadmap->id != XCREATEWINDOW_FAILED_RM)
   {
     context->window = XCreateWindow(context->display, root,
       context->window_attribs.x, context->window_attribs.y,
@@ -286,12 +286,12 @@ _NET_WM_WINDOW_TYPE_DESKTOP stored\n"));
 }
 
 #if DEBUG
-bool initDebugWindow(Context* context, bool verbose, enum Roadmap roadmap)
+bool initDebugWindow(Context* context, bool verbose, Roadmap* roadmap)
 {
   VERB(verbose, printf("  Creating a debug window to catch key press events \
 ...\n"));
 
-  if (roadmap != XCREATEDEBUGWINDOW_FAILED_RM)
+  if (roadmap->id != XCREATEDEBUGWINDOW_FAILED_RM)
   {
     context->debug_window = XCreateSimpleWindow(context->display,
       RootWindow(context->display, DefaultScreen(context->display)), 0, 0, 1,
@@ -321,11 +321,11 @@ debug window\n"));
 }
 #endif
 
-bool initContext(Context* context, bool verbose, enum Roadmap roadmap)
+bool initContext(Context* context, bool verbose, Roadmap* roadmap)
 {
   VERB(verbose, printf("  Opening X Display ...\n"));
 
-  if (roadmap != XOPENDISPLAY_FAILED_RM)
+  if (roadmap->id != XOPENDISPLAY_FAILED_RM)
   {
     context->display = XOpenDisplay(NULL);
   }
@@ -370,7 +370,7 @@ bool initContext(Context* context, bool verbose, enum Roadmap roadmap)
   VERB(verbose, printf("  Querying pointer to glXCreateContextAttribsARB() \
 function ...\n"));
   glXCreateContextAttribsARBProc glXCreateContextAttribsARB = 0;
-  if (roadmap != GLXCREATECONTEXTATTRIBSARB_UNFOUNDABLE_RM)
+  if (roadmap->id != GLXCREATECONTEXTATTRIBSARB_UNFOUNDABLE_RM)
   {
     glXCreateContextAttribsARB = (glXCreateContextAttribsARBProc)
       glXGetProcAddressARB((const GLubyte *) "glXCreateContextAttribsARB");
@@ -420,7 +420,7 @@ found\n"));
 
   VERB(verbose, printf("  Initializing the context to the initial state \
 defined by the OpenGL specification ...\n"));
-  if (roadmap != CONTEXT_CREATION_FAILED_RM)
+  if (roadmap->id != CONTEXT_CREATION_FAILED_RM)
   {
     context->glx_context = glXCreateContextAttribsARB(context->display,
       bestFbc, 0, True, context_attribs);
@@ -464,7 +464,7 @@ current window\n"));
 
   GLenum err=glewInit();
 
-  if ((err != GLEW_OK) || (roadmap == GLEWINIT_FAILED_RM))
+  if ((err != GLEW_OK) || (roadmap->id == GLEWINIT_FAILED_RM))
   {
     VERB(verbose, fprintf(stderr, "  "));
     fprintf(stderr, "glewInit() failed: %s\n", glewGetErrorString(err));

@@ -50,7 +50,7 @@ void help()
 }
 
 bool parsing_options(bool* verbose, int* delay, UniformValues* uniform_values,
-  enum Roadmap* roadmap, int* argc, char** argv)
+  Roadmap* roadmap, int* argc, char** argv)
 {
   for (int i = 1; i < *argc; i++)
   {
@@ -87,11 +87,17 @@ bool parsing_options(bool* verbose, int* delay, UniformValues* uniform_values,
     } else if (strcmp(argv[i], "-R") == 0) {
       if (++i < *argc)
       {
-        *roadmap = atoi(argv[i]);
-        if ((*roadmap < EXIT_SUCCESS_RM) || (*roadmap >= RM_NB))
+        roadmap->id = atoi(argv[i]);
+        if ((roadmap->id < EXIT_SUCCESS_RM) || (roadmap->id >= RM_NB))
         {
           help();
           return false;
+        // TODO
+        } else if (roadmap->id) {
+          if (++i < *argc)
+          {
+            roadmap->glsl_file = argv[i];
+          }
         }
       }
     } else {

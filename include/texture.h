@@ -3,6 +3,6 @@
 
 #include "util.h"
 
-bool loadPng(PNG* png, bool verbose, enum Roadmap roadmap);
+bool loadPng(PNG* png, bool verbose, Roadmap* roadmap);
 
 #endif

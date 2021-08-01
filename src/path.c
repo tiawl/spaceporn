@@ -1,11 +1,11 @@
 #include "path.h"
 
 bool initFragShaderPath(Shaders* shaders, size_t len[5], char* user,
-  bool verbose, enum Roadmap roadmap)
+  bool verbose, Roadmap* roadmap)
 {
   VERB(verbose, printf("  Allocating memory for fragment shader path ...\n"));
 
-  if (roadmap != FSHADERPATH_MALLOC_FAILED_RM)
+  if (roadmap->id != FSHADERPATH_MALLOC_FAILED_RM)
   {
     shaders->fshaderpath =
       malloc(len[0] + len[1] + len[2] + len[3] + len[4] + 1);
@@ -40,11 +40,11 @@ path\n"));
 }
 
 bool initVertShaderPath(Shaders* shaders, size_t len[5], char* user,
-  bool verbose, enum Roadmap roadmap)
+  bool verbose, Roadmap* roadmap)
 {
   VERB(verbose, printf("  Allocating memory for vertex shader path ...\n"));
 
-  if (roadmap != VSHADERPATH_MALLOC_FAILED_RM)
+  if (roadmap->id != VSHADERPATH_MALLOC_FAILED_RM)
   {
     shaders->vshaderpath =
       malloc(len[0] + len[1] + len[2] + len[3] + len[4] + 1);
@@ -79,11 +79,11 @@ path\n"));
 }
 
 bool initTexturePath(PNG* png, size_t len[5], char* user, bool verbose,
-  enum Roadmap roadmap)
+  Roadmap* roadmap)
 {
   VERB(verbose, printf("  Allocating memory for texture path ...\n"));
 
-  if (roadmap != TEXTUREPATH_MALLOC_FAILED_RM)
+  if (roadmap->id != TEXTUREPATH_MALLOC_FAILED_RM)
   {
     png->path =
       malloc(len[0] + len[1] + len[2] + len[3] + len[4] + 1);
@@ -114,7 +114,7 @@ bool initTexturePath(PNG* png, size_t len[5], char* user, bool verbose,
   return true;
 }
 
-bool initPaths(Shaders* shaders, PNG* png, bool verbose, enum Roadmap roadmap)
+bool initPaths(Shaders* shaders, PNG* png, bool verbose, Roadmap* roadmap)
 {
   VERB(verbose, printf("  Computing length of home directory path ...\n"));
   const size_t len1 = strlen(HOME_DIR);
@@ -122,7 +122,7 @@ bool initPaths(Shaders* shaders, PNG* png, bool verbose, enum Roadmap roadmap)
 
   VERB(verbose, printf("  Querying username ...\n"));
   char* user = NULL;
-  if (roadmap != GETENV_USERNAME_FAILED_RM)
+  if (roadmap->id != GETENV_USERNAME_FAILED_RM)
   {
     user = getenv("USERNAME");
   }

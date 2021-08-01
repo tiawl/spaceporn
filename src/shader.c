@@ -1,7 +1,6 @@
 #include "shader.h"
 
-bool buildFile(char** filepath, char** buffer, bool verbose,
-  enum Roadmap roadmap)
+bool buildFile(char** filepath, char** buffer, bool verbose, Roadmap* roadmap)
 {
   VERB(verbose, printf("    Reading file \"%s\" ... \n", *filepath));
   if (!readFile(filepath, buffer, "", verbose, roadmap))
@@ -20,25 +19,33 @@ bool buildFile(char** filepath, char** buffer, bool verbose,
   return true;
 }
 
-bool buildVertexShaderFile(Shaders* shaders, bool verbose,
-  enum Roadmap roadmap)
+bool buildVertexShaderFile(Shaders* shaders, bool verbose, Roadmap* roadmap)
 {
-  if (roadmap == FOPEN_VERTEX_FILE_FAILED_RM)
+  if (roadmap->id == FOPEN_VERTEX_FILE_FAILED_RM)
   {
-    roadmap = FOPEN_FAILED_RM;
+    roadmap->id = FOPEN_FAILED_RM;
   }
 
-  if (roadmap == BUFFER_VERTEX_FILE_MALLOC_FAILED_RM)
+  if (roadmap->id == BUFFER_VERTEX_FILE_MALLOC_FAILED_RM)
   {
-    roadmap = BUFFER_MALLOC_FAILED_RM;
+    roadmap->id = BUFFER_MALLOC_FAILED_RM;
   }
 
-  if (roadmap == VERTEX_SHADER_COMPILATION_FAILED_RM)
+  if (roadmap->id == VERTEX_SHADER_COMPILATION_FAILED_RM)
   {
-    roadmap = SHADER_COMPILATION_FAILED_RM;
+    roadmap->id = SHADER_COMPILATION_FAILED_RM;
     shaders->vertex_file = ERRONEOUS_VERTEX_SHADER;
-  } else if (roadmap == LINKING_PROGRAM_FAILED_RM) {
+  } else if (roadmap->id == LINKING_PROGRAM_FAILED_RM) {
     shaders->vertex_file = MISSINGMAIN_VERTEX_SHADER;
+  }
+
+  if (roadmap->id == VERTEX_FILE_SARH_REGCOMP_FAILED_RM)
+  {
+    roadmap->id = SARH_REGCOMP_FAILED_RM;
+  } else if (roadmap->id == VERTEX_FILE_SARH_HEADERS_MALLOC_FAILED_RM) {
+    roadmap->id = SARH_HEADERS_MALLOC_FAILED_RM;
+  } else if (roadmap->id == VERTEX_FILE_SARH_HEADERS_0_MALLOC_FAILED_RM) {
+    roadmap->id = SARH_HEADERS_0_MALLOC_FAILED_RM;
   }
 
   if (!buildFile(&(shaders->vshaderpath), &(shaders->vertex_file), verbose,
@@ -52,25 +59,33 @@ bool buildVertexShaderFile(Shaders* shaders, bool verbose,
   return true;
 }
 
-bool buildFragmentShaderFile(Shaders* shaders, bool verbose,
-  enum Roadmap roadmap)
+bool buildFragmentShaderFile(Shaders* shaders, bool verbose, Roadmap* roadmap)
 {
-  if (roadmap == FOPEN_FRAGMENT_FILE_FAILED_RM)
+  if (roadmap->id == FOPEN_FRAGMENT_FILE_FAILED_RM)
   {
-    roadmap = FOPEN_FAILED_RM;
+    roadmap->id = FOPEN_FAILED_RM;
   }
 
-  if (roadmap == BUFFER_FRAGMENT_FILE_MALLOC_FAILED_RM)
+  if (roadmap->id == BUFFER_FRAGMENT_FILE_MALLOC_FAILED_RM)
   {
-    roadmap = BUFFER_MALLOC_FAILED_RM;
+    roadmap->id = BUFFER_MALLOC_FAILED_RM;
   }
 
-  if (roadmap == FRAGMENT_SHADER_COMPILATION_FAILED_RM)
+  if (roadmap->id == FRAGMENT_SHADER_COMPILATION_FAILED_RM)
   {
-    roadmap = SHADER_COMPILATION_FAILED_RM;
+    roadmap->id = SHADER_COMPILATION_FAILED_RM;
     shaders->fragment_file = ERRONEOUS_FRAGMENT_SHADER;
-  } else if (roadmap == LINKING_PROGRAM_FAILED_RM) {
-    roadmap = EXIT_SUCCESS_RM;
+  } else if (roadmap->id == LINKING_PROGRAM_FAILED_RM) {
+    roadmap->id = EXIT_SUCCESS_RM;
+  }
+
+  if (roadmap->id == FRAGMENT_FILE_SARH_REGCOMP_FAILED_RM)
+  {
+    roadmap->id = SARH_REGCOMP_FAILED_RM;
+  } else if (roadmap->id == FRAGMENT_FILE_SARH_HEADERS_MALLOC_FAILED_RM) {
+    roadmap->id = SARH_HEADERS_MALLOC_FAILED_RM;
+  } else if (roadmap->id == FRAGMENT_FILE_SARH_HEADERS_0_MALLOC_FAILED_RM) {
+    roadmap->id = SARH_HEADERS_0_MALLOC_FAILED_RM;
   }
 
   if (!buildFile(&(shaders->fshaderpath), &(shaders->fragment_file), verbose,
@@ -85,7 +100,7 @@ bool buildFragmentShaderFile(Shaders* shaders, bool verbose,
 }
 
 bool checkLogShader(GLuint* shader, GLenum shaderType, char* buffer,
-  bool verbose, enum Roadmap roadmap)
+  bool verbose, Roadmap* roadmap)
 {
   GLint shaderCompiled = GL_FALSE;
   GL_CHECK(glGetShaderiv(*shader, GL_COMPILE_STATUS, &shaderCompiled));
@@ -135,7 +150,7 @@ bool checkLogShader(GLuint* shader, GLenum shaderType, char* buffer,
 }
 
 bool loadShader(Shaders* shaders, GLenum shaderType, bool verbose,
-  enum Roadmap roadmap)
+  Roadmap* roadmap)
 {
   GLuint* shader = shaderType == GL_FRAGMENT_SHADER ?
     &(shaders->fragment_shader) : &(shaders->vertex_shader);
@@ -173,7 +188,7 @@ bool loadShader(Shaders* shaders, GLenum shaderType, bool verbose,
   return true;
 }
 
-bool loadVertexShader(Shaders* shaders, bool verbose, enum Roadmap roadmap)
+bool loadVertexShader(Shaders* shaders, bool verbose, Roadmap* roadmap)
 {
   if (!loadShader(shaders, GL_VERTEX_SHADER, verbose, roadmap))
   {
@@ -185,7 +200,7 @@ bool loadVertexShader(Shaders* shaders, bool verbose, enum Roadmap roadmap)
   return true;
 }
 
-bool loadFragmentShader(Shaders* shaders, bool verbose, enum Roadmap roadmap)
+bool loadFragmentShader(Shaders* shaders, bool verbose, Roadmap* roadmap)
 {
   if (!loadShader(shaders, GL_FRAGMENT_SHADER, verbose, roadmap))
   {
@@ -197,7 +212,7 @@ bool loadFragmentShader(Shaders* shaders, bool verbose, enum Roadmap roadmap)
   return true;
 }
 
-bool checkLogProgram(Shaders* shaders, bool verbose, enum Roadmap roadmap)
+bool checkLogProgram(Shaders* shaders, bool verbose, Roadmap* roadmap)
 {
   VERB(verbose, printf("  Checking linking status of OpenGL program ...\n"));
 
@@ -240,7 +255,7 @@ bool checkLogProgram(Shaders* shaders, bool verbose, enum Roadmap roadmap)
 }
 
 bool loadProgram(Context* context, Shaders* shaders, bool verbose,
-  enum Roadmap roadmap)
+  Roadmap* roadmap)
 {
   VERB(verbose, printf("  Creating OpenGL Program ...\n"));
   GL_CHECK(shaders->program = glCreateProgram());

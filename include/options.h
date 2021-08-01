@@ -11,6 +11,6 @@
 
 void help();
 bool parsing_options(bool* verbose, int* delay, UniformValues* uniform_values,
-  enum Roadmap* roadmap, int* argc, char** argv);
+  Roadmap* roadmap, int* argc, char** argv);
 
 #endif

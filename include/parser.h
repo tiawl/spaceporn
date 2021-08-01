@@ -21,15 +21,15 @@ typedef struct
 } Regex;
 
 void freeRegex(Regex* regex, const char* spaces, bool verbose);
-bool regex_replace(char** str, const char* pattern, const char* replace,
-  const char* spaces, bool verbose, enum Roadmap roadmap);
+bool replace(char** str, const char* pattern, const char* replace,
+  const char* spaces, bool verbose, Roadmap* roadmap);
 bool readFile(char** filepath, char** buffer, const char* spaces,
-  bool verbose, enum Roadmap roadmap);
+  bool verbose, Roadmap* roadmap);
 bool addMarkers(char** filename, char** buffer, const char* dir_path,
-  bool is_main, const char* spaces, bool verbose, enum Roadmap roadmap);
+  bool is_main, const char* spaces, bool verbose, Roadmap* roadmap);
 bool searchAndReplaceHeaders(char** filepath, char** buffer, bool verbose,
-  enum Roadmap roadmap);
+  Roadmap* roadmap);
 bool improveLogShader(char** message, char** buffer, size_t maxLength,
-  bool verbose, enum Roadmap roadmap);
+  bool verbose, Roadmap* roadmap);
 
 #endif

@@ -10,8 +10,11 @@
 
 #define DEBUG true
 
-enum Roadmap
+enum RoadmapID
 {
+  SARH_HEADERS_0_MALLOC_FAILED_RM = -6,
+  SARH_HEADERS_MALLOC_FAILED_RM = -5,
+  SARH_REGCOMP_FAILED_RM = -4,
   SHADER_COMPILATION_FAILED_RM = -3,
   FOPEN_FAILED_RM = -2,
   BUFFER_MALLOC_FAILED_RM = -1,
@@ -46,11 +49,23 @@ enum Roadmap
   PNG_DATA_MALLOC_FAILED_RM,
   PNG_ROWPOINTERS_MALLOC_FAILED_RM,
   OPENGL_ERROR_RM, // --------------------------------  30
+  VERTEX_FILE_SARH_REGCOMP_FAILED_RM,
+  VERTEX_FILE_SARH_HEADERS_MALLOC_FAILED_RM,
+  VERTEX_FILE_SARH_HEADERS_0_MALLOC_FAILED_RM,
+  FRAGMENT_FILE_SARH_REGCOMP_FAILED_RM,
+  FRAGMENT_FILE_SARH_HEADERS_MALLOC_FAILED_RM,
+  FRAGMENT_FILE_SARH_HEADERS_0_MALLOC_FAILED_RM,
 #if DEBUG
   XCREATEDEBUGWINDOW_FAILED_RM,
 #endif
   RM_NB
 };
+
+typedef struct
+{
+  enum RoadmapID id;
+  char* glsl_file;
+} Roadmap;
 
 #define VERB(v, stmt) if (v) { \
   stmt; \
@@ -105,11 +120,11 @@ typedef struct
   PNG* png;
   Vertices* vertices;
   bool* verbose;
-  enum Roadmap* roadmap;
+  Roadmap* roadmap;
 } Aggregate;
 
 void freeContext(Context* context, bool verbose);
-void freeProgram(Shaders* shaders, bool verbose, enum Roadmap roadmap);
+void freeProgram(Shaders* shaders, bool verbose, Roadmap* roadmap);
 void freePng(PNG* png, bool verbose);
 void freePaths(Shaders* shaders, PNG* png, bool verbose);
 void freeVertices(Vertices* vertices, bool verbose);
@@ -119,7 +134,7 @@ void aggregateShaders(Shaders* shaders);
 void aggregatePng(PNG* png);
 void aggregateVertices(Vertices* vertices);
 void aggregateVerbose(bool* verbose);
-void aggregateRoadmap(enum Roadmap* roadmap);
+void aggregateRoadmap(Roadmap* roadmap);
 
 void exitHandler();
 void checkOpenGLError(const char* stmt, const char* fname, int line);

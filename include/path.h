@@ -14,12 +14,11 @@
 #define TEXTURE_FILE "/big_stars.png"
 
 bool initFragShaderPath(Shaders* shaders, size_t len[5], char* user,
-  bool verbose, enum Roadmap roadmap);
+  bool verbose, Roadmap* roadmap);
 bool initVertShaderPath(Shaders* shaders, size_t len[5], char* user,
-  bool verbose, enum Roadmap roadmap);
+  bool verbose, Roadmap* roadmap);
 bool initTexturePath(PNG* png, size_t len[5], char* user, bool verbose,
-  enum Roadmap roadmap);
-bool initPaths(Shaders* shaders, PNG* png, bool verbose,
-  enum Roadmap roadmap);
+  Roadmap* roadmap);
+bool initPaths(Shaders* shaders, PNG* png, bool verbose, Roadmap* roadmap);
 
 #endif

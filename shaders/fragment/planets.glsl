@@ -1,9 +1,9 @@
-#include "pixelspace.glsl"
-#include "planet/land.glsl"
-#include "planet/moon.glsl"
+# include "pixelspace.glsl"
+# include "planet/land.glsl"
+# include "planet/moon.glsl"
 
-#define MOON 0.25
-#define LAND 1.
+# define MOON 0.25
+# define LAND 1.
 
 float floor_multiple(float numToRound, float base)
 {

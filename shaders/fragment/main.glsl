@@ -1,10 +1,10 @@
-#version 330 core
+# version 330 core
 
-#include "bigstars.glsl"
-#include "dust.glsl"
-#include "nebulae.glsl"
-#include "planets.glsl"
-#include "stars.glsl"
+# include "bigstars.glsl"
+# include "dust.glsl"
+# include "nebulae.glsl"
+# include "planets.glsl"
+# include "stars.glsl"
 
 void main()
 {

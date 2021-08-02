@@ -200,19 +200,12 @@ allocated successfully\n", spaces));
 }
 
 bool addMarkers(char** filename, char** buffer, const char* dir_path,
-  bool is_main, const char* spaces, bool verbose, Roadmap* roadmap)
+  const char* spaces, bool verbose, Roadmap* roadmap)
 {
   size_t i = 0;
-  size_t j = 0;
 
   size_t marker_length;
-  char* header;
-  size_t header_length = 0;
   unsigned line = 1;
-
-  FILE* file = NULL;
-  char tmp_ch;
-  unsigned lines_header;
 
   VERB(verbose, printf("%s    Computing length of buffer file ...\n",
     spaces));
@@ -220,10 +213,40 @@ bool addMarkers(char** filename, char** buffer, const char* dir_path,
   VERB(verbose, printf("%s    Length of buffer file is %lu\n", spaces,
     buffer_length));
 
+  VERB(verbose, printf("%s    Computing lines number in buffer file ...\n",
+    spaces));
+  unsigned buffer_lines = 1;
+  while (i <= buffer_length)
+  {
+    if ((*buffer)[i] == '\n')
+    {
+      ++buffer_lines;
+    }
+    ++i;
+  }
+  VERB(verbose, printf("%s    Lines number of buffer file is %u\n", spaces,
+    buffer_lines));
+
+  i = 0;
+
+  VERB(verbose, printf("%s    Reallocating memory for buffer ...\n",
+    spaces));
+  *buffer = realloc(*buffer, sizeof(char) * (buffer_length +
+    (strlen(*filename) + strlen(" // :") + floor(log10(line)) + 3) *
+    buffer_lines + 1));
+  if (!buffer)
+  {
+    VERB(verbose, fprintf(stderr, "%s      ", spaces));
+    fprintf(stderr, "realloc() buffer failed\n");
+    return false;
+  }
+  VERB(verbose, printf("%s    Memory reallocated successfully\n",
+    spaces));
+
   VERB(verbose, printf("%s    Iterating over the buffer ...\n", spaces));
   while (i <= buffer_length)
   {
-    if (((*buffer)[i] == '\n') || (is_main && ((*buffer)[i] == '\0')))
+    if ((*buffer)[i] == '\n')
     {
       VERB(verbose, printf("%s      New line detected\n", spaces));
 
@@ -231,30 +254,19 @@ bool addMarkers(char** filename, char** buffer, const char* dir_path,
         spaces));
       marker_length = strlen(*filename) + strlen(" // :") +
         floor(log10(line)) + 1 + 1;
-      if (header_length > 0)
-      {
-        marker_length += header_length + strlen(" // :") +
-          floor(log10(lines_header)) + 1;
-      }
       VERB(verbose, printf("%s      Length of marker is %lu\n", spaces,
         marker_length));
 
       VERB(verbose, printf("%s      Building marker ...\n", spaces));
       char marker[marker_length];
-      if (header_length > 0)
-      {
-        snprintf(marker, marker_length + 1, " // %s:%u // %s:%u", *filename,
-          line, header, lines_header);
-      } else {
-        snprintf(marker, marker_length + 1, " // %s:%u", *filename, line);
-      }
+      snprintf(marker, marker_length + 1, " // %s:%u", *filename, line);
       VERB(verbose, printf("%s      Marker is \"%s\"\n", spaces, marker));
-
-      char new[strlen(*buffer) + marker_length];
-      new[0] = '\0';
 
       VERB(verbose, printf("%s      Building new file buffer ...\n",
         spaces));
+
+      char new[buffer_length + marker_length];
+      new[0] = '\0';
 
       VERB(verbose, printf("%s        Copying first file buffer part \
 ...\n", spaces));
@@ -263,28 +275,16 @@ bool addMarkers(char** filename, char** buffer, const char* dir_path,
 successfully\n", spaces));
 
       VERB(verbose, printf("%s        Concatenating marker ...\n", spaces));
-      strncat(new, marker, marker_length);
+      strcat(new, marker);
       VERB(verbose, printf("%s        Marker concatenated\n", spaces));
 
       VERB(verbose, printf("%s        Concatenating last file buffer part \
 ...\n", spaces));
-      strncat(new, *buffer + i, strlen(*buffer) - i);
+      strncat(new, *buffer + i, buffer_length - i);
       VERB(verbose, printf("%s        Last file buffer part concatenated \
 successfully\n", spaces));
 
       VERB(verbose, printf("%s      New buffer file built\n", spaces));
-
-      VERB(verbose, printf("%s      Reallocating memory for buffer ...\n",
-        spaces));
-      *buffer = realloc(*buffer, sizeof(char) * (strlen(new) + 1));
-      if (!buffer)
-      {
-        VERB(verbose, fprintf(stderr, "%s      ", spaces));
-        fprintf(stderr, "realloc() buffer failed\n");
-        return false;
-      }
-      VERB(verbose, printf("%s      Memory reallocated successfully\n",
-        spaces));
 
       VERB(verbose, printf("%s      Copying temporary variable into file \
 buffer ...\n", spaces));
@@ -293,7 +293,7 @@ buffer ...\n", spaces));
 successfully\n", spaces));
 
       VERB(verbose, printf("%s      Recomputing length of buffer file \
- ...\n", spaces));
+...\n", spaces));
       buffer_length = strlen(*buffer);
       VERB(verbose, printf("%s      Length of buffer files is %lu\n",
         spaces, buffer_length));
@@ -306,106 +306,52 @@ created marker ...\n", spaces));
       }
       VERB(verbose, printf("%s      Marker found\n", spaces));
       ++line;
+    } else if ((*buffer)[i] == '\0') {
+      VERB(verbose, printf("%s      Last line detected\n", spaces));
 
-      if (header_length > 0)
-      {
-        header_length = 0;
+      VERB(verbose, printf("%s      Computing length of marker ...\n",
+        spaces));
+      marker_length = strlen(*filename) + strlen(" // :") +
+        floor(log10(line)) + 1 + 1;
+      VERB(verbose, printf("%s      Length of marker is %lu\n", spaces,
+        marker_length));
 
-        VERB(verbose, printf("%s      Freeing header marker ...\n",
-          spaces));
-        free(header);
-        VERB(verbose, printf("%s      Memory freed successfully\n",
-          spaces));
-      }
-    } else if (i > 9) {
-      if (((*buffer)[i - 10] == '#') && ((*buffer)[i - 9] == 'i') &&
-        ((*buffer)[i - 8] == 'n') && ((*buffer)[i - 7] == 'c') &&
-        ((*buffer)[i - 6] == 'l') && ((*buffer)[i - 5] == 'u') &&
-        ((*buffer)[i - 4] == 'd') && ((*buffer)[i - 3] == 'e') &&
-        ((*buffer)[i - 2] == ' ') && ((*buffer)[i - 1] == '\"'))
-      {
-        VERB(verbose, printf("%s      Header line detected\n", spaces));
-        VERB(verbose, printf("%s      First index of the header name \
-at %lu\n", spaces, i));
+      VERB(verbose, printf("%s      Building marker ...\n", spaces));
+      char marker[marker_length];
+      snprintf(marker, marker_length + 1, " // %s:%u", *filename, line);
+      VERB(verbose, printf("%s      Marker is \"%s\"\n", spaces, marker));
 
-        VERB(verbose, printf("%s      Iterating until the second double \
-quotes character ...\n", spaces));
-        j = i + 1;
-        while ((*buffer)[j] != '\"')
-        {
-          ++j;
-        }
-        VERB(verbose, printf("%s      Second double quotes of header line \
-found at %lu\n", spaces, j));
+      VERB(verbose, printf("%s      Building new file buffer ...\n",
+        spaces));
 
-        header_length = j - i;
-        VERB(verbose, printf("%s      Header length is %lu\n", spaces,
-          header_length));
+      char new[buffer_length + marker_length + 1];
+      new[0] = '\0';
 
-        VERB(verbose, printf("%s      Allocating memory for header file \
-name ...\n", spaces));
-        header = malloc(sizeof(char) * (header_length + 1));
-        if (!header)
-        {
-          VERB(verbose, fprintf(stderr, "%s      ", spaces));
-          fprintf(stderr, "malloc() header failed\n");
-          return false;
-        }
-        *header = '\0';
-        VERB(verbose, printf("%s      Memory allocated successfully\n",
-          spaces));
+      VERB(verbose, printf("%s      Building new file buffer ...\n",
+        spaces));
 
-        VERB(verbose, printf("%s      Copying header file name ...\n",
-          spaces));
-        strncat(header, *buffer + i, header_length);
-        VERB(verbose, printf("%s      Header file name copied \
+      VERB(verbose, printf("%s        Copying file buffer ...\n", spaces));
+      strcat(new, *buffer);
+      VERB(verbose, printf("%s        File buffer part copied \
 successfully\n", spaces));
 
-        char new[strlen(dir_path) + header_length];
-        new[0] = '\0';
+      VERB(verbose, printf("%s        Concatenating marker ...\n", spaces));
+      strcat(new, marker);
+      VERB(verbose, printf("%s        Marker concatenated\n", spaces));
 
-        VERB(verbose, printf("%s      Copying absolute directory path into \
-temporary variable ...\n", spaces));
-        strcat(new, dir_path);
-        VERB(verbose, printf("%s      Absolute directory path copied \
+      VERB(verbose, printf("%s        Concatenating new line character ...\n",
+        spaces));
+      strcat(new, "\n");
+      VERB(verbose, printf("%s        New line character concatenated \
 successfully\n", spaces));
 
-        VERB(verbose, printf("%s      Concatenating header file name into \
-temporary variable ...\n", spaces));
-        strcat(new, header);
-        VERB(verbose, printf("%s      Header file name concatenated \
+      VERB(verbose, printf("%s      New buffer file built\n", spaces));
+
+      VERB(verbose, printf("%s      Copying temporary variable into file \
+buffer ...\n", spaces));
+      strcpy(*buffer, new);
+      VERB(verbose, printf("%s      Temporary variable copied \
 successfully\n", spaces));
-
-        VERB(verbose, printf("%s      Opening \"%s\" ...\n", spaces, new));
-        file = fopen(new, "r");
-        if (!file)
-        {
-          VERB(verbose, fprintf(stderr, "%s      ", spaces));
-          fprintf(stderr, "Failed to read inside \"%s\": %s\n", new,
-            strerror(errno));
-          return false;
-        }
-        VERB(verbose, printf("%s      File opened successfully\n", spaces));
-
-        VERB(verbose, printf("%s      Computing number of line into \"%s\" \
-...\n", spaces, new));
-        lines_header = 0;
-        while ((tmp_ch = fgetc(file)) != EOF)
-        {
-          if (tmp_ch == '\n')
-          {
-            lines_header++;
-          }
-        }
-        VERB(verbose, printf("%s      The file contains %u lines\n", spaces,
-          lines_header));
-
-        VERB(verbose, printf("%s      Closing \"%s\" ...\n", spaces, new));
-        fclose(file);
-        VERB(verbose, printf("%s      File closed successfully\n", spaces));
-
-        i = j;
-      }
     }
     ++i;
   }
@@ -488,8 +434,8 @@ bool searchAndReplaceHeaders(char** filepath, char** buffer, bool verbose,
     // TODO
     VERB(verbose, printf("    Adding markers to \"%s\" ...\n",
       (regex.headers)[0]));
-    if (!addMarkers(&((regex.headers)[0]), buffer, dir_path, true, "",
-      verbose, roadmap))
+    if (!addMarkers(&((regex.headers)[0]), buffer, dir_path, "", verbose,
+      roadmap))
     {
       VERB(verbose, fprintf(stderr, "    "));
       fprintf(stderr, "Unable to mark the file\n");
@@ -507,10 +453,10 @@ bool searchAndReplaceHeaders(char** filepath, char** buffer, bool verbose,
     while (match == 0)
     {
       VERB(verbose, printf("    Regex pattern found into buffer file\n"));
-      start_header = m[0].rm_so + 10;
+      start_header = m[1].rm_so;
       VERB(verbose, printf("    Start index of header is %lu\n",
         start_header));
-      end_header = m[0].rm_eo - 1;
+      end_header = m[1].rm_eo;
       VERB(verbose, printf("    End index of header is %lu\n", end_header));
 
       char first_match[end_header - start_header];
@@ -625,7 +571,7 @@ header_filepath ...\n"));
         VERB(verbose, printf("      Adding markers to \"%s\" ...\n",
           (regex.headers)[regex.headers_length - 1]));
         if (!addMarkers(&((regex.headers)[regex.headers_length - 1]),
-          &(regex.header_buffer), dir_path, false, "  ", verbose, roadmap))
+          &(regex.header_buffer), dir_path, "  ", verbose, roadmap))
         {
           VERB(verbose, fprintf(stderr, "      "));
           fprintf(stderr, "Unable to mark the file\n");
@@ -659,7 +605,7 @@ into buffer file ...\n", first_match));
     VERB(verbose, printf("    Regex pattern not found\n"));
     VERB(verbose, printf("    File buffer is now:\n\
 ------------------------------------------------------------------------------\
-\n%s\n\
+\n%s\
 ------------------------------------------------------------------------------\
 \n", *buffer));
 

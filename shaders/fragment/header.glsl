@@ -30,8 +30,8 @@ struct Planet
   vec2 light_origin;
 };
 
-#define TEXTURE_SIZE vec2(256., 32.)
-#define NB_COL 7.
+# define TEXTURE_SIZE vec2(256., 32.)
+# define NB_COL 7.
 
 vec2 rotate(vec2 vec, vec2 center, float angle)
 {

@@ -109,7 +109,7 @@ bool checkLogShader(GLuint* shader, GLenum shaderType, char* buffer,
   {
     VERB(verbose, fprintf(stderr, "    "));
     fprintf(stderr, "Unable to compile %s shader\n",
-      shaderType == GL_FRAGMENT_SHADER ? "Fragment" : "Vertex");
+      shaderType == GL_FRAGMENT_SHADER ? "fragment" : "vertex");
 
     GLint maxLength = 0;
 

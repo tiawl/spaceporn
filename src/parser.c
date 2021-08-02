@@ -158,7 +158,7 @@ beginning ...\n", spaces));
       (roadmap->id != SHADER_COMPILATION_FAILED_RM) &&
       (roadmap->id != LINKING_PROGRAM_FAILED_RM))
     {
-      *buffer = malloc(length);
+      *buffer = malloc(length + 1);
     }
 
     if (*buffer)
@@ -170,12 +170,12 @@ allocated successfully\n", spaces));
       if ((roadmap->id != SHADER_COMPILATION_FAILED_RM) &&
         (roadmap->id != LINKING_PROGRAM_FAILED_RM))
       {
-        fread(*buffer, 1, length - 1, f);
-        (*buffer)[length - 1] = '\0'; // fread does not 0 terminate strings
+        fread(*buffer, 1, length, f);
+        (*buffer)[length] = '\0'; // fread does not 0 terminate strings
       }
       VERB(verbose, printf("%s      Buffer filled with:\n\
 ------------------------------------------------------------------------------\
-\n%s\n\
+\n%s\
 ------------------------------------------------------------------------------\
 \n", spaces, *buffer))
 
@@ -215,7 +215,7 @@ bool addMarkers(char** filename, char** buffer, const char* dir_path,
 
   VERB(verbose, printf("%s    Computing lines number in buffer file ...\n",
     spaces));
-  unsigned buffer_lines = 1;
+  unsigned buffer_lines = 0;
   while (i <= buffer_length)
   {
     if ((*buffer)[i] == '\n')
@@ -232,8 +232,8 @@ bool addMarkers(char** filename, char** buffer, const char* dir_path,
   VERB(verbose, printf("%s    Reallocating memory for buffer ...\n",
     spaces));
   *buffer = realloc(*buffer, sizeof(char) * (buffer_length +
-    (strlen(*filename) + strlen(" // :") + floor(log10(line)) + 3) *
-    buffer_lines + 1));
+    (strlen(*filename) + strlen(" // :") + floor(log10(buffer_lines)) + 1) *
+    buffer_lines));
   if (!buffer)
   {
     VERB(verbose, fprintf(stderr, "%s      ", spaces));
@@ -306,52 +306,6 @@ created marker ...\n", spaces));
       }
       VERB(verbose, printf("%s      Marker found\n", spaces));
       ++line;
-    } else if ((*buffer)[i] == '\0') {
-      VERB(verbose, printf("%s      Last line detected\n", spaces));
-
-      VERB(verbose, printf("%s      Computing length of marker ...\n",
-        spaces));
-      marker_length = strlen(*filename) + strlen(" // :") +
-        floor(log10(line)) + 1 + 1;
-      VERB(verbose, printf("%s      Length of marker is %lu\n", spaces,
-        marker_length));
-
-      VERB(verbose, printf("%s      Building marker ...\n", spaces));
-      char marker[marker_length];
-      snprintf(marker, marker_length + 1, " // %s:%u", *filename, line);
-      VERB(verbose, printf("%s      Marker is \"%s\"\n", spaces, marker));
-
-      VERB(verbose, printf("%s      Building new file buffer ...\n",
-        spaces));
-
-      char new[buffer_length + marker_length + 1];
-      new[0] = '\0';
-
-      VERB(verbose, printf("%s      Building new file buffer ...\n",
-        spaces));
-
-      VERB(verbose, printf("%s        Copying file buffer ...\n", spaces));
-      strcat(new, *buffer);
-      VERB(verbose, printf("%s        File buffer part copied \
-successfully\n", spaces));
-
-      VERB(verbose, printf("%s        Concatenating marker ...\n", spaces));
-      strcat(new, marker);
-      VERB(verbose, printf("%s        Marker concatenated\n", spaces));
-
-      VERB(verbose, printf("%s        Concatenating new line character ...\n",
-        spaces));
-      strcat(new, "\n");
-      VERB(verbose, printf("%s        New line character concatenated \
-successfully\n", spaces));
-
-      VERB(verbose, printf("%s      New buffer file built\n", spaces));
-
-      VERB(verbose, printf("%s      Copying temporary variable into file \
-buffer ...\n", spaces));
-      strcpy(*buffer, new);
-      VERB(verbose, printf("%s      Temporary variable copied \
-successfully\n", spaces));
     }
     ++i;
   }

@@ -2,6 +2,7 @@
 #define XTELESKTOP_OPTIONS_H
 
 #include <string.h>
+#include <unistd.h>
 
 #include "uniform.h"
 

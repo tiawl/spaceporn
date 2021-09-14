@@ -57,8 +57,8 @@ Dev options:
 
 1. Clone the repository.
 2. `cd` into the directory.
-3. Run `chmod 700 ./sh/configure.sh`
-4. Run `./sh/configure.sh` and install requested dependencies. Repeat this step until `bin/conf/config.status` is generated.
+3. Run `chmod 700 ./bash/configure.sh`
+4. Run `./bash/configure.sh` and install requested dependencies. Repeat this step until `bin/conf/config.status` is generated.
 5. Run `make`.
 6. Test the program by using **User options** described in **Usage** section until you find a command which fits your needs.
    This command will be called `YOUR_XTELESKTOP_CLI` for following steps of this tutorial.

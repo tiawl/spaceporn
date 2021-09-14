@@ -66,14 +66,15 @@ developing package.]), [[#include <X11/Xutil.h>]])
 
 # Checks for predefined macros and variables.
 AC_CHECK_DECLS([NULL, EXIT_FAILURE, EXIT_SUCCESS, SEEK_END, SEEK_SET,
-  CLOCKS_PER_SEC, errno, REG_EXTENDED, REG_NEWLINE, REG_NOMATCH], [],
+  CLOCKS_PER_SEC, errno, REG_EXTENDED, REG_NEWLINE, REG_NOMATCH, F_OK], [],
   AC_MSG_ERROR([GLibC package is found but some declarations of this package \
 are not found. Update the GLibC developing package.]),
 [[#include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
 #include <errno.h>
-#include <regex.h>]])
+#include <regex.h>
+#include <unistd.h>]])
 AC_CHECK_DECLS([PNG_LIBPNG_VER_STRING, PNG_INFO_tRNS, PNG_COLOR_MASK_ALPHA, \
   png_jmpbuf], [], AC_MSG_ERROR([libPNG package is found but some \
 declarations of this package are not found. Update the libPNG developing \
@@ -110,7 +111,7 @@ AC_FUNC_MALLOC
 AC_CHECK_FUNCS([strchr strerror strstr strlen strcmp strtok strcpy strcat \
 strncpy strncat strtoul getenv usleep memcpy printf fprintf snprintf free \
 srand rand atof atoi time clock fopen fseek fread fclose fgetc setjmp exit \
-atexit realloc regcomp regexec regerror regfree log10 floor], [],
+atexit realloc regcomp regexec regerror regfree log10 floor access], [],
 AC_MSG_ERROR([GLibC package is found but some functions of this package are \
 not found. Update the GLibC developing package.]))
 AC_CHECK_FUNCS([png_destroy_read_struct png_create_read_struct \

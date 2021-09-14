@@ -4299,6 +4299,7 @@ ac_fn_c_check_decl "$LINENO" "NULL" "ac_cv_have_decl_NULL" "#include <stdlib.h>
 #include <time.h>
 #include <errno.h>
 #include <regex.h>
+#include <unistd.h>
 "
 if test "x$ac_cv_have_decl_NULL" = xyes; then :
   ac_have_decl=1
@@ -4312,14 +4313,15 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "GLibC package is found but some declarations of this \
-package are not found. Update the GLibC developing package." "$LINENO" 5
+  as_fn_error $? "GLibC package is found but some declarations of this package \
+are not found. Update the GLibC developing package." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "EXIT_FAILURE" "ac_cv_have_decl_EXIT_FAILURE" "#include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
 #include <errno.h>
 #include <regex.h>
+#include <unistd.h>
 "
 if test "x$ac_cv_have_decl_EXIT_FAILURE" = xyes; then :
   ac_have_decl=1
@@ -4333,14 +4335,15 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "GLibC package is found but some declarations of this \
-package are not found. Update the GLibC developing package." "$LINENO" 5
+  as_fn_error $? "GLibC package is found but some declarations of this package \
+are not found. Update the GLibC developing package." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "EXIT_SUCCESS" "ac_cv_have_decl_EXIT_SUCCESS" "#include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
 #include <errno.h>
 #include <regex.h>
+#include <unistd.h>
 "
 if test "x$ac_cv_have_decl_EXIT_SUCCESS" = xyes; then :
   ac_have_decl=1
@@ -4354,14 +4357,15 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "GLibC package is found but some declarations of this \
-package are not found. Update the GLibC developing package." "$LINENO" 5
+  as_fn_error $? "GLibC package is found but some declarations of this package \
+are not found. Update the GLibC developing package." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "SEEK_END" "ac_cv_have_decl_SEEK_END" "#include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
 #include <errno.h>
 #include <regex.h>
+#include <unistd.h>
 "
 if test "x$ac_cv_have_decl_SEEK_END" = xyes; then :
   ac_have_decl=1
@@ -4375,14 +4379,15 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "GLibC package is found but some declarations of this \
-package are not found. Update the GLibC developing package." "$LINENO" 5
+  as_fn_error $? "GLibC package is found but some declarations of this package \
+are not found. Update the GLibC developing package." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "SEEK_SET" "ac_cv_have_decl_SEEK_SET" "#include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
 #include <errno.h>
 #include <regex.h>
+#include <unistd.h>
 "
 if test "x$ac_cv_have_decl_SEEK_SET" = xyes; then :
   ac_have_decl=1
@@ -4396,14 +4401,15 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "GLibC package is found but some declarations of this \
-package are not found. Update the GLibC developing package." "$LINENO" 5
+  as_fn_error $? "GLibC package is found but some declarations of this package \
+are not found. Update the GLibC developing package." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "CLOCKS_PER_SEC" "ac_cv_have_decl_CLOCKS_PER_SEC" "#include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
 #include <errno.h>
 #include <regex.h>
+#include <unistd.h>
 "
 if test "x$ac_cv_have_decl_CLOCKS_PER_SEC" = xyes; then :
   ac_have_decl=1
@@ -4417,14 +4423,15 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "GLibC package is found but some declarations of this \
-package are not found. Update the GLibC developing package." "$LINENO" 5
+  as_fn_error $? "GLibC package is found but some declarations of this package \
+are not found. Update the GLibC developing package." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "errno" "ac_cv_have_decl_errno" "#include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
 #include <errno.h>
 #include <regex.h>
+#include <unistd.h>
 "
 if test "x$ac_cv_have_decl_errno" = xyes; then :
   ac_have_decl=1
@@ -4438,14 +4445,15 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "GLibC package is found but some declarations of this \
-package are not found. Update the GLibC developing package." "$LINENO" 5
+  as_fn_error $? "GLibC package is found but some declarations of this package \
+are not found. Update the GLibC developing package." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "REG_EXTENDED" "ac_cv_have_decl_REG_EXTENDED" "#include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
 #include <errno.h>
 #include <regex.h>
+#include <unistd.h>
 "
 if test "x$ac_cv_have_decl_REG_EXTENDED" = xyes; then :
   ac_have_decl=1
@@ -4459,14 +4467,15 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "GLibC package is found but some declarations of this \
-package are not found. Update the GLibC developing package." "$LINENO" 5
+  as_fn_error $? "GLibC package is found but some declarations of this package \
+are not found. Update the GLibC developing package." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "REG_NEWLINE" "ac_cv_have_decl_REG_NEWLINE" "#include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
 #include <errno.h>
 #include <regex.h>
+#include <unistd.h>
 "
 if test "x$ac_cv_have_decl_REG_NEWLINE" = xyes; then :
   ac_have_decl=1
@@ -4480,35 +4489,15 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "GLibC package is found but some declarations of this \
-package are not found. Update the GLibC developing package." "$LINENO" 5
-fi
-ac_fn_c_check_decl "$LINENO" "REG_NOTBOL" "ac_cv_have_decl_REG_NOTBOL" "#include <stdlib.h>
-#include <stdio.h>
-#include <time.h>
-#include <errno.h>
-#include <regex.h>
-"
-if test "x$ac_cv_have_decl_REG_NOTBOL" = xyes; then :
-  ac_have_decl=1
-else
-  ac_have_decl=0
-fi
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE_DECL_REG_NOTBOL $ac_have_decl
-_ACEOF
-if test $ac_have_decl = 1; then :
-
-else
-  as_fn_error $? "GLibC package is found but some declarations of this \
-package are not found. Update the GLibC developing package." "$LINENO" 5
+  as_fn_error $? "GLibC package is found but some declarations of this package \
+are not found. Update the GLibC developing package." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "REG_NOMATCH" "ac_cv_have_decl_REG_NOMATCH" "#include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
 #include <errno.h>
 #include <regex.h>
+#include <unistd.h>
 "
 if test "x$ac_cv_have_decl_REG_NOMATCH" = xyes; then :
   ac_have_decl=1
@@ -4522,8 +4511,30 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "GLibC package is found but some declarations of this \
-package are not found. Update the GLibC developing package." "$LINENO" 5
+  as_fn_error $? "GLibC package is found but some declarations of this package \
+are not found. Update the GLibC developing package." "$LINENO" 5
+fi
+ac_fn_c_check_decl "$LINENO" "F_OK" "ac_cv_have_decl_F_OK" "#include <stdlib.h>
+#include <stdio.h>
+#include <time.h>
+#include <errno.h>
+#include <regex.h>
+#include <unistd.h>
+"
+if test "x$ac_cv_have_decl_F_OK" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_F_OK $ac_have_decl
+_ACEOF
+if test $ac_have_decl = 1; then :
+
+else
+  as_fn_error $? "GLibC package is found but some declarations of this package \
+are not found. Update the GLibC developing package." "$LINENO" 5
 fi
 
 ac_fn_c_check_decl "$LINENO" "PNG_LIBPNG_VER_STRING" "ac_cv_have_decl_PNG_LIBPNG_VER_STRING" "#include <png.h>
@@ -5858,9 +5869,9 @@ fi
 
 
 for ac_func in strchr strerror strstr strlen strcmp strtok strcpy strcat \
-strncpy strncat getenv usleep memcpy printf fprintf snprintf free srand rand \
-atof atoi time clock fopen fseek fread fclose setjmp exit atexit realloc \
-regcomp regexec regerror regfree log10 floor
+strncpy strncat strtoul getenv usleep memcpy printf fprintf snprintf free \
+srand rand atof atoi time clock fopen fseek fread fclose fgetc setjmp exit \
+atexit realloc regcomp regexec regerror regfree log10 floor access
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
 ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
@@ -5870,9 +5881,8 @@ if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
 _ACEOF
 
 else
-  as_fn_error $? "GLibC \
-package is found but some functions of this package are not found. Update \
-the GLibC developing package." "$LINENO" 5
+  as_fn_error $? "GLibC package is found but some functions of this package are \
+not found. Update the GLibC developing package." "$LINENO" 5
 fi
 done
 

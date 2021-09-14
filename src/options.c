@@ -92,11 +92,25 @@ bool parsing_options(bool* verbose, int* delay, UniformValues* uniform_values,
         {
           help();
           return false;
-        // TODO
         } else if (roadmap->id) {
-          if (++i < *argc)
+          if ((roadmap->id == FRAGMENT_FILE_SARH_ADDMARKERS_REALLOC_FAILED_RM)
+            || (roadmap->id == FRAGMENT_FILE_SARH_HEADER_MALLOC_FAILED_RM)
+            || (roadmap->id == VERTEX_FILE_SARH_ADDMARKERS_REALLOC_FAILED_RM)
+            || (roadmap->id == VERTEX_FILE_SARH_HEADER_MALLOC_FAILED_RM))
           {
-            roadmap->glsl_file = argv[i];
+            if (++i < *argc)
+            {
+              if (access(argv[i], F_OK) == 0)
+              {
+                roadmap->glsl_file = argv[i];
+              } else {
+                fprintf(stderr, "%s does not exist\n", argv[i]);
+                return false;
+              }
+            } else {
+              help();
+              return false;
+            }
           }
         }
       }

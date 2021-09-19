@@ -1,6 +1,6 @@
 #include "path.h"
 
-bool initFragShaderPath(Shaders* shaders, size_t len[5], char* user,
+bool initFragShaderPath(Shaders* shaders, size_t len[6], char* user,
   bool verbose, Roadmap* roadmap)
 {
   VERB(verbose, printf("  Allocating memory for fragment shader path ...\n"));
@@ -8,7 +8,7 @@ bool initFragShaderPath(Shaders* shaders, size_t len[5], char* user,
   if (roadmap->id != FSHADERPATH_MALLOC_FAILED_RM)
   {
     shaders->fshaderpath =
-      malloc(len[0] + len[1] + len[2] + len[3] + len[4] + 1);
+      malloc(len[0] + len[1] + len[2] + len[3] + len[4] + len[5] + 1);
   }
 
   if (!shaders->fshaderpath)
@@ -20,26 +20,29 @@ bool initFragShaderPath(Shaders* shaders, size_t len[5], char* user,
   VERB(verbose, printf("  Successfull allocated memory for fragment shader \
 path\n"));
 
-  VERB(verbose, printf("  Building fragment shader path string ... 0/5\n"));
+  VERB(verbose, printf("  Building fragment shader path string ... 0/6\n"));
   memcpy(shaders->fshaderpath, HOME_DIR, len[0]);
-  VERB(verbose, printf("  Building fragment shader path string ... 1/5\n"));
+  VERB(verbose, printf("  Building fragment shader path string ... 1/6\n"));
   memcpy(shaders->fshaderpath + len[0], user, len[1]);
-  VERB(verbose, printf("  Building fragment shader path string ... 2/5\n"));
+  VERB(verbose, printf("  Building fragment shader path string ... 2/6\n"));
   memcpy(shaders->fshaderpath + len[0] + len[1], BIN_DIR, len[2]);
-  VERB(verbose, printf("  Building fragment shader path string ... 3/5\n"));
+  VERB(verbose, printf("  Building fragment shader path string ... 3/6\n"));
   memcpy(shaders->fshaderpath + len[0] + len[1] + len[2], SHADERS_DIR,
     len[3]);
-  VERB(verbose, printf("  Building fragment shader path string ... 4/5\n"));
+  VERB(verbose, printf("  Building fragment shader path string ... 4/6\n"));
   memcpy(shaders->fshaderpath + len[0] + len[1] + len[2] + len[3],
-    FSHADER_FILE, len[4] + 1);
-  VERB(verbose, printf("  Building fragment shader path string ... 5/5\n"));
+    FRAGMENT_DIR, len[4]);
+  VERB(verbose, printf("  Building fragment shader path string ... 5/6\n"));
+  memcpy(shaders->fshaderpath + len[0] + len[1] + len[2] + len[3] + len[4],
+    MAIN_FILE, len[5] + 1);
+  VERB(verbose, printf("  Building fragment shader path string ... 6/6\n"));
   VERB(verbose, printf("  Fragment shader path string built: %s\n",
     shaders->fshaderpath));
 
   return true;
 }
 
-bool initVertShaderPath(Shaders* shaders, size_t len[5], char* user,
+bool initVertShaderPath(Shaders* shaders, size_t len[6], char* user,
   bool verbose, Roadmap* roadmap)
 {
   VERB(verbose, printf("  Allocating memory for vertex shader path ...\n"));
@@ -47,7 +50,7 @@ bool initVertShaderPath(Shaders* shaders, size_t len[5], char* user,
   if (roadmap->id != VSHADERPATH_MALLOC_FAILED_RM)
   {
     shaders->vshaderpath =
-      malloc(len[0] + len[1] + len[2] + len[3] + len[4] + 1);
+      malloc(len[0] + len[1] + len[2] + len[3] + len[4] + len[5] + 1);
   }
 
   if (!shaders->vshaderpath)
@@ -59,19 +62,22 @@ bool initVertShaderPath(Shaders* shaders, size_t len[5], char* user,
   VERB(verbose, printf("  Successfull allocated memory for vertex shader \
 path\n"));
 
-  VERB(verbose, printf("  Building vertex shader path string ... 0/5\n"));
+  VERB(verbose, printf("  Building vertex shader path string ... 0/6\n"));
   memcpy(shaders->vshaderpath, HOME_DIR, len[0]);
-  VERB(verbose, printf("  Building vertex shader path string ... 1/5\n"));
+  VERB(verbose, printf("  Building vertex shader path string ... 1/6\n"));
   memcpy(shaders->vshaderpath + len[0], user, len[1]);
-  VERB(verbose, printf("  Building vertex shader path string ... 2/5\n"));
+  VERB(verbose, printf("  Building vertex shader path string ... 2/6\n"));
   memcpy(shaders->vshaderpath + len[0] + len[1], BIN_DIR, len[2]);
-  VERB(verbose, printf("  Building vertex shader path string ... 3/5\n"));
+  VERB(verbose, printf("  Building vertex shader path string ... 3/6\n"));
   memcpy(shaders->vshaderpath + len[0] + len[1] + len[2], SHADERS_DIR,
     len[3]);
-  VERB(verbose, printf("  Building vertex shader path string ... 4/5\n"));
+  VERB(verbose, printf("  Building vertex shader path string ... 4/6\n"));
   memcpy(shaders->vshaderpath + len[0] + len[1] + len[2] + len[3],
-    VSHADER_FILE, len[4] + 1);
-  VERB(verbose, printf("  Building vertex shader path string ... 5/5\n"));
+    VERTEX_DIR, len[4]);
+  VERB(verbose, printf("  Building vertex shader path string ... 5/6\n"));
+  memcpy(shaders->vshaderpath + len[0] + len[1] + len[2] + len[3] + len[4],
+    MAIN_FILE, len[5] + 1);
+  VERB(verbose, printf("  Building vertex shader path string ... 6/6\n"));
   VERB(verbose, printf("  Vertex shader path string built: %s\n",
     shaders->vshaderpath));
 
@@ -152,29 +158,34 @@ bool initPaths(Shaders* shaders, PNG* png, bool verbose, Roadmap* roadmap)
   const size_t len5 = strlen(TEXTURES_DIR);
   VERB(verbose, printf("  Length of \"%s\" is %lu\n", TEXTURES_DIR, len5));
 
-  VERB(verbose, printf("  Computing length of fragment shader filename \
+  VERB(verbose, printf("  Computing length of fragment shader directory \
 ...\n"));
-  const size_t len6 = strlen(FSHADER_FILE);
-  VERB(verbose, printf("  Length of \"%s\" is %lu\n", FSHADER_FILE, len6));
+  const size_t len6 = strlen(FRAGMENT_DIR);
+  VERB(verbose, printf("  Length of \"%s\" is %lu\n", FRAGMENT_DIR, len6));
 
-  VERB(verbose, printf("  Computing length of vertex shader filename ...\n"));
-  const size_t len7 = strlen(VSHADER_FILE);
-  VERB(verbose, printf("  Length of \"%s\" is %lu\n", VSHADER_FILE, len7));
+  VERB(verbose, printf("  Computing length of vertex shader directory \
+...\n"));
+  const size_t len7 = strlen(VERTEX_DIR);
+  VERB(verbose, printf("  Length of \"%s\" is %lu\n", VERTEX_DIR, len7));
+
+  VERB(verbose, printf("  Computing length of shader main filename ...\n"));
+  const size_t len8 = strlen(MAIN_FILE);
+  VERB(verbose, printf("  Length of \"%s\" is %lu\n", MAIN_FILE, len8));
 
   VERB(verbose, printf("  Computing length of texture filename ...\n"));
-  const size_t len8 = strlen(TEXTURE_FILE);
-  VERB(verbose, printf("  Length of \"%s\" is %lu\n", TEXTURE_FILE, len8));
+  const size_t len9 = strlen(TEXTURE_FILE);
+  VERB(verbose, printf("  Length of \"%s\" is %lu\n", TEXTURE_FILE, len9));
 
-  size_t f_length[5] =
+  size_t f_length[6] =
   {
-    len1, len2, len3, len4, len6
+    len1, len2, len3, len4, len6, len8
   };
 
   if (initFragShaderPath(shaders, f_length, user, verbose, roadmap))
   {
-    size_t v_length[5] =
+    size_t v_length[6] =
     {
-      len1, len2, len3, len4, len7
+      len1, len2, len3, len4, len7, len8
     };
 
     if (initVertShaderPath(shaders, v_length, user,
@@ -182,7 +193,7 @@ bool initPaths(Shaders* shaders, PNG* png, bool verbose, Roadmap* roadmap)
     {
       size_t t_length[5] =
       {
-        len1, len2, len3, len5, len8
+        len1, len2, len3, len5, len9
       };
 
       if (!initTexturePath(png, t_length,

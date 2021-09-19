@@ -231,9 +231,17 @@ bool addMarkers(char** filename, char** buffer, const char* dir_path,
 
   VERB(verbose, printf("%s    Reallocating memory for buffer ...\n",
     spaces));
-  *buffer = realloc(*buffer, sizeof(char) * (buffer_length +
-    (strlen(*filename) + strlen(" // :") + floor(log10(buffer_lines)) + 1) *
-    buffer_lines));
+
+  if ((roadmap->id != SARH_ADDMARKERS_REALLOC_FAILED_RM)
+    || (strcmp(roadmap->glsl_file, *filename) != 0))
+  {
+    *buffer = realloc(*buffer, sizeof(char) * (buffer_length +
+      (strlen(*filename) + strlen(" // :") + floor(log10(buffer_lines)) + 1) *
+      buffer_lines));
+  } else {
+    *buffer = NULL;
+  }
+
   if (!buffer)
   {
     VERB(verbose, fprintf(stderr, "%s      ", spaces));
@@ -357,7 +365,7 @@ bool searchAndReplaceHeaders(char** filepath, char** buffer, bool verbose,
     if (!regex.headers)
     {
       VERB(verbose, fprintf(stderr, "    "));
-      fprintf (stderr, "headers malloc() failed\n");
+      fprintf(stderr, "headers malloc() failed\n");
       freeRegex(&regex, "", verbose);
       return false;
     }
@@ -386,7 +394,6 @@ bool searchAndReplaceHeaders(char** filepath, char** buffer, bool verbose,
     VERB(verbose, printf("    \"%s\" successfully copied\n",
       (regex.headers)[0]));
 
-    // TODO
     VERB(verbose, printf("    Adding markers to \"%s\" ...\n",
       (regex.headers)[0]));
     if (!addMarkers(&((regex.headers)[0]), buffer, dir_path, "", verbose,
@@ -443,6 +450,7 @@ bool searchAndReplaceHeaders(char** filepath, char** buffer, bool verbose,
         VERB(verbose, printf("      \"%s\" is already included\n",
           first_match));
 
+        // TODO
         VERB(verbose, printf("      Deleting first occurence of #header \
 \"%s\" line into buffer file with replace() ...\n", first_match));
         if (!replace(buffer, INCLUDE_HEADER_PATTERN, "", "  ", verbose,

@@ -4,6 +4,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "path.h"
 #include "uniform.h"
 
 #define NAME "xtelesktop"

@@ -102,15 +102,30 @@ bool parsing_options(bool* verbose, int* delay, UniformValues* uniform_values,
           {
             if (++i < *argc)
             {
-              if (access(argv[i], F_OK) == 0)
+              char* dir = NULL;
+              if ((roadmap->id == VERTEX_FILE_SARH_ADDMARKERS_REALLOC_FAILED_RM)
+                || (roadmap->id == VERTEX_FILE_SARH_HEADER_MALLOC_FAILED_RM))
+              {
+                dir = malloc(sizeof(char) * (strlen(SHADERS_DIR) +
+                  strlen(VERTEX_DIR) + strlen(argv[i]) + 1));
+                strcpy(dir, SHADERS_DIR);
+                strcat(dir, VERTEX_DIR);
+              } else {
+                dir = malloc(sizeof(char) * (strlen(SHADERS_DIR) +
+                  strlen(FRAGMENT_DIR) + strlen(argv[i]) + 1));
+                strcpy(dir, SHADERS_DIR);
+                strcat(dir, FRAGMENT_DIR);
+              }
+              strcat(dir, argv[i]);
+              if (access(dir, F_OK) == 0)
               {
                 roadmap->glsl_file = argv[i];
               } else {
-                fprintf(stderr, "%s does not exist\n", argv[i]);
+                fprintf(stderr, "%s does not exist\n", dir);
                 return false;
               }
             } else {
-              help();
+              fprintf(stderr, "This roadmap needs a file\n");
               return false;
             }
           }

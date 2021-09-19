@@ -366,7 +366,7 @@ bool searchAndReplaceHeaders(char** filepath, char** buffer, bool verbose,
     regex.headers_length = 1;
     VERB(verbose, printf("    Allocating memory for headers[0] ...\n");)
     if ((roadmap->id != SARH_HEADER_MALLOC_FAILED_RM)
-      && (strcmp(roadmap->glsl_file, "main.glsl") == 0))
+      || (strcmp(roadmap->glsl_file, "main.glsl") != 0))
     {
       (regex.headers)[0] = malloc(sizeof(char) * (strlen("main.glsl") + 1));
     }

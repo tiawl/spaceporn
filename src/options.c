@@ -52,6 +52,8 @@ void help()
 bool parsing_options(bool* verbose, int* delay, UniformValues* uniform_values,
   Roadmap* roadmap, int* argc, char** argv)
 {
+  roadmap->glsl_file = "";
+
   for (int i = 1; i < *argc; i++)
   {
     if (strcmp(argv[i], "-x") == 0)

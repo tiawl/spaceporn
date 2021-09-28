@@ -38,7 +38,9 @@ bool replace(char** str, const char* pattern, const char* replace,
 
   VERB(verbose, printf("%s      Compiling regex pattern: \"%s\" ...\n",
     spaces, pattern));
-  if (regcomp(&regex, pattern, REG_EXTENDED | REG_NEWLINE) == 0)
+
+  if ((regcomp(&regex, pattern, REG_EXTENDED | REG_NEWLINE) == 0) &&
+    (roadmap->id != SARH_REPLACE_REGCOMP_FAILED_RM))
   {
     VERB(verbose, printf("%s      Regex pattern compiled successfully\n",
       spaces));
@@ -54,7 +56,8 @@ bool replace(char** str, const char* pattern, const char* replace,
 
     // replace only first occurence
     VERB(verbose, printf("%s      Comparing regex pattern ...\n", spaces));
-    if (regexec(&regex, *str, nmatch + 1, m, 0) == 0)
+    int match = regexec(&regex, *str, nmatch + 1, m, 0);
+    if (match == 0)
     {
       VERB(verbose, printf("%s      Regex pattern found\n", spaces));
 
@@ -91,7 +94,7 @@ original string ...\n", spaces));
       VERB(verbose, printf("%s      Reallocating memory for *str ...\n",
         spaces));
       *str = realloc(*str, sizeof(char) * (strlen(new) + 1));
-      if (!*str)
+      if ((!*str) && (roadmap->id != SARH_REPLACE_REALLOC_FAILED_RM))
       {
         VERB(verbose, fprintf(stderr, "%s      ", spaces));
         fprintf(stderr, "*str realloc() failed\n");
@@ -103,8 +106,25 @@ original string ...\n", spaces));
       VERB(verbose, printf("%s      Copying new in *str ...\n", spaces));
       strcpy(*str, new);
       VERB(verbose, printf("%s      Copied successfully\n", spaces));
-    } else {
+    } else if (match == REG_NOMATCH) {
       VERB(verbose, printf("%s      Regex pattern not found\n", spaces));
+    } else {
+      int regex_error = 1;
+      size_t size = regerror(regex_error, &regex, NULL, 0);
+      VERB(verbose, printf("%s      Message size of regex error is %lu\n",
+        spaces, size));
+
+      char text[size];
+
+      regerror(regex_error, &regex, &(text[0]), size);
+
+      VERB(verbose, printf("%s      Freeing regex structure ...\n", spaces));
+      regfree(&regex);
+      VERB(verbose, printf("%s      Memory freed successfully\n", spaces));
+
+      VERB(verbose, fprintf(stderr, "%s      ", spaces));
+      fprintf(stderr, "Regex error: %s\n", text);
+      return false;
     }
 
     VERB(verbose, printf("%s      Freeing regex structure ...\n", spaces));
@@ -450,9 +470,20 @@ bool searchAndReplaceHeaders(char** filepath, char** buffer, bool verbose,
         VERB(verbose, printf("      \"%s\" is already included\n",
           first_match));
 
-        // TODO
         VERB(verbose, printf("      Deleting first occurence of #header \
 \"%s\" line into buffer file with replace() ...\n", first_match));
+        if ((roadmap->id == SARH_REPLACE_1_REGCOMP_FAILED_RM) &&
+          (strcmp(roadmap->glsl_file, first_match) == 0))
+        {
+          roadmap->id = SARH_REPLACE_REGCOMP_FAILED_RM;
+        } else if ((roadmap->id == SARH_REPLACE_1_REALLOC_FAILED_RM) &&
+          (strcmp(roadmap->glsl_file, first_match) == 0)) {
+            roadmap->id = SARH_REPLACE_REALLOC_FAILED_RM;
+        } else if ((roadmap->id == SARH_REPLACE_1_REGEXEC_FAILED_RM) &&
+          (strcmp(roadmap->glsl_file, first_match) == 0)) {
+            roadmap->id = SARH_REPLACE_REGEXEC_FAILED_RM;
+        }
+
         if (!replace(buffer, INCLUDE_HEADER_PATTERN, "", "  ", verbose,
           roadmap))
         {
@@ -472,7 +503,9 @@ bool searchAndReplaceHeaders(char** filepath, char** buffer, bool verbose,
         VERB(verbose, printf("      Reallocating memory for headers ...\n");)
         regex.headers = realloc(regex.headers,
           sizeof(char*) * regex.headers_length);
-        if (!regex.headers)
+        if ((!regex.headers) ||
+          ((roadmap->id == SARH_HEADERS_REALLOC_FAILED_RM) &&
+          (strcmp(roadmap->glsl_file, first_match) == 0)))
         {
           VERB(verbose, fprintf(stderr, "      "));
           fprintf (stderr, "headers realloc() failed\n");
@@ -485,7 +518,9 @@ bool searchAndReplaceHeaders(char** filepath, char** buffer, bool verbose,
 ...\n", regex.headers_length - 1);)
         (regex.headers)[regex.headers_length - 1] =
           malloc(sizeof(char) * (end_header - start_header + 1));
-        if (!(regex.headers)[regex.headers_length - 1])
+        if ((!(regex.headers)[regex.headers_length - 1]) ||
+          ((roadmap->id == SARH_HEADER_REALLOC_FAILED_RM) &&
+          (strcmp(roadmap->glsl_file, first_match) == 0)))
         {
           VERB(verbose, fprintf(stderr, "      "));
           fprintf (stderr, "headers[%lu] malloc() failed\n",
@@ -521,6 +556,16 @@ header_filepath ...\n"));
         VERB(verbose, printf("      Reading file \"%s\" ... \n",
           header_filepath));
         char* header_filepath_p = &(header_filepath[0]);
+
+        if ((roadmap->id == SARH_READFILE_BUFFER_MALLOC_FAILED_RM) &&
+          (strcmp(roadmap->glsl_file, first_match) == 0))
+        {
+          roadmap->id = BUFFER_MALLOC_FAILED_RM;
+        } else if ((roadmap->id == SARH_READFILE_FOPEN_FAILED_RM) &&
+          (strcmp(roadmap->glsl_file, first_match) == 0)) {
+            roadmap->id = FOPEN_FAILED_RM;
+        }
+
         if (!readFile(&header_filepath_p, &(regex.header_buffer), "  ",
           verbose, roadmap))
         {
@@ -533,6 +578,12 @@ header_filepath ...\n"));
 
         VERB(verbose, printf("      Adding markers to \"%s\" ...\n",
           (regex.headers)[regex.headers_length - 1]));
+        if ((roadmap->id == SARH_ADDMARKERS_IN_LOOP_REALLOC_FAILED_RM) &&
+          (strcmp(roadmap->glsl_file, first_match) == 0))
+        {
+          roadmap->id = SARH_ADDMARKERS_REALLOC_FAILED_RM;
+        }
+
         if (!addMarkers(&((regex.headers)[regex.headers_length - 1]),
           &(regex.header_buffer), dir_path, "  ", verbose, roadmap))
         {
@@ -545,6 +596,18 @@ header_filepath ...\n"));
 
         VERB(verbose, printf("      Replacing header \"%s\" by its content \
 into buffer file ...\n", first_match));
+        if ((roadmap->id == SARH_REPLACE_2_REGCOMP_FAILED_RM) &&
+          (strcmp(roadmap->glsl_file, first_match) == 0))
+        {
+          roadmap->id = SARH_REPLACE_REGCOMP_FAILED_RM;
+        } else if ((roadmap->id == SARH_REPLACE_2_REALLOC_FAILED_RM) &&
+          (strcmp(roadmap->glsl_file, first_match) == 0)) {
+            roadmap->id = SARH_REPLACE_REALLOC_FAILED_RM;
+        } else if ((roadmap->id == SARH_REPLACE_2_REGEXEC_FAILED_RM) &&
+          (strcmp(roadmap->glsl_file, first_match) == 0)) {
+            roadmap->id = SARH_REPLACE_REGEXEC_FAILED_RM;
+        }
+
         if (!replace(buffer, INCLUDE_HEADER_PATTERN,
           regex.header_buffer, "  ", verbose, roadmap))
         {
@@ -575,7 +638,7 @@ into buffer file ...\n", first_match));
     freeRegex(&regex, "", verbose);
 
     VERB(verbose, printf("    Searching for regex error ...\n"));
-    if (match != REG_NOMATCH)
+    if ((match != REG_NOMATCH) || (roadmap->id == SARH_REGEXEC_FAILED_RM))
     {
       size_t size = regerror(regex_error, &(regex.regex), NULL, 0);
       VERB(verbose, printf("    Message size of regex error is %lu\n", size));
@@ -707,7 +770,26 @@ file ...\n"));
       match = regexec(&regex, *message, nmatch + 1, m, 0);
     }
 
-    VERB(verbose, printf("      Regex pattern not found\n"));
+    VERB(verbose, printf("      Searching for regex error ...\n"));
+    if (match != REG_NOMATCH)
+    {
+      int regex_error = 1;
+      size_t size = regerror(regex_error, &regex, NULL, 0);
+      VERB(verbose, printf("      Message size of regex error is %lu\n", size));
+
+      char text[size];
+
+      regerror(regex_error, &regex, &(text[0]), size);
+
+      VERB(verbose, printf("      Freeing regex structure ...\n"));
+      regfree(&regex);
+      VERB(verbose, printf("      Memory freed successfully\n"));
+
+      VERB(verbose, fprintf(stderr, "      "));
+      fprintf(stderr, "Regex error: %s\n", text);
+      return false;
+    }
+    VERB(verbose, printf("      No regex error. Regex pattern not found\n"));
   } else {
     VERB(verbose, fprintf(stderr, "      "));
     fprintf(stderr, "Regex compilation failed\n");

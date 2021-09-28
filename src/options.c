@@ -94,7 +94,7 @@ bool parsing_options(bool* verbose, int* delay, UniformValues* uniform_values,
         {
           help();
           return false;
-        } else if (roadmap->id) {
+        } else {
           if ((roadmap->id == FRAGMENT_FILE_SARH_ADDMARKERS_REALLOC_FAILED_RM)
             || (roadmap->id == FRAGMENT_FILE_SARH_HEADER_MALLOC_FAILED_RM)
             || (roadmap->id == VERTEX_FILE_SARH_ADDMARKERS_REALLOC_FAILED_RM)

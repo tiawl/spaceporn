@@ -24,23 +24,14 @@ bool buildVertexShaderFile(Shaders* shaders, bool verbose, Roadmap* roadmap)
   if (roadmap->id == FOPEN_VERTEX_FILE_FAILED_RM)
   {
     roadmap->id = FOPEN_FAILED_RM;
-  }
-
-  if (roadmap->id == BUFFER_VERTEX_FILE_MALLOC_FAILED_RM)
-  {
+  } else if (roadmap->id == BUFFER_VERTEX_FILE_MALLOC_FAILED_RM) {
     roadmap->id = BUFFER_MALLOC_FAILED_RM;
-  }
-
-  if (roadmap->id == VERTEX_SHADER_COMPILATION_FAILED_RM)
-  {
+  } else if (roadmap->id == VERTEX_SHADER_COMPILATION_FAILED_RM) {
     roadmap->id = SHADER_COMPILATION_FAILED_RM;
     shaders->vertex_file = ERRONEOUS_VERTEX_SHADER;
   } else if (roadmap->id == LINKING_PROGRAM_FAILED_RM) {
     shaders->vertex_file = MISSINGMAIN_VERTEX_SHADER;
-  }
-
-  if (roadmap->id == VERTEX_FILE_SARH_REGCOMP_FAILED_RM)
-  {
+  } else if (roadmap->id == VERTEX_FILE_SARH_REGCOMP_FAILED_RM) {
     roadmap->id = SARH_REGCOMP_FAILED_RM;
   } else if (roadmap->id == VERTEX_FILE_SARH_HEADERS_MALLOC_FAILED_RM) {
     roadmap->id = SARH_HEADERS_MALLOC_FAILED_RM;
@@ -48,6 +39,29 @@ bool buildVertexShaderFile(Shaders* shaders, bool verbose, Roadmap* roadmap)
     roadmap->id = SARH_HEADER_MALLOC_FAILED_RM;
   } else if (roadmap->id == VERTEX_FILE_SARH_ADDMARKERS_REALLOC_FAILED_RM) {
     roadmap->id = SARH_ADDMARKERS_REALLOC_FAILED_RM;
+  } else if (roadmap->id == VERTEX_FILE_SARH_REPLACE_1_REGCOMP_FAILED_RM) {
+    roadmap->id = SARH_REPLACE_1_REGCOMP_FAILED_RM;
+  } else if (roadmap->id == VERTEX_FILE_SARH_REPLACE_1_REALLOC_FAILED_RM) {
+    roadmap->id = SARH_REPLACE_1_REALLOC_FAILED_RM;
+  } else if (roadmap->id == VERTEX_FILE_SARH_REPLACE_1_REGEXEC_FAILED_RM) {
+    roadmap->id = SARH_REPLACE_1_REGEXEC_FAILED_RM;
+  } else if (roadmap->id == VERTEX_FILE_SARH_HEADERS_REALLOC_FAILED_RM) {
+    roadmap->id = SARH_HEADERS_REALLOC_FAILED_RM;
+  } else if (roadmap->id == VERTEX_FILE_SARH_HEADER_REALLOC_FAILED_RM) {
+    roadmap->id = SARH_HEADER_REALLOC_FAILED_RM;
+  } else if (roadmap->id == VERTEX_FILE_SARH_READFILE_BUFFER_MALLOC_FAILED_RM) {
+    roadmap->id = SARH_READFILE_BUFFER_MALLOC_FAILED_RM;
+  } else if (roadmap->id == VERTEX_FILE_SARH_READFILE_FOPEN_FAILED_RM) {
+    roadmap->id = SARH_READFILE_FOPEN_FAILED_RM;
+  } else if (roadmap->id ==
+    VERTEX_FILE_SARH_ADDMARKERS_IN_LOOP_REALLOC_FAILED_RM) {
+      roadmap->id = SARH_ADDMARKERS_IN_LOOP_REALLOC_FAILED_RM;
+  } else if (roadmap->id == VERTEX_FILE_SARH_REPLACE_2_REGCOMP_FAILED_RM) {
+    roadmap->id = SARH_REPLACE_2_REGCOMP_FAILED_RM;
+  } else if (roadmap->id == VERTEX_FILE_SARH_REPLACE_2_REALLOC_FAILED_RM) {
+    roadmap->id = SARH_REPLACE_2_REALLOC_FAILED_RM;
+  } else if (roadmap->id == VERTEX_FILE_SARH_REPLACE_2_REGEXEC_FAILED_RM) {
+    roadmap->id = SARH_REPLACE_2_REGEXEC_FAILED_RM;
   }
 
   if (!buildFile(&(shaders->vshaderpath), &(shaders->vertex_file), verbose,
@@ -66,23 +80,14 @@ bool buildFragmentShaderFile(Shaders* shaders, bool verbose, Roadmap* roadmap)
   if (roadmap->id == FOPEN_FRAGMENT_FILE_FAILED_RM)
   {
     roadmap->id = FOPEN_FAILED_RM;
-  }
-
-  if (roadmap->id == BUFFER_FRAGMENT_FILE_MALLOC_FAILED_RM)
-  {
+  } else if (roadmap->id == BUFFER_FRAGMENT_FILE_MALLOC_FAILED_RM) {
     roadmap->id = BUFFER_MALLOC_FAILED_RM;
-  }
-
-  if (roadmap->id == FRAGMENT_SHADER_COMPILATION_FAILED_RM)
-  {
+  } if (roadmap->id == FRAGMENT_SHADER_COMPILATION_FAILED_RM) {
     roadmap->id = SHADER_COMPILATION_FAILED_RM;
     shaders->fragment_file = ERRONEOUS_FRAGMENT_SHADER;
   } else if (roadmap->id == LINKING_PROGRAM_FAILED_RM) {
     roadmap->id = EXIT_SUCCESS_RM;
-  }
-
-  if (roadmap->id == FRAGMENT_FILE_SARH_REGCOMP_FAILED_RM)
-  {
+  } else if (roadmap->id == FRAGMENT_FILE_SARH_REGCOMP_FAILED_RM) {
     roadmap->id = SARH_REGCOMP_FAILED_RM;
   } else if (roadmap->id == FRAGMENT_FILE_SARH_HEADERS_MALLOC_FAILED_RM) {
     roadmap->id = SARH_HEADERS_MALLOC_FAILED_RM;
@@ -90,6 +95,30 @@ bool buildFragmentShaderFile(Shaders* shaders, bool verbose, Roadmap* roadmap)
     roadmap->id = SARH_HEADER_MALLOC_FAILED_RM;
   } else if (roadmap->id == FRAGMENT_FILE_SARH_ADDMARKERS_REALLOC_FAILED_RM) {
     roadmap->id = SARH_ADDMARKERS_REALLOC_FAILED_RM;
+  } else if (roadmap->id == FRAGMENT_FILE_SARH_REPLACE_1_REGCOMP_FAILED_RM) {
+    roadmap->id = SARH_REPLACE_1_REGCOMP_FAILED_RM;
+  } else if (roadmap->id == FRAGMENT_FILE_SARH_REPLACE_1_REALLOC_FAILED_RM) {
+    roadmap->id = SARH_REPLACE_1_REALLOC_FAILED_RM;
+  } else if (roadmap->id == FRAGMENT_FILE_SARH_REPLACE_1_REGEXEC_FAILED_RM) {
+    roadmap->id = SARH_REPLACE_1_REGEXEC_FAILED_RM;
+  } else if (roadmap->id == FRAGMENT_FILE_SARH_HEADERS_REALLOC_FAILED_RM) {
+    roadmap->id = SARH_HEADERS_REALLOC_FAILED_RM;
+  } else if (roadmap->id == FRAGMENT_FILE_SARH_HEADER_REALLOC_FAILED_RM) {
+    roadmap->id = SARH_HEADER_REALLOC_FAILED_RM;
+  } else if (roadmap->id ==
+    FRAGMENT_FILE_SARH_READFILE_BUFFER_MALLOC_FAILED_RM) {
+      roadmap->id = SARH_READFILE_BUFFER_MALLOC_FAILED_RM;
+  } else if (roadmap->id == FRAGMENT_FILE_SARH_READFILE_FOPEN_FAILED_RM) {
+    roadmap->id = SARH_READFILE_FOPEN_FAILED_RM;
+  } else if (roadmap->id ==
+    FRAGMENT_FILE_SARH_ADDMARKERS_IN_LOOP_REALLOC_FAILED_RM) {
+      roadmap->id = SARH_ADDMARKERS_IN_LOOP_REALLOC_FAILED_RM;
+  } else if (roadmap->id == FRAGMENT_FILE_SARH_REPLACE_2_REGCOMP_FAILED_RM) {
+    roadmap->id = SARH_REPLACE_2_REGCOMP_FAILED_RM;
+  } else if (roadmap->id == FRAGMENT_FILE_SARH_REPLACE_2_REALLOC_FAILED_RM) {
+    roadmap->id = SARH_REPLACE_2_REALLOC_FAILED_RM;
+  } else if (roadmap->id == FRAGMENT_FILE_SARH_REPLACE_2_REGEXEC_FAILED_RM) {
+    roadmap->id = SARH_REPLACE_2_REGEXEC_FAILED_RM;
   }
 
   if (!buildFile(&(shaders->fshaderpath), &(shaders->fragment_file), verbose,

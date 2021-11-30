@@ -62,6 +62,8 @@ bool buildVertexShaderFile(Shaders* shaders, bool verbose, Roadmap* roadmap)
     roadmap->id = SARH_REPLACE_2_REALLOC_FAILED_RM;
   } else if (roadmap->id == VERTEX_FILE_SARH_REPLACE_2_REGEXEC_FAILED_RM) {
     roadmap->id = SARH_REPLACE_2_REGEXEC_FAILED_RM;
+  } else if (roadmap->id == VERTEX_FILE_SARH_REGEXEC_FAILED_RM) {
+    roadmap->id = SARH_REGEXEC_FAILED_RM;
   }
 
   if (!buildFile(&(shaders->vshaderpath), &(shaders->vertex_file), verbose,
@@ -82,7 +84,7 @@ bool buildFragmentShaderFile(Shaders* shaders, bool verbose, Roadmap* roadmap)
     roadmap->id = FOPEN_FAILED_RM;
   } else if (roadmap->id == BUFFER_FRAGMENT_FILE_MALLOC_FAILED_RM) {
     roadmap->id = BUFFER_MALLOC_FAILED_RM;
-  } if (roadmap->id == FRAGMENT_SHADER_COMPILATION_FAILED_RM) {
+  } else if (roadmap->id == FRAGMENT_SHADER_COMPILATION_FAILED_RM) {
     roadmap->id = SHADER_COMPILATION_FAILED_RM;
     shaders->fragment_file = ERRONEOUS_FRAGMENT_SHADER;
   } else if (roadmap->id == LINKING_PROGRAM_FAILED_RM) {
@@ -119,6 +121,8 @@ bool buildFragmentShaderFile(Shaders* shaders, bool verbose, Roadmap* roadmap)
     roadmap->id = SARH_REPLACE_2_REALLOC_FAILED_RM;
   } else if (roadmap->id == FRAGMENT_FILE_SARH_REPLACE_2_REGEXEC_FAILED_RM) {
     roadmap->id = SARH_REPLACE_2_REGEXEC_FAILED_RM;
+  } else if (roadmap->id == FRAGMENT_FILE_SARH_REGEXEC_FAILED_RM) {
+    roadmap->id = SARH_REGEXEC_FAILED_RM;
   }
 
   if (!buildFile(&(shaders->fshaderpath), &(shaders->fragment_file), verbose,
@@ -223,6 +227,18 @@ bool loadShader(Shaders* shaders, GLenum shaderType, bool verbose,
 
 bool loadVertexShader(Shaders* shaders, bool verbose, Roadmap* roadmap)
 {
+  if (roadmap->id == VERTEX_FILE_ILS_REPLACE_REGCOMP_FAILED_RM)
+  {
+    roadmap->id = IMPROVELOGSHADER_REPLACE_REGCOMP_FAILED_RM;
+  } else if (roadmap->id == VERTEX_FILE_ILS_REPLACE_REALLOC_FAILED_RM) {
+    roadmap->id = IMPROVELOGSHADER_REPLACE_REALLOC_FAILED_RM;
+  } else if (roadmap->id == VERTEX_FILE_ILS_REPLACE_REGEXEC_FAILED_RM) {
+    roadmap->id = IMPROVELOGSHADER_REPLACE_REGEXEC_FAILED_RM;
+  } else if (roadmap->id == VERTEX_FILE_ILS_REGCOMP_FAILED_RM) {
+    roadmap->id = IMPROVELOGSHADER_REGCOMP_FAILED_RM;
+  } else if (roadmap->id == VERTEX_FILE_ILS_REGEXEC_FAILED_RM) {
+    roadmap->id = IMPROVELOGSHADER_REGEXEC_FAILED_RM;
+  }
   if (!loadShader(shaders, GL_VERTEX_SHADER, verbose, roadmap))
   {
     VERB(verbose, fprintf(stderr, "  "));
@@ -235,6 +251,18 @@ bool loadVertexShader(Shaders* shaders, bool verbose, Roadmap* roadmap)
 
 bool loadFragmentShader(Shaders* shaders, bool verbose, Roadmap* roadmap)
 {
+  if (roadmap->id == FRAGMENT_FILE_ILS_REPLACE_REGCOMP_FAILED_RM)
+  {
+    roadmap->id = IMPROVELOGSHADER_REPLACE_REGCOMP_FAILED_RM;
+  } else if (roadmap->id == FRAGMENT_FILE_ILS_REPLACE_REALLOC_FAILED_RM) {
+    roadmap->id = IMPROVELOGSHADER_REPLACE_REALLOC_FAILED_RM;
+  } else if (roadmap->id == FRAGMENT_FILE_ILS_REPLACE_REGEXEC_FAILED_RM) {
+    roadmap->id = IMPROVELOGSHADER_REPLACE_REGEXEC_FAILED_RM;
+  } else if (roadmap->id == FRAGMENT_FILE_ILS_REGCOMP_FAILED_RM) {
+    roadmap->id = IMPROVELOGSHADER_REGCOMP_FAILED_RM;
+  } else if (roadmap->id == FRAGMENT_FILE_ILS_REGEXEC_FAILED_RM) {
+    roadmap->id = IMPROVELOGSHADER_REGEXEC_FAILED_RM;
+  }
   if (!loadShader(shaders, GL_FRAGMENT_SHADER, verbose, roadmap))
   {
     VERB(verbose, fprintf(stderr, "  "));

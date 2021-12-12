@@ -1,6 +1,5 @@
 [![Build Status](https://travis-ci.com/pabtomas/xteleskop.svg?branch=master)](https://travis-ci.com/pabtomas/xteleskop)
 
-
 # xteleskop
 
 A PixelSpace Shader Wallpaper for X System

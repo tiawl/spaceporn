@@ -1,5 +1,5 @@
-#ifndef XTELESKTOP_CONTEXT_H
-#define XTELESKTOP_CONTEXT_H
+#ifndef XTELESKOP_CONTEXT_H
+#define XTELESKOP_CONTEXT_H
 
 #include <stdio.h>
 #include <stdlib.h>

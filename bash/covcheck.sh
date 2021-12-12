@@ -45,10 +45,10 @@ done
 make coverage > /dev/null 2>&1
 cd ./bin/cov
 
-./xtelesktop -h > /dev/null 2>&1
-./xtelesktop -x -1 > /dev/null 2>&1
-./xtelesktop -d -1 > /dev/null 2>&1
-./xtelesktop -V -R -1 > /dev/null 2>&1
+./xteleskop -h > /dev/null 2>&1
+./xteleskop -x -1 > /dev/null 2>&1
+./xteleskop -d -1 > /dev/null 2>&1
+./xteleskop -V -R -1 > /dev/null 2>&1
 
 echo
 
@@ -58,7 +58,7 @@ for ROADMAP in $(eval echo {1..$(( ${#ROADMAPS[@]} - 1 ))}); do
   done
   echo && echo $ROADMAP && echo
   echo "Covering ${ROADMAPS[$ROADMAP]} ..."
-  ./xtelesktop -R $ROADMAP -a -m -p -x 500 -d 30000 > /dev/null 2>&1
+  ./xteleskop -R $ROADMAP -a -m -p -x 500 -d 30000 > /dev/null 2>&1
   echo "${ROADMAPS[$ROADMAP]} covered" && echo
 done
 

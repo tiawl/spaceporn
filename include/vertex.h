@@ -1,5 +1,5 @@
-#ifndef XTELESKTOP_VERTEX_H
-#define XTELESKTOP_VERTEX_H
+#ifndef XTELESKOP_VERTEX_H
+#define XTELESKOP_VERTEX_H
 
 #include "util.h"
 

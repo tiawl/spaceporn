@@ -1,5 +1,5 @@
-#ifndef XTELESKTOP_SHADER_H
-#define XTELESKTOP_SHADER_H
+#ifndef XTELESKOP_SHADER_H
+#define XTELESKOP_SHADER_H
 
 #define ERRONEOUS_VERTEX_SHADER "# version 330 core\n\
 \n\

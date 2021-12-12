@@ -1,5 +1,5 @@
-#ifndef XTELESKTOP_OPTIONS_H
-#define XTELESKTOP_OPTIONS_H
+#ifndef XTELESKOP_OPTIONS_H
+#define XTELESKOP_OPTIONS_H
 
 #include <string.h>
 #include <unistd.h>
@@ -7,7 +7,7 @@
 #include "path.h"
 #include "uniform.h"
 
-#define NAME "xtelesktop"
+#define NAME "xteleskop"
 #define VERSION "0.1"
 #define DEFAULT_DELAY 30000
 

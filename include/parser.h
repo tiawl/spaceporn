@@ -1,5 +1,5 @@
-#ifndef XTELESKTOP_PARSER_H
-#define XTELESKTOP_PARSER_H
+#ifndef XTELESKOP_PARSER_H
+#define XTELESKOP_PARSER_H
 
 #include <errno.h>
 #include <math.h>

@@ -1,5 +1,5 @@
-#ifndef XTELESKTOP_UTIL_H
-#define XTELESKTOP_UTIL_H
+#ifndef XTELESKOP_UTIL_H
+#define XTELESKOP_UTIL_H
 
 #include <stdbool.h>
 #include <stdio.h>

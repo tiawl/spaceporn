@@ -1,5 +1,5 @@
-#ifndef XTELESKTOP_H
-#define XTELESKTOP_H
+#ifndef XTELESKOP_H
+#define XTELESKOP_H
 
 #include "context.h"
 #include "options.h"

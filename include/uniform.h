@@ -1,5 +1,5 @@
-#ifndef XTELESKTOP_UNIFORM_H
-#define XTELESKTOP_UNIFORM_H
+#ifndef XTELESKOP_UNIFORM_H
+#define XTELESKOP_UNIFORM_H
 
 #include <time.h>
 

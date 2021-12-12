@@ -1,12 +1,12 @@
-#ifndef XTELESKTOP_PATH_H
-#define XTELESKTOP_PATH_H
+#ifndef XTELESKOP_PATH_H
+#define XTELESKOP_PATH_H
 
 #include <string.h>
 
 #include "util.h"
 
 #define HOME_DIR "/home/"
-#define BIN_DIR "/Workspace/Perso/xtelesktop/" //  "/.local/bin/"
+#define BIN_DIR "/Workspace/Perso/xteleskop/" //  "/.local/bin/"
 #define SHADERS_DIR "shaders/"
 #define TEXTURES_DIR "textures/"
 #define FRAGMENT_DIR "fragment/"

@@ -1,7 +1,7 @@
-[![Build Status](https://travis-ci.com/pabtomas/xtelesktop.svg?branch=master)](https://travis-ci.com/pabtomas/xtelesktop)
+[![Build Status](https://travis-ci.com/pabtomas/xteleskop.svg?branch=master)](https://travis-ci.com/pabtomas/xteleskop)
 
 
-# xtelesktop
+# xteleskop
 
 A PixelSpace Shader Wallpaper for X System
 
@@ -29,9 +29,9 @@ You can not use this code for a non-personal usage without to be aware of its au
 ## Usage
 
 ```
-xtelesktop v0.1
+xteleskop v0.1
 
-Usage: xtelesktop [-a] [-m] [-p] [-x PIXELS] [-d MICROS] [-V] [-R ROADMAP]
+Usage: xteleskop [-a] [-m] [-p] [-x PIXELS] [-d MICROS] [-V] [-R ROADMAP]
 
 User options:
 
@@ -62,12 +62,12 @@ Dev options:
 4. Run `./bash/configure.sh` and install requested dependencies. Repeat this step until `bin/conf/config.status` is generated.
 5. Run `make`.
 6. Test the program by using **User options** described in **Usage** section until you find a command which fits your needs.
-   This command will be called `YOUR_XTELESKTOP_CLI` for following steps of this tutorial.
+   This command will be called `YOUR_XTELESKOP_CLI` for following steps of this tutorial.
 7. Run `sudo make install`.
 
 ---
 8. Add this following line to your `.xinitrc`:
-   `YOUR_XTELESKTOP_CLI -V > ~/.xtelesktop.log 2>&1`
+   `YOUR_XTELESKOP_CLI -V > ~/.xteleskop.log 2>&1`
 9. Logout and log back in to update the background.
 ---
 
@@ -77,7 +77,7 @@ Dev options:
   - Ubuntu 20.04    :heavy_check_mark:
 - Windows OSs       :x:
 
-If you ran **xtelesktop** on a non-listed environment, contact me, I will add it here.
+If you ran **xteleskop** on a non-listed environment, contact me, I will add it here.
 
 ## Known issues
 
@@ -85,7 +85,7 @@ If you ran **xtelesktop** on a non-listed environment, contact me, I will add it
 
 ## Reporting bugs
 
-If the application crashed, you can send me your OS config (OS and Window Manager) **and** the content of the file located at: `~/.xtelesktop.log` if you followed the **Installing** tutorial (if not it will be really hard to understand what happened on your device).
+If the application crashed, you can send me your OS config (OS and Window Manager) **and** the content of the file located at: `~/.xteleskop.log` if you followed the **Installing** tutorial (if not it will be really hard to understand what happened on your device).
 
 ## Additional links
 

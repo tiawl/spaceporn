@@ -137,7 +137,6 @@ object ...\n"));
   VERB(verbose, printf("Vertex buffer object and vertex array object \
 initialized\n"));
 
-  int ii = 0;
   while(true)
   {
     VERB(verbose, printf("Updating uniforms ...\n"));
@@ -172,11 +171,10 @@ initialized\n"));
     usleep(delay);
     VERB(verbose, printf("Ready to loop again\n"));
 
-    if ((roadmap.id == BREAK_SUCCESS_RM) && (ii > 1000))
+    if (roadmap.id == BREAK_SUCCESS_RM)
     {
       break;
     }
-    ii = ii + 1;
   }
 
   freePaths(&shaders, &png, verbose);

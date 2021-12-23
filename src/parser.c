@@ -173,7 +173,22 @@ end ...\n", spaces));
 
     VERB(verbose, printf("%s      Computing file position of the stream \
 ...\n", spaces));
-    length = ftell(f);
+    char relative_path[19];
+    strncpy(relative_path, *filepath + (strlen(*filepath) - 18), 18);
+    relative_path[18] = '\0';
+    if ((roadmap->id == VERTEX_SHADER_COMPILATION_FAILED_RM)
+      && (strcmp(relative_path, "s/vertex/main.glsl") == 0))
+    {
+      length = ERRONEOUS_VERTEX_SHADER;
+    } else if ((roadmap->id == FRAGMENT_SHADER_COMPILATION_FAILED_RM)
+      && (strcmp(relative_path, "fragment/main.glsl") == 0)) {
+        length = ERRONEOUS_FRAGMENT_SHADER;
+    } else if ((roadmap->id == LINKING_PROGRAM_FAILED_RM)
+      && (strcmp(relative_path, "s/vertex/main.glsl") == 0)) {
+        length = MISSINGMAIN_VERTEX_SHADER;
+    } else {
+      length = ftell(f);
+    }
     VERB(verbose, printf("%s      File position of the stream computed\n",
       spaces));
 
@@ -184,9 +199,7 @@ beginning ...\n", spaces));
 
     VERB(verbose, printf("%s      Allocating memory for reading file buffer \
 ...\n", spaces));
-    if ((roadmap->id != BUFFER_MALLOC_FAILED_RM) &&
-      (roadmap->id != SHADER_COMPILATION_FAILED_RM) &&
-      (roadmap->id != LINKING_PROGRAM_FAILED_RM))
+    if (roadmap->id != BUFFER_MALLOC_FAILED_RM)
     {
       *buffer = malloc(length + 1);
     }
@@ -197,12 +210,8 @@ beginning ...\n", spaces));
 allocated successfully\n", spaces));
 
       VERB(verbose, printf("%s      Reading file into buffer ...\n", spaces))
-      if ((roadmap->id != SHADER_COMPILATION_FAILED_RM) &&
-        (roadmap->id != LINKING_PROGRAM_FAILED_RM))
-      {
-        fread(*buffer, 1, length, f);
-        (*buffer)[length] = '\0'; // fread does not 0 terminate strings
-      }
+      fread(*buffer, 1, length, f);
+      (*buffer)[length] = '\0'; // fread does not 0 terminate strings
       VERB(verbose, printf("%s      Buffer filled with:\n\
 ------------------------------------------------------------------------------\
 \n%s\
@@ -261,18 +270,12 @@ bool addMarkers(char** filename, char** buffer, const char* dir_path,
 
   VERB(verbose, printf("%s    Reallocating memory for buffer ...\n",
     spaces));
+  *buffer = realloc(*buffer, sizeof(char) * (buffer_length + 1 +
+    (strlen(*filename) + strlen(" // :") + floor(log10(buffer_lines)) + 1) *
+    buffer_lines));
 
-  if ((roadmap->id != SARH_ADDMARKERS_REALLOC_FAILED_RM)
-    || (strcmp(roadmap->glsl_file, *filename) != 0))
-  {
-    *buffer = realloc(*buffer, sizeof(char) * (buffer_length +
-      (strlen(*filename) + strlen(" // :") + floor(log10(buffer_lines)) + 1) *
-      buffer_lines));
-  } else {
-    *buffer = NULL;
-  }
-
-  if (!buffer)
+  if (!*buffer || ((roadmap->id != SARH_ADDMARKERS_REALLOC_FAILED_RM)
+    || (strcmp(roadmap->glsl_file, *filename) != 0)))
   {
     VERB(verbose, fprintf(stderr, "%s      ", spaces));
     fprintf(stderr, "realloc() buffer failed\n");
@@ -357,7 +360,7 @@ bool searchAndReplaceHeaders(char** filepath, char** buffer, bool verbose,
   Regex regex;
   regex.header_buffer = NULL;
   regex.headers = NULL;
-  regex.headers_length = 1;
+  regex.headers_length = 0;
 
   char dir_path[strlen(*filepath) - 9];
   dir_path[0] = '\0';
@@ -401,12 +404,13 @@ bool searchAndReplaceHeaders(char** filepath, char** buffer, bool verbose,
     }
     VERB(verbose, printf("    Memory allocated successfully\n"));
 
-    regex.headers_length = 1;
     VERB(verbose, printf("    Allocating memory for headers[0] ...\n");)
     if ((roadmap->id != SARH_HEADER_MALLOC_FAILED_RM)
       || (strcmp(roadmap->glsl_file, "main.glsl") != 0))
     {
       (regex.headers)[0] = malloc(sizeof(char) * (strlen("main.glsl") + 1));
+    } else {
+      (regex.headers)[0] = NULL;
     }
 
     if (!(regex.headers)[0])
@@ -417,6 +421,7 @@ bool searchAndReplaceHeaders(char** filepath, char** buffer, bool verbose,
       return false;
     }
     VERB(verbose, printf("    Memory allocated successfully\n"));
+    regex.headers_length = 1;
 
     VERB(verbose, printf("    Copying string into headers[0] ...\n"));
     strcpy((regex.headers)[0], "main.glsl");

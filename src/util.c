@@ -114,9 +114,7 @@ void freeContext(Context* context, bool verbose)
 
 void freeProgram(Shaders* shaders, bool verbose, Roadmap* roadmap)
 {
-  if (shaders->vertex_file && (roadmap->id !=
-    VERTEX_SHADER_COMPILATION_FAILED_RM) && (roadmap->id !=
-    LINKING_PROGRAM_FAILED_RM))
+  if (shaders->vertex_file)
   {
     VERB(verbose, printf("Freeing vertex file ...\n"));
     free(shaders->vertex_file);
@@ -124,8 +122,7 @@ void freeProgram(Shaders* shaders, bool verbose, Roadmap* roadmap)
     VERB(verbose, printf("Vertex file freed\n"));
   }
 
-  if (shaders->fragment_file && (roadmap->id !=
-    FRAGMENT_SHADER_COMPILATION_FAILED_RM))
+  if (shaders->fragment_file)
   {
     VERB(verbose, printf("Freeing fragment file ...\n"));
     free(shaders->fragment_file);

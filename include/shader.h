@@ -1,29 +1,6 @@
 #ifndef XTELESKOP_SHADER_H
 #define XTELESKOP_SHADER_H
 
-#define ERRONEOUS_VERTEX_SHADER "# version 330 core\n\
-\n\
-layout(location = 0)\n\
-in vec2 vertexPosition;\n\
-\n\
-void main()\n\
-{\n"
-
-#define MISSINGMAIN_VERTEX_SHADER "# version 330 core\n\
-\n\
-layout(location = 0) in vec2 vertexPosition;"
-
-#define ERRONEOUS_FRAGMENT_SHADER "# version 330 core\n\
-\n\
-uniform float fflags[6];\n\
-uniform bvec3 bflags;\n\
-uniform sampler2D big_stars_texture;\n\
-\n\
-out vec4 fragColor;\n\
-\n\
-void main()\n\
-{\n"
-
 #include "parser.h"
 
 bool buildFile(char** filepath, char** buffer, bool verbose,

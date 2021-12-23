@@ -74,20 +74,30 @@ bool parsing_options(bool* verbose, int* delay, UniformValues* uniform_values,
               {
                 dir = malloc(sizeof(char) * (strlen(SHADERS_DIR) +
                   strlen(VERTEX_DIR) + strlen(argv[i]) + 1));
+                if (!dir)
+                {
+                  fprintf(stderr, "malloc() failed when parsing options.\n");
+                }
                 strcpy(dir, SHADERS_DIR);
                 strcat(dir, VERTEX_DIR);
               } else {
                 dir = malloc(sizeof(char) * (strlen(SHADERS_DIR) +
                   strlen(FRAGMENT_DIR) + strlen(argv[i]) + 1));
+                if (!dir)
+                {
+                  fprintf(stderr, "malloc() failed when parsing options.\n");
+                }
                 strcpy(dir, SHADERS_DIR);
                 strcat(dir, FRAGMENT_DIR);
               }
               strcat(dir, argv[i]);
               if (access(dir, F_OK) == 0)
               {
+                free(dir);
                 roadmap->glsl_file = argv[i];
               } else {
                 fprintf(stderr, "%s does not exist\n", dir);
+                free(dir);
                 return false;
               }
             } else {

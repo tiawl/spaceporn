@@ -1,9 +1,9 @@
 #!/bin/bash
 
-FRAGMENTS=$(find shaders/fragment -type f)
-VERTEXES=$(find shaders/vertex -type f)
+declare -r FRAGMENTS=$(find shaders/fragment -type f)
+declare -r VERTEXES=$(find shaders/vertex -type f)
 
-declare -a ROADMAPS=($(seq 1 72))
+declare -a -r ROADMAPS=($(seq 1 72))
 
 STATUS=0
 EQUALS=0
@@ -14,82 +14,57 @@ make clean all > /dev/null 2>&1
 for ROADMAP in ${ROADMAPS[@]}; do
 
   FLAGS=""
-  if [ ${ROADMAP} -ge 35 ] && [ ${ROADMAP} -le 47 ]; then
+  if [[ ${ROADMAP} -ge 35 && ${ROADMAP} -le 47 ]]; then
     FLAGS="${VERTEXES}"
-  elif [ ${ROADMAP} -ge 48 ] && [ ${ROADMAP} -le 60 ]; then
+  elif [[ ${ROADMAP} -ge 48 && ${ROADMAP} -le 60 ]]; then
     FLAGS="${FRAGMENTS}"
   fi
 
-  if [ "x${FLAGS}" = "x" ]; then
+  if [[ "x${FLAGS}" == "x" ]]; then
     VALGRIND_OUTPUT=$(valgrind --leak-check=summary --show-leak-kinds=all \
---suppressions=amd.supp ./bin/all/xteleskop -a -m -p -x 500 -d 30000 \
--R ${ROADMAP} 2>&1 > /dev/null | sed 's/==[[:digit:]]*==/ /g')
+      --suppressions=amd.supp ./bin/all/xteleskop -a -m -p -x 500 -d 30000 \
+      -R ${ROADMAP} 2>&1 > /dev/null | sed 's/==[[:digit:]]*==/ /g')
 
-    for ITEM in $( echo "$VALGRIND_OUTPUT" | tee \
->(grep -E -A 3 "LEAK SUMMARY") >(grep -E "ERROR SUMMARY") > /dev/null \
-| grep -Po '^\D+\K(\d,?)+' | sed 's/,//g' ); do
-      if [ ${ITEM} -ne 0 ]; then
-        STATUS=1
-        break
-      fi
-    done
+    [[ $(echo "${VALGRIND_OUTPUT}" | tee >(grep -E -A 3 "LEAK SUMMARY") \
+      >(grep -E "ERROR SUMMARY") > /dev/null | grep -Po '^\D*\K(\d,?)+' \
+      | tr -d ',' | grep -E -v "^0$" | wc -l) -gt 0 ]] && STATUS=1
 
-    ((EQUALS=(78 - ${#ROADMAP}) / 2))
+    EQUALS=$(( (80 - ${#ROADMAP} - 2) / 2 ))
 
-    printf %${EQUALS}s | tr ' ' '='
-    printf " "
-    printf "${ROADMAP}"
-    printf " "
-    printf %${EQUALS}s | tr ' ' '='
-    if [ $((${#ROADMAP} % 2)) -eq 1 ]; then
-      printf =
-    fi
+    BAR=$(printf %${EQUALS}s | tr ' ' '=')
+    printf "${BAR} ${ROADMAP} ${BAR}"
+    [[ $(( ${#ROADMAP} % 2 )) -eq 1 ]] && printf "="
 
-    echo -e "\n"
+    echo -e "\n\n$(echo "${VALGRIND_OUTPUT}" | grep -E -A 2 "HEAP SUMMARY")\n"
+    [[ "${VALGRIND_OUTPUT}" =~ LEAK\ SUMMARY ]] && echo -e "$( \
+      echo "${VALGRIND_OUTPUT}" | grep -E -A 5 "LEAK SUMMARY")\n"
+    echo -e "$(echo "${VALGRIND_OUTPUT}" | grep -E "ERROR SUMMARY")\n"
 
-    echo "${VALGRIND_OUTPUT}" | grep -E -A 2 "HEAP SUMMARY" && echo
-    echo "${VALGRIND_OUTPUT}" | grep -E -A 5 "LEAK SUMMARY" && echo
-    echo "${VALGRIND_OUTPUT}" | grep -E "ERROR SUMMARY" && echo
-
-    if [ ${STATUS} -ne 0 ]; then
-      break
-    fi
+    [[ ${STATUS} -ne 0 ]] && exit 1
   else
-    for ${FILE} in ${FLAGS}; do
+    for FILE in ${FLAGS}; do
       VALGRIND_OUTPUT=$(valgrind --leak-check=summary --show-leak-kinds=all \
---suppressions=amd.supp ./bin/all/xteleskop -a -m -p -x 500 -d 30000 \
--R ${ROADMAP} ${FILE} 2>&1 > /dev/null | sed 's/==[[:digit:]]*==/ /g')
+        --suppressions=amd.supp ./bin/all/xteleskop -a -m -p -x 500 -d 30000 \
+        -R ${ROADMAP} $(echo ${FILE} | sed 's:^\([^/]\+/\)\{2\}::g') 2>&1 \
+        > /dev/null | sed 's/==[[:digit:]]*==/ /g')
 
-      for ITEM in $( echo "$VALGRIND_OUTPUT" | tee \
->(grep -E -A 3 "LEAK SUMMARY") >(grep -E "ERROR SUMMARY") > /dev/null \
-| grep -Po '^\D+\K(\d,?)+' | sed 's/,//g' ); do
-        if [ ${ITEM} -ne 0 ]; then
-          STATUS=1
-          break
-        fi
-      done
+      [[ $(echo "${VALGRIND_OUTPUT}" | tee >(grep -E -A 3 "LEAK SUMMARY") \
+        >(grep -E "ERROR SUMMARY") > /dev/null | grep -Po '^\D*\K(\d,?)+' \
+        | tr -d ',' | grep -E -v "^0$" | wc -l) -gt 0 ]] && STATUS=1
 
-      ((EQUALS=(78 - ${#ROADMAP} - ${#FILE} - 2) / 2))
+      EQUALS=$(( (80 - ${#ROADMAP} - ${#FILE} - 5) / 2 ))
 
-      printf %${EQUALS}s | tr ' ' '='
-      printf " "
-      printf "${ROADMAP}: ${FILE}"
-      printf " "
-      printf %${EQUALS}s | tr ' ' '='
-      if [ $(((${#ROADMAP} + ${#FILE}) % 2)) -eq 1 ]; then
-        printf =
-      fi
+      BAR=$(printf %${EQUALS}s | tr ' ' '=')
+      printf "${BAR} ${ROADMAP} - ${FILE} ${BAR}"
+      [[ $(( (${#ROADMAP} + ${#FILE} + 3) % 2 )) -eq 1 ]] && printf "="
 
-      echo -e "\n${VALGRIND_OUTPUT}" | grep -E -A 2 "HEAP SUMMARY" && echo
-      echo "${VALGRIND_OUTPUT}" | grep -E -A 5 "LEAK SUMMARY" && echo
-      echo "${VALGRIND_OUTPUT}" | grep -E "ERROR SUMMARY" && echo
+      echo -e "\n\n$(echo "${VALGRIND_OUTPUT}" | grep -E -A 2 "HEAP SUMMARY")\n"
+      [[ "${VALGRIND_OUTPUT}" =~ LEAK\ SUMMARY ]] && echo -e "$( \
+        echo "${VALGRIND_OUTPUT}" | grep -E -A 5 "LEAK SUMMARY")\n"
+      echo -e "$(echo "${VALGRIND_OUTPUT}" | grep -E "ERROR SUMMARY")\n"
 
-      if [ ${STATUS} -ne 0 ]; then
-        break
-      fi
+      [[ ${STATUS} -ne 0 ]] && exit 1
     done
   fi
 
 done
-
-(exit ${STATUS})

@@ -26,11 +26,6 @@ bool buildVertexShaderFile(Shaders* shaders, bool verbose, Roadmap* roadmap)
     roadmap->id = FOPEN_FAILED_RM;
   } else if (roadmap->id == BUFFER_VERTEX_FILE_MALLOC_FAILED_RM) {
     roadmap->id = BUFFER_MALLOC_FAILED_RM;
-  } else if (roadmap->id == VERTEX_SHADER_COMPILATION_FAILED_RM) {
-    roadmap->id = SHADER_COMPILATION_FAILED_RM;
-    shaders->vertex_file = ERRONEOUS_VERTEX_SHADER;
-  } else if (roadmap->id == LINKING_PROGRAM_FAILED_RM) {
-    shaders->vertex_file = MISSINGMAIN_VERTEX_SHADER;
   } else if (roadmap->id == VERTEX_FILE_SARH_REGCOMP_FAILED_RM) {
     roadmap->id = SARH_REGCOMP_FAILED_RM;
   } else if (roadmap->id == VERTEX_FILE_SARH_HEADERS_MALLOC_FAILED_RM) {
@@ -84,11 +79,6 @@ bool buildFragmentShaderFile(Shaders* shaders, bool verbose, Roadmap* roadmap)
     roadmap->id = FOPEN_FAILED_RM;
   } else if (roadmap->id == BUFFER_FRAGMENT_FILE_MALLOC_FAILED_RM) {
     roadmap->id = BUFFER_MALLOC_FAILED_RM;
-  } else if (roadmap->id == FRAGMENT_SHADER_COMPILATION_FAILED_RM) {
-    roadmap->id = SHADER_COMPILATION_FAILED_RM;
-    shaders->fragment_file = ERRONEOUS_FRAGMENT_SHADER;
-  } else if (roadmap->id == LINKING_PROGRAM_FAILED_RM) {
-    roadmap->id = EXIT_SUCCESS_RM;
   } else if (roadmap->id == FRAGMENT_FILE_SARH_REGCOMP_FAILED_RM) {
     roadmap->id = SARH_REGCOMP_FAILED_RM;
   } else if (roadmap->id == FRAGMENT_FILE_SARH_HEADERS_MALLOC_FAILED_RM) {

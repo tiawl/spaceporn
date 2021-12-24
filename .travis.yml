@@ -18,4 +18,4 @@ before_script:
   - export CC=${cc}
 
 script:
-  - chmod 700 bash/configure.sh && ./bash/configure.sh && make clean all
+  - chmod 700 scripts/configure.sh && ./scripts/configure.sh && make clean all

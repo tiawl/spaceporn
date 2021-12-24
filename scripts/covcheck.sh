@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+
+declare -r FRAGMENTS=$(find shaders/fragment -type f)
+declare -r VERTEXES=$(find shaders/vertex -type f)
+
+declare -a -r ROADMAPS=($(seq 1 72))
+
+make coverage > /dev/null 2>&1
+
+declare -r XTELESKOP="./bin/cov/xteleskop"
+
+${XTELESKOP} -h > /dev/null 2>&1
+${XTELESKOP} -x -1 > /dev/null 2>&1
+${XTELESKOP} -d -1 > /dev/null 2>&1
+${XTELESKOP} -V -R -1 > /dev/null 2>&1
+
+echo
+
+for ROADMAP in ${ROADMAPS[@]}; do
+
+  FLAGS=""
+  if [[ ${ROADMAP} -ge 35 && ${ROADMAP} -le 47 ]]; then
+    FLAGS="${VERTEXES}"
+  elif [[ ${ROADMAP} -ge 48 && ${ROADMAP} -le 60 ]]; then
+    FLAGS="${FRAGMENTS}"
+  fi
+
+  if [[ "x${FLAGS}" == "x" ]]; then
+    printf %80s | tr ' ' '='
+    echo -e "\n\nCovering roadmap ${ROADMAP} ..."
+    ${XTELESKOP} -a -m -p -x 500 -d 30000 -R ${ROADMAP} &> /dev/null
+    echo "Roadmap ${ROADMAP} covered" && echo
+  else
+    for FILE in ${FLAGS}; do
+      printf %80s | tr ' ' '='
+      echo -e "\n\nCovering roadmap ${ROADMAP} - ${FILE} ..."
+      ${XTELESKOP} -a -m -p -x 500 -d 30000 -R ${ROADMAP} ${FILE} &> /dev/null
+      echo "Roadmap ${ROADMAP} - ${FILE} covered" && echo
+    done
+  fi
+done
+
+echo -e "$(printf %80s | tr ' ' '=')\n"
+
+SOURCES=$(find src/ -type f -not -path '*/\.*') && cd bin/cov \
+  && gcov -f ${SOURCES} -o .

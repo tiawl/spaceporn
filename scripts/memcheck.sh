@@ -66,5 +66,4 @@ for ROADMAP in ${ROADMAPS[@]}; do
       [[ ${STATUS} -ne 0 ]] && exit 1
     done
   fi
-
 done

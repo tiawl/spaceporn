@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 declare -r FRAGMENTS=$(find shaders/fragment -type f)
 declare -r VERTEXES=$(find shaders/vertex -type f)
@@ -25,7 +25,7 @@ for ROADMAP in ${ROADMAPS[@]}; do
       --suppressions=amd.supp ./bin/all/xteleskop -a -m -p -x 500 -d 30000 \
       -R ${ROADMAP} 2>&1 > /dev/null | sed 's/==[[:digit:]]*==/ /g')
 
-    [[ $(echo "${VALGRIND_OUTPUT}" | tee >(grep -E -A 3 "LEAK SUMMARY") \
+    [[ $(echo "${VALGRIND_OUTPUT}" | tee >(grep -E -A 4 "LEAK SUMMARY") \
       >(grep -E "ERROR SUMMARY") > /dev/null | grep -Po '^\D*\K(\d,?)+' \
       | tr -d ',' | grep -E -v "^0$" | wc -l) -gt 0 ]] && STATUS=1
 
@@ -48,7 +48,7 @@ for ROADMAP in ${ROADMAPS[@]}; do
         -R ${ROADMAP} $(echo ${FILE} | sed 's:^\([^/]\+/\)\{2\}::g') 2>&1 \
         > /dev/null | sed 's/==[[:digit:]]*==/ /g')
 
-      [[ $(echo "${VALGRIND_OUTPUT}" | tee >(grep -E -A 3 "LEAK SUMMARY") \
+      [[ $(echo "${VALGRIND_OUTPUT}" | tee >(grep -E -A 4 "LEAK SUMMARY") \
         >(grep -E "ERROR SUMMARY") > /dev/null | grep -Po '^\D*\K(\d,?)+' \
         | tr -d ',' | grep -E -v "^0$" | wc -l) -gt 0 ]] && STATUS=1
 

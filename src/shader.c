@@ -156,6 +156,7 @@ bool checkLogShader(GLuint* shader, GLenum shaderType, char* buffer,
 
       if (!improveLogShader(&message, &buffer, maxLength, verbose, roadmap))
       {
+        free(message);
         return false;
       }
 

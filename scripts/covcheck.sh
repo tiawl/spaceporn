@@ -13,6 +13,7 @@ ${XTELESKOP} -h > /dev/null 2>&1
 ${XTELESKOP} -x -1 > /dev/null 2>&1
 ${XTELESKOP} -d -1 > /dev/null 2>&1
 ${XTELESKOP} -V -R -1 > /dev/null 2>&1
+${XTELESKOP} -R 54 > /dev/null 2>&1
 
 echo
 
@@ -34,7 +35,8 @@ for ROADMAP in ${ROADMAPS[@]}; do
     for FILE in ${FLAGS}; do
       printf %80s | tr ' ' '='
       echo -e "\n\nCovering roadmap ${ROADMAP} - ${FILE} ..."
-      ${XTELESKOP} -a -m -p -x 500 -d 30000 -R ${ROADMAP} ${FILE} &> /dev/null
+      ${XTELESKOP} -a -m -p -x 500 -d 30000 -R ${ROADMAP} $(echo ${FILE} \
+        | sed 's:^\([^/]\+/\)\{2\}::g') &> /dev/null
       echo "Roadmap ${ROADMAP} - ${FILE} covered" && echo
     done
   fi

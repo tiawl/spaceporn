@@ -77,6 +77,7 @@ bool parsing_options(bool* verbose, int* delay, UniformValues* uniform_values,
                 if (!dir)
                 {
                   fprintf(stderr, "malloc() failed when parsing options.\n");
+                  return false;
                 }
                 strcpy(dir, SHADERS_DIR);
                 strcat(dir, VERTEX_DIR);
@@ -86,6 +87,7 @@ bool parsing_options(bool* verbose, int* delay, UniformValues* uniform_values,
                 if (!dir)
                 {
                   fprintf(stderr, "malloc() failed when parsing options.\n");
+                  return false;
                 }
                 strcpy(dir, SHADERS_DIR);
                 strcat(dir, FRAGMENT_DIR);

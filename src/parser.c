@@ -185,21 +185,21 @@ end ...\n", spaces));
     strncpy(relative_path, *filepath + (strlen(*filepath) - 18), 18);
     relative_path[18] = '\0';
     if (((roadmap->id == VERTEX_SHADER_COMPILATION_FAILED_RM)
-      && (strcmp(relative_path, "s/vertex/main.glsl") == 0))
       || (roadmap->id == VERTEX_FILE_ILS_REPLACE_REGCOMP_FAILED_RM)
       || (roadmap->id == VERTEX_FILE_ILS_REPLACE_REALLOC_FAILED_RM)
       || (roadmap->id == VERTEX_FILE_ILS_REPLACE_REGEXEC_FAILED_RM)
       || (roadmap->id == VERTEX_FILE_ILS_REGCOMP_FAILED_RM)
       || (roadmap->id == VERTEX_FILE_ILS_REGEXEC_FAILED_RM))
+      && (strcmp(relative_path, "s/vertex/main.glsl") == 0))
     {
       length = ERRONEOUS_VERTEX_SHADER;
     } else if (((roadmap->id == FRAGMENT_SHADER_COMPILATION_FAILED_RM)
-      && (strcmp(relative_path, "fragment/main.glsl") == 0))
       || (roadmap->id == FRAGMENT_FILE_ILS_REPLACE_REGCOMP_FAILED_RM)
       || (roadmap->id == FRAGMENT_FILE_ILS_REPLACE_REALLOC_FAILED_RM)
       || (roadmap->id == FRAGMENT_FILE_ILS_REPLACE_REGEXEC_FAILED_RM)
       || (roadmap->id == FRAGMENT_FILE_ILS_REGCOMP_FAILED_RM)
-      || (roadmap->id == FRAGMENT_FILE_ILS_REGEXEC_FAILED_RM)) {
+      || (roadmap->id == FRAGMENT_FILE_ILS_REGEXEC_FAILED_RM))
+      && (strcmp(relative_path, "fragment/main.glsl") == 0)) {
         length = ERRONEOUS_FRAGMENT_SHADER;
     } else if ((roadmap->id == LINKING_PROGRAM_FAILED_RM)
       && (strcmp(relative_path, "s/vertex/main.glsl") == 0)) {

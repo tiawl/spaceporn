@@ -3452,8 +3452,8 @@ fi
 done
 
 
-for ac_header in time.h errno.h stdio.h stdlib.h string.h unistd.h string.h \
-regex.h math.h
+for ac_header in errno.h stdio.h stdlib.h string.h unistd.h \
+string.h regex.h math.h
 do :
   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
 ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
@@ -3463,8 +3463,8 @@ if eval test \"x\$"$as_ac_Header"\" = x"yes"; then :
 _ACEOF
 
 else
-  as_fn_error $? "Some GLibC headers are not found. Install \
-or check the GLibC developing package." "$LINENO" 5
+  as_fn_error $? "Some GLibC headers are missing. \
+Install or check the GLibC library." "$LINENO" 5
 fi
 
 done
@@ -3515,7 +3515,7 @@ _ACEOF
 
 else
   as_fn_error $? "lib math linking flag (-lm) is \
-not found. Install or check GLibC developing package." "$LINENO" 5
+missing. Install or check GLibC library." "$LINENO" 5
 fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for png_create_read_struct in -lpng" >&5
@@ -3563,8 +3563,7 @@ _ACEOF
 
 else
   as_fn_error $? "libPNG \
-linking flag (-lpng) is not found. Install or check libPNG developing \
-package." "$LINENO" 5
+linking flag (-lpng) is missing. Install or check libPNG." "$LINENO" 5
 fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for glClear in -lGL" >&5
@@ -3612,7 +3611,7 @@ _ACEOF
 
 else
   as_fn_error $? "GL linking flag \
-(-lGL) is not found. Install or check GL developing package." "$LINENO" 5
+(-lGL) is missing. Install or check GL library." "$LINENO" 5
 fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for glewInit in -lGLEW" >&5
@@ -3660,7 +3659,7 @@ _ACEOF
 
 else
   as_fn_error $? "GLEW linking flag \
-(-lGLEW) is not found. Install or check GLEW developing package." "$LINENO" 5
+(-lGLEW) is missing. Install or check GLEW library." "$LINENO" 5
 fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for XOpenDisplay in -lX11" >&5
@@ -3708,7 +3707,7 @@ _ACEOF
 
 else
   as_fn_error $? "X11 linking flag \
-(-lX11) is not found. Install or check X11 developing package." "$LINENO" 5
+(-lX11) is missing. Install or check X11 library." "$LINENO" 5
 fi
 
 
@@ -3716,8 +3715,8 @@ ac_fn_c_check_header_mongrel "$LINENO" "png.h" "ac_cv_header_png_h" "$ac_include
 if test "x$ac_cv_header_png_h" = xyes; then :
 
 else
-  as_fn_error $? "libPNG header is not found. \
-Install or check libPNG developing package." "$LINENO" 5
+  as_fn_error $? "libPNG header is missing. \
+Install or check libPNG." "$LINENO" 5
 fi
 
 
@@ -3725,8 +3724,8 @@ ac_fn_c_check_header_mongrel "$LINENO" "GL/gl.h" "ac_cv_header_GL_gl_h" "$ac_inc
 if test "x$ac_cv_header_GL_gl_h" = xyes; then :
 
 else
-  as_fn_error $? "GL header is not found. \
-Install or check GL developing package." "$LINENO" 5
+  as_fn_error $? "GL header is missing. \
+Install or check GL library." "$LINENO" 5
 fi
 
 
@@ -3734,8 +3733,8 @@ ac_fn_c_check_header_mongrel "$LINENO" "GL/glx.h" "ac_cv_header_GL_glx_h" "$ac_i
 if test "x$ac_cv_header_GL_glx_h" = xyes; then :
 
 else
-  as_fn_error $? "GLX header is not found. \
-Install or check GLX developing package." "$LINENO" 5
+  as_fn_error $? "GLX header is missing. \
+Install or check GLX library." "$LINENO" 5
 fi
 
 
@@ -3743,8 +3742,8 @@ ac_fn_c_check_header_mongrel "$LINENO" "GL/glew.h" "ac_cv_header_GL_glew_h" "$ac
 if test "x$ac_cv_header_GL_glew_h" = xyes; then :
 
 else
-  as_fn_error $? "GLEW header is not found. \
-Install or check GLEW developing package." "$LINENO" 5
+  as_fn_error $? "GLEW header is missing. \
+Install or check GLEW library." "$LINENO" 5
 fi
 
 
@@ -3758,8 +3757,8 @@ if eval test \"x\$"$as_ac_Header"\" = x"yes"; then :
 _ACEOF
 
 else
-  as_fn_error $? "Some X11 headers are not found. Install or check X11 \
-developing package." "$LINENO" 5
+  as_fn_error $? "Some X11 headers are missing. Install or check X11 \
+library." "$LINENO" 5
 fi
 
 done
@@ -3853,6 +3852,7 @@ _ACEOF
 fi
 
 
+AC_CHECK_HEADER_TIME
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for an ANSI C-conforming const" >&5
 $as_echo_n "checking for an ANSI C-conforming const... " >&6; }
 if ${ac_cv_c_const+:} false; then :
@@ -3970,9 +3970,8 @@ _ACEOF
 
 
 else
-  as_fn_error $? "GLibC package \
-is found but some types of this package are not found. Update the GLibC \
-developing package." "$LINENO" 5
+  as_fn_error $? "GLibC library \
+is installed but some of its types are missing." "$LINENO" 5
 fi
 ac_fn_c_check_type "$LINENO" "regex_t" "ac_cv_type_regex_t" "#include <stdio.h>
 #include <regex.h>
@@ -3985,9 +3984,8 @@ _ACEOF
 
 
 else
-  as_fn_error $? "GLibC package \
-is found but some types of this package are not found. Update the GLibC \
-developing package." "$LINENO" 5
+  as_fn_error $? "GLibC library \
+is installed but some of its types are missing." "$LINENO" 5
 fi
 ac_fn_c_check_type "$LINENO" "regmatch_t" "ac_cv_type_regmatch_t" "#include <stdio.h>
 #include <regex.h>
@@ -4000,9 +3998,8 @@ _ACEOF
 
 
 else
-  as_fn_error $? "GLibC package \
-is found but some types of this package are not found. Update the GLibC \
-developing package." "$LINENO" 5
+  as_fn_error $? "GLibC library \
+is installed but some of its types are missing." "$LINENO" 5
 fi
 
 ac_fn_c_check_type "$LINENO" "png_infop" "ac_cv_type_png_infop" "#include <png.h>
@@ -4015,8 +4012,8 @@ _ACEOF
 
 
 else
-  as_fn_error $? "libPNG package is found but some types and structures \
-of this package are not found. Update the libPNG developing package." "$LINENO" 5
+  as_fn_error $? "libPNG lbrary is installed but some of its types and \
+structures are missing." "$LINENO" 5
 fi
 ac_fn_c_check_type "$LINENO" "png_byte" "ac_cv_type_png_byte" "#include <png.h>
 "
@@ -4028,8 +4025,8 @@ _ACEOF
 
 
 else
-  as_fn_error $? "libPNG package is found but some types and structures \
-of this package are not found. Update the libPNG developing package." "$LINENO" 5
+  as_fn_error $? "libPNG lbrary is installed but some of its types and \
+structures are missing." "$LINENO" 5
 fi
 ac_fn_c_check_type "$LINENO" "png_bytep" "ac_cv_type_png_bytep" "#include <png.h>
 "
@@ -4041,8 +4038,8 @@ _ACEOF
 
 
 else
-  as_fn_error $? "libPNG package is found but some types and structures \
-of this package are not found. Update the libPNG developing package." "$LINENO" 5
+  as_fn_error $? "libPNG lbrary is installed but some of its types and \
+structures are missing." "$LINENO" 5
 fi
 ac_fn_c_check_type "$LINENO" "png_uint_32" "ac_cv_type_png_uint_32" "#include <png.h>
 "
@@ -4054,8 +4051,8 @@ _ACEOF
 
 
 else
-  as_fn_error $? "libPNG package is found but some types and structures \
-of this package are not found. Update the libPNG developing package." "$LINENO" 5
+  as_fn_error $? "libPNG lbrary is installed but some of its types and \
+structures are missing." "$LINENO" 5
 fi
 ac_fn_c_check_type "$LINENO" "png_structp" "ac_cv_type_png_structp" "#include <png.h>
 "
@@ -4067,8 +4064,8 @@ _ACEOF
 
 
 else
-  as_fn_error $? "libPNG package is found but some types and structures \
-of this package are not found. Update the libPNG developing package." "$LINENO" 5
+  as_fn_error $? "libPNG lbrary is installed but some of its types and \
+structures are missing." "$LINENO" 5
 fi
 
 ac_fn_c_check_type "$LINENO" "GLubyte" "ac_cv_type_GLubyte" "#include <GL/gl.h>
@@ -4081,8 +4078,7 @@ _ACEOF
 
 
 else
-  as_fn_error $? "GL package is found but some types of this package are \
-not found. Update the GL developing package." "$LINENO" 5
+  as_fn_error $? "GL library is installed but some of its types are missing." "$LINENO" 5
 fi
 ac_fn_c_check_type "$LINENO" "GLuint" "ac_cv_type_GLuint" "#include <GL/gl.h>
 "
@@ -4094,8 +4090,7 @@ _ACEOF
 
 
 else
-  as_fn_error $? "GL package is found but some types of this package are \
-not found. Update the GL developing package." "$LINENO" 5
+  as_fn_error $? "GL library is installed but some of its types are missing." "$LINENO" 5
 fi
 ac_fn_c_check_type "$LINENO" "GLenum" "ac_cv_type_GLenum" "#include <GL/gl.h>
 "
@@ -4107,8 +4102,7 @@ _ACEOF
 
 
 else
-  as_fn_error $? "GL package is found but some types of this package are \
-not found. Update the GL developing package." "$LINENO" 5
+  as_fn_error $? "GL library is installed but some of its types are missing." "$LINENO" 5
 fi
 ac_fn_c_check_type "$LINENO" "GLfloat" "ac_cv_type_GLfloat" "#include <GL/gl.h>
 "
@@ -4120,8 +4114,7 @@ _ACEOF
 
 
 else
-  as_fn_error $? "GL package is found but some types of this package are \
-not found. Update the GL developing package." "$LINENO" 5
+  as_fn_error $? "GL library is installed but some of its types are missing." "$LINENO" 5
 fi
 ac_fn_c_check_type "$LINENO" "GLint" "ac_cv_type_GLint" "#include <GL/gl.h>
 "
@@ -4133,8 +4126,7 @@ _ACEOF
 
 
 else
-  as_fn_error $? "GL package is found but some types of this package are \
-not found. Update the GL developing package." "$LINENO" 5
+  as_fn_error $? "GL library is installed but some of its types are missing." "$LINENO" 5
 fi
 ac_fn_c_check_type "$LINENO" "GLchar" "ac_cv_type_GLchar" "#include <GL/gl.h>
 "
@@ -4146,8 +4138,7 @@ _ACEOF
 
 
 else
-  as_fn_error $? "GL package is found but some types of this package are \
-not found. Update the GL developing package." "$LINENO" 5
+  as_fn_error $? "GL library is installed but some of its types are missing." "$LINENO" 5
 fi
 
 ac_fn_c_check_type "$LINENO" "GLXFBConfig" "ac_cv_type_GLXFBConfig" "#include <GL/glx.h>
@@ -4160,9 +4151,8 @@ _ACEOF
 
 
 else
-  as_fn_error $? "GLX package is \
-found but some strutures of this package are not found. Update the GLX \
-developing package." "$LINENO" 5
+  as_fn_error $? "GLX library is \
+installed but some of its strutures are missing." "$LINENO" 5
 fi
 ac_fn_c_check_type "$LINENO" "GLXContext" "ac_cv_type_GLXContext" "#include <GL/glx.h>
 "
@@ -4174,9 +4164,8 @@ _ACEOF
 
 
 else
-  as_fn_error $? "GLX package is \
-found but some strutures of this package are not found. Update the GLX \
-developing package." "$LINENO" 5
+  as_fn_error $? "GLX library is \
+installed but some of its strutures are missing." "$LINENO" 5
 fi
 
 ac_fn_c_check_type "$LINENO" "Bool" "ac_cv_type_Bool" "#include <X11/Xutil.h>
@@ -4189,9 +4178,8 @@ _ACEOF
 
 
 else
-  as_fn_error $? "X11 package is found but \
-some types and strutures of this package are not found. Update the X11 \
-developing package." "$LINENO" 5
+  as_fn_error $? "X11 library is installed
+but some of its types and strutures are missing." "$LINENO" 5
 fi
 ac_fn_c_check_type "$LINENO" "XEvent" "ac_cv_type_XEvent" "#include <X11/Xutil.h>
 "
@@ -4203,9 +4191,8 @@ _ACEOF
 
 
 else
-  as_fn_error $? "X11 package is found but \
-some types and strutures of this package are not found. Update the X11 \
-developing package." "$LINENO" 5
+  as_fn_error $? "X11 library is installed
+but some of its types and strutures are missing." "$LINENO" 5
 fi
 ac_fn_c_check_type "$LINENO" "XErrorEvent" "ac_cv_type_XErrorEvent" "#include <X11/Xutil.h>
 "
@@ -4217,9 +4204,8 @@ _ACEOF
 
 
 else
-  as_fn_error $? "X11 package is found but \
-some types and strutures of this package are not found. Update the X11 \
-developing package." "$LINENO" 5
+  as_fn_error $? "X11 library is installed
+but some of its types and strutures are missing." "$LINENO" 5
 fi
 ac_fn_c_check_type "$LINENO" "XSetWindowAttributes" "ac_cv_type_XSetWindowAttributes" "#include <X11/Xutil.h>
 "
@@ -4231,9 +4217,8 @@ _ACEOF
 
 
 else
-  as_fn_error $? "X11 package is found but \
-some types and strutures of this package are not found. Update the X11 \
-developing package." "$LINENO" 5
+  as_fn_error $? "X11 library is installed
+but some of its types and strutures are missing." "$LINENO" 5
 fi
 ac_fn_c_check_type "$LINENO" "XWMHints" "ac_cv_type_XWMHints" "#include <X11/Xutil.h>
 "
@@ -4245,9 +4230,8 @@ _ACEOF
 
 
 else
-  as_fn_error $? "X11 package is found but \
-some types and strutures of this package are not found. Update the X11 \
-developing package." "$LINENO" 5
+  as_fn_error $? "X11 library is installed
+but some of its types and strutures are missing." "$LINENO" 5
 fi
 ac_fn_c_check_type "$LINENO" "XVisualInfo" "ac_cv_type_XVisualInfo" "#include <X11/Xutil.h>
 "
@@ -4259,9 +4243,8 @@ _ACEOF
 
 
 else
-  as_fn_error $? "X11 package is found but \
-some types and strutures of this package are not found. Update the X11 \
-developing package." "$LINENO" 5
+  as_fn_error $? "X11 library is installed
+but some of its types and strutures are missing." "$LINENO" 5
 fi
 ac_fn_c_check_type "$LINENO" "Window" "ac_cv_type_Window" "#include <X11/Xutil.h>
 "
@@ -4273,9 +4256,8 @@ _ACEOF
 
 
 else
-  as_fn_error $? "X11 package is found but \
-some types and strutures of this package are not found. Update the X11 \
-developing package." "$LINENO" 5
+  as_fn_error $? "X11 library is installed
+but some of its types and strutures are missing." "$LINENO" 5
 fi
 ac_fn_c_check_type "$LINENO" "Colormap" "ac_cv_type_Colormap" "#include <X11/Xutil.h>
 "
@@ -4287,16 +4269,15 @@ _ACEOF
 
 
 else
-  as_fn_error $? "X11 package is found but \
-some types and strutures of this package are not found. Update the X11 \
-developing package." "$LINENO" 5
+  as_fn_error $? "X11 library is installed
+but some of its types and strutures are missing." "$LINENO" 5
 fi
 
 
 # Checks for predefined macros and variables.
 ac_fn_c_check_decl "$LINENO" "NULL" "ac_cv_have_decl_NULL" "#include <stdlib.h>
 #include <stdio.h>
-#include <time.h>
+#include <sys/time.h>
 #include <errno.h>
 #include <regex.h>
 #include <unistd.h>
@@ -4313,12 +4294,12 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "GLibC package is found but some declarations of this package \
-are not found. Update the GLibC developing package." "$LINENO" 5
+  as_fn_error $? "GLibC \
+library is installed but some of its declarations are missing." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "EXIT_FAILURE" "ac_cv_have_decl_EXIT_FAILURE" "#include <stdlib.h>
 #include <stdio.h>
-#include <time.h>
+#include <sys/time.h>
 #include <errno.h>
 #include <regex.h>
 #include <unistd.h>
@@ -4335,12 +4316,12 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "GLibC package is found but some declarations of this package \
-are not found. Update the GLibC developing package." "$LINENO" 5
+  as_fn_error $? "GLibC \
+library is installed but some of its declarations are missing." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "EXIT_SUCCESS" "ac_cv_have_decl_EXIT_SUCCESS" "#include <stdlib.h>
 #include <stdio.h>
-#include <time.h>
+#include <sys/time.h>
 #include <errno.h>
 #include <regex.h>
 #include <unistd.h>
@@ -4357,12 +4338,12 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "GLibC package is found but some declarations of this package \
-are not found. Update the GLibC developing package." "$LINENO" 5
+  as_fn_error $? "GLibC \
+library is installed but some of its declarations are missing." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "SEEK_END" "ac_cv_have_decl_SEEK_END" "#include <stdlib.h>
 #include <stdio.h>
-#include <time.h>
+#include <sys/time.h>
 #include <errno.h>
 #include <regex.h>
 #include <unistd.h>
@@ -4379,12 +4360,12 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "GLibC package is found but some declarations of this package \
-are not found. Update the GLibC developing package." "$LINENO" 5
+  as_fn_error $? "GLibC \
+library is installed but some of its declarations are missing." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "SEEK_SET" "ac_cv_have_decl_SEEK_SET" "#include <stdlib.h>
 #include <stdio.h>
-#include <time.h>
+#include <sys/time.h>
 #include <errno.h>
 #include <regex.h>
 #include <unistd.h>
@@ -4401,34 +4382,12 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "GLibC package is found but some declarations of this package \
-are not found. Update the GLibC developing package." "$LINENO" 5
-fi
-ac_fn_c_check_decl "$LINENO" "CLOCKS_PER_SEC" "ac_cv_have_decl_CLOCKS_PER_SEC" "#include <stdlib.h>
-#include <stdio.h>
-#include <time.h>
-#include <errno.h>
-#include <regex.h>
-#include <unistd.h>
-"
-if test "x$ac_cv_have_decl_CLOCKS_PER_SEC" = xyes; then :
-  ac_have_decl=1
-else
-  ac_have_decl=0
-fi
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE_DECL_CLOCKS_PER_SEC $ac_have_decl
-_ACEOF
-if test $ac_have_decl = 1; then :
-
-else
-  as_fn_error $? "GLibC package is found but some declarations of this package \
-are not found. Update the GLibC developing package." "$LINENO" 5
+  as_fn_error $? "GLibC \
+library is installed but some of its declarations are missing." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "errno" "ac_cv_have_decl_errno" "#include <stdlib.h>
 #include <stdio.h>
-#include <time.h>
+#include <sys/time.h>
 #include <errno.h>
 #include <regex.h>
 #include <unistd.h>
@@ -4445,12 +4404,12 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "GLibC package is found but some declarations of this package \
-are not found. Update the GLibC developing package." "$LINENO" 5
+  as_fn_error $? "GLibC \
+library is installed but some of its declarations are missing." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "REG_EXTENDED" "ac_cv_have_decl_REG_EXTENDED" "#include <stdlib.h>
 #include <stdio.h>
-#include <time.h>
+#include <sys/time.h>
 #include <errno.h>
 #include <regex.h>
 #include <unistd.h>
@@ -4467,12 +4426,12 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "GLibC package is found but some declarations of this package \
-are not found. Update the GLibC developing package." "$LINENO" 5
+  as_fn_error $? "GLibC \
+library is installed but some of its declarations are missing." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "REG_NEWLINE" "ac_cv_have_decl_REG_NEWLINE" "#include <stdlib.h>
 #include <stdio.h>
-#include <time.h>
+#include <sys/time.h>
 #include <errno.h>
 #include <regex.h>
 #include <unistd.h>
@@ -4489,12 +4448,12 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "GLibC package is found but some declarations of this package \
-are not found. Update the GLibC developing package." "$LINENO" 5
+  as_fn_error $? "GLibC \
+library is installed but some of its declarations are missing." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "REG_NOMATCH" "ac_cv_have_decl_REG_NOMATCH" "#include <stdlib.h>
 #include <stdio.h>
-#include <time.h>
+#include <sys/time.h>
 #include <errno.h>
 #include <regex.h>
 #include <unistd.h>
@@ -4511,12 +4470,12 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "GLibC package is found but some declarations of this package \
-are not found. Update the GLibC developing package." "$LINENO" 5
+  as_fn_error $? "GLibC \
+library is installed but some of its declarations are missing." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "F_OK" "ac_cv_have_decl_F_OK" "#include <stdlib.h>
 #include <stdio.h>
-#include <time.h>
+#include <sys/time.h>
 #include <errno.h>
 #include <regex.h>
 #include <unistd.h>
@@ -4533,8 +4492,8 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "GLibC package is found but some declarations of this package \
-are not found. Update the GLibC developing package." "$LINENO" 5
+  as_fn_error $? "GLibC \
+library is installed but some of its declarations are missing." "$LINENO" 5
 fi
 
 ac_fn_c_check_decl "$LINENO" "PNG_LIBPNG_VER_STRING" "ac_cv_have_decl_PNG_LIBPNG_VER_STRING" "#include <png.h>
@@ -4551,9 +4510,8 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "libPNG package is found but some \
-declarations of this package are not found. Update the libPNG developing \
-package." "$LINENO" 5
+  as_fn_error $? "libPNG is installed but some of its \
+declarations are missing." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "PNG_INFO_tRNS" "ac_cv_have_decl_PNG_INFO_tRNS" "#include <png.h>
 "
@@ -4569,9 +4527,8 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "libPNG package is found but some \
-declarations of this package are not found. Update the libPNG developing \
-package." "$LINENO" 5
+  as_fn_error $? "libPNG is installed but some of its \
+declarations are missing." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "PNG_COLOR_MASK_ALPHA" "ac_cv_have_decl_PNG_COLOR_MASK_ALPHA" "#include <png.h>
 "
@@ -4587,9 +4544,8 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "libPNG package is found but some \
-declarations of this package are not found. Update the libPNG developing \
-package." "$LINENO" 5
+  as_fn_error $? "libPNG is installed but some of its \
+declarations are missing." "$LINENO" 5
 fi
 as_ac_Symbol=`$as_echo "ac_cv_have_decl_\\
   png_jmpbuf" | $as_tr_sh`
@@ -4609,9 +4565,8 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "libPNG package is found but some \
-declarations of this package are not found. Update the libPNG developing \
-package." "$LINENO" 5
+  as_fn_error $? "libPNG is installed but some of its \
+declarations are missing." "$LINENO" 5
 fi
 
 ac_fn_c_check_decl "$LINENO" "GL_TEXTURE_2D" "ac_cv_have_decl_GL_TEXTURE_2D" "#include <GL/gl.h>
@@ -4628,9 +4583,8 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "GL package is \
-found but some declarations of this package are not found. Update the GL \
-developing package." "$LINENO" 5
+  as_fn_error $? "GL library is \
+installed but some of its declarations are missing." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "GL_TEXTURE_WRAP_S" "ac_cv_have_decl_GL_TEXTURE_WRAP_S" "#include <GL/gl.h>
 "
@@ -4646,9 +4600,8 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "GL package is \
-found but some declarations of this package are not found. Update the GL \
-developing package." "$LINENO" 5
+  as_fn_error $? "GL library is \
+installed but some of its declarations are missing." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "GL_TEXTURE_WRAP_T" "ac_cv_have_decl_GL_TEXTURE_WRAP_T" "#include <GL/gl.h>
 "
@@ -4664,9 +4617,8 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "GL package is \
-found but some declarations of this package are not found. Update the GL \
-developing package." "$LINENO" 5
+  as_fn_error $? "GL library is \
+installed but some of its declarations are missing." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "GL_TEXTURE_MAG_FILTER" "ac_cv_have_decl_GL_TEXTURE_MAG_FILTER" "#include <GL/gl.h>
 "
@@ -4682,9 +4634,8 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "GL package is \
-found but some declarations of this package are not found. Update the GL \
-developing package." "$LINENO" 5
+  as_fn_error $? "GL library is \
+installed but some of its declarations are missing." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "GL_NEAREST" "ac_cv_have_decl_GL_NEAREST" "#include <GL/gl.h>
 "
@@ -4700,9 +4651,8 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "GL package is \
-found but some declarations of this package are not found. Update the GL \
-developing package." "$LINENO" 5
+  as_fn_error $? "GL library is \
+installed but some of its declarations are missing." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "GL_TEXTURE_MIN_FILTER" "ac_cv_have_decl_GL_TEXTURE_MIN_FILTER" "#include <GL/gl.h>
 "
@@ -4718,9 +4668,8 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "GL package is \
-found but some declarations of this package are not found. Update the GL \
-developing package." "$LINENO" 5
+  as_fn_error $? "GL library is \
+installed but some of its declarations are missing." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "GL_NO_ERROR" "ac_cv_have_decl_GL_NO_ERROR" "#include <GL/gl.h>
 "
@@ -4736,9 +4685,8 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "GL package is \
-found but some declarations of this package are not found. Update the GL \
-developing package." "$LINENO" 5
+  as_fn_error $? "GL library is \
+installed but some of its declarations are missing." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "GL_FALSE" "ac_cv_have_decl_GL_FALSE" "#include <GL/gl.h>
 "
@@ -4754,9 +4702,8 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "GL package is \
-found but some declarations of this package are not found. Update the GL \
-developing package." "$LINENO" 5
+  as_fn_error $? "GL library is \
+installed but some of its declarations are missing." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "GL_COMPILE_STATUS" "ac_cv_have_decl_GL_COMPILE_STATUS" "#include <GL/gl.h>
 "
@@ -4772,9 +4719,8 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "GL package is \
-found but some declarations of this package are not found. Update the GL \
-developing package." "$LINENO" 5
+  as_fn_error $? "GL library is \
+installed but some of its declarations are missing." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "GL_TRUE" "ac_cv_have_decl_GL_TRUE" "#include <GL/gl.h>
 "
@@ -4790,9 +4736,8 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "GL package is \
-found but some declarations of this package are not found. Update the GL \
-developing package." "$LINENO" 5
+  as_fn_error $? "GL library is \
+installed but some of its declarations are missing." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "GL_INFO_LOG_LENGTH" "ac_cv_have_decl_GL_INFO_LOG_LENGTH" "#include <GL/gl.h>
 "
@@ -4808,9 +4753,8 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "GL package is \
-found but some declarations of this package are not found. Update the GL \
-developing package." "$LINENO" 5
+  as_fn_error $? "GL library is \
+installed but some of its declarations are missing." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "GL_VERTEX_SHADER" "ac_cv_have_decl_GL_VERTEX_SHADER" "#include <GL/gl.h>
 "
@@ -4826,9 +4770,8 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "GL package is \
-found but some declarations of this package are not found. Update the GL \
-developing package." "$LINENO" 5
+  as_fn_error $? "GL library is \
+installed but some of its declarations are missing." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "GL_FRAGMENT_SHADER" "ac_cv_have_decl_GL_FRAGMENT_SHADER" "#include <GL/gl.h>
 "
@@ -4844,9 +4787,8 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "GL package is \
-found but some declarations of this package are not found. Update the GL \
-developing package." "$LINENO" 5
+  as_fn_error $? "GL library is \
+installed but some of its declarations are missing." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "GL_LINK_STATUS" "ac_cv_have_decl_GL_LINK_STATUS" "#include <GL/gl.h>
 "
@@ -4862,9 +4804,8 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "GL package is \
-found but some declarations of this package are not found. Update the GL \
-developing package." "$LINENO" 5
+  as_fn_error $? "GL library is \
+installed but some of its declarations are missing." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "GL_ARRAY_BUFFER" "ac_cv_have_decl_GL_ARRAY_BUFFER" "#include <GL/gl.h>
 "
@@ -4880,9 +4821,8 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "GL package is \
-found but some declarations of this package are not found. Update the GL \
-developing package." "$LINENO" 5
+  as_fn_error $? "GL library is \
+installed but some of its declarations are missing." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "GL_STATIC_DRAW" "ac_cv_have_decl_GL_STATIC_DRAW" "#include <GL/gl.h>
 "
@@ -4898,9 +4838,8 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "GL package is \
-found but some declarations of this package are not found. Update the GL \
-developing package." "$LINENO" 5
+  as_fn_error $? "GL library is \
+installed but some of its declarations are missing." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "GL_FLOAT" "ac_cv_have_decl_GL_FLOAT" "#include <GL/gl.h>
 "
@@ -4916,9 +4855,8 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "GL package is \
-found but some declarations of this package are not found. Update the GL \
-developing package." "$LINENO" 5
+  as_fn_error $? "GL library is \
+installed but some of its declarations are missing." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "GL_COLOR_BUFFER_BIT" "ac_cv_have_decl_GL_COLOR_BUFFER_BIT" "#include <GL/gl.h>
 "
@@ -4934,9 +4872,8 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "GL package is \
-found but some declarations of this package are not found. Update the GL \
-developing package." "$LINENO" 5
+  as_fn_error $? "GL library is \
+installed but some of its declarations are missing." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "GL_DEPTH_BUFFER_BIT" "ac_cv_have_decl_GL_DEPTH_BUFFER_BIT" "#include <GL/gl.h>
 "
@@ -4952,9 +4889,8 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "GL package is \
-found but some declarations of this package are not found. Update the GL \
-developing package." "$LINENO" 5
+  as_fn_error $? "GL library is \
+installed but some of its declarations are missing." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "GL_TRIANGLE_STRIP" "ac_cv_have_decl_GL_TRIANGLE_STRIP" "#include <GL/gl.h>
 "
@@ -4970,9 +4906,8 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "GL package is \
-found but some declarations of this package are not found. Update the GL \
-developing package." "$LINENO" 5
+  as_fn_error $? "GL library is \
+installed but some of its declarations are missing." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "GL_RGBA" "ac_cv_have_decl_GL_RGBA" "#include <GL/gl.h>
 "
@@ -4988,9 +4923,8 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "GL package is \
-found but some declarations of this package are not found. Update the GL \
-developing package." "$LINENO" 5
+  as_fn_error $? "GL library is \
+installed but some of its declarations are missing." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "GL_RGB" "ac_cv_have_decl_GL_RGB" "#include <GL/gl.h>
 "
@@ -5006,9 +4940,8 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "GL package is \
-found but some declarations of this package are not found. Update the GL \
-developing package." "$LINENO" 5
+  as_fn_error $? "GL library is \
+installed but some of its declarations are missing." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "GL_UNSIGNED_BYTE" "ac_cv_have_decl_GL_UNSIGNED_BYTE" "#include <GL/gl.h>
 "
@@ -5024,9 +4957,8 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "GL package is \
-found but some declarations of this package are not found. Update the GL \
-developing package." "$LINENO" 5
+  as_fn_error $? "GL library is \
+installed but some of its declarations are missing." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "GL_CLAMP_TO_BORDER" "ac_cv_have_decl_GL_CLAMP_TO_BORDER" "#include <GL/gl.h>
 "
@@ -5042,9 +4974,8 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "GL package is \
-found but some declarations of this package are not found. Update the GL \
-developing package." "$LINENO" 5
+  as_fn_error $? "GL library is \
+installed but some of its declarations are missing." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "GL_BLEND" "ac_cv_have_decl_GL_BLEND" "#include <GL/gl.h>
 "
@@ -5060,9 +4991,8 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "GL package is \
-found but some declarations of this package are not found. Update the GL \
-developing package." "$LINENO" 5
+  as_fn_error $? "GL library is \
+installed but some of its declarations are missing." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "GL_SRC_ALPHA" "ac_cv_have_decl_GL_SRC_ALPHA" "#include <GL/gl.h>
 "
@@ -5078,9 +5008,8 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "GL package is \
-found but some declarations of this package are not found. Update the GL \
-developing package." "$LINENO" 5
+  as_fn_error $? "GL library is \
+installed but some of its declarations are missing." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "GL_ONE_MINUS_SRC_ALPHA" "ac_cv_have_decl_GL_ONE_MINUS_SRC_ALPHA" "#include <GL/gl.h>
 "
@@ -5096,9 +5025,8 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "GL package is \
-found but some declarations of this package are not found. Update the GL \
-developing package." "$LINENO" 5
+  as_fn_error $? "GL library is \
+installed but some of its declarations are missing." "$LINENO" 5
 fi
 
 ac_fn_c_check_decl "$LINENO" "glewExperimental" "ac_cv_have_decl_glewExperimental" "#include <GL/glew.h>
@@ -5106,9 +5034,8 @@ ac_fn_c_check_decl "$LINENO" "glewExperimental" "ac_cv_have_decl_glewExperimenta
 if test "x$ac_cv_have_decl_glewExperimental" = xyes; then :
 
 else
-  as_fn_error $? "GLEW package is \
-found but some declarations of this package are not found. Update the GLEW \
-developing package." "$LINENO" 5
+  as_fn_error $? "GLEW library is \
+installed but some of its declarations are missing." "$LINENO" 5
 fi
 
 ac_fn_c_check_decl "$LINENO" "GLX_WINDOW_BIT" "ac_cv_have_decl_GLX_WINDOW_BIT" "#include <GL/glx.h>
@@ -5125,8 +5052,8 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "GLX package is found but some declarations of this package are \
-not found. Update the GLX developing package." "$LINENO" 5
+  as_fn_error $? "GLX library is installed but some of its declarations are \
+missing." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "GLX_RGBA_BIT" "ac_cv_have_decl_GLX_RGBA_BIT" "#include <GL/glx.h>
 "
@@ -5142,8 +5069,8 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "GLX package is found but some declarations of this package are \
-not found. Update the GLX developing package." "$LINENO" 5
+  as_fn_error $? "GLX library is installed but some of its declarations are \
+missing." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "GLX_TRUE_COLOR" "ac_cv_have_decl_GLX_TRUE_COLOR" "#include <GL/glx.h>
 "
@@ -5159,8 +5086,8 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "GLX package is found but some declarations of this package are \
-not found. Update the GLX developing package." "$LINENO" 5
+  as_fn_error $? "GLX library is installed but some of its declarations are \
+missing." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "GLX_X_RENDERABLE" "ac_cv_have_decl_GLX_X_RENDERABLE" "#include <GL/glx.h>
 "
@@ -5176,8 +5103,8 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "GLX package is found but some declarations of this package are \
-not found. Update the GLX developing package." "$LINENO" 5
+  as_fn_error $? "GLX library is installed but some of its declarations are \
+missing." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "GLX_DRAWABLE_TYPE" "ac_cv_have_decl_GLX_DRAWABLE_TYPE" "#include <GL/glx.h>
 "
@@ -5193,8 +5120,8 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "GLX package is found but some declarations of this package are \
-not found. Update the GLX developing package." "$LINENO" 5
+  as_fn_error $? "GLX library is installed but some of its declarations are \
+missing." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "GLX_RENDER_TYPE" "ac_cv_have_decl_GLX_RENDER_TYPE" "#include <GL/glx.h>
 "
@@ -5210,8 +5137,8 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "GLX package is found but some declarations of this package are \
-not found. Update the GLX developing package." "$LINENO" 5
+  as_fn_error $? "GLX library is installed but some of its declarations are \
+missing." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "GLX_X_VISUAL_TYPE" "ac_cv_have_decl_GLX_X_VISUAL_TYPE" "#include <GL/glx.h>
 "
@@ -5227,8 +5154,8 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "GLX package is found but some declarations of this package are \
-not found. Update the GLX developing package." "$LINENO" 5
+  as_fn_error $? "GLX library is installed but some of its declarations are \
+missing." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "GLX_RED_SIZE" "ac_cv_have_decl_GLX_RED_SIZE" "#include <GL/glx.h>
 "
@@ -5244,8 +5171,8 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "GLX package is found but some declarations of this package are \
-not found. Update the GLX developing package." "$LINENO" 5
+  as_fn_error $? "GLX library is installed but some of its declarations are \
+missing." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "GLX_GREEN_SIZE" "ac_cv_have_decl_GLX_GREEN_SIZE" "#include <GL/glx.h>
 "
@@ -5261,8 +5188,8 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "GLX package is found but some declarations of this package are \
-not found. Update the GLX developing package." "$LINENO" 5
+  as_fn_error $? "GLX library is installed but some of its declarations are \
+missing." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "GLX_BLUE_SIZE" "ac_cv_have_decl_GLX_BLUE_SIZE" "#include <GL/glx.h>
 "
@@ -5278,8 +5205,8 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "GLX package is found but some declarations of this package are \
-not found. Update the GLX developing package." "$LINENO" 5
+  as_fn_error $? "GLX library is installed but some of its declarations are \
+missing." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "GLX_ALPHA_SIZE" "ac_cv_have_decl_GLX_ALPHA_SIZE" "#include <GL/glx.h>
 "
@@ -5295,8 +5222,8 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "GLX package is found but some declarations of this package are \
-not found. Update the GLX developing package." "$LINENO" 5
+  as_fn_error $? "GLX library is installed but some of its declarations are \
+missing." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "GLX_DEPTH_SIZE" "ac_cv_have_decl_GLX_DEPTH_SIZE" "#include <GL/glx.h>
 "
@@ -5312,8 +5239,8 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "GLX package is found but some declarations of this package are \
-not found. Update the GLX developing package." "$LINENO" 5
+  as_fn_error $? "GLX library is installed but some of its declarations are \
+missing." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "GLX_STENCIL_SIZE" "ac_cv_have_decl_GLX_STENCIL_SIZE" "#include <GL/glx.h>
 "
@@ -5329,8 +5256,8 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "GLX package is found but some declarations of this package are \
-not found. Update the GLX developing package." "$LINENO" 5
+  as_fn_error $? "GLX library is installed but some of its declarations are \
+missing." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "GLX_DOUBLEBUFFER" "ac_cv_have_decl_GLX_DOUBLEBUFFER" "#include <GL/glx.h>
 "
@@ -5346,8 +5273,8 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "GLX package is found but some declarations of this package are \
-not found. Update the GLX developing package." "$LINENO" 5
+  as_fn_error $? "GLX library is installed but some of its declarations are \
+missing." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "GLX_SAMPLE_BUFFERS" "ac_cv_have_decl_GLX_SAMPLE_BUFFERS" "#include <GL/glx.h>
 "
@@ -5363,8 +5290,8 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "GLX package is found but some declarations of this package are \
-not found. Update the GLX developing package." "$LINENO" 5
+  as_fn_error $? "GLX library is installed but some of its declarations are \
+missing." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "GLX_SAMPLES" "ac_cv_have_decl_GLX_SAMPLES" "#include <GL/glx.h>
 "
@@ -5380,8 +5307,8 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "GLX package is found but some declarations of this package are \
-not found. Update the GLX developing package." "$LINENO" 5
+  as_fn_error $? "GLX library is installed but some of its declarations are \
+missing." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "GLX_CONTEXT_MAJOR_VERSION_ARB" "ac_cv_have_decl_GLX_CONTEXT_MAJOR_VERSION_ARB" "#include <GL/glx.h>
 "
@@ -5397,8 +5324,8 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "GLX package is found but some declarations of this package are \
-not found. Update the GLX developing package." "$LINENO" 5
+  as_fn_error $? "GLX library is installed but some of its declarations are \
+missing." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "GLX_CONTEXT_MINOR_VERSION_ARB" "ac_cv_have_decl_GLX_CONTEXT_MINOR_VERSION_ARB" "#include <GL/glx.h>
 "
@@ -5414,8 +5341,8 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "GLX package is found but some declarations of this package are \
-not found. Update the GLX developing package." "$LINENO" 5
+  as_fn_error $? "GLX library is installed but some of its declarations are \
+missing." "$LINENO" 5
 fi
 
 ac_fn_c_check_decl "$LINENO" "XA_ATOM" "ac_cv_have_decl_XA_ATOM" "#include <X11/Xutil.h>
@@ -5433,9 +5360,8 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "X11 package is \
-found but some declarations of this package are not found. Update the X11 \
-developing package." "$LINENO" 5
+  as_fn_error $? "X11 library is \
+installed but some of its declarations are missing." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "True" "ac_cv_have_decl_True" "#include <X11/Xutil.h>
 #include <X11/Xatom.h>
@@ -5452,9 +5378,8 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "X11 package is \
-found but some declarations of this package are not found. Update the X11 \
-developing package." "$LINENO" 5
+  as_fn_error $? "X11 library is \
+installed but some of its declarations are missing." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "False" "ac_cv_have_decl_False" "#include <X11/Xutil.h>
 #include <X11/Xatom.h>
@@ -5471,9 +5396,8 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "X11 package is \
-found but some declarations of this package are not found. Update the X11 \
-developing package." "$LINENO" 5
+  as_fn_error $? "X11 library is \
+installed but some of its declarations are missing." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "None" "ac_cv_have_decl_None" "#include <X11/Xutil.h>
 #include <X11/Xatom.h>
@@ -5490,9 +5414,8 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "X11 package is \
-found but some declarations of this package are not found. Update the X11 \
-developing package." "$LINENO" 5
+  as_fn_error $? "X11 library is \
+installed but some of its declarations are missing." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "CWBorderPixel" "ac_cv_have_decl_CWBorderPixel" "#include <X11/Xutil.h>
 #include <X11/Xatom.h>
@@ -5509,9 +5432,8 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "X11 package is \
-found but some declarations of this package are not found. Update the X11 \
-developing package." "$LINENO" 5
+  as_fn_error $? "X11 library is \
+installed but some of its declarations are missing." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "CWColormap" "ac_cv_have_decl_CWColormap" "#include <X11/Xutil.h>
 #include <X11/Xatom.h>
@@ -5528,9 +5450,8 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "X11 package is \
-found but some declarations of this package are not found. Update the X11 \
-developing package." "$LINENO" 5
+  as_fn_error $? "X11 library is \
+installed but some of its declarations are missing." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "CWEventMask" "ac_cv_have_decl_CWEventMask" "#include <X11/Xutil.h>
 #include <X11/Xatom.h>
@@ -5547,9 +5468,8 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "X11 package is \
-found but some declarations of this package are not found. Update the X11 \
-developing package." "$LINENO" 5
+  as_fn_error $? "X11 library is \
+installed but some of its declarations are missing." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "InputHint" "ac_cv_have_decl_InputHint" "#include <X11/Xutil.h>
 #include <X11/Xatom.h>
@@ -5566,9 +5486,8 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "X11 package is \
-found but some declarations of this package are not found. Update the X11 \
-developing package." "$LINENO" 5
+  as_fn_error $? "X11 library is \
+installed but some of its declarations are missing." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "StateHint" "ac_cv_have_decl_StateHint" "#include <X11/Xutil.h>
 #include <X11/Xatom.h>
@@ -5585,9 +5504,8 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "X11 package is \
-found but some declarations of this package are not found. Update the X11 \
-developing package." "$LINENO" 5
+  as_fn_error $? "X11 library is \
+installed but some of its declarations are missing." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "BlackPixel" "ac_cv_have_decl_BlackPixel" "#include <X11/Xutil.h>
 #include <X11/Xatom.h>
@@ -5604,9 +5522,8 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "X11 package is \
-found but some declarations of this package are not found. Update the X11 \
-developing package." "$LINENO" 5
+  as_fn_error $? "X11 library is \
+installed but some of its declarations are missing." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "WhitePixel" "ac_cv_have_decl_WhitePixel" "#include <X11/Xutil.h>
 #include <X11/Xatom.h>
@@ -5623,9 +5540,8 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "X11 package is \
-found but some declarations of this package are not found. Update the X11 \
-developing package." "$LINENO" 5
+  as_fn_error $? "X11 library is \
+installed but some of its declarations are missing." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "InputOutput" "ac_cv_have_decl_InputOutput" "#include <X11/Xutil.h>
 #include <X11/Xatom.h>
@@ -5642,9 +5558,8 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "X11 package is \
-found but some declarations of this package are not found. Update the X11 \
-developing package." "$LINENO" 5
+  as_fn_error $? "X11 library is \
+installed but some of its declarations are missing." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "NormalState" "ac_cv_have_decl_NormalState" "#include <X11/Xutil.h>
 #include <X11/Xatom.h>
@@ -5661,9 +5576,8 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "X11 package is \
-found but some declarations of this package are not found. Update the X11 \
-developing package." "$LINENO" 5
+  as_fn_error $? "X11 library is \
+installed but some of its declarations are missing." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "AllocNone" "ac_cv_have_decl_AllocNone" "#include <X11/Xutil.h>
 #include <X11/Xatom.h>
@@ -5680,9 +5594,8 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "X11 package is \
-found but some declarations of this package are not found. Update the X11 \
-developing package." "$LINENO" 5
+  as_fn_error $? "X11 library is \
+installed but some of its declarations are missing." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "StructureNotifyMask" "ac_cv_have_decl_StructureNotifyMask" "#include <X11/Xutil.h>
 #include <X11/Xatom.h>
@@ -5699,9 +5612,8 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "X11 package is \
-found but some declarations of this package are not found. Update the X11 \
-developing package." "$LINENO" 5
+  as_fn_error $? "X11 library is \
+installed but some of its declarations are missing." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "PropModeReplace" "ac_cv_have_decl_PropModeReplace" "#include <X11/Xutil.h>
 #include <X11/Xatom.h>
@@ -5718,9 +5630,8 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "X11 package is \
-found but some declarations of this package are not found. Update the X11 \
-developing package." "$LINENO" 5
+  as_fn_error $? "X11 library is \
+installed but some of its declarations are missing." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "DefaultScreen" "ac_cv_have_decl_DefaultScreen" "#include <X11/Xutil.h>
 #include <X11/Xatom.h>
@@ -5737,9 +5648,8 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "X11 package is \
-found but some declarations of this package are not found. Update the X11 \
-developing package." "$LINENO" 5
+  as_fn_error $? "X11 library is \
+installed but some of its declarations are missing." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "RootWindow" "ac_cv_have_decl_RootWindow" "#include <X11/Xutil.h>
 #include <X11/Xatom.h>
@@ -5756,9 +5666,8 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "X11 package is \
-found but some declarations of this package are not found. Update the X11 \
-developing package." "$LINENO" 5
+  as_fn_error $? "X11 library is \
+installed but some of its declarations are missing." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "ExposureMask" "ac_cv_have_decl_ExposureMask" "#include <X11/Xutil.h>
 #include <X11/Xatom.h>
@@ -5775,9 +5684,8 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "X11 package is \
-found but some declarations of this package are not found. Update the X11 \
-developing package." "$LINENO" 5
+  as_fn_error $? "X11 library is \
+installed but some of its declarations are missing." "$LINENO" 5
 fi
 ac_fn_c_check_decl "$LINENO" "KeyPressMask" "ac_cv_have_decl_KeyPressMask" "#include <X11/Xutil.h>
 #include <X11/Xatom.h>
@@ -5794,9 +5702,8 @@ _ACEOF
 if test $ac_have_decl = 1; then :
 
 else
-  as_fn_error $? "X11 package is \
-found but some declarations of this package are not found. Update the X11 \
-developing package." "$LINENO" 5
+  as_fn_error $? "X11 library is \
+installed but some of its declarations are missing." "$LINENO" 5
 fi
 
 
@@ -5870,8 +5777,8 @@ fi
 
 for ac_func in strchr strerror strstr strlen strcmp strtok strcpy strcat \
 strncpy strncat strtoul getenv usleep memcpy printf fprintf snprintf free \
-srand rand atof atoi time clock fopen fseek fread fclose fgetc setjmp exit \
-atexit realloc regcomp regexec regerror regfree log10 floor access
+srand rand atof atoi time gettimeofday fopen fseek fread fclose fgetc setjmp \
+exit atexit realloc regcomp regexec regerror regfree log10 floor access
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
 ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
@@ -5881,8 +5788,8 @@ if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
 _ACEOF
 
 else
-  as_fn_error $? "GLibC package is found but some functions of this package are \
-not found. Update the GLibC developing package." "$LINENO" 5
+  as_fn_error $? "GLibC library is installed but some of its functions are \
+missing." "$LINENO" 5
 fi
 done
 
@@ -5898,8 +5805,7 @@ if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
 _ACEOF
 
 else
-  as_fn_error $? "libPNG package is found but some functions of this package \
-are not found. Update the libPNG developing package." "$LINENO" 5
+  as_fn_error $? "libPNG is installed but some of its functions are missing." "$LINENO" 5
 fi
 done
 
@@ -5921,8 +5827,7 @@ if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
 _ACEOF
 
 else
-  as_fn_error $? "GL package is found but some functions of this package are not \
-found. Update the GL developing package." "$LINENO" 5
+  as_fn_error $? "GL library is installed but some of its functions are missing." "$LINENO" 5
 fi
 done
 
@@ -5930,9 +5835,8 @@ ac_fn_c_check_func "$LINENO" "glewInit" "ac_cv_func_glewInit"
 if test "x$ac_cv_func_glewInit" = xyes; then :
 
 else
-  as_fn_error $? "GLEW package is found but some \
-functions of this package are not found. Update the GLEW developing \
-package." "$LINENO" 5
+  as_fn_error $? "GLEW library is installed but some \
+of its functions are missing." "$LINENO" 5
 fi
 
 for ac_func in glXQueryVersion glXChooseFBConfig glXGetVisualFromFBConfig \
@@ -5947,8 +5851,8 @@ if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
 _ACEOF
 
 else
-  as_fn_error $? "GLX package is found but some functions of this package \
-are not found. Update the GLX developing package." "$LINENO" 5
+  as_fn_error $? "GLX library is installed but some of its functions are \
+missing." "$LINENO" 5
 fi
 done
 
@@ -5965,8 +5869,8 @@ if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
 _ACEOF
 
 else
-  as_fn_error $? "X11 package is found but some functions of this package \
-are not found. Update the X11 developing package." "$LINENO" 5
+  as_fn_error $? "X11 library is installed but some of its functions are \
+missing." "$LINENO" 5
 fi
 done
 

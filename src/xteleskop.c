@@ -4,7 +4,7 @@ int main(int argc, char** argv)
 {
   srand(time(NULL));
 
-  int delay = DEFAULT_DELAY;
+  int fps = DEFAULT_FPS;
 
   bool verbose = false;
   aggregateVerbose(&verbose);
@@ -15,7 +15,7 @@ int main(int argc, char** argv)
 
   UniformValues uniform_values;
   uniform_values.time = 0.0f;
-  uniform_values.clock = clock();
+  gettimeofday(&(uniform_values.start), NULL);
   uniform_values.pixels = 500;
   uniform_values.animations = false;
   uniform_values.motion = false;
@@ -23,11 +23,16 @@ int main(int argc, char** argv)
   uniform_values.xseed = rand();
   uniform_values.yseed = rand();
 
-  if (!parsing_options(&verbose, &delay, &uniform_values, &roadmap,
+  if (!parsing_options(&verbose, &fps, &uniform_values, &roadmap,
     &argc, argv))
   {
     return EXIT_FAILURE;
   }
+
+  struct timeval start_loop;
+  struct timeval end_loop;
+  const unsigned delay = 1000000.0f / fps;
+  unsigned gpu_time;
 
   Shaders shaders;
   aggregateShaders(&shaders);
@@ -139,6 +144,8 @@ initialized\n"));
 
   while(true)
   {
+    gettimeofday(&start_loop, NULL);
+
     VERB(verbose, printf("Updating uniforms ...\n"));
     updateUniforms(uniforms, uniformIds, &uniform_values, verbose);
     VERB(verbose, printf("Uniforms updated\n"));
@@ -167,8 +174,11 @@ initialized\n"));
     }
 #endif
 
-    VERB(verbose, printf("Sleeping for %d ms ...\n", delay));
-    usleep(delay);
+    gettimeofday(&end_loop, NULL);
+    gpu_time = timediff(&start_loop, &end_loop) * 1000000.0f;
+    VERB(verbose, printf("Sleeping for %d ms ...\n",
+      gpu_time >= delay ? 0 : delay - gpu_time));
+    usleep(gpu_time >= delay ? 0 : delay - gpu_time);
     VERB(verbose, printf("Ready to loop again\n"));
 
     if (roadmap.id == BREAK_SUCCESS_RM)

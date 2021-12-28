@@ -2,7 +2,9 @@
 
 void updateFloatUniforms(GLint uniformId, UniformValues* values, bool verbose)
 {
-  values->time = ((double)(clock() - values->clock)) / CLOCKS_PER_SEC;
+  struct timeval now;
+  gettimeofday(&now, NULL);
+  values->time = timediff(&(values->start), &now);
   GLfloat fflags[UNIFORM_FLOATS] =
   {
     values->width, values->height, values->xseed, values->yseed,

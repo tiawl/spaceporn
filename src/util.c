@@ -247,3 +247,9 @@ void freePaths(Shaders* shaders, PNG* png, bool verbose)
     VERB(verbose, printf("texturepath freed\n"));
   }
 }
+
+double timediff(struct timeval* start, struct timeval* end)
+{
+  return (end->tv_sec + end->tv_usec / 1000000.0)
+    - (start->tv_sec + start->tv_usec / 1000000.0);
+}

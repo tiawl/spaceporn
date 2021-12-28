@@ -11,7 +11,7 @@ const float bigstars_density = 3.;
 
 vec2 resolution = vec2(fflags[0], fflags[1]);
 vec2 seed = vec2(fflags[2], fflags[3]);
-float time = fflags[4];
+float time = fflags[4] / 50.;
 float pixels = fflags[5];
 
 bool animation = bflags.x;

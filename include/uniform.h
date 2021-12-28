@@ -1,14 +1,12 @@
 #ifndef XTELESKOP_UNIFORM_H
 #define XTELESKOP_UNIFORM_H
 
-#include <time.h>
-
 #include "util.h"
 
 typedef struct
 {
   GLfloat time;
-  clock_t clock;
+  struct timeval start;
   GLint width;
   GLint height;
   GLint pixels;

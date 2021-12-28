@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/time.h>
 #include <png.h>
 #include <GL/glew.h>
 #include <GL/glx.h>
@@ -194,6 +195,8 @@ void aggregateRoadmap(Roadmap* roadmap);
 
 void exitHandler();
 void checkOpenGLError(const char* stmt, const char* fname, int line);
+
+double timediff(struct timeval* start, struct timeval* end);
 
 #define GL_CHECK(stmt) do { \
   stmt; \

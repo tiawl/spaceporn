@@ -7,11 +7,10 @@ void help()
 [-V] [-R ROADMAP]\n\n", NAME);
   fprintf(stderr, "User options:\n\n\
     -a  Enable shader animations\n\n\
+    -f  Frame per second between 1 to 60 (ex: -f 10) [default: 30]\n\n\
     -m  Enable camera motion\n\n\
-    -p  Enable multiple colorschemes\n\n\
-    -x  Pixels value between 100 to 600 (ex: -x 300) [default: 500]\n\n\
-    -d  Delay value between each frame in microseconds (ex: -d 0)\n\
-        [default: 30000]\n\n");
+    -p  Enable usage of multiple palettes\n\n\
+    -x  Pixelization value between 100 to 600 (ex: -x 300) [default: 500]\n\n");
   fprintf(stderr, "Dev options:\n\n\
     -V  Verbose mode\n\n\
     -R  Run the corresponding predefined execution roadmap. Dev flag \n\
@@ -19,44 +18,44 @@ void help()
         [default: 0]\n\n");
 }
 
-bool parsing_options(bool* verbose, int* delay, UniformValues* uniform_values,
+bool parsing_options(bool* verbose, int* fps, UniformValues* uniform_values,
   Roadmap* roadmap, int* argc, char** argv)
 {
   roadmap->glsl_file = "";
 
   for (int i = 1; i < *argc; i++)
   {
-    if (strcmp(argv[i], "-x") == 0)
+    if (strcmp(argv[i], PIXEL_FLAG) == 0)
     {
       if (++i < *argc)
       {
         uniform_values->pixels = atof(argv[i]);
-        if ((uniform_values->pixels > 600.) ||
-          (uniform_values->pixels < 100.))
+        if ((uniform_values->pixels > MAX_PIXELS) ||
+          (uniform_values->pixels < MIN_PIXELS))
         {
           help();
           return false;
         }
       }
-    } else if (strcmp(argv[i], "-d") == 0) {
+    } else if (strcmp(argv[i], FPS_FLAG) == 0) {
       if (++i < *argc)
       {
-        *delay = atoi(argv[i]);
-        if (*delay < 0)
+        *fps = atoi(argv[i]);
+        if ((*fps < MIN_FPS) || (*fps > MAX_FPS))
         {
           help();
           return false;
         }
       }
-    } else if (strcmp(argv[i], "-a") == 0) {
+    } else if (strcmp(argv[i], ANIMATION_FLAG) == 0) {
       uniform_values->animations = true;
-    } else if (strcmp(argv[i], "-m") == 0) {
+    } else if (strcmp(argv[i], CAMERAMOTION_FLAG) == 0) {
       uniform_values->motion = true;
-    } else if (strcmp(argv[i], "-p") == 0) {
+    } else if (strcmp(argv[i], PALETTES_FLAG) == 0) {
       uniform_values->palettes = true;
-    } else if (strcmp(argv[i], "-V") == 0) {
+    } else if (strcmp(argv[i], VERBOSE_FLAG) == 0) {
       *verbose = true;
-    } else if (strcmp(argv[i], "-R") == 0) {
+    } else if (strcmp(argv[i], ROADMAP_FLAG) == 0) {
       if (++i < *argc)
       {
         roadmap->id = atoi(argv[i]);

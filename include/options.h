@@ -9,10 +9,24 @@
 
 #define NAME "xteleskop"
 #define VERSION "0.1"
-#define DEFAULT_DELAY 30000
+#define DEFAULT_FPS 30
+
+#define ANIMATION_FLAG "-a"
+#define FPS_FLAG "-f"
+#define CAMERAMOTION_FLAG "-m"
+#define PALETTES_FLAG "-p"
+#define PIXEL_FLAG "-x"
+#define ZOOM_FLAG "-z"
+#define ROADMAP_FLAG "-R"
+#define VERBOSE_FLAG "-V"
+
+#define MIN_PIXELS 100.
+#define MAX_PIXELS 600.
+#define MIN_FPS 1
+#define MAX_FPS 60
 
 void help();
-bool parsing_options(bool* verbose, int* delay, UniformValues* uniform_values,
+bool parsing_options(bool* verbose, int* fps, UniformValues* uniform_values,
   Roadmap* roadmap, int* argc, char** argv);
 
 #endif

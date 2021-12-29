@@ -7,13 +7,11 @@ void updateFloatUniforms(GLint uniformId, UniformValues* values, bool verbose)
   values->time = timediff(&(values->start), &now);
   GLfloat fflags[UNIFORM_FLOATS] =
   {
-    values->width, values->height, values->xseed, values->yseed,
-    values->time, values->pixels
+    values->width, values->height, values->seed, values->time, values->pixels
   };
 
-  VERB(verbose, printf("    New fflags values: [%d, %d, %f, %f, %f, %d]\n",
-    values->width, values->height, fflags[2], fflags[3], fflags[4],
-    values->pixels));
+  VERB(verbose, printf("    New fflags values: [%d, %d, %f, %f, %d]\n",
+    values->width, values->height, fflags[2], fflags[3], values->pixels));
 
   VERB(verbose, printf("    Specifying value of fflags in current program \
 ...\n"));

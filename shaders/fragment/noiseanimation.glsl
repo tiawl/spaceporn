@@ -4,7 +4,7 @@ mat2 makem2(float theta)
 {
   float c = cos(theta);
   float s = sin(theta);
-  return mat2(c,-s,s,c);
+  return mat2(c, -s, s, c);
 }
 
 vec2 dualfbm(vec2 p, uint octaves)

@@ -10,18 +10,16 @@ vec3 nrand3(vec2 co)
 
 vec4 stars(vec2 uv)
 {
-  const float stars_density = 20.;
-
-  vec2 stars_seed = uv.xy * 2.0;
-  stars_seed = floor(stars_seed * resolution.x);
+  vec2 stars_seed = uv * 2.0;
+  stars_seed = floor(stars_seed);
   vec3 rnd = nrand3(stars_seed);
   vec4 starcolor = vec4(pow(rnd.y, stars_density));
 
   if (starcolor.x > 0.3)
   {
-    float brighness_variance = max(0.15, psrand(uv) / 2.0f);
-    return starcolor + (vec4(psrand((1. + fract(time)) * uv)
-      * brighness_variance) - (brighness_variance / 2.));
+    float brighness_variance = max(0.15, hash(uv, 0u) / 2.0f);
+    return starcolor + vec4(hash(uv, uint(floor(MAX_RATE * time)))
+      * brighness_variance - (brighness_variance / 2.));
   } else {
     return vec4(0.);
   }

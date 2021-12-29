@@ -4,15 +4,14 @@ uniform sampler2D big_stars_texture;
 
 out vec4 fragColor;
 
-const float SIZE = 10.0;
-
 const float planets_density = 1.; // WARNING: must be greater than 1 to avoid some artifacts
 const float bigstars_density = 3.;
+const float stars_density = 20.0;
 
 vec2 resolution = vec2(fflags[0], fflags[1]);
-vec2 seed = vec2(fflags[2], fflags[3]);
-float time = fflags[4] / 50.;
-float pixels = fflags[5];
+float seed = fflags[2];
+float time = fflags[3] / 50.;
+float pixels = fflags[4];
 
 bool animation = bflags.x;
 bool motion = bflags.y;
@@ -32,6 +31,10 @@ struct Planet
 
 # define TEXTURE_SIZE vec2(256., 32.)
 # define NB_COL 7.
+
+# define DUST_SIZE 0.015
+# define MAX_RATE 300.
+# define MOTION_SPEED 1.
 
 vec2 rotate(vec2 vec, vec2 center, float angle)
 {

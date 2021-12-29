@@ -10,8 +10,8 @@ uint pcg(uint v)
   return (word >> 22u) ^ word;
 }
 
-uvec3 pcg3d(uvec3 v) {
-
+uvec3 pcg3d(uvec3 v)
+{
   v = v * 1664525u + 1013904223u;
 
   v.x += v.y*v.z;

@@ -9,7 +9,12 @@
 
 #define NAME "xteleskop"
 #define VERSION "0.1"
+
 #define DEFAULT_FPS 30
+#define DEFAULT_PIXELS 500
+#define DEFAULT_ANIMATIONS false
+#define DEFAULT_MOTION false
+#define DEFAULT_PALETTES false
 
 #define ANIMATION_FLAG "-a"
 #define FPS_FLAG "-f"

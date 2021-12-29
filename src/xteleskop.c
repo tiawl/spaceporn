@@ -16,12 +16,11 @@ int main(int argc, char** argv)
   UniformValues uniform_values;
   uniform_values.time = 0.0f;
   gettimeofday(&(uniform_values.start), NULL);
-  uniform_values.pixels = 500;
-  uniform_values.animations = false;
-  uniform_values.motion = false;
-  uniform_values.palettes = false;
-  uniform_values.xseed = rand();
-  uniform_values.yseed = rand();
+  uniform_values.pixels = DEFAULT_PIXELS;
+  uniform_values.animations = DEFAULT_ANIMATIONS;
+  uniform_values.motion = DEFAULT_MOTION;
+  uniform_values.palettes = DEFAULT_PALETTES;
+  uniform_values.seed = rand();
 
   if (!parsing_options(&verbose, &fps, &uniform_values, &roadmap,
     &argc, argv))

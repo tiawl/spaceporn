@@ -11,7 +11,7 @@ declare -r XTELESKOP="./bin/cov/xteleskop"
 
 ${XTELESKOP} -h > /dev/null 2>&1
 ${XTELESKOP} -x -1 > /dev/null 2>&1
-${XTELESKOP} -d -1 > /dev/null 2>&1
+${XTELESKOP} -f 0 > /dev/null 2>&1
 ${XTELESKOP} -V -R -1 > /dev/null 2>&1
 ${XTELESKOP} -R 54 > /dev/null 2>&1
 
@@ -29,13 +29,13 @@ for ROADMAP in ${ROADMAPS[@]}; do
   if [[ "x${FLAGS}" == "x" ]]; then
     printf %80s | tr ' ' '='
     echo -e "\n\nCovering roadmap ${ROADMAP} ..."
-    ${XTELESKOP} -a -m -p -x 500 -d 30000 -R ${ROADMAP} &> /dev/null
+    ${XTELESKOP} -a -m -p -x 500 -f 30 -R ${ROADMAP} &> /dev/null
     echo "Roadmap ${ROADMAP} covered" && echo
   else
     for FILE in ${FLAGS}; do
       printf %80s | tr ' ' '='
       echo -e "\n\nCovering roadmap ${ROADMAP} - ${FILE} ..."
-      ${XTELESKOP} -a -m -p -x 500 -d 30000 -R ${ROADMAP} $(echo ${FILE} \
+      ${XTELESKOP} -a -m -p -x 500 -f 30 -R ${ROADMAP} $(echo ${FILE} \
         | sed 's:^\([^/]\+/\)\{2\}::g') &> /dev/null
       echo "Roadmap ${ROADMAP} - ${FILE} covered" && echo
     done

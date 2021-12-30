@@ -22,7 +22,7 @@ for ROADMAP in ${ROADMAPS[@]}; do
 
   if [[ "x${FLAGS}" == "x" ]]; then
     VALGRIND_OUTPUT=$(valgrind --leak-check=summary --show-leak-kinds=all \
-      --suppressions=amd.supp ./bin/all/xteleskop -a -m -p -x 500 -d 30000 \
+      --suppressions=amd.supp ./bin/all/xteleskop -a -m -p -x 500 -f 30 \
       -R ${ROADMAP} 2>&1 > /dev/null | sed 's/==[[:digit:]]*==/ /g')
 
     [[ $(echo "${VALGRIND_OUTPUT}" | tee >(grep -E -A 4 "LEAK SUMMARY") \
@@ -44,7 +44,7 @@ for ROADMAP in ${ROADMAPS[@]}; do
   else
     for FILE in ${FLAGS}; do
       VALGRIND_OUTPUT=$(valgrind --leak-check=summary --show-leak-kinds=all \
-        --suppressions=amd.supp ./bin/all/xteleskop -a -m -p -x 500 -d 30000 \
+        --suppressions=amd.supp ./bin/all/xteleskop -a -m -p -x 500 -f 30 \
         -R ${ROADMAP} $(echo ${FILE} | sed 's:^\([^/]\+/\)\{2\}::g') 2>&1 \
         > /dev/null | sed 's/==[[:digit:]]*==/ /g')
 

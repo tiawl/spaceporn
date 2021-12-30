@@ -14,7 +14,7 @@ void main()
   if (motion)
   {
     float radius = 2. * max(resolution.x, resolution.y);
-    m = radius + radius
+    m = 2 * radius + radius
       * vec2(sin(MOTION_SPEED * time), sin(MOTION_SPEED * time * 0.75));
   }
 
@@ -40,8 +40,8 @@ void main()
 //       dust(uv, psdith)) * (sin(time * 2500.) * 0.025 + 1.)));
 //   }
 
-  col = max(bigstars(UV), max(stars(px), mix(dust(px, psdith),
-    nebulae(px, psdith), 0.3) * (sin(time * 2500.) * 0.025 + 1.)));
+  col = max(bigstars(UV), max(stars(px), max(dust(px, psdith),
+    nebulae(px, psdith)) * 0.8 * (sin(time * 2500.) * 0.015 + 1.)));
 
   fragColor = col;
 }

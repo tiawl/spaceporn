@@ -20,7 +20,6 @@ int main(int argc, char** argv)
   uniform_values.animations = DEFAULT_ANIMATIONS;
   uniform_values.motion = DEFAULT_MOTION;
   uniform_values.palettes = DEFAULT_PALETTES;
-  uniform_values.seed = rand();
 
   if (!parsing_options(&verbose, &fps, &uniform_values, &roadmap,
     &argc, argv))
@@ -140,6 +139,10 @@ object ...\n"));
   initVertices(&vertices, verbose);
   VERB(verbose, printf("Vertex buffer object and vertex array object \
 initialized\n"));
+
+  VERB(verbose, printf("Generating random number to seed GPU hash() ...\n"));
+  uniform_values.seed = rand();
+  VERB(verbose, printf("Seed is %f\n", uniform_values.seed));
 
   while(true)
   {

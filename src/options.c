@@ -7,14 +7,15 @@ void help()
 [-V] [-R ROADMAP]\n\n", NAME);
   fprintf(stderr, "User options:\n\n\
     -a  Enable shader animations\n\n\
-    -f  Frame per second between 1 to 60 (ex: -f 10) [default: 30]\n\n\
+    -f  Frame per second between %d to %d (ex: -f 10)\n\
+        [default: 30]\n\n\
     -m  Enable camera motion\n\n\
     -p  Enable usage of multiple palettes\n\n\
-    -x  Pixelization value between 100 to 600 (ex: -x 300) [default: 500]\n\n");
+    -x  Pixelization value between %d to %d (ex: -x 300)\n\
+        [default: 500]\n\n", MIN_FPS, MAX_FPS, MIN_PIXELS, MAX_PIXELS);
   fprintf(stderr, "Dev options:\n\n\
     -V  Verbose mode\n\n\
-    -R  Run the corresponding predefined execution roadmap. Dev flag \n\
-        purposes (ex: -R 0)\n\
+    -R  Run the corresponding predefined execution roadmap (ex: -R 0)\n\
         [default: 0]\n\n");
 }
 

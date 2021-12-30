@@ -25,8 +25,8 @@
 #define ROADMAP_FLAG "-R"
 #define VERBOSE_FLAG "-V"
 
-#define MIN_PIXELS 100.
-#define MAX_PIXELS 600.
+#define MIN_PIXELS 200
+#define MAX_PIXELS 600
 #define MIN_FPS 1
 #define MAX_FPS 60
 

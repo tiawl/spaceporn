@@ -3,11 +3,15 @@
 vec4 dust(vec2 uv, bool dith)
 {
   uint octaves = 8u;
-  uv = dualfbm(uv, octaves);
+  uint dust_seed = uint(floor(seed));
+  uv = dualfbm(uv, octaves, dust_seed);
 
-  float n_alpha = psfbm(uv * ceil(DUST_SIZE * 0.5) + uv * 2., octaves);
-  float n_dust = pscloud_alpha(uv * DUST_SIZE, octaves);
-  float n_dust2 = psfbm(uv * ceil(DUST_SIZE * 0.2) - uv * 2., octaves);
+  float n_alpha = psfbm(uv * ceil(DUST_SIZE * 0.5) + uv * 2., octaves,
+    dust_seed);
+  float n_dust = pscloud_alpha(uv * DUST_SIZE, octaves, dust_seed);
+  float n_alpha2 = psfbm(uv * ceil(DUST_SIZE * 0.2) + uv * 2., octaves,
+    dust_seed + 2u);
+  float n_dust2 = pscloud_alpha(uv * DUST_SIZE, octaves, dust_seed + 2u);
   float n_dust_lerp = n_dust2 * n_dust;
 
   if (dith)

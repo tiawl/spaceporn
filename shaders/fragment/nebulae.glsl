@@ -3,7 +3,7 @@
 vec4 nebulae(vec2 uv, bool dith)
 {
   uint octaves = 2u;
-  uint neb_seed = uint(floor(seed)) + 1u;
+  uint neb_seed = seed + 1u;
   uv = dualfbm(uv, octaves, neb_seed);
 
   float d = distance(uv, vec2(0.5)) * 0.4;
@@ -29,9 +29,9 @@ vec4 nebulae(vec2 uv, bool dith)
 
   float col_value = 0.0;
   if (a2 > a) {
-    col_value = floor(n_dust_lerp * 35.0) / NB_COL;
+    col_value = floor(n_dust_lerp * 35.0) / NB_COLS;
   } else {
-    col_value = floor(n_dust_lerp * 14.0) / NB_COL;
+    col_value = floor(n_dust_lerp * 14.0) / NB_COLS;
   }
 
   return vec4(vec3(col_value), a2);

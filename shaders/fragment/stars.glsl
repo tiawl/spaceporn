@@ -17,8 +17,8 @@ vec4 stars(vec2 uv)
 
   if (starcolor.x > 0.3)
   {
-    float brighness_variance = max(0.15, hash(uv, 0u) / 2.0f);
-    return starcolor + vec4(hash(uv, uint(floor(MAX_RATE * time)))
+    float brighness_variance = max(0.15, hash(uv, seed) / 2.0f);
+    return starcolor + vec4(hash(uv, seed + uint(floor(MAX_RATE * time)))
       * brighness_variance - (brighness_variance / 2.));
   } else {
     return vec4(0.);

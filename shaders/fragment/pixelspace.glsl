@@ -15,15 +15,11 @@ float psnoise(vec2 coord, uint noise_seed)
   float b = hash(i + vec2(1.0, 0.0), noise_seed);
   float c = hash(i + vec2(0.0, 1.0), noise_seed);
   float d = hash(i + vec2(1.0, 1.0), noise_seed);
-//    float a = psrand(i);
-//    float b = psrand(i + vec2(1.0, 0.0));
-//    float c = psrand(i + vec2(0.0, 1.0));
-//    float d = psrand(i + vec2(1.0, 1.0));
 
-   vec2 cubic = f * f * (3.0 - 2.0 * f);
+  vec2 cubic = f * f * (3.0 - 2.0 * f);
 
-   return mix(a, b, cubic.x) + (c - a) * cubic.y *
-     (1.0 - cubic.x) + (d - b) * cubic.x * cubic.y;
+  return mix(a, b, cubic.x) + (c - a) * cubic.y *
+    (1.0 - cubic.x) + (d - b) * cubic.x * cubic.y;
 }
 
 float psfbm(vec2 coord, uint octaves, uint noise_seed)
@@ -46,7 +42,6 @@ float pscircleNoise(vec2 uv, uint noise_seed)
   float uv_y = floor(uv.y);
   uv.x += uv_y * .31;
   vec2 f = fract(uv);
-  //float h = psrand(vec2(floor(uv.x), floor(uv_y)));
   float h = hash(vec2(floor(uv.x), floor(uv_y)), noise_seed);
   float m = (length(f - 0.25 - (h * 0.5)));
   float r = h * 0.25;

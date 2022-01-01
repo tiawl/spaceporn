@@ -9,7 +9,7 @@ const float bigstars_density = 3.;
 const float stars_density = 20.0;
 
 vec2 resolution = vec2(fflags[0], fflags[1]);
-float seed = fflags[2];
+uint seed = uint(floor(fflags[2]));
 float time = fflags[3] / 50.;
 float pixels = fflags[4];
 
@@ -23,16 +23,18 @@ struct Planet
   vec2 center;
   float rotation;
   float radius;
-  vec2 seed;
+  uvec2 seed;
   float time_speed;
   float plan;
   vec2 light_origin;
 };
 
 # define TEXTURE_SIZE vec2(256., 32.)
-# define NB_COL 7.
+# define NB_COLS 7.
+# define MOON_COLS 20.
 
 # define DUST_SIZE 0.015
+# define PLANETS_SIZE 0.01
 # define MAX_RATE 300.
 # define MOTION_SPEED 1.
 

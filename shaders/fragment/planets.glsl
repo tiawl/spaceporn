@@ -24,42 +24,42 @@ Planet calc_circle(vec2 xy, vec2 offset)
   ixy -= offset;
   vec2 center = ixy + planets_density * 0.5;
 
-  center += planets_density * 0.25 + planets_density * 0.5 * psrand(ixy);
+  center += planets_density * 0.25 + planets_density * 0.5 * hash(ixy, seed);
 
-  float angle = radians(psrand(ixy + 50.0) * 360.);
+  float angle = radians(hash(ixy, seed + 1u) * 360.);
   center.x += planets_density * 0.1 * sin(angle);
   center.y += planets_density * 0.1 * cos(angle);
 
-  float rd_planet = ceil(psrand(ixy + 620.) * 4.);
+  float rd_planet = ceil(hash(ixy, seed + 2u) * 4.);
   if (rd_planet < 1.)
   {
     rd_planet = 1.;
   }
   rd_planet = rd_planet / 4.;
 
-  float radius = 0.2 + 0.4 * psrand(ixy + 100.0);
-  float light_angle = radians(psrand(ixy + 230.0) * 360.);
-  float light_dist = (radius / 4.) + psrand(ixy - 370.) * (radius / 4.);
+  float radius = 0.2 + 0.4 * hash(ixy, seed + 3u);
+  float light_angle = radians(hash(ixy, seed + 4u) * 360.);
+  float light_dist = (radius / 4.) + hash(ixy, seed + 5u) * (radius / 4.);
 
   return Planet(step(distance(xy, center), radius) * rd_planet,
-    center, radians(psrand(ixy - 20.0) * 360.), radius,
-    vec2(psrand(ixy + 840.), psrand(ixy + 480.)),
-    (psrand(ixy - 90.) + 1.) * 2., psrand(ixy - 520.),
+    center, radians(hash(ixy, seed + 6u) * 360.), radius,
+    uvec2(hash(ixy, seed + 7u) * resolution.x, hash(ixy, seed + 8u) * resolution.y),
+    (hash(ixy, seed + 9u) + 1.) * 2., hash(ixy, seed + 10u),
     center + light_dist * vec2(cos(light_angle), sin(light_angle)));
 }
 
-vec4 planets(vec2 UV, vec2 uv)
+vec4 planets(vec2 UV, vec2 px, bool dith)
 {
-  uv *= 5.;
+  px *= PLANETS_SIZE;
 
   Planet calc[4] = Planet[4](
-    calc_circle(uv, vec2(0., 0.)), calc_circle(uv, vec2(planets_density, 0.)),
-    calc_circle(uv, vec2(0., planets_density)),
-    calc_circle(uv, vec2(planets_density, planets_density))
+    calc_circle(px, vec2(0., 0.)), calc_circle(px, vec2(planets_density, 0.)),
+    calc_circle(px, vec2(0., planets_density)),
+    calc_circle(px, vec2(planets_density, planets_density))
   );
 
   int index = 0;
-  Planet planet = Planet(0., vec2(0.), 0., 0., vec2(0.), 0., 0., vec2(0., 0.));
+  Planet planet = Planet(0., vec2(0.), 0., 0., uvec2(0), 0., 0., vec2(0., 0.));
 
   while (index < 4)
   {
@@ -70,12 +70,17 @@ vec4 planets(vec2 UV, vec2 uv)
     ++index;
   }
 
-  if (planet.type == LAND)
-  {
-    return land(UV, uv, planet);
-  } else if (planet.type == MOON) {
-    return moon(uv, planet);
+//   if (planet.type == LAND)
+//   {
+//     return land(UV, uv, planet);
+//   } else if (planet.type == MOON) {
+//     return moon(uv, planet);
+//   } else {
+//     return vec4(planet.type);
+//   }
+  if (planet.type == MOON) {
+    return moon(px, planet, dith);
   } else {
-    return vec4(planet.type);
+    return vec4(-1.);//vec4(planet.type);
   }
 }

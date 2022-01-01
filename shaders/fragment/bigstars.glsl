@@ -5,23 +5,23 @@ float calc_square(vec2 xy, vec2 offset)
   vec2 ixy = floor(xy) - offset;
   vec2 center = ixy + 0.5;
 
-  center += 0.25 + 0.5 * hash(ixy, 0u);
+  center += 0.5 + 0.5 * hash(ixy, seed + 0u);
 
-  float angle = radians(hash(ixy, 1u) * 360.);
-  center.x += 0.25 * sin(angle);
-  center.y += 0.25 * cos(angle);
+  float angle = radians(hash(ixy, seed + 1u) * 360.);
+  center.x += 0.5 * sin(angle);
+  center.y += 0.5 * cos(angle);
 
   vec2 uv_unit = (vec2(1.) / resolution) * bigstars_density;
   uv_unit.x *= resolution.x / resolution.y;
 
-  float rd_bigstar = ceil(hash(ixy, 2u) * 6.);
+  float rd_bigstar = ceil(hash(ixy, seed + 2u) * 6.);
   if (rd_bigstar < 1.)
   {
     rd_bigstar = 1.;
   }
 
   float size = (max(resolution.x, resolution.y) / pixels) *
-    (0.5 + hash(ixy, 3u) * 0.4);
+    (0.5 + hash(ixy, seed + 3u) * 0.4);
 
   vec2 dist_text_center = ceil(12.0 * size + 0.1) * uv_unit;
   float m = 2. * ((rd_bigstar - 1.) / rd_bigstar) - 1.;
@@ -37,9 +37,9 @@ float calc_square(vec2 xy, vec2 offset)
       dist_center / (size * uv_unit * TEXTURE_SIZE));
     if (text.a > 0.)
     {
-      float rd_brightness = ceil(hash(ixy, 2u) * 2.);
+      float rd_brightness = ceil(hash(ixy, seed + 2u) * 2.);
       return text.x * (0.25 * rd_brightness *
-        hash(ixy, uint(floor(MAX_RATE * 3. * time))) + 1.);
+        hash(ixy, seed + uint(floor(MAX_RATE * 3. * time))) + 1.);
     } else {
       return 0.;
     }
@@ -54,5 +54,5 @@ vec4 bigstars(vec2 uv)
   float col_value = max(max(max(calc_square(uv, vec2(0.0, 0.0)),
     calc_square(uv, vec2(0.0, 1.0))), calc_square(uv, vec2(1.0, 0.0))),
     calc_square(uv, vec2(1.0, 1.0)));
-  return vec4(floor(col_value * NB_COL) / NB_COL);
+  return vec4(floor(col_value * NB_COLS) / NB_COLS);
 }

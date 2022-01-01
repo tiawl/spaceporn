@@ -43,8 +43,8 @@ Planet calc_circle(vec2 xy, vec2 offset)
 
   return Planet(step(distance(xy, center), radius) * rd_planet,
     center, radians(hash(ixy, seed + 6u) * 360.), radius,
-    uvec2(hash(ixy, seed + 7u) * resolution.x, hash(ixy, seed + 8u) * resolution.y),
-    (hash(ixy, seed + 9u) + 1.) * 2., hash(ixy, seed + 10u),
+    uint(hash(ixy, seed + 7u) * resolution.x),
+    (hash(ixy, seed + 8u) + 1.) * 2., hash(ixy, seed + 9u),
     center + light_dist * vec2(cos(light_angle), sin(light_angle)));
 }
 
@@ -59,7 +59,7 @@ vec4 planets(vec2 UV, vec2 px, bool dith)
   );
 
   int index = 0;
-  Planet planet = Planet(0., vec2(0.), 0., 0., uvec2(0), 0., 0., vec2(0., 0.));
+  Planet planet = Planet(0., vec2(0.), 0., 0., 0u, 0., 0., vec2(0., 0.));
 
   while (index < 4)
   {
@@ -70,15 +70,10 @@ vec4 planets(vec2 UV, vec2 px, bool dith)
     ++index;
   }
 
-//   if (planet.type == LAND)
-//   {
-//     return land(UV, uv, planet);
-//   } else if (planet.type == MOON) {
-//     return moon(uv, planet);
-//   } else {
-//     return vec4(planet.type);
-//   }
-  if (planet.type == MOON) {
+  if (planet.type == LAND)
+  {
+    return land(UV, px, planet);
+  } else if (planet.type == MOON) {
     return moon(px, planet, dith);
   } else {
     return vec4(-1.);//vec4(planet.type);

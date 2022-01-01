@@ -23,7 +23,7 @@ struct Planet
   vec2 center;
   float rotation;
   float radius;
-  uvec2 seed;
+  uint seed;
   float time_speed;
   float plan;
   vec2 light_origin;
@@ -31,7 +31,7 @@ struct Planet
 
 # define TEXTURE_SIZE vec2(256., 32.)
 # define NB_COLS 7.
-# define MOON_COLS 20.
+# define PLANET_COLS 20.
 
 # define DUST_SIZE 0.015
 # define PLANETS_SIZE 0.01
@@ -44,6 +44,14 @@ vec2 rotate(vec2 vec, vec2 center, float angle)
   vec *= mat2(vec2(cos(angle), -sin(angle)), vec2(sin(angle), cos(angle)));
   vec += center;
   return vec;
+}
+
+vec2 spherify(vec2 uv, vec2 center, float radius)
+{
+  vec2 centered = (uv - center) * 2.;
+  float z = sqrt(radius * radius * 4. - dot(centered.xy, centered.xy));
+  vec2 sphere = centered / (z + 1.0);
+  return sphere * 0.5 + 0.5;
 }
 
 bool dither(float dither_size, vec2 uv1, vec2 uv2)

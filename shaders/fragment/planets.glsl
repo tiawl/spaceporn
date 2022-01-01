@@ -1,8 +1,10 @@
 # include "pixelspace.glsl"
 # include "planet/land.glsl"
 # include "planet/moon.glsl"
+# include "planet/gaz.glsl"
 
 # define MOON 0.25
+# define GAZ  0.5
 # define LAND 1.
 
 float floor_multiple(float numToRound, float base)
@@ -73,6 +75,8 @@ vec4 planets(vec2 UV, vec2 px, bool dith)
   if (planet.type == LAND)
   {
     return land(UV, px, planet);
+  } else if (planet.type == GAZ) {
+    return gaz(px, planet);
   } else if (planet.type == MOON) {
     return moon(px, planet, dith);
   } else {

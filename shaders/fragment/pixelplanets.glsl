@@ -38,6 +38,7 @@ float ppfbm(float size, vec2 sizeModifier, vec2 coord, uint octaves,
   return value;
 }
 
+// by Leukbaars from https://www.shadertoy.com/view/4tK3zR
 float ppcircleNoise(float size, vec2 sizeModifier, vec2 uv, uint noise_seed)
 {
   float uv_y = floor(uv.y);
@@ -66,4 +67,20 @@ float ppcloud_alpha(float size, vec2 sizeModifier, float time_speed, vec2 uv,
     uv * size + c_noise + vec2(time * time_speed, 0.0), octaves, noise_seed);
 
   return fbm;
+}
+
+vec2 rotate(vec2 vec, vec2 center, float angle)
+{
+  vec -= center;
+  vec *= mat2(vec2(cos(angle), -sin(angle)), vec2(sin(angle), cos(angle)));
+  vec += center;
+  return vec;
+}
+
+vec2 spherify(vec2 uv, vec2 center, float radius)
+{
+  vec2 centered = (uv - center) * 2.;
+  float z = sqrt(radius * radius * 4. - dot(centered.xy, centered.xy));
+  vec2 sphere = centered / (z + 1.0);
+  return sphere * 0.5 + 0.5;
 }

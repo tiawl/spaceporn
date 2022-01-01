@@ -16,7 +16,7 @@ void main()
   }
 
   float motion_radius = 2. * max(resolution.x, resolution.y);
-  vec2 m = 2 * motion_radius + motion_radius
+  vec2 offset = 2 * motion_radius + motion_radius
     * vec2(sin(MOTION_SPEED * time), sin(MOTION_SPEED * time * 0.75));
 
   if (!animation)
@@ -26,7 +26,7 @@ void main()
     time = fflags[3] / 50.;
   }
 
-  vec2 UV = (gl_FragCoord.xy + m) / resolution;
+  vec2 UV = (gl_FragCoord.xy + offset) / resolution;
   UV.x *= resolution.x / resolution.y;
 
   vec2 px = floor(UV * pixels);

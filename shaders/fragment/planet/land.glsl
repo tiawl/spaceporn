@@ -53,6 +53,7 @@ vec4 computeLand(vec2 UV, vec2 uv, Planet planet)
   const float size = 4.6;
   const float river_cutoff = 0.368;
   const uint octaves = 5u;
+  const vec2 sizeModifier = vec2(2., 1.);
 
   float lratio = 1. / sqrt(planet.radius);
   float d_light = distance(uv, planet.light_origin) * lratio;
@@ -64,15 +65,15 @@ vec4 computeLand(vec2 UV, vec2 uv, Planet planet)
   vec2 base_fbm_uv = uv * size + vec2(time * planet.time_speed, 0.0);
 
   float fbm1 =
-    ppfbm(size, vec2(2.0, 1.0), base_fbm_uv, octaves, seed + planet.seed);
-  float fbm2 = ppfbm(size, vec2(2.0, 1.0),
+    ppfbm(size, sizeModifier, base_fbm_uv, octaves, seed + planet.seed);
+  float fbm2 = ppfbm(size, sizeModifier,
     base_fbm_uv - planet.light_origin * fbm1, octaves, seed + planet.seed);
-  float fbm3 = ppfbm(size, vec2(2.0, 1.0),
+  float fbm3 = ppfbm(size, sizeModifier,
     base_fbm_uv - planet.light_origin * 1.5 * fbm1, octaves, seed + planet.seed);
-  float fbm4 = ppfbm(size, vec2(2.0, 1.0),
+  float fbm4 = ppfbm(size, sizeModifier,
     base_fbm_uv - planet.light_origin * 2.0 * fbm1, octaves, seed + planet.seed);
 
-  float river_fbm = ppfbm(size, vec2(2.0, 1.0),
+  float river_fbm = ppfbm(size, sizeModifier,
     base_fbm_uv + fbm1 * 6.0, octaves, seed + planet.seed);
   river_fbm = step(river_cutoff, river_fbm);
 

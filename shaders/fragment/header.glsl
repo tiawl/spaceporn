@@ -1,3 +1,13 @@
+// TODO:
+// - More parameters on different planets to add more variety
+// - add zoom uniform (to avoid confusion with pixels)
+// - ring planet
+// - dry planet
+// - galaxy
+// - dark hole (with event horizon animation)
+// - group of asteroids
+// - palette gen
+
 uniform float fflags[6];
 uniform bvec3 bflags;
 uniform sampler2D big_stars_texture;
@@ -27,6 +37,7 @@ struct Planet
   float time_speed;
   float plan;
   vec2 light_origin;
+  uint turbulence;
 };
 
 # define TEXTURE_SIZE vec2(256., 32.)

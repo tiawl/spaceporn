@@ -3,7 +3,7 @@
 declare -r FRAGMENTS=$(find shaders/fragment -type f)
 declare -r VERTEXES=$(find shaders/vertex -type f)
 
-declare -a -r ROADMAPS=($(seq 1 72))
+declare -a -r ROADMAPS=($(seq 2 73))
 
 STATUS=0
 EQUALS=0
@@ -11,12 +11,32 @@ EQUALS=0
 echo -e "\nCompiling ...\n"
 make clean all > /dev/null 2>&1
 
+VALGRIND_OUTPUT=$(valgrind --leak-check=summary --show-leak-kinds=all \
+  --suppressions=amd.supp ./bin/all/xteleskop -R 1 -s 1 2>&1 > /dev/null \
+  | sed 's/==[[:digit:]]*==/ /g')
+
+[[ $(echo "${VALGRIND_OUTPUT}" | tee >(grep -E -A 4 "LEAK SUMMARY") \
+  >(grep -E "ERROR SUMMARY") > /dev/null | grep -Po '^\D*\K(\d,?)+' \
+  | tr -d ',' | grep -E -v "^0$" | wc -l) -gt 0 ]] && STATUS=1
+
+EQUALS=$(( 77 / 2 ))
+
+BAR=$(printf %${EQUALS}s | tr ' ' '=')
+printf "${BAR} 1 ${BAR}="
+
+echo -e "\n\n$(echo "${VALGRIND_OUTPUT}" | grep -E -A 2 "HEAP SUMMARY")\n"
+[[ "${VALGRIND_OUTPUT}" =~ LEAK\ SUMMARY ]] && echo -e "$( \
+echo "${VALGRIND_OUTPUT}" | grep -E -A 5 "LEAK SUMMARY")\n"
+echo -e "$(echo "${VALGRIND_OUTPUT}" | grep -E "ERROR SUMMARY")\n"
+
+[[ ${STATUS} -ne 0 ]] && exit 1
+
 for ROADMAP in ${ROADMAPS[@]}; do
 
   FLAGS=""
-  if [[ ${ROADMAP} -ge 35 && ${ROADMAP} -le 47 ]]; then
+  if [[ ${ROADMAP} -ge 36 && ${ROADMAP} -le 48 ]]; then
     FLAGS="${VERTEXES}"
-  elif [[ ${ROADMAP} -ge 48 && ${ROADMAP} -le 60 ]]; then
+  elif [[ ${ROADMAP} -ge 49 && ${ROADMAP} -le 61 ]]; then
     FLAGS="${FRAGMENTS}"
   fi
 

@@ -2,9 +2,22 @@
 
 void updateFloatUniforms(GLint uniformId, UniformValues* values, bool verbose)
 {
+  if ((values->slide > 0) || (values->seed < 0.))
+  {
+    VERB(verbose, printf("    Generating random number to seed GPU hash() \
+...\n"));
+    values->seed = rand();
+    VERB(verbose, printf("    Seed is %f\n", values->seed));
+
+#if DEBUG
+    printf("Seed is %f\n", values->seed);
+#endif
+  }
+
   struct timeval now;
   gettimeofday(&now, NULL);
   values->time = timediff(&(values->start), &now);
+
   GLfloat fflags[UNIFORM_FLOATS] =
   {
     values->width, values->height, values->seed, values->time, values->pixels,

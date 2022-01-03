@@ -6,6 +6,7 @@
 typedef struct
 {
   GLfloat time;
+  GLint slide;
   struct timeval start;
   GLint width;
   GLint height;

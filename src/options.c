@@ -3,23 +3,31 @@
 void help()
 {
   fprintf(stderr, "\n%s v%s\n", NAME, VERSION);
-  fprintf(stderr, "\nUsage: %s [-a] [-f FPS] [-m] [-p] [-x PIXELS] [-z ZOOM]\n\
-  [-V] [-R ROADMAP]\n\n", NAME);
+  fprintf(stderr,
+    "\nUsage: %s [%s] [%s FPS] [%s] [%s MINS] [%s] [%s PIXELS] [%s ZOOM]\n\
+  [%s] [%s ROADMAP]\n\n", NAME, ANIMATION_FLAG, FPS_FLAG, CAMERAMOTION_FLAG,
+  SLIDE_FLAG, PALETTES_FLAG, PIXEL_FLAG, ZOOM_FLAG, VERBOSE_FLAG, ROADMAP_FLAG);
   fprintf(stderr, "User options:\n\n\
-    -a  Enable shader animations\n\n\
-    -f  Frame per second between %d to %d (ex: -f 10)\n\
+    %s  Enable shader animations.\n\n\
+    %s  Frames per second between %d to %d.\n\
         [default: %d]\n\n\
-    -m  Enable camera motion\n\n\
-    -p  Enable usage of multiple palettes\n\n\
-    -x  Pixelization value between %d to %d (ex: -x 300)\n\
+    %s  Enable camera motion.\n\n\
+    %s  Enable usage of multiple palettes.\n\n\
+    %s  Enable slide mode: disable %s flag, disable %s flag, disable %s\n\
+        flag and generate a new background every MINS minutes. Reduce\n\
+        CPU and GPU usages.\n\n\
+    %s  Pixelization value between %d to %d.\n\
         [default: %d]\n\n\
-    -z  Zoom value between %d to %d (ex: -z 25)\n\
-        [default: %d]\n\n", MIN_FPS, MAX_FPS, DEFAULT_FPS, MIN_PIXELS,
-        MAX_PIXELS, DEFAULT_PIXELS, MIN_ZOOM, MAX_ZOOM, DEFAULT_ZOOM);
-  fprintf(stderr, "Dev options:\n\n\
-    -V  Verbose mode\n\n\
-    -R  Run the corresponding predefined execution roadmap (ex: -R 0)\n\
-        [default: 0]\n\n");
+    %s  Zoom value between %d to %d.\n\
+        [default: %d]\n\n", ANIMATION_FLAG, FPS_FLAG, MIN_FPS, MAX_FPS,
+        DEFAULT_FPS, CAMERAMOTION_FLAG, PALETTES_FLAG, SLIDE_FLAG,
+        ANIMATION_FLAG, FPS_FLAG, CAMERAMOTION_FLAG, PIXEL_FLAG, MIN_PIXELS,
+        MAX_PIXELS, DEFAULT_PIXELS, ZOOM_FLAG, MIN_ZOOM, MAX_ZOOM,
+        DEFAULT_ZOOM);
+  fprintf(stderr, "Debug options:\n\n\
+    %s  Verbose mode.\n\n\
+    %s  Run the corresponding predefined execution roadmap.\n\
+        [default: 0]\n\n", VERBOSE_FLAG, ROADMAP_FLAG);
 }
 
 bool parsing_options(bool* verbose, int* fps, UniformValues* uniform_values,
@@ -41,16 +49,17 @@ bool parsing_options(bool* verbose, int* fps, UniformValues* uniform_values,
           return false;
         }
       }
-    } else if (strcmp(argv[i], FPS_FLAG) == 0) {
-      if (++i < *argc)
-      {
-        *fps = atoi(argv[i]);
-        if ((*fps < MIN_FPS) || (*fps > MAX_FPS))
+    } else if ((strcmp(argv[i], FPS_FLAG) == 0) &&
+      (uniform_values->slide == 0)) {
+        if (++i < *argc)
         {
-          help();
-          return false;
+          *fps = atoi(argv[i]);
+          if ((*fps < MIN_FPS) || (*fps > MAX_FPS))
+          {
+            help();
+            return false;
+          }
         }
-      }
     } else if (strcmp(argv[i], ZOOM_FLAG) == 0) {
       if (++i < *argc)
       {
@@ -62,10 +71,25 @@ bool parsing_options(bool* verbose, int* fps, UniformValues* uniform_values,
           return false;
         }
       }
-    } else if (strcmp(argv[i], ANIMATION_FLAG) == 0) {
-      uniform_values->animations = true;
-    } else if (strcmp(argv[i], CAMERAMOTION_FLAG) == 0) {
-      uniform_values->motion = true;
+    } else if (strcmp(argv[i], SLIDE_FLAG) == 0) {
+      if (++i < *argc)
+      {
+        uniform_values->slide = atoi(argv[i]);
+        if (uniform_values->slide <= 0)
+        {
+          help();
+          return false;
+        }
+        uniform_values->animations = false;
+        uniform_values->motion = false;
+        *fps = 0;
+      }
+    } else if ((strcmp(argv[i], ANIMATION_FLAG) == 0) &&
+      (uniform_values->slide == 0)) {
+        uniform_values->animations = true;
+    } else if ((strcmp(argv[i], CAMERAMOTION_FLAG) == 0) &&
+      (uniform_values->slide == 0)) {
+        uniform_values->motion = true;
     } else if (strcmp(argv[i], PALETTES_FLAG) == 0) {
       uniform_values->palettes = true;
     } else if (strcmp(argv[i], VERBOSE_FLAG) == 0) {

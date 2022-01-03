@@ -21,6 +21,7 @@
 #define FPS_FLAG "-f"
 #define CAMERAMOTION_FLAG "-m"
 #define PALETTES_FLAG "-p"
+#define SLIDE_FLAG "-s"
 #define PIXEL_FLAG "-x"
 #define ZOOM_FLAG "-z"
 #define ROADMAP_FLAG "-R"

@@ -97,15 +97,14 @@ vec4 planets(vec2 UV, vec2 px, bool dith)
     ++index;
   }
 
-//   if (planet.type == LAND)
-//   {
-//     return land(UV, px, planet);
-//   } else if (planet.type == MOON) {
-//     return moon(px, planet, dith);
-//   } else if (planet.type == GAZ) {
-//     return gaz(px, planet);
-//   } else
-  if (planet.type == RING) {
+  if (planet.type == LAND)
+  {
+    return land(UV, px, planet);
+  } else if (planet.type == MOON) {
+    return moon(px, planet, dith);
+  } else if (planet.type == GAZ) {
+    return gaz(px, planet);
+  } else if (planet.type == RING) {
     return ring(px, planet, dith);
   } else {
     return vec4(-1.);// vec4(planet.type);

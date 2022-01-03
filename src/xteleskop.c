@@ -15,12 +15,14 @@ int main(int argc, char** argv)
 
   UniformValues uniform_values;
   uniform_values.time = 0.0f;
+  uniform_values.slide = 0;
   gettimeofday(&(uniform_values.start), NULL);
   uniform_values.pixels = DEFAULT_PIXELS;
   uniform_values.zoom = DEFAULT_ZOOM;
   uniform_values.animations = DEFAULT_ANIMATIONS;
   uniform_values.motion = DEFAULT_MOTION;
   uniform_values.palettes = DEFAULT_PALETTES;
+  uniform_values.seed = -1.;
 
   if (!parsing_options(&verbose, &fps, &uniform_values, &roadmap,
     &argc, argv))
@@ -32,8 +34,14 @@ int main(int argc, char** argv)
 
   struct timeval start_loop;
   struct timeval end_loop;
-  const unsigned delay = 1000000.0f / fps;
   unsigned gpu_time;
+  unsigned delay;
+  if ((fps > 0) && (uniform_values.slide == 0))
+  {
+    delay = 1000000.0f / fps;
+  } else {
+    delay = uniform_values.slide;
+  }
 
   Shaders shaders;
   aggregateShaders(&shaders);
@@ -143,14 +151,12 @@ object ...\n"));
   VERB(verbose, printf("Vertex buffer object and vertex array object \
 initialized\n"));
 
-  VERB(verbose, printf("Generating random number to seed GPU hash() ...\n"));
-  uniform_values.seed = rand();
-  VERB(verbose, printf("Seed is %f\n", uniform_values.seed));
-  printf("Seed is %f\n", uniform_values.seed);
-
   while(true)
   {
-    gettimeofday(&start_loop, NULL);
+    if ((fps > 0) && (uniform_values.slide == 0))
+    {
+      gettimeofday(&start_loop, NULL);
+    }
 
     VERB(verbose, printf("Updating uniforms ...\n"));
     updateUniforms(uniforms, uniformIds, &uniform_values, verbose);
@@ -180,11 +186,17 @@ initialized\n"));
     }
 #endif
 
-    gettimeofday(&end_loop, NULL);
-    gpu_time = timediff(&start_loop, &end_loop) * 1000000.0f;
-    VERB(verbose, printf("Sleeping for %d ms ...\n",
-      gpu_time >= delay ? 0 : delay - gpu_time));
-    usleep(gpu_time >= delay ? 0 : delay - gpu_time);
+    if ((fps > 0) && (uniform_values.slide == 0))
+    {
+      gettimeofday(&end_loop, NULL);
+      gpu_time = timediff(&start_loop, &end_loop) * 1000000.0f;
+      VERB(verbose, printf("Sleeping for %d ms ...\n",
+        gpu_time >= delay ? 0 : delay - gpu_time));
+      usleep(gpu_time >= delay ? 0 : delay - gpu_time);
+    } else {
+      VERB(verbose, printf("Sleeping for %d min ...\n", delay));
+      sleep(delay * 60);
+    }
     VERB(verbose, printf("Ready to loop again\n"));
 
     if (roadmap.id == BREAK_SUCCESS_RM)

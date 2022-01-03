@@ -104,7 +104,7 @@ vec4 computeLand(vec2 UV, vec2 uv, Planet planet)
 
   col = col * light_borders(d_light, planet.radius);
   col = (floor(col * PLANET_COLS)) / PLANET_COLS;
-  return vec4(col, step(distance(vec2(0.5), uv), 0.5));
+  return vec4(col, 1.);
 }
 
 vec4 land(vec2 UV, vec2 uv, Planet planet)

@@ -49,13 +49,23 @@ Planet calc_circle(vec2 ixy, vec2 xy, vec2 offset)
   float plan = hash(ixy, seed + 9u);
   vec2 light_origin =
     center + light_dist * vec2(cos(light_angle), sin(light_angle));
-  uint turbulence = 0u;
+
   Planet planet = Planet(shape, center, rotation, radius, seed, time_speed,
-    plan, light_origin, turbulence);
-  if (rd_planet == GAZ)
+    plan, light_origin, 0u, 0., 0.);
+  if (rd_planet == RING)
   {
+    float ring_rotation = radians(hash(ixy, seed + 11u) * 360.);
+    float ring_radius =
+      hash(ixy, seed + 12u) * (0.2 + (planet.radius - 0.2) / 4.);
+    float ring_width = hash(ixy, seed + 13u) * 0.06;
+    float ring_angle = hash(ixy, seed + 14u) * 10. * (planet.radius - 0.2);
+
+    vec3 res = computeRingShape(xy, planet, ring_rotation, ring_width,
+      ring_radius, ring_angle);
+    planet.type = max(res.x * rd_planet, planet.type);
+    planet.ring = res.y;
+    planet.ring_a = res.z;
     planet.turbulence = (uint(hash(ixy, seed + 10u) * 9.) + 1u) * 10u;
-    planet.type = max(computeRing(xy, planet, false).x * rd_planet, planet.type);
   }
 
   return planet;
@@ -75,7 +85,8 @@ vec4 planets(vec2 UV, vec2 px, bool dith)
   );
 
   int index = 0;
-  Planet planet = Planet(0., vec2(0.), 0., 0., 0u, 0., 0., vec2(0., 0.), 0u);
+  Planet planet =
+    Planet(0., vec2(0.), 0., 0., 0u, 0., 0., vec2(0., 0.), 0u, 0., 0.);
 
   while (index < 4)
   {
@@ -93,9 +104,10 @@ vec4 planets(vec2 UV, vec2 px, bool dith)
 //     return moon(px, planet, dith);
 //   } else if (planet.type == GAZ) {
 //     return gaz(px, planet);
-//   } else if (planet.type == RING) {
-//     return ring(px, planet, dith);
-//   } else {
-    return vec4(planet.type); //vec(-1.);
-//   }
+//   } else
+  if (planet.type == RING) {
+    return ring(px, planet, dith);
+  } else {
+    return vec4(-1.);// vec4(planet.type);
+  }
 }

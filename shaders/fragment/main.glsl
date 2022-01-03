@@ -36,11 +36,11 @@ void main()
   vec4 col = vec4(0.);
 
   col = planets(UV, px, dith);
-//   if (col.x == -1.)
-//   {
-//     col = max(bigstars(UV), max(stars(px), max(dust(px, dith),
-//       nebulae(px, dith)) * 0.8 * (sin(time * 2500.) * 0.015 + 1.)));
-//   }
+  if (col.x == -1.)
+  {
+    col = max(bigstars(UV), max(stars(px), max(dust(px, dith),
+      nebulae(px, dith)) * 0.8 * (sin(time * 2500.) * 0.015 + 1.)));
+  }
 
   fragColor = col;
 }

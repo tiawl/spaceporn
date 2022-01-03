@@ -1,7 +1,6 @@
 // TODO:
 // - More parameters on different planets to add more variety
 // - add zoom uniform (to avoid confusion with pixels)
-// - ring planet
 // - dry planet
 // - galaxy
 // - dark hole (with event horizon animation)
@@ -14,7 +13,7 @@ uniform sampler2D big_stars_texture;
 
 out vec4 fragColor;
 
-const float planets_density = 1.; // WARNING: must be greater than 1 to avoid some artifacts
+const float planets_density = 3.; // WARNING: must be greater than 1 to avoid some artifacts
 const float bigstars_density = 3.;
 const float stars_density = 20.0;
 
@@ -38,6 +37,8 @@ struct Planet
   float plan;
   vec2 light_origin;
   uint turbulence;
+  float ring;
+  float ring_a;
 };
 
 # define TEXTURE_SIZE vec2(256., 32.)

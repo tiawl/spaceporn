@@ -143,6 +143,7 @@ initialized\n"));
   VERB(verbose, printf("Generating random number to seed GPU hash() ...\n"));
   uniform_values.seed = rand();
   VERB(verbose, printf("Seed is %f\n", uniform_values.seed));
+  printf("Seed is %f\n", uniform_values.seed);
 
   while(true)
   {

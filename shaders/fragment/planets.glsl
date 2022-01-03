@@ -3,11 +3,14 @@
 # include "planet/moon.glsl"
 # include "planet/gaz.glsl"
 # include "planet/ring.glsl"
+# include "planet/dry.glsl"
 
-# define MOON 0.25
-# define GAZ  0.5
-# define RING 0.75
+# define MOON 0.2
+# define GAZ  0.4
+# define RING 0.6
+# define DRY  0.8
 # define LAND 1.
+# define PLANET_TYPES 5.
 
 float floor_multiple(float numToRound, float base)
 {
@@ -31,12 +34,12 @@ Planet calc_circle(vec2 ixy, vec2 xy, vec2 offset)
   center.x += planets_density * 0.1 * sin(angle);
   center.y += planets_density * 0.1 * cos(angle);
 
-  float rd_planet = ceil(hash(ixy, seed + 2u) * 4.);
+  float rd_planet = ceil(hash(ixy, seed + 2u) * PLANET_TYPES);
   if (rd_planet < 1.)
   {
     rd_planet = 1.;
   }
-  rd_planet = rd_planet / 4.;
+  rd_planet = rd_planet / PLANET_TYPES;
 
   float radius = 0.2 + 0.4 * hash(ixy, seed + 3u);
   float light_angle = radians(hash(ixy, seed + 4u) * 360.);
@@ -106,6 +109,8 @@ vec4 planets(vec2 UV, vec2 px, bool dith)
     return gaz(px, planet);
   } else if (planet.type == RING) {
     return ring(px, planet, dith);
+  } else if (planet.type == DRY) {
+    return dry(px, planet, dith);
   } else {
     return vec4(-1.);// vec4(planet.type);
   }

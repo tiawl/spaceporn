@@ -1,6 +1,5 @@
 // TODO:
 // - More parameters on different planets to add more variety
-// - add zoom uniform (to avoid confusion with pixels)
 // - dry planet
 // - galaxy
 // - dark hole (with event horizon animation)
@@ -13,7 +12,7 @@ uniform sampler2D big_stars_texture;
 
 out vec4 fragColor;
 
-const float planets_density = 3.; // WARNING: must be greater than 1 to avoid some artifacts
+const float planets_density = 3.; // WARNING: must be greater than 3 to avoid some artifacts
 const float bigstars_density = 3.;
 const float stars_density = 20.0;
 
@@ -21,6 +20,7 @@ vec2 resolution = vec2(fflags[0], fflags[1]);
 uint seed = uint(floor(fflags[2]));
 float time = fflags[3] / 50.;
 float pixels = fflags[4];
+float zoom = fflags[5];
 
 bool animation = bflags.x;
 bool motion = bflags.y;

@@ -13,6 +13,7 @@ typedef struct
   GLboolean animations;
   GLboolean motion;
   GLboolean palettes;
+  GLfloat zoom;
   GLfloat seed;
 } UniformValues;
 
@@ -23,7 +24,7 @@ typedef struct
 } Uniform;
 
 #define UNIFORM_COUNT 2
-#define UNIFORM_FLOATS 5
+#define UNIFORM_FLOATS 6
 #define UNIFORM_BOOLEANS 3
 
 /* custom functions used to set uniform values */

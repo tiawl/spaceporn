@@ -7,7 +7,8 @@ void updateFloatUniforms(GLint uniformId, UniformValues* values, bool verbose)
   values->time = timediff(&(values->start), &now);
   GLfloat fflags[UNIFORM_FLOATS] =
   {
-    values->width, values->height, values->seed, values->time, values->pixels
+    values->width, values->height, values->seed, values->time, values->pixels,
+    values->zoom
   };
 
   VERB(verbose, printf("    New fflags values: [%d, %d, %f, %f, %d]\n",

@@ -17,6 +17,7 @@ int main(int argc, char** argv)
   uniform_values.time = 0.0f;
   gettimeofday(&(uniform_values.start), NULL);
   uniform_values.pixels = DEFAULT_PIXELS;
+  uniform_values.zoom = DEFAULT_ZOOM;
   uniform_values.animations = DEFAULT_ANIMATIONS;
   uniform_values.motion = DEFAULT_MOTION;
   uniform_values.palettes = DEFAULT_PALETTES;
@@ -26,6 +27,8 @@ int main(int argc, char** argv)
   {
     return EXIT_FAILURE;
   }
+
+  uniform_values.zoom /= 100.;
 
   struct timeval start_loop;
   struct timeval end_loop;

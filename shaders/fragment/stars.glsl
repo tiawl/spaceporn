@@ -2,10 +2,10 @@
 
 vec3 nrand3(vec2 co)
 {
-  vec3 a = fract(cos(co.x * 8.3e-3 + co.y) * vec3(1.3e5, 4.7e5, 2.9e5));
-  vec3 b = fract(sin(co.x * 0.3e-3 + co.y) * vec3(8.1e5, 1.0e5, 0.1e5));
-  vec3 c = mix(a, b, 0.5);
-  return c;
+  float a = hash(co, seed + 1u);
+  float b = hash(co, seed + 2u);
+  float c = mix(a, b, 0.5);
+  return vec3(c);
 }
 
 vec4 stars(vec2 uv)

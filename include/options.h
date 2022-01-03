@@ -11,7 +11,8 @@
 #define VERSION "0.1"
 
 #define DEFAULT_FPS 30
-#define DEFAULT_PIXELS 500
+#define DEFAULT_PIXELS 300
+#define DEFAULT_ZOOM 25
 #define DEFAULT_ANIMATIONS false
 #define DEFAULT_MOTION false
 #define DEFAULT_PALETTES false
@@ -29,6 +30,8 @@
 #define MAX_PIXELS 600
 #define MIN_FPS 1
 #define MAX_FPS 60
+#define MIN_ZOOM 10
+#define MAX_ZOOM 50
 
 void help();
 bool parsing_options(bool* verbose, int* fps, UniformValues* uniform_values,

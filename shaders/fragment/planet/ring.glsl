@@ -71,8 +71,6 @@ vec4 computePlanetUnder(vec2 uv, Planet planet, bool dith)
     col = colorSelection(darkColors, posterized - 1.0);
   }
 
-//   float c = ppcloud_alpha(size, sizeModifier, planet.time_speed,
-//     uv * vec2(1.0), octaves, seed + planet.seed);
   col *= sqrt(0.8 - d_light);
   return vec4(col, 1.);
 }

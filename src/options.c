@@ -3,16 +3,19 @@
 void help()
 {
   fprintf(stderr, "\n%s v%s\n", NAME, VERSION);
-  fprintf(stderr, "\nUsage: %s [-a] [-m] [-p] [-x PIXELS] [-d MICROS] \
-[-V] [-R ROADMAP]\n\n", NAME);
+  fprintf(stderr, "\nUsage: %s [-a] [-f FPS] [-m] [-p] [-x PIXELS] [-z ZOOM]\n\
+  [-V] [-R ROADMAP]\n\n", NAME);
   fprintf(stderr, "User options:\n\n\
     -a  Enable shader animations\n\n\
     -f  Frame per second between %d to %d (ex: -f 10)\n\
-        [default: 30]\n\n\
+        [default: %d]\n\n\
     -m  Enable camera motion\n\n\
     -p  Enable usage of multiple palettes\n\n\
     -x  Pixelization value between %d to %d (ex: -x 300)\n\
-        [default: 500]\n\n", MIN_FPS, MAX_FPS, MIN_PIXELS, MAX_PIXELS);
+        [default: %d]\n\n\
+    -z  Zoom value between %d to %d (ex: -z 25)\n\
+        [default: %d]\n\n", MIN_FPS, MAX_FPS, DEFAULT_FPS, MIN_PIXELS,
+        MAX_PIXELS, DEFAULT_PIXELS, MIN_ZOOM, MAX_ZOOM, DEFAULT_ZOOM);
   fprintf(stderr, "Dev options:\n\n\
     -V  Verbose mode\n\n\
     -R  Run the corresponding predefined execution roadmap (ex: -R 0)\n\
@@ -43,6 +46,17 @@ bool parsing_options(bool* verbose, int* fps, UniformValues* uniform_values,
       {
         *fps = atoi(argv[i]);
         if ((*fps < MIN_FPS) || (*fps > MAX_FPS))
+        {
+          help();
+          return false;
+        }
+      }
+    } else if (strcmp(argv[i], ZOOM_FLAG) == 0) {
+      if (++i < *argc)
+      {
+        uniform_values->zoom = atoi(argv[i]);
+        if ((uniform_values->zoom < MIN_ZOOM) ||
+          (uniform_values->zoom > MAX_ZOOM))
         {
           help();
           return false;

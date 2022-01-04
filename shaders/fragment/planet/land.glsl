@@ -3,10 +3,9 @@
 float light_borders(float d_light, float radius)
 {
   float light = 1.;
-  if (d_light > radius / 8.)
+  if (d_light > radius / 4.)
   {
-    float p = (1. - d_light) / (1. - radius / 8.);
-    p *= p;
+    float p = (1. - d_light) / (1. - radius / 4.);
     p *= p;
     p *= p;
     p *= p;

@@ -48,7 +48,7 @@ struct Planet
 # define DUST_SIZE 0.015
 # define PLANETS_SIZE 0.01
 # define MAX_RATE 300.
-# define MOTION_SPEED 20.
+# define MOTION_SPEED 1.
 
 bool dither(float dither_size, vec2 uv1, vec2 uv2)
 {

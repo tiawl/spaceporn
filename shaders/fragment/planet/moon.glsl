@@ -60,7 +60,7 @@ vec4 computeCraters(vec2 uv, Planet planet, bool dith)
 
   if (dith)
   {
-    col *= 0.95;
+    col *= 0.9;
   }
 
   float diff_col = 0.;
@@ -95,7 +95,7 @@ vec4 computeMoon(vec2 uv, Planet planet, bool dith)
 
   if (dith)
   {
-    col *= 0.95;
+    col *= 0.9;
   }
 
   col = floor(col * PLANET_COLS) / PLANET_COLS;

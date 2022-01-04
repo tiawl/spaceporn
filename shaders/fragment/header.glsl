@@ -43,13 +43,12 @@ struct Planet
 
 # define TEXTURE_SIZE vec2(256., 32.)
 # define NB_COLS 7.
-# define GAZ_COLS 12.
-# define PLANET_COLS 20.
+# define PLANET_COLS 12.
 
 # define DUST_SIZE 0.015
 # define PLANETS_SIZE 0.01
 # define MAX_RATE 300.
-# define MOTION_SPEED 1.
+# define MOTION_SPEED 20.
 
 bool dither(float dither_size, vec2 uv1, vec2 uv2)
 {

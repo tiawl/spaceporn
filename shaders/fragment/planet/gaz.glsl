@@ -1,6 +1,6 @@
 # include "pixelplanets.glsl"
 
-vec4 computeInnerCloud(vec2 uv, Planet planet)
+vec4 computeInnerCloud(vec2 uv, Planet planet, bool dith)
 {
   const float size = 9.0;
   const float stretch = 1.0;
@@ -21,12 +21,17 @@ vec4 computeInnerCloud(vec2 uv, Planet planet)
 
   vec3 col = vec3(0.169);
 
-  col *= sqrt(0.8 - (d_light + c * 0.2));
-  col = (floor(col * GAZ_COLS)) / GAZ_COLS;
+  float light_b = sqrt(0.8 - (d_light + c * 0.2));
+  col *= light_b;
+  if (dith && (light_b < 1.))
+  {
+    col *= 0.9;
+  }
+  col = (floor(col * PLANET_COLS)) / PLANET_COLS;
   return vec4(col, step(cloud_cover, c));
 }
 
-vec4 computeOuterClouds(vec2 uv, Planet planet)
+vec4 computeOuterClouds(vec2 uv, Planet planet, bool dith)
 {
   const float size = 9.0;
   const uint octaves = 5u;
@@ -51,18 +56,23 @@ vec4 computeOuterClouds(vec2 uv, Planet planet)
     col = vec3(0.479);
   }
 
-  col *= sqrt(0.8 - (d_light + c * 0.2));
-  col = (floor(col * GAZ_COLS)) / GAZ_COLS;
+  float light_b = sqrt(0.8 - (d_light + c * 0.2));
+  col *= light_b;
+  if (dith && (light_b < 1.))
+  {
+    col *= 0.9;
+  }
+  col = (floor(col * PLANET_COLS)) / PLANET_COLS;
   return vec4(col, step(cloud_cover, c));
 }
 
-vec4 gaz(vec2 uv, Planet planet)
+vec4 gaz(vec2 uv, Planet planet, bool dith)
 {
-  vec4 outerClouds = computeOuterClouds(uv, planet);
+  vec4 outerClouds = computeOuterClouds(uv, planet, dith);
   if (outerClouds.a != 0.0)
   {
     return outerClouds;
   } else {
-    return computeInnerCloud(uv, planet);
+    return computeInnerCloud(uv, planet, dith);
   }
 }

@@ -74,7 +74,7 @@ Planet calc_circle(vec2 ixy, vec2 xy, vec2 offset)
   return planet;
 }
 
-vec4 planets(vec2 UV, vec2 px, bool dith)
+vec4 planets(vec2 px, bool dith)
 {
   px *= PLANETS_SIZE;
 
@@ -102,11 +102,11 @@ vec4 planets(vec2 UV, vec2 px, bool dith)
 
   if (planet.type == LAND)
   {
-    return land(UV, px, planet);
+    return land(px, planet, dith);
   } else if (planet.type == MOON) {
     return moon(px, planet, dith);
   } else if (planet.type == GAZ) {
-    return gaz(px, planet);
+    return gaz(px, planet, dith);
   } else if (planet.type == RING) {
     return ring(px, planet, dith);
   } else if (planet.type == DRY) {

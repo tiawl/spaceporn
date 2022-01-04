@@ -15,7 +15,7 @@ void main()
     time = 0.0;
   }
 
-  float motion_radius = 2.;
+  float motion_radius = 2. * zoom;
   vec2 offset = 2 * motion_radius + motion_radius
     * vec2(sin(MOTION_SPEED * time), sin(MOTION_SPEED * time * 0.75));
 
@@ -40,7 +40,7 @@ void main()
 
   vec4 col = vec4(0.);
 
-  col = planets(UV, px, dith);
+  col = planets(px, dith);
   if (col.x == -1.)
   {
     col = max(bigstars(unzoomed_UV), max(stars(unzoomed_px), max(dust(px, dith),

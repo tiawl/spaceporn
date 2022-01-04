@@ -15,7 +15,7 @@ float light_borders(float d_light, float radius)
   return light;
 }
 
-vec4 computeClouds(vec2 uv, Planet planet)
+vec4 computeClouds(vec2 uv, Planet planet, bool dith)
 {
   const float cloud_curve = 1.3;
   const float size = 7.315;
@@ -42,14 +42,18 @@ vec4 computeClouds(vec2 uv, Planet planet)
   }
 
   d_light *= d_light * 0.4;
-  col = col * light_borders(d_light, planet.radius);
-  col = (floor(col * PLANET_COLS)) / PLANET_COLS;
+  float light_b = light_borders(d_light, planet.radius);
+  col = col * light_b;
+  if (dith && (light_b < 1.))
+  {
+    col *= 0.9;
+  }
+  col = (floor(col * NB_COLS)) / NB_COLS;
   return vec4(col, step(cloud_cover, c));
 }
 
-vec4 computeLand(vec2 UV, vec2 uv, Planet planet)
+vec4 computeLand(vec2 uv, Planet planet, bool dith)
 {
-  const float dither_size = 3.951;
   const float size = 4.6;
   const float river_cutoff = 0.368;
   const uint octaves = 5u;
@@ -57,7 +61,6 @@ vec4 computeLand(vec2 UV, vec2 uv, Planet planet)
 
   float lratio = 1. / sqrt(planet.radius);
   float d_light = distance(uv, planet.light_origin) * lratio;
-  bool dith = dither(dither_size, uv, UV);
 
   uv = rotate(uv, planet.center, planet.rotation);
   uv = spherify(uv, planet.center, planet.radius);
@@ -76,8 +79,6 @@ vec4 computeLand(vec2 UV, vec2 uv, Planet planet)
   float river_fbm = ppfbm(size, sizeModifier,
     base_fbm_uv + fbm1 * 6.0, octaves, seed + planet.seed);
   river_fbm = step(river_cutoff, river_fbm);
-
-  float dither_border = (1.0 / pixels) * dither_size;
 
   d_light *= d_light * 0.4;
   vec3 col = vec3(0.204);
@@ -102,17 +103,22 @@ vec4 computeLand(vec2 UV, vec2 uv, Planet planet)
     }
   }
 
-  col = col * light_borders(d_light, planet.radius);
-  col = (floor(col * PLANET_COLS)) / PLANET_COLS;
+  float light_b = light_borders(d_light, planet.radius);
+  col = col * light_b;
+  if (dith && (light_b < 1.))
+  {
+    col *= 0.9;
+  }
+  col = (floor(col * NB_COLS)) / NB_COLS;
   return vec4(col, 1.);
 }
 
-vec4 land(vec2 UV, vec2 uv, Planet planet)
+vec4 land(vec2 uv, Planet planet, bool dith)
 {
-  vec4 clouds = computeClouds(uv, planet);
+  vec4 clouds = computeClouds(uv, planet, dith);
   if (clouds.a == 0.)
   {
-    return computeLand(UV, uv, planet);
+    return computeLand(uv, planet, dith);
   } else {
     return clouds;
   }

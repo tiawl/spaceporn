@@ -12,7 +12,7 @@ void help()
     %s  Frames per second between %d to %d.\n\
         [default: %d]\n\n\
     %s  Enable camera motion.\n\n\
-    %s  Enable usage of multiple palettes.\n\n\
+    %s  Enable usage of unique palette for each object.\n\n\
     %s  Enable slide mode: disable %s flag, disable %s flag, disable %s\n\
         flag and generate a new background every MINS minutes. Reduce\n\
         CPU and GPU usages.\n\n\

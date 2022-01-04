@@ -10,16 +10,14 @@ float ppnoise(float size, vec2 sizeModifier, vec2 coord, uint noise_seed)
 {
   vec2 i = floor(coord);
   vec2 f = fract(coord);
+  f = f * f * (3.0 - 2.0 * f);
 
   float a = pprand(size, sizeModifier, i, noise_seed);
   float b = pprand(size, sizeModifier, i + vec2(1.0, 0.0), noise_seed);
   float c = pprand(size, sizeModifier, i + vec2(0.0, 1.0), noise_seed);
   float d = pprand(size, sizeModifier, i + vec2(1.0, 1.0), noise_seed);
 
-  vec2 cubic = f * f * (3.0 - 2.0 * f);
-
-  return mix(a, b, cubic.x) + (c - a) * cubic.y *
-    (1.0 - cubic.x) + (d - b) * cubic.x * cubic.y;
+  return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
 }
 
 float ppfbm(float size, vec2 sizeModifier, vec2 coord, uint octaves,

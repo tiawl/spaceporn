@@ -48,7 +48,6 @@ vec4 computeCraters(vec2 uv, Planet planet, bool dith)
     uv + (planet.light_origin - planet.center + vec2(0.5, 0.)) * 0.03,
     seed + planet.seed);
 
-  vec3 col = vec3(0.);
   float s = step(d_to_center, planet.radius);
   float a = step(0.5, c1) * s * s;
 
@@ -56,9 +55,10 @@ vec4 computeCraters(vec2 uv, Planet planet, bool dith)
     uv * sizePlanet + vec2(time * planet.time_speed, 0.0), octaves,
     seed + planet.seed) * 0.3;
 
-  col = vec3(1. - d_light);
+  float light_b = 1. - d_light;
+  vec3 col = vec3(light_b);
 
-  if (dith)
+  if (dith && (light_b < 1.))
   {
     col *= 0.9;
   }
@@ -91,9 +91,10 @@ vec4 computeMoon(vec2 uv, Planet planet, bool dith)
     uv * size + vec2(time * planet.time_speed, 0.0), octaves,
     seed + planet.seed) * 0.3;
 
-  vec3 col = vec3(1. - d_light);
+  float light_b = 1. - d_light;
+  vec3 col = vec3(light_b);
 
-  if (dith)
+  if (dith && (light_b < 1.))
   {
     col *= 0.9;
   }

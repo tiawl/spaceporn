@@ -71,7 +71,13 @@ vec4 computePlanetUnder(vec2 uv, Planet planet, bool dith)
     col = colorSelection(darkColors, posterized - 1.0);
   }
 
-  col *= sqrt(0.8 - d_light);
+  float light_b = 1. - d_light;
+  col *= min(0.7, light_b);
+  if (dith && (light_b < 0.8))
+  {
+    col *= 0.95;
+  }
+  col = (floor(col * PLANET_COLS)) / PLANET_COLS;
   return vec4(col, 1.);
 }
 
@@ -112,7 +118,7 @@ vec3 computeRingShape(vec2 uv, Planet planet, float rotation, float w,
   }
 }
 
-vec4 computeRingColor(vec2 uv, Planet planet)
+vec4 computeRingColor(vec2 uv, Planet planet, bool dith)
 {
   float lratio = 1. / sqrt(planet.radius);
   float d_light = distance(uv, planet.light_origin) * lratio;
@@ -124,7 +130,15 @@ vec4 computeRingColor(vec2 uv, Planet planet)
   } else {
     col = colorSelection(darkColors, posterized - 1.0);
   }
-  col *= max(sqrt(1. - d_light), 0.4);
+
+  float light_b = max(sqrt(1. - d_light), 0.4);
+  col *= light_b;
+  if (dith && (light_b < 1.))
+  {
+    col *= 0.95;
+  }
+  col = (floor(col * PLANET_COLS)) / PLANET_COLS;
+  return vec4(col, 1.);
   return vec4(col, planet.ring_a);
 }
 
@@ -132,7 +146,7 @@ vec4 ring(vec2 uv, Planet planet, bool dith)
 {
   if (planet.ring_a != 0.0)
   {
-    return computeRingColor(uv, planet);
+    return computeRingColor(uv, planet, dith);
   } else {
     return computePlanetUnder(uv, planet, dith);
   }

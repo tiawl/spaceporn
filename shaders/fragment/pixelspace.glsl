@@ -33,6 +33,7 @@ float psfbm(vec2 coord, uint octaves, uint noise_seed)
 float pscircleNoise(vec2 uv, uint noise_seed)
 {
   float uv_y = floor(uv.y);
+  uv.x += uv_y * .31;
   vec2 f = fract(uv);
   float h = hash(vec2(floor(uv.x), floor(uv_y)), noise_seed);
   float m = (length(f - 0.25 - (h * 0.5)));

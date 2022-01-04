@@ -70,6 +70,8 @@ int main(int argc, char** argv)
   context.window = 0;
 #if DEBUG
   context.debug_window = 0;
+  int fps_timer = -1;
+  int fps_counter = -1;
 #endif
   context.visual_info = NULL;
   context.cmap = 0;
@@ -156,6 +158,18 @@ initialized\n"));
     if ((fps > 0) && (uniform_values.slide == 0))
     {
       gettimeofday(&start_loop, NULL);
+
+#if DEBUG
+      if (fps_timer <= 0)
+      {
+        if (fps_counter >= 0)
+        {
+          printf("%d FPS\n", fps_counter);
+        }
+        fps_counter = 0;
+        fps_timer = 1000000;
+      }
+#endif
     }
 
     VERB(verbose, printf("Updating uniforms ...\n"));
@@ -193,6 +207,10 @@ initialized\n"));
       VERB(verbose, printf("Sleeping for %d ms ...\n",
         gpu_time >= delay ? 0 : delay - gpu_time));
       usleep(gpu_time >= delay ? 0 : delay - gpu_time);
+#if DEBUG
+      fps_timer -= (gpu_time > delay ? gpu_time : delay);
+      fps_counter++;
+#endif
     } else {
       VERB(verbose, printf("Sleeping for %d min ...\n", delay));
       if (roadmap.id == SLIDEMODE_SUCCESS_RM)

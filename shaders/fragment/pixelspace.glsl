@@ -1,25 +1,18 @@
 # include "hash.glsl"
 # include "header.glsl"
 
-float psrand(vec2 coord)
-{
-  return fract(43757.5453 * sin(dot(coord, vec2(12.9898, 78.233))));
-}
-
 float psnoise(vec2 coord, uint noise_seed)
 {
   vec2 i = floor(coord);
   vec2 f = fract(coord);
+  f = f * f * (3.0 - 2.0 * f);
 
   float a = hash(i, noise_seed);
   float b = hash(i + vec2(1.0, 0.0), noise_seed);
   float c = hash(i + vec2(0.0, 1.0), noise_seed);
   float d = hash(i + vec2(1.0, 1.0), noise_seed);
 
-  vec2 cubic = f * f * (3.0 - 2.0 * f);
-
-  return mix(a, b, cubic.x) + (c - a) * cubic.y *
-    (1.0 - cubic.x) + (d - b) * cubic.x * cubic.y;
+  return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
 }
 
 float psfbm(vec2 coord, uint octaves, uint noise_seed)
@@ -40,7 +33,6 @@ float psfbm(vec2 coord, uint octaves, uint noise_seed)
 float pscircleNoise(vec2 uv, uint noise_seed)
 {
   float uv_y = floor(uv.y);
-  uv.x += uv_y * .31;
   vec2 f = fract(uv);
   float h = hash(vec2(floor(uv.x), floor(uv_y)), noise_seed);
   float m = (length(f - 0.25 - (h * 0.5)));

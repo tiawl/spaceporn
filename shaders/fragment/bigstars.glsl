@@ -38,8 +38,9 @@ float calc_square(vec2 xy, vec2 offset)
     if (text.a > 0.)
     {
       float rd_brightness = ceil(hash(ixy, seed + 2u) * 2.);
-      return text.x * (0.25 * rd_brightness *
-        hash(ixy, seed + uint(floor(MAX_RATE * 3. * time))) + 1.);
+      return text.x + (0.125 * rd_brightness *
+        abs(sin((time + hash(ixy, seed)) *
+          (hash(ixy, seed + 1u) + 1.5) * MAX_RATE)));
     } else {
       return 0.;
     }

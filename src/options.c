@@ -103,12 +103,13 @@ bool parsing_options(bool* verbose, int* fps, UniformValues* uniform_values,
           help();
           return false;
         } else {
-          if ((roadmap->id >= 35) && (roadmap->id <= 60))
+          if ((roadmap->id >= VERTEX_FILE_SARH_HEADER_MALLOC_FAILED_RM) &&
+            (roadmap->id <= FRAGMENT_FILE_SARH_REPLACE_2_REGEXEC_FAILED_RM))
           {
             if (++i < *argc)
             {
               char* dir = NULL;
-              if (roadmap->id < 48)
+              if (roadmap->id < FRAGMENT_FILE_SARH_HEADER_MALLOC_FAILED_RM)
               {
                 dir = malloc(sizeof(char) * (strlen(SHADERS_DIR) +
                   strlen(VERTEX_DIR) + strlen(argv[i]) + 1));

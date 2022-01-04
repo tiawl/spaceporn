@@ -12,7 +12,7 @@ uniform sampler2D big_stars_texture;
 
 out vec4 fragColor;
 
-const float planets_density = 3.; // WARNING: must be greater than 3 to avoid some artifacts
+const float planets_density = 1.; // WARNING: must be greater than 3 to avoid some artifacts
 const float bigstars_density = 3.;
 const float stars_density = 20.0;
 

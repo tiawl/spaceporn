@@ -195,6 +195,11 @@ initialized\n"));
       usleep(gpu_time >= delay ? 0 : delay - gpu_time);
     } else {
       VERB(verbose, printf("Sleeping for %d min ...\n", delay));
+      if (roadmap.id == SLIDEMODE_SUCCESS_RM)
+      {
+        delay = 0;
+        roadmap.id = BREAK_SUCCESS_RM;
+      }
       sleep(delay * 60);
     }
     VERB(verbose, printf("Ready to loop again\n"));

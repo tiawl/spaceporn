@@ -109,6 +109,9 @@ are initialized\n"));
     }
     LOG(verbose, printf("GLX context created\n"));
 
+    uniform_values.width = context.window_attribs.width;
+    uniform_values.height = context.window_attribs.height;
+
     LOG(verbose, printf("Loading OpenGL program ...\n"));
     if (!loadProgram(&context, &shaders, verbose, &roadmap))
     {
@@ -132,10 +135,17 @@ are initialized\n"));
 
     GLuint uniformIds[UNIFORM_COUNT];
 
-    uniform_values.width = context.window_attribs.width;
-    uniform_values.height = context.window_attribs.height;
+    LOG(verbose, printf("Generating textures atlas ...\n"));
+    if (!generateAtlas(&(textures.atlas), &uniform_values, verbose))
+    {
+      fprintf((verbose ? stdout : stderr),
+        "Failed to generate textures atlas\n");
+      status = false;
+      break;
+    }
+    LOG(verbose, printf("Textures atlas generated\n"));
 
-    LOG(verbose, printf("Loading PNG texture ...\n"));
+    LOG(verbose, printf("Loading bigstars PNG texture ...\n"));
     if (!loadPng(&(textures.bigstars), verbose, &roadmap))
     {
       fprintf((verbose ? stdout : stderr),
@@ -143,7 +153,7 @@ are initialized\n"));
       status = false;
       break;
     }
-    LOG(verbose, printf("PNG texture loaded\n"));
+    LOG(verbose, printf("bigstars PNG texture loaded\n"));
 
     LOG(verbose, printf("Searching uniforms location ...\n"));
     getUniforms(uniforms, uniformIds, &shaders.program, verbose);

@@ -140,9 +140,12 @@ typedef struct
   char* glsl_file;
 } Roadmap;
 
-#define VERB(v, stmt) if (v) { \
-  stmt; \
-}
+#define LOG(v, stmt) do \
+{ \
+  if (v) { \
+    stmt; \
+  } \
+} while (0)
 
 typedef struct
 {
@@ -186,41 +189,21 @@ typedef struct
   GLuint buffer;
 } Vertices;
 
-typedef struct
-{
-  Context* context;
-  Shaders* shaders;
-  PNG* png;
-  Vertices* vertices;
-  bool* verbose;
-  Roadmap* roadmap;
-} Aggregate;
-
-void freeContext(Context* context, bool verbose);
-void freeProgram(Shaders* shaders, bool verbose, Roadmap* roadmap);
-void freePng(PNG* png, bool verbose);
-void freePaths(Shaders* shaders, PNG* png, bool verbose);
-void freeVertices(Vertices* vertices, bool verbose);
-
-void aggregateContext(Context* context);
-void aggregateShaders(Shaders* shaders);
-void aggregatePng(PNG* png);
-void aggregateVertices(Vertices* vertices);
-void aggregateVerbose(bool* verbose);
-void aggregateRoadmap(Roadmap* roadmap);
-
-void exitHandler();
-void checkOpenGLError(const char* stmt, const char* fname, int line);
+bool checkOpenGLError(const char* stmt, const char* fname, int line);
 
 double timediff(struct timeval* start, struct timeval* end);
 
-#define GL_CHECK(stmt) do { \
+#define GL_CHECK(stmt, status) { \
   stmt; \
-  checkOpenGLError(#stmt, __FILE__, __LINE__); \
-} while (0)
+  status = checkOpenGLError(#stmt, __FILE__, __LINE__); \
+  if (!(status)) \
+  { \
+    break; \
+  } \
+}
 
 #define MISSINGMAIN_VERTEX_SHADER 65
 #define ERRONEOUS_VERTEX_SHADER 80
-#define ERRONEOUS_FRAGMENT_SHADER 156
+#define ERRONEOUS_FRAGMENT_SHADER 180
 
 #endif

@@ -21,5 +21,6 @@ bool initVertShaderPath(Shaders* shaders, size_t len[6], char* user,
 bool initTexturePath(PNG* png, size_t len[5], char* user, bool verbose,
   Roadmap* roadmap);
 bool initPaths(Shaders* shaders, PNG* png, bool verbose, Roadmap* roadmap);
+void freePaths(Shaders* shaders, PNG* png, bool verbose);
 
 #endif

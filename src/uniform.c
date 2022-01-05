@@ -1,62 +1,84 @@
 #include "uniform.h"
 
-void updateFloatUniforms(GLint uniformId, UniformValues* values, bool verbose)
+bool updateFloatUniforms(GLint uniformId, UniformValues* values, bool verbose)
 {
-  if ((values->slide > 0) || (values->seed < 0.))
+  bool status = true;
+
+  do
   {
-    VERB(verbose, printf("    Generating random number to seed GPU hash() \
+    if ((values->slide > 0) || (values->seed < 0.))
+    {
+      LOG(verbose, printf("    Generating random number to seed GPU hash() \
 ...\n"));
-    values->seed = rand();
-    VERB(verbose, printf("    Seed is %f\n", values->seed));
+      values->seed = rand();
+      LOG(verbose, printf("    Seed is %f\n", values->seed));
 
 #if DEBUG
-    printf("Seed is %f\n", values->seed);
+      printf("Seed is %f\n", values->seed);
 #endif
-  }
+    }
 
-  struct timeval now;
-  gettimeofday(&now, NULL);
-  values->time = timediff(&(values->start), &now);
+    struct timeval now;
+    gettimeofday(&now, NULL);
+    values->time = timediff(&(values->start), &now);
 
-  GLfloat fflags[UNIFORM_FLOATS] =
-  {
-    values->width, values->height, values->seed, values->time, values->pixels,
-    values->zoom
-  };
+    GLfloat fflags[UNIFORM_FLOATS] =
+    {
+      values->width, values->height, values->seed, values->time, values->pixels,
+      values->zoom
+    };
 
-  VERB(verbose, printf("    New fflags values: [%d, %d, %f, %f, %d]\n",
-    values->width, values->height, fflags[2], fflags[3], values->pixels));
+    LOG(verbose, printf("    New fflags values: [%d, %d, %f, %f, %d, %f]\n",
+      values->width, values->height, fflags[2], fflags[3], values->pixels,
+      values->zoom));
 
-  VERB(verbose, printf("    Specifying value of fflags in current program \
+    LOG(verbose, printf("    Specifying value of fflags in current program \
 ...\n"));
-  GL_CHECK(glUniform1fv(uniformId, UNIFORM_FLOATS, fflags));
-  VERB(verbose, printf("    Value of fflags specified in current program\n"));
+    GL_CHECK(glUniform1fv(uniformId, UNIFORM_FLOATS, fflags), status);
+    LOG(verbose, printf("    Value of fflags specified in current program\n"));
+  } while (false);
+
+  return status;
 }
 
-void updateBoolUniforms(GLint uniformId, UniformValues* values, bool verbose)
+bool updateBoolUniforms(GLint uniformId, UniformValues* values, bool verbose)
 {
-  VERB(verbose, printf("    New bflags values: [%s, %s, %s]\n",
-    values->animations ? "true" : "false", values->motion ? "true" : "false",
-    values->palettes ? "true" : "false"));
+  bool status = true;
 
-  VERB(verbose, printf("    Specifying value of bflags in current program \
+  do
+  {
+    LOG(verbose, printf("    New bflags values: [%s, %s, %s]\n",
+      values->animations ? "true" : "false", values->motion ? "true" : "false",
+      values->palettes ? "true" : "false"));
+
+    LOG(verbose, printf("    Specifying value of bflags in current program \
 ...\n"));
-  GL_CHECK(glUniform3i(uniformId, values->animations, values->motion,
-    values->palettes));
-  VERB(verbose, printf("    Value of bflags specified in current program\n"));
+    GL_CHECK(glUniform3i(uniformId, values->animations, values->motion,
+      values->palettes), status);
+    LOG(verbose, printf("    Value of bflags specified in current program\n"));
+  } while (false);
+
+  return status;
 }
 
-void getUniforms(const Uniform uniforms[UNIFORM_COUNT],
+bool getUniforms(const Uniform uniforms[UNIFORM_COUNT],
   GLuint uniformIds[UNIFORM_COUNT], GLuint* program, bool verbose)
 {
-  for (int i = 0; i < UNIFORM_COUNT; i++)
+  bool status = true;
+
+  do
   {
-    VERB(verbose, printf("  Querying uniform location of %s\n",
-      uniforms[i].name));
-    GL_CHECK(uniformIds[i] =
-      glGetUniformLocation(*program, uniforms[i].name));
-    VERB(verbose, printf("  %s uniform located\n", uniforms[i].name));
-  }
+    for (int i = 0; i < UNIFORM_COUNT; i++)
+    {
+      LOG(verbose, printf("  Querying uniform location of %s\n",
+        uniforms[i].name));
+      GL_CHECK(uniformIds[i] =
+        glGetUniformLocation(*program, uniforms[i].name), status);
+      LOG(verbose, printf("  %s uniform located\n", uniforms[i].name));
+    }
+  } while (false);
+
+  return status;
 }
 
 void updateUniforms(const Uniform uniforms[UNIFORM_COUNT],
@@ -64,8 +86,8 @@ void updateUniforms(const Uniform uniforms[UNIFORM_COUNT],
 {
   for (int i = 0; i < UNIFORM_COUNT; i++)
   {
-    VERB(verbose, printf("  Updating %s...\n", uniforms[i].name));
+    LOG(verbose, printf("  Updating %s...\n", uniforms[i].name));
     uniforms[i].update(uniformIds[i], values, verbose);
-    VERB(verbose, printf("  %s updated\n", uniforms[i].name));
+    LOG(verbose, printf("  %s updated\n", uniforms[i].name));
   }
 }

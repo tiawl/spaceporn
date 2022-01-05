@@ -21,7 +21,7 @@ typedef struct
 typedef struct
 {
   char* name;
-  void (*update)(GLint, UniformValues*, bool);
+  bool (*update)(GLint, UniformValues*, bool);
 } Uniform;
 
 #define UNIFORM_COUNT 2
@@ -29,11 +29,11 @@ typedef struct
 #define UNIFORM_BOOLEANS 3
 
 /* custom functions used to set uniform values */
-void updateFloatUniforms(GLint uniformId, UniformValues* values,
+bool updateFloatUniforms(GLint uniformId, UniformValues* values,
   bool verbose);
-void updateBoolUniforms(GLint uniformId, UniformValues* values, bool verbose);
+bool updateBoolUniforms(GLint uniformId, UniformValues* values, bool verbose);
 
-void getUniforms(const Uniform uniforms[UNIFORM_COUNT],
+bool getUniforms(const Uniform uniforms[UNIFORM_COUNT],
   GLuint uniformIds[UNIFORM_COUNT], GLuint* program, bool verbose);
 void updateUniforms(const Uniform uniforms[UNIFORM_COUNT],
   GLuint uniformIds[UNIFORM_COUNT], UniformValues* values, bool verbose);

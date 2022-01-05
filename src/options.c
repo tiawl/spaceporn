@@ -33,126 +33,143 @@ void help()
 bool parsing_options(bool* verbose, int* fps, UniformValues* uniform_values,
   Roadmap* roadmap, int* argc, char** argv)
 {
-  roadmap->glsl_file = "";
+  int status = true;
+  char* dir = NULL;
 
-  for (int i = 1; i < *argc; i++)
+  do
   {
-    if (strcmp(argv[i], PIXEL_FLAG) == 0)
+    roadmap->glsl_file = "";
+    for (int i = 1; i < *argc; i++)
     {
-      if (++i < *argc)
+      if (strcmp(argv[i], PIXEL_FLAG) == 0)
       {
-        uniform_values->pixels = atof(argv[i]);
-        if ((uniform_values->pixels > MAX_PIXELS) ||
-          (uniform_values->pixels < MIN_PIXELS))
-        {
-          help();
-          return false;
-        }
-      }
-    } else if ((strcmp(argv[i], FPS_FLAG) == 0) &&
-      (uniform_values->slide == 0)) {
         if (++i < *argc)
         {
-          *fps = atoi(argv[i]);
-          if ((*fps < MIN_FPS) || (*fps > MAX_FPS))
+          uniform_values->pixels = atof(argv[i]);
+          if ((uniform_values->pixels > MAX_PIXELS) ||
+            (uniform_values->pixels < MIN_PIXELS))
           {
             help();
-            return false;
+            status = false;
+            break;
           }
         }
-    } else if (strcmp(argv[i], ZOOM_FLAG) == 0) {
-      if (++i < *argc)
-      {
-        uniform_values->zoom = atoi(argv[i]);
-        if ((uniform_values->zoom < MIN_ZOOM) ||
-          (uniform_values->zoom > MAX_ZOOM))
-        {
-          help();
-          return false;
-        }
-      }
-    } else if (strcmp(argv[i], SLIDE_FLAG) == 0) {
-      if (++i < *argc)
-      {
-        uniform_values->slide = atoi(argv[i]);
-        if (uniform_values->slide <= 0)
-        {
-          help();
-          return false;
-        }
-        uniform_values->animations = false;
-        uniform_values->motion = false;
-        *fps = 0;
-      }
-    } else if ((strcmp(argv[i], ANIMATION_FLAG) == 0) &&
-      (uniform_values->slide == 0)) {
-        uniform_values->animations = true;
-    } else if ((strcmp(argv[i], CAMERAMOTION_FLAG) == 0) &&
-      (uniform_values->slide == 0)) {
-        uniform_values->motion = true;
-    } else if (strcmp(argv[i], PALETTES_FLAG) == 0) {
-      uniform_values->palettes = true;
-    } else if (strcmp(argv[i], VERBOSE_FLAG) == 0) {
-      *verbose = true;
-    } else if (strcmp(argv[i], ROADMAP_FLAG) == 0) {
-      if (++i < *argc)
-      {
-        roadmap->id = atoi(argv[i]);
-        if ((roadmap->id < EXIT_SUCCESS_RM) || (roadmap->id >= RM_NB))
-        {
-          help();
-          return false;
-        } else {
-          if ((roadmap->id >= VERTEX_FILE_SARH_HEADER_MALLOC_FAILED_RM) &&
-            (roadmap->id <= FRAGMENT_FILE_SARH_REPLACE_2_REGEXEC_FAILED_RM))
+      } else if ((strcmp(argv[i], FPS_FLAG) == 0) &&
+        (uniform_values->slide == 0)) {
+          if (++i < *argc)
           {
-            if (++i < *argc)
+            *fps = atoi(argv[i]);
+            if ((*fps < MIN_FPS) || (*fps > MAX_FPS))
             {
-              char* dir = NULL;
-              if (roadmap->id < FRAGMENT_FILE_SARH_HEADER_MALLOC_FAILED_RM)
+              help();
+              status = false;
+              break;
+            }
+          }
+      } else if (strcmp(argv[i], ZOOM_FLAG) == 0) {
+        if (++i < *argc)
+        {
+          uniform_values->zoom = atoi(argv[i]);
+          if ((uniform_values->zoom < MIN_ZOOM) ||
+            (uniform_values->zoom > MAX_ZOOM))
+          {
+            help();
+            status = false;
+            break;
+          }
+        }
+      } else if (strcmp(argv[i], SLIDE_FLAG) == 0) {
+        if (++i < *argc)
+        {
+          uniform_values->slide = atoi(argv[i]);
+          if (uniform_values->slide <= 0)
+          {
+            help();
+            status = false;
+            break;
+          }
+          uniform_values->animations = false;
+          uniform_values->motion = false;
+          *fps = 0;
+        }
+      } else if ((strcmp(argv[i], ANIMATION_FLAG) == 0) &&
+        (uniform_values->slide == 0)) {
+          uniform_values->animations = true;
+      } else if ((strcmp(argv[i], CAMERAMOTION_FLAG) == 0) &&
+        (uniform_values->slide == 0)) {
+          uniform_values->motion = true;
+      } else if (strcmp(argv[i], PALETTES_FLAG) == 0) {
+        uniform_values->palettes = true;
+      } else if (strcmp(argv[i], VERBOSE_FLAG) == 0) {
+        *verbose = true;
+      } else if (strcmp(argv[i], ROADMAP_FLAG) == 0) {
+        if (++i < *argc)
+        {
+          roadmap->id = atoi(argv[i]);
+          if ((roadmap->id < EXIT_SUCCESS_RM) || (roadmap->id >= RM_NB))
+          {
+            help();
+            status = false;
+            break;
+          } else {
+            if ((roadmap->id >= VERTEX_FILE_SARH_HEADER_MALLOC_FAILED_RM) &&
+              (roadmap->id <= FRAGMENT_FILE_SARH_REPLACE_2_REGEXEC_FAILED_RM))
+            {
+              if (++i < *argc)
               {
-                dir = malloc(sizeof(char) * (strlen(SHADERS_DIR) +
-                  strlen(VERTEX_DIR) + strlen(argv[i]) + 1));
-                if (!dir)
+                if (roadmap->id < FRAGMENT_FILE_SARH_HEADER_MALLOC_FAILED_RM)
                 {
-                  fprintf(stderr, "malloc() failed when parsing options.\n");
-                  return false;
+                  dir = malloc(sizeof(char) * (strlen(SHADERS_DIR) +
+                    strlen(VERTEX_DIR) + strlen(argv[i]) + 1));
+                  if (!dir)
+                  {
+                    fprintf(stderr, "malloc() failed when parsing options.\n");
+                    status = false;
+                    break;
+                  }
+                  strcpy(dir, SHADERS_DIR);
+                  strcat(dir, VERTEX_DIR);
+                } else {
+                  dir = malloc(sizeof(char) * (strlen(SHADERS_DIR) +
+                    strlen(FRAGMENT_DIR) + strlen(argv[i]) + 1));
+                  if (!dir)
+                  {
+                    fprintf(stderr, "malloc() failed when parsing options.\n");
+                    status = false;
+                    break;
+                  }
+                  strcpy(dir, SHADERS_DIR);
+                  strcat(dir, FRAGMENT_DIR);
                 }
-                strcpy(dir, SHADERS_DIR);
-                strcat(dir, VERTEX_DIR);
-              } else {
-                dir = malloc(sizeof(char) * (strlen(SHADERS_DIR) +
-                  strlen(FRAGMENT_DIR) + strlen(argv[i]) + 1));
-                if (!dir)
+                strcat(dir, argv[i]);
+                if (access(dir, F_OK) == 0)
                 {
-                  fprintf(stderr, "malloc() failed when parsing options.\n");
-                  return false;
+                  roadmap->glsl_file = argv[i];
+                } else {
+                  fprintf(stderr, "%s does not exist\n", dir);
+                  status = false;
+                  break;
                 }
-                strcpy(dir, SHADERS_DIR);
-                strcat(dir, FRAGMENT_DIR);
-              }
-              strcat(dir, argv[i]);
-              if (access(dir, F_OK) == 0)
-              {
-                free(dir);
-                roadmap->glsl_file = argv[i];
               } else {
-                fprintf(stderr, "%s does not exist\n", dir);
-                free(dir);
-                return false;
+                fprintf(stderr, "This roadmap needs a file\n");
+                status = false;
+                break;
               }
-            } else {
-              fprintf(stderr, "This roadmap needs a file\n");
-              return false;
             }
           }
         }
+      } else {
+        help();
+        status = false;
+        break;
       }
-    } else {
-      help();
-      return false;
     }
+  } while (false);
+
+  if (dir != NULL)
+  {
+    free(dir);
   }
 
-  return true;
+  return status;
 }

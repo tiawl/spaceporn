@@ -4,5 +4,6 @@
 #include "util.h"
 
 bool loadPng(PNG* png, bool verbose, Roadmap* roadmap);
+bool freePng(PNG* png, bool verbose);
 
 #endif

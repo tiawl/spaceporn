@@ -17,5 +17,6 @@ bool loadFragmentShader(Shaders* shaders, bool verbose, Roadmap* roadmap);
 bool checkLogProgram(Shaders* shaders, bool verbose, Roadmap* roadmap);
 bool loadProgram(Context* context, Shaders* shaders, bool verbose,
   Roadmap* roadmap);
+bool freeProgram(Shaders* shaders, bool verbose, Roadmap* roadmap);
 
 #endif

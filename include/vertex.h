@@ -3,7 +3,8 @@
 
 #include "util.h"
 
-void initVertices(Vertices* vertices, bool verbose);
-void draw(bool verbose);
+bool initVertices(Vertices* vertices, bool verbose);
+bool draw(bool verbose);
+bool freeVertices(Vertices* vertices, bool verbose);
 
 #endif

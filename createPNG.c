@@ -18,36 +18,6 @@ int main(int argc, char *argv[])
   return result;
 }
 
-typedef struct
-{
-  unsigned x;
-  unsigned y;
-  unsigned z;
-  unsigned w;
-} uvec4;
-
-void pcg4d(uvec4* v)
-{
-  v->x = v->x * 1664525u + 1013904223u;
-  v->y = v->y * 1664525u + 1013904223u;
-  v->z = v->z * 1664525u + 1013904223u;
-  v->w = v->w * 1664525u + 1013904223u;
-
-  v->x += v->y * v->w;
-  v->y += v->z * v->x;
-  v->z += v->x * v->y;
-  v->w += v->y * v->z;
-
-  v->x ^= v->x >> 16u;
-  v->y ^= v->y >> 16u;
-  v->z ^= v->z >> 16u;
-  v->w ^= v->w >> 16u;
-
-  v->x += v->y * v->w;
-  v->y += v->z * v->x;
-  v->z += v->x * v->y;
-  v->w += v->y * v->z;
-}
 
 int writeImage(char* filename, int width, int height)
 {

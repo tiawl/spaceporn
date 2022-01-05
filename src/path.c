@@ -96,8 +96,8 @@ path\n"));
   return status;
 }
 
-bool initTexturePath(PNG* png, size_t len[5], char* user, bool verbose,
-  Roadmap* roadmap)
+bool initTexturePath(PNG* png, size_t len[6], char* user, char* path,
+  bool verbose, Roadmap* roadmap)
 {
   int status = true;
 
@@ -130,8 +130,7 @@ bool initTexturePath(PNG* png, size_t len[5], char* user, bool verbose,
     LOG(verbose, printf("  Building texture path string ... 3/5\n"));
     memcpy(png->path + len[0] + len[1] + len[2], TEXTURES_DIR, len[3]);
     LOG(verbose, printf("  Building texture path string ... 4/5\n"));
-    memcpy(png->path + len[0] + len[1] + len[2] + len[3], TEXTURE_FILE,
-      len[4] + 1);
+    memcpy(png->path + len[0] + len[1] + len[2] + len[3], path, len[4] + 1);
     LOG(verbose, printf("  Building texture path string ... 5/5\n"));
     LOG(verbose, printf("  Texture path string built: %s\n", png->path));
   } while (false);
@@ -139,7 +138,8 @@ bool initTexturePath(PNG* png, size_t len[5], char* user, bool verbose,
   return status;
 }
 
-bool initPaths(Shaders* shaders, PNG* png, bool verbose, Roadmap* roadmap)
+bool initPaths(Shaders* shaders, Textures* textures, bool verbose,
+  Roadmap* roadmap)
 {
   int status = true;
 
@@ -197,41 +197,50 @@ bool initPaths(Shaders* shaders, PNG* png, bool verbose, Roadmap* roadmap)
     const size_t len8 = strlen(MAIN_FILE);
     LOG(verbose, printf("  Length of \"%s\" is %lu\n", MAIN_FILE, len8));
 
-    LOG(verbose, printf("  Computing length of texture filename ...\n"));
-    const size_t len9 = strlen(TEXTURE_FILE);
-    LOG(verbose, printf("  Length of \"%s\" is %lu\n", TEXTURE_FILE, len9));
+    LOG(verbose, printf("  Computing length of bigstars texture filename \
+...\n"));
+    const size_t len9 = strlen(BIGSTARS_FILE);
+    LOG(verbose, printf("  Length of \"%s\" is %lu\n", BIGSTARS_FILE, len9));
 
-    size_t f_length[6] =
+    LOG(verbose, printf("  Computing length of atlas texture filename ...\n"));
+    const size_t len10 = strlen(ATLAS_FILE);
+    LOG(verbose, printf("  Length of \"%s\" is %lu\n", ATLAS_FILE, len10));
+
+    size_t length[6] =
     {
       len1, len2, len3, len4, len6, len8
     };
 
-    if (initFragShaderPath(shaders, f_length, user, verbose, roadmap))
+    if (!initFragShaderPath(shaders, length, user, verbose, roadmap))
     {
-      size_t v_length[6] =
-      {
-        len1, len2, len3, len4, len7, len8
-      };
+      status = false;
+      break;
+    }
 
-      if (initVertShaderPath(shaders, v_length, user,
-        verbose, roadmap))
-      {
-        size_t t_length[5] =
-        {
-          len1, len2, len3, len5, len9
-        };
+    length[4] = len7;
 
-        if (!initTexturePath(png, t_length,
-          user, verbose, roadmap))
-        {
-          status = false;
-          break;
-        }
-      } else {
-        status = false;
-        break;
-      }
-    } else {
+    if (!initVertShaderPath(shaders, length, user, verbose, roadmap))
+    {
+      status = false;
+      break;
+    }
+
+    length[3] = len5;
+    length[4] = len9;
+    length[5] = 0;
+
+    if (!initTexturePath(&(textures->bigstars), length, user, BIGSTARS_FILE,
+      verbose, roadmap))
+    {
+      status = false;
+      break;
+    }
+
+    length[4] = len10;
+
+    if (!initTexturePath(&(textures->atlas), length, user, ATLAS_FILE,
+      verbose, roadmap))
+    {
       status = false;
       break;
     }
@@ -240,7 +249,7 @@ bool initPaths(Shaders* shaders, PNG* png, bool verbose, Roadmap* roadmap)
   return status;
 }
 
-void freePaths(Shaders* shaders, PNG* png, bool verbose)
+void freePaths(Shaders* shaders, Textures* textures, bool verbose)
 {
   if (shaders->fshaderpath)
   {
@@ -258,11 +267,19 @@ void freePaths(Shaders* shaders, PNG* png, bool verbose)
     LOG(verbose, printf("vshaderpath freed\n"));
   }
 
-  if (png->path)
+  if (textures->bigstars.path)
   {
     LOG(verbose, printf("Freeing texturepath ...\n"));
-    free(png->path);
-    png->path = NULL;
+    free(textures->bigstars.path);
+    textures->bigstars.path = NULL;
+    LOG(verbose, printf("texturepath freed\n"));
+  }
+
+  if (textures->atlas.path)
+  {
+    LOG(verbose, printf("Freeing texturepath ...\n"));
+    free(textures->atlas.path);
+    textures->atlas.path = NULL;
     LOG(verbose, printf("texturepath freed\n"));
   }
 }

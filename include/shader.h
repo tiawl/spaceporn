@@ -2,6 +2,18 @@
 #define XTELESKOP_SHADER_H
 
 #include "parser.h"
+#include "context.h"
+
+typedef struct
+{
+  char* fshaderpath;
+  char* vshaderpath;
+  char* vertex_file;
+  char* fragment_file;
+  GLuint vertex_shader;
+  GLuint fragment_shader;
+  GLuint program;
+} Shaders;
 
 bool buildFile(char** filepath, char** buffer, bool verbose,
   Roadmap* roadmap);

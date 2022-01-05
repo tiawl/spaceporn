@@ -3,6 +3,7 @@
 
 #include "context.h"
 #include "options.h"
+#include "parser.h"
 #include "path.h"
 #include "shader.h"
 #include "texture.h"

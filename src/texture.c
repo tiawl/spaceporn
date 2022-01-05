@@ -36,13 +36,14 @@ bool loadPng(PNG* png, bool verbose, Roadmap* roadmap)
     LOG(verbose, printf("  Creating structure for reading PNG file ...\n"));
     if (roadmap->id != PNGCREATEREADSTRUCT_FAILED_RM)
     {
-      png->parser = png_create_read_struct(PNG_LIBPNG_VER_STRING, 0, 0, 0);
+      png->ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, 0, 0, 0);
     }
 
-    if (!png->parser)
+    if (!png->ptr)
     {
       LOG(verbose, printf("  "));
       fprintf((verbose ? stdout : stderr), "png_create_read_struct() failed\n");
+
       status = false;
       break;
     }
@@ -51,42 +52,44 @@ bool loadPng(PNG* png, bool verbose, Roadmap* roadmap)
     LOG(verbose, printf("  Creating PNG info structure ...\n"));
     if (roadmap->id != PNGCREATEINFOSTRUCT_FAILED_RM)
     {
-      png->info = png_create_info_struct(png->parser);
+      png->info = png_create_info_struct(png->ptr);
     }
 
     if (!png->info)
     {
       LOG(verbose, printf("  "));
       fprintf((verbose ? stdout : stderr), "png_create_info_struct() failed\n");
+
       status = false;
       break;
     }
     LOG(verbose, printf("  PNG info structure created\n"));
 
     LOG(verbose, printf("  Searching libPNG error ...\n"));
-    if (setjmp(png_jmpbuf(png->parser)) ||
+    if (setjmp(png_jmpbuf(png->ptr)) ||
       (roadmap->id == PNG_JMPBUF_FAILED_RM))
     {
       LOG(verbose, printf("  "));
       fprintf((verbose ? stdout : stderr),
         "Routine problem: libPNG encountered an error\n");
+
       status = false;
       break;
     }
     LOG(verbose, printf("  No error found\n"));
 
     LOG(verbose, printf("  Initializing PNG input/output ...\n"));
-    png_init_io(png->parser, png->file);
+    png_init_io(png->ptr, png->file);
     LOG(verbose, printf("  PNG input/output initialized\n"));
 
     LOG(verbose, printf("  Reading PNG info ...\n"));
-    png_read_info(png->parser, png->info);
+    png_read_info(png->ptr, png->info);
     LOG(verbose, printf("  PNG info read\n"));
 
     LOG(verbose, printf("  Querying PNG_IHDR chunk information from PNG info \
 structure ...\n"));
     png_get_IHDR(
-      png->parser, png->info, &w, &h, &bit_depth, &color_type, 0, 0, 0);
+      png->ptr, png->info, &w, &h, &bit_depth, &color_type, 0, 0, 0);
     LOG(verbose, printf("  PNG_IHDR chunk information found\n"));
 
     if (roadmap->id == BAD_PNG_DIMENSIONS_RM)
@@ -106,11 +109,11 @@ are not power of two or smaller than 8 failed to load in OpenGL\n");
     LOG(verbose, printf("  Valid PNG images dimensions\n"));
 
     LOG(verbose, printf("  Updating PNG info structure ...\n"));
-    png_read_update_info(png->parser, png->info);
+    png_read_update_info(png->ptr, png->info);
     LOG(verbose, printf("  PNG info structure updated\n"));
 
     LOG(verbose, printf("  Querying number of bytes for a row ...\n"));
-    int rowbytes = png_get_rowbytes(png->parser, png->info);
+    int rowbytes = png_get_rowbytes(png->ptr, png->info);
     rowbytes += 3 - ((rowbytes-1) % 4); // align to 4 bytes
     LOG(verbose, printf("  Number of bytes for a row is %d\n", rowbytes));
 
@@ -132,10 +135,10 @@ are not power of two or smaller than 8 failed to load in OpenGL\n");
     LOG(verbose, printf("  Allocating memory for row_pointers ...\n"));
     if (roadmap->id != PNG_ROWPOINTERS_MALLOC_FAILED_RM)
     {
-      png->row_pointers = malloc(h * sizeof(png_bytep));
+      png->read_row_pointers = malloc(h * sizeof(png_bytep));
     }
 
-    if (!png->row_pointers)
+    if (!png->read_row_pointers)
     {
       LOG(verbose, printf("  "));
       fprintf((verbose ? stdout : stderr), "row_pointers malloc() failed\n");
@@ -148,15 +151,19 @@ are not power of two or smaller than 8 failed to load in OpenGL\n");
     {
       LOG(verbose, printf("  Setting individual row_pointers to point at the \
 correct offsets of data ... %d/%d\n", i, h));
-      png->row_pointers[h - 1 - i] = png->data + i * rowbytes;
+      png->read_row_pointers[h - 1 - i] = png->data + i * rowbytes;
     }
     LOG(verbose, printf("  Setting individual row_pointers to point at the \
 correct offsets of data ... %d/%d\n", h, h));
     LOG(verbose, printf("  Individual row_pointers set\n"));
 
     LOG(verbose, printf("  Reading PNG image into memory ...\n"));
-    png_read_image(png->parser, png->row_pointers);
+    png_read_image(png->ptr, png->read_row_pointers);
     LOG(verbose, printf("  PNG image read into memory\n"));
+
+    LOG(verbose, printf("  Ending PNG reading ...\n"));
+    png_read_end(png->ptr, NULL);
+    LOG(verbose, printf("  PNG reading ends\n"));
 
     LOG(verbose, printf("  Generating OpenGL texture ...\n"));
     GL_CHECK(glGenTextures(1, &(png->texture)), status);
@@ -193,27 +200,243 @@ texture coordinates ...\n"));
   return status;
 }
 
+void pcg4d(uvec4* vector)
+{
+  vector->x = vector->x * 1664525u + 1013904223u;
+  vector->y = vector->y * 1664525u + 1013904223u;
+  vector->z = vector->z * 1664525u + 1013904223u;
+  vector->w = vector->w * 1664525u + 1013904223u;
+
+  vector->x += vector->y * vector->w;
+  vector->y += vector->z * vector->x;
+  vector->z += vector->x * vector->y;
+  vector->w += vector->y * vector->z;
+
+  vector->x ^= vector->x >> 16u;
+  vector->y ^= vector->y >> 16u;
+  vector->z ^= vector->z >> 16u;
+  vector->w ^= vector->w >> 16u;
+
+  vector->x += vector->y * vector->w;
+  vector->y += vector->z * vector->x;
+  vector->z += vector->x * vector->y;
+  vector->w += vector->y * vector->z;
+}
+
+bool buildPcgTexture(PNG* png, UniformValues* values, int* width, int* height,
+  bool verbose)
+{
+  bool status = true;
+
+  do
+  {
+    uvec4 u;
+    *width = 5;
+    *height = 3;
+
+//     if (values->width >= values->height)
+//     {
+//       *width = values->pixels * 5 *
+//         ((int) round(((double) values->width) /
+//           ((double) values->height)));
+//       *height = values->pixels * 5;
+//     } else {
+//       *width = values->pixels * 5;
+//       *height = values->pixels * 5 *
+//         ((int) round(((double) values->height) /
+//           ((double) values->width)));
+//     }
+
+    png->write_row_pointers =
+      (png_byte**) malloc(sizeof(png_byte*) * (*height));
+    if (!png->write_row_pointers)
+    {
+      status = false;
+      break;
+    }
+
+    for (int i = 0; i < *height; i++)
+    {
+      png->write_row_pointers[i] = (png_byte*) malloc(4 * (*width));
+      if (!png->write_row_pointers[i])
+      {
+        status = false;
+        break;
+      }
+    }
+
+    if (!status)
+    {
+      break;
+    }
+
+    for (int y = 0; y < *height; y++)
+    {
+      for (int x = 0; x < (*width) * 4; x += 4)
+      {
+        u.x = x / 4;
+        u.y = y;
+        u.z = 0;
+        u.w = 0;
+        pcg4d(&u);
+        png->write_row_pointers[(*height) - 1 - y][x] =
+          (png_byte) round((((double) u.x) / (double) UINT_MAX) * 255.);
+        png->write_row_pointers[(*height) - 1 - y][x + 1] =
+          (png_byte) round((((double) u.y) / (double) UINT_MAX) * 255.);
+        png->write_row_pointers[(*height) - 1 - y][x + 2] =
+          (png_byte) round((((double) u.z) / (double) UINT_MAX) * 255.);
+        png->write_row_pointers[(*height) - 1 - y][x + 3] =
+          (png_byte) round((((double) u.w) / (double) UINT_MAX) * 255.);
+      }
+    }
+  } while (false);
+
+  return status;
+}
+
+bool writePng(PNG* png, UniformValues* values, int* width, int* height,
+  bool verbose)
+{
+  bool status = true;
+
+  do
+  {
+    png->file = fopen(png->path, "wb");
+
+    if (!png->file)
+    {
+      LOG(verbose, printf("  "));
+      fprintf((verbose ? stdout : stderr), "Failed to open \"%s\"\n",
+        png->path);
+
+      status = false;
+      break;
+    }
+
+    png->ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+    if (!png->ptr)
+    {
+      LOG(verbose, printf("  "));
+      fprintf((verbose ? stdout : stderr), "png_create_write_struct() failed\n");
+      status = false;
+      break;
+    }
+
+    png->info = png_create_info_struct(png->ptr);
+    if (png->info == NULL)
+    {
+      LOG(verbose, printf("  "));
+      fprintf((verbose ? stdout : stderr), "png_create_info_struct() failed\n");
+
+      status = false;
+      break;
+    }
+
+    if (setjmp(png_jmpbuf(png->ptr)))
+    {
+      LOG(verbose, printf("  "));
+      fprintf((verbose ? stdout : stderr),
+        "Routine problem: libPNG encountered an error\n");
+
+      status = false;
+      break;
+    }
+
+    png_init_io(png->ptr, png->file);
+
+    png_set_IHDR(png->ptr, png->info, *width, *height,
+      8, PNG_COLOR_TYPE_RGB_ALPHA, PNG_INTERLACE_NONE,
+      PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
+
+    png_write_info(png->ptr, png->info);
+    png_write_image(png->ptr, png->write_row_pointers);
+    png_write_end(png->ptr, NULL);
+  } while (false);
+
+  return status;
+}
+
+bool writeAtlas(PNG* png, UniformValues* values, bool verbose)
+{
+  bool status = true;
+  int width = 0;
+  int height = 0;
+
+  do
+  {
+    if (!buildPcgTexture(png, values, &width, &height, verbose))
+    {
+      status = false;
+      break;
+    }
+
+    if (!writePng(png, values, &width, &height, verbose))
+    {
+      status = false;
+      break;
+    }
+  } while (false);
+
+  if (png->file)
+  {
+    fclose(png->file);
+  }
+
+  if (png->info)
+  {
+    png_free_data(png->ptr, png->info, PNG_FREE_ALL, -1);
+  }
+
+  if (png->ptr != NULL)
+  {
+    png_destroy_write_struct(&png->ptr, (png_infopp) NULL);
+  }
+
+  for (int i = 0; i < height; i++)
+  {
+    if (png->write_row_pointers[i])
+    {
+      free(png->write_row_pointers[i]);
+    }
+  }
+
+  if (png->write_row_pointers)
+  {
+    free(png->write_row_pointers);
+  }
+
+  return status;
+}
+
 bool freePng(PNG* png, bool verbose)
 {
   int status = true;
 
-  if(png->parser)
+  if (png->info)
   {
-    LOG(verbose, printf("Destroying png_read_struct ...\n"));
-    png_destroy_read_struct(&(png->parser), png->info ? &(png->info) : 0, 0);
-    png->parser = 0;
-    LOG(verbose, printf("png_read_struct destroyed\n"));
+    LOG(verbose, printf("Freeing PNG info ...\n"));
+    png_free_data(png->ptr, png->info, PNG_FREE_ALL, -1);
+    png->info = 0;
+    LOG(verbose, printf("PNG info freed\n"));
   }
 
-  if(png->row_pointers)
+  if (png->ptr)
   {
-    LOG(verbose, printf("Freeing row_pointers ...\n"));
-    free(png->row_pointers);
-    png->row_pointers = NULL;
-    LOG(verbose, printf("row_pointers freed\n"));
+    LOG(verbose, printf("Destroying PNG ptr ...\n"));
+    png_destroy_read_struct(&(png->ptr), png->info ? &(png->info) : 0, 0);
+    png->ptr = 0;
+    LOG(verbose, printf("PNG ptr destroyed\n"));
   }
 
-  if(png->data)
+  if (png->read_row_pointers)
+  {
+    LOG(verbose, printf("Freeing PNG read_row_pointers ...\n"));
+    free(png->read_row_pointers);
+    png->read_row_pointers = NULL;
+    LOG(verbose, printf("PNG read_row_pointers freed\n"));
+  }
+
+  if (png->data)
   {
     LOG(verbose, printf("Freeing PNG data ...\n"));
     free(png->data);
@@ -221,7 +444,7 @@ bool freePng(PNG* png, bool verbose)
     LOG(verbose, printf("PNG data freed\n"));
   }
 
-  if(png->file)
+  if (png->file)
   {
     LOG(verbose, printf("Closing PNG file ...\n"));
     fclose(png->file);
@@ -240,4 +463,10 @@ bool freePng(PNG* png, bool verbose)
   } while (false);
 
   return status;
+}
+
+void freeTextures(Textures* textures, bool verbose)
+{
+  freePng(&(textures->bigstars), verbose);
+  freePng(&(textures->atlas), verbose);
 }

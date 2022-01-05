@@ -12,6 +12,20 @@
 #define GLX_CONTEXT_MAJOR_VERSION_ARB       0x2091
 #define GLX_CONTEXT_MINOR_VERSION_ARB       0x2092
 
+typedef struct
+{
+  Display* display;
+  GLXContext glx_context;
+  Window window;
+#if DEBUG
+  Window debug_window;
+  XEvent event;
+#endif
+  XWindowAttributes window_attribs;
+  XVisualInfo* visual_info;
+  Colormap cmap;
+} Context;
+
 typedef GLXContext (*glXCreateContextAttribsARBProc)(Display*, GLXFBConfig,
   GLXContext, Bool, const int*);
 

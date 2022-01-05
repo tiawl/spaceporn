@@ -32,14 +32,23 @@ int main(int argc, char** argv)
   shaders.fragment_shader = 0;
   shaders.program = 0;
 
-  PNG png;
-  png.file = NULL;
-  png.data = NULL;
-  png.parser = 0;
-  png.info = 0;
-  png.row_pointers = NULL;
-  png.path = NULL;
-  png.texture = 0;
+  Textures textures;
+  textures.bigstars.file = NULL;
+  textures.bigstars.data = NULL;
+  textures.bigstars.ptr = 0;
+  textures.bigstars.info = 0;
+  textures.bigstars.read_row_pointers = NULL;
+  textures.bigstars.write_row_pointers = NULL;
+  textures.bigstars.path = NULL;
+  textures.bigstars.texture = 0;
+  textures.atlas.file = NULL;
+  textures.atlas.data = NULL;
+  textures.atlas.ptr = 0;
+  textures.atlas.info = 0;
+  textures.atlas.read_row_pointers = NULL;
+  textures.atlas.write_row_pointers = NULL;
+  textures.atlas.path = NULL;
+  textures.atlas.texture = 0;
 
   Context context;
   context.display = NULL;
@@ -81,7 +90,7 @@ int main(int argc, char** argv)
 
     LOG(verbose, printf("Initializing fragment shader, vertex shader and \
 texture paths ...\n"));
-    if (!initPaths(&shaders, &png, verbose, &roadmap))
+    if (!initPaths(&shaders, &textures, verbose, &roadmap))
     {
       fprintf((verbose ? stdout : stderr), "Failed to initialize fragment \
 shader, vertex shader or texture paths\n");
@@ -127,10 +136,10 @@ are initialized\n"));
     uniform_values.height = context.window_attribs.height;
 
     LOG(verbose, printf("Loading PNG texture ...\n"));
-    if (!loadPng(&png, verbose, &roadmap))
+    if (!loadPng(&(textures.bigstars), verbose, &roadmap))
     {
       fprintf((verbose ? stdout : stderr),
-        "Failed to load PNG file \"%s\"\n", png.path);
+        "Failed to load PNG file \"%s\"\n", textures.bigstars.path);
       status = false;
       break;
     }
@@ -222,9 +231,9 @@ initialized\n"));
     }
   } while (false);
 
-  freePaths(&shaders, &png, verbose);
+  freePaths(&shaders, &textures, verbose);
   freeVertices(&vertices, verbose);
-  freePng(&png, verbose);
+  freeTextures(&textures, verbose);
   freeProgram(&shaders, verbose, &roadmap);
   freeContext(&context, verbose);
 

@@ -147,48 +147,6 @@ typedef struct
   } \
 } while (0)
 
-typedef struct
-{
-  Display* display;
-  GLXContext glx_context;
-  Window window;
-#if DEBUG
-  Window debug_window;
-  XEvent event;
-#endif
-  XWindowAttributes window_attribs;
-  XVisualInfo* visual_info;
-  Colormap cmap;
-} Context;
-
-typedef struct
-{
-  char* fshaderpath;
-  char* vshaderpath;
-  char* vertex_file;
-  char* fragment_file;
-  GLuint vertex_shader;
-  GLuint fragment_shader;
-  GLuint program;
-} Shaders;
-
-typedef struct
-{
-  png_structp parser;
-  png_infop info;
-  png_bytep* row_pointers;
-  uint8_t* data;
-  FILE* file;
-  char* path;
-  GLuint texture;
-} PNG;
-
-typedef struct
-{
-  GLuint array;
-  GLuint buffer;
-} Vertices;
-
 bool checkOpenGLError(const char* stmt, const char* fname, int line);
 
 double timediff(struct timeval* start, struct timeval* end);

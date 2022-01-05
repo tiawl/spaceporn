@@ -1,20 +1,19 @@
 # include "pixelplanets.glsl"
 
-float circleNoiseCrater(float size, vec2 sizeModifier, vec2 uv,
-  uint moon_seed)
+float circleNoiseCrater(float size, vec2 sizeModifier, vec2 uv, vec2 center)
 {
   float uv_y = floor(uv.y);
   uv.x += uv_y * .31;
   vec2 f = fract(uv);
-  float h = pprand(size, sizeModifier, vec2(floor(uv.x), floor(uv_y)),
-    seed + moon_seed);
+  float h =
+    pprand(size, sizeModifier, vec2(floor(uv.x), floor(uv_y)), seed, center);
   float m = (length(f - 0.25 - (h * 0.5)));
   float r = h * 0.25;
   return smoothstep(r - 0.10 * r, r, m);
 }
 
 float crater(float size, vec2 sizeModifier, float time_speed, vec2 uv,
-  uint moon_seed)
+  vec2 center)
 {
   float c = 1.0;
 
@@ -22,7 +21,7 @@ float crater(float size, vec2 sizeModifier, float time_speed, vec2 uv,
   {
     c *= circleNoiseCrater(size, sizeModifier,
       (uv * size) + (float(i + 1) + 10.0) + vec2(time * time_speed, 0.0),
-      moon_seed);
+      center);
   }
 
   return 1.0 - c;
@@ -34,6 +33,7 @@ vec4 computeCraters(vec2 uv, Planet planet, bool dith)
   const float sizePlanet = 8.0;
   const vec3 color1 = vec3(0.608);
   const uint octaves = 4u;
+  const vec2 sizeModifier = vec2(2., 1.);
 
   float lratio = 1. / sqrt(planet.radius);
   float d_to_center = distance(uv, planet.center);
@@ -43,17 +43,17 @@ vec4 computeCraters(vec2 uv, Planet planet, bool dith)
   uv = spherify(uv, planet.center, planet.radius);
 
   float c1 =
-    crater(sizeCraters, vec2(1.0), planet.time_speed, uv, seed + planet.seed);
-  float c2 = crater(sizeCraters, vec2(1.0), planet.time_speed,
+    crater(sizeCraters, sizeModifier, planet.time_speed, uv, planet.center);
+  float c2 = crater(sizeCraters, sizeModifier, planet.time_speed,
     uv + (planet.light_origin - planet.center + vec2(0.5, 0.)) * 0.03,
-    seed + planet.seed);
+    planet.center);
 
   float s = step(d_to_center, planet.radius);
   float a = step(0.5, c1) * s * s;
 
-  d_light += ppfbm(sizePlanet, vec2(1.0),
-    uv * sizePlanet + vec2(time * planet.time_speed, 0.0), octaves,
-    seed + planet.seed) * 0.3;
+  d_light += ppfbm(sizePlanet, sizeModifier,
+    uv * sizePlanet + vec2(time * planet.time_speed, 0.0), octaves, seed,
+    planet.center) * 0.3;
 
   float light_b = 1. - d_light;
   vec3 col = vec3(light_b);
@@ -78,6 +78,7 @@ vec4 computeMoon(vec2 uv, Planet planet, bool dith)
   const float size = 8.0;
   const vec3 color1 = vec3(0.608);
   const uint octaves = 4u;
+  const vec2 sizeModifier = vec2(2., 1.);
 
   float lratio = 1. / sqrt(planet.radius);
   float d_circle = distance(uv, planet.center);
@@ -87,9 +88,9 @@ vec4 computeMoon(vec2 uv, Planet planet, bool dith)
 
   float a = step(d_circle, 1.);
 
-  d_light += ppfbm(size, vec2(1.0),
-    uv * size + vec2(time * planet.time_speed, 0.0), octaves,
-    seed + planet.seed) * 0.3;
+  d_light += ppfbm(size, sizeModifier,
+    uv * size + vec2(time * planet.time_speed, 0.0), octaves, seed,
+    planet.center) * 0.3;
 
   float light_b = 1. - d_light;
   vec3 col = vec3(light_b);

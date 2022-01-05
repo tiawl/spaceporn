@@ -1,3 +1,5 @@
+# include "pixelplanets.glsl"
+
 const vec3[10] lightColors = vec3[](
   vec3(0.766), vec3(0.731), vec3(0.697), vec3(0.660), vec3(0.625), vec3(0.574),
   vec3(0.525), vec3(0.476), vec3(0.427), vec3(0.376)
@@ -9,7 +11,7 @@ const vec3[10] darkColors = vec3[](
 );
 
 float turbulence(float size, vec2 sizeModifier, float time_speed, vec2 uv,
-  uint noise_seed, uint octaves)
+  uint noise_seed, uint octaves, vec2 center)
 {
   float c_noise = 0.0;
 
@@ -17,7 +19,7 @@ float turbulence(float size, vec2 sizeModifier, float time_speed, vec2 uv,
   {
     c_noise += ppcircleNoise(size, sizeModifier,
       (uv * size * 0.3) + (float(i + 1u) + 10.) +
-        (vec2(time * time_speed, 0.0)), noise_seed);
+        (vec2(time * time_speed, 0.0)), noise_seed, center);
   }
   return c_noise;
 }
@@ -41,16 +43,16 @@ vec4 computePlanetUnder(vec2 uv, Planet planet, bool dith)
   uv = rotate(uv, planet.center, planet.rotation);
   uv = spherify(uv, planet.center, planet.radius);
 
-  float band = ppfbm(size, sizeModifier, vec2(0.0, uv.y * size),
-    octaves, seed + planet.seed);
-  float turb = turbulence(size, sizeModifier, planet.time_speed, uv,
-    seed + planet.seed, planet.turbulence);
+  float band = ppfbm(size, sizeModifier,
+    vec2(0.0, uv.y * size), octaves, seed, planet.center);
+  float turb = turbulence(size, sizeModifier, planet.time_speed,
+    uv, seed, planet.turbulence, planet.center);
 
   float fbm1 =
-    ppfbm(size, sizeModifier, uv * size, octaves, seed + planet.seed);
+    ppfbm(size, sizeModifier, uv * size, octaves, seed, planet.center);
   float fbm2 = ppfbm(size, sizeModifier, uv * vec2(1.0, 2.0) * size
-    + fbm1 + vec2(time * planet.time_speed, 0.0) + turb, octaves,
-    seed + planet.seed);
+    + fbm1 + vec2(time * planet.time_speed, 0.0) + turb, octaves, seed,
+    planet.center);
 
   fbm2 *= band * band * 7.0;
   float light = fbm2 + d_light * 1.8;
@@ -107,7 +109,7 @@ vec3 computeRingShape(vec2 uv, Planet planet, float rotation, float w,
   uv_center =
     rotate(uv_center + vec2(0, 0.5), vec2(0.5), time * planet.time_speed);
   ring *=
-    ppfbm(size, sizeModifier, uv_center * size, octaves, seed + planet.seed);
+    ppfbm(size, sizeModifier, uv_center * size, octaves, seed, planet.center);
 
   float ring_a = step(0.28, ring);
   if (ring_a > 0.)

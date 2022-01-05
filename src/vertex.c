@@ -18,9 +18,9 @@ bool initVertices(Vertices* vertices, bool verbose)
     const GLfloat g_vertex_buffer_data[] =
     {
       -1.0f, -1.0f,
-      1.0f, -1.0f,
-      -1.0f, 1.0f,
-      1.0f, 1.0f
+       1.0f, -1.0f,
+      -1.0f,  1.0f,
+       1.0f,  1.0f
     };
 
     LOG(verbose, printf("  Generating vertex buffer object ...\n"));

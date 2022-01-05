@@ -32,7 +32,6 @@ struct Planet
   vec2 center;
   float rotation;
   float radius;
-  uint seed;
   float time_speed;
   float plan;
   vec2 light_origin;

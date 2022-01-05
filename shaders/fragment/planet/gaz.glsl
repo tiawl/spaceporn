@@ -17,7 +17,7 @@ vec4 computeInnerCloud(vec2 uv, Planet planet, bool dith)
   uv.y += smoothstep(0.0, cloud_curve, abs(uv.x - 0.4));
 
   float c = ppcloud_alpha(size, vec2(1.0), planet.time_speed,
-    uv * vec2(1.0, stretch), octaves, seed + planet.seed);
+    uv * vec2(1.0, stretch), octaves, seed, planet.center);
 
   vec3 col = vec3(0.169);
 
@@ -48,7 +48,7 @@ vec4 computeOuterClouds(vec2 uv, Planet planet, bool dith)
   uv.y += smoothstep(0.0, cloud_curve, abs(uv.x - 0.4));
 
   float c = ppcloud_alpha(size, vec2(1.0), planet.time_speed,
-    uv * vec2(1.0, stretch), octaves, seed + planet.seed);
+    uv * vec2(1.0, stretch), octaves, seed, planet.center);
 
   vec3 col = vec3(0.634);
   if (c < cloud_cover + 0.03)

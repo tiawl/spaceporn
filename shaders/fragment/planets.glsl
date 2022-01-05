@@ -47,28 +47,27 @@ Planet calc_circle(vec2 ixy, vec2 xy, vec2 offset)
 
   float shape = step(distance(xy, center), radius) * rd_planet;
   float rotation = radians(hash(ixy, seed + 6u) * 360.);
-  uint seed = uint(round(hash(ixy, seed + 7u) * resolution.x));
-  float time_speed = (hash(ixy, seed + 8u) + 1.) * 2.;
-  float plan = hash(ixy, seed + 9u);
+  float time_speed = (hash(ixy, seed + 7u) + 1.) * 2.;
+  float plan = hash(ixy, seed + 8u);
   vec2 light_origin =
     center + light_dist * vec2(cos(light_angle), sin(light_angle));
 
-  Planet planet = Planet(shape, center, rotation, radius, seed, time_speed,
-    plan, light_origin, 0u, 0., 0.);
+  Planet planet = Planet(shape, center, rotation, radius, time_speed, plan,
+    light_origin, 0u, 0., 0.);
   if (rd_planet == RING)
   {
-    float ring_rotation = radians(hash(ixy, seed + 11u) * 360.);
+    float ring_rotation = radians(hash(ixy, seed + 10u) * 360.);
     float ring_radius =
-      hash(ixy, seed + 12u) * (0.2 + (planet.radius - 0.2) / 4.);
-    float ring_width = hash(ixy, seed + 13u) * 0.06;
-    float ring_angle = hash(ixy, seed + 14u) * 10. * (planet.radius - 0.2);
+      hash(ixy, seed + 11u) * (0.2 + (planet.radius - 0.2) / 4.);
+    float ring_width = hash(ixy, seed + 12u) * 0.06;
+    float ring_angle = hash(ixy, seed + 13u) * 10. * (planet.radius - 0.2);
 
     vec3 res = computeRingShape(xy, planet, ring_rotation, ring_width,
       ring_radius, ring_angle);
     planet.type = max(res.x * rd_planet, planet.type);
     planet.ring = res.y;
     planet.ring_a = res.z;
-    planet.turbulence = (uint(hash(ixy, seed + 10u) * 9.) + 1u) * 10u;
+    planet.turbulence = (uint(hash(ixy, seed + 9u) * 9.) + 1u) * 10u;
   }
 
   return planet;
@@ -89,7 +88,7 @@ vec4 planets(vec2 px, bool dith)
 
   int index = 0;
   Planet planet =
-    Planet(0., vec2(0.), 0., 0., 0u, 0., 0., vec2(0., 0.), 0u, 0., 0.);
+    Planet(0., vec2(0.), 0., 0., 0., 0., vec2(0., 0.), 0u, 0., 0.);
 
   while (index < 4)
   {

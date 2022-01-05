@@ -32,7 +32,7 @@ vec4 computeClouds(vec2 uv, Planet planet, bool dith)
   uv.y += smoothstep(0.0, cloud_curve, abs(uv.x - 0.4));
 
   float c = ppcloud_alpha(size, vec2(1.0), planet.time_speed,
-    uv * vec2(1.0, stretch), octaves, seed + planet.seed);
+    uv * vec2(1.0, stretch), octaves, seed, planet.center);
 
   vec3 col = vec3(0.956);
   if (c < cloud_cover + 0.03)
@@ -67,16 +67,18 @@ vec4 computeLand(vec2 uv, Planet planet, bool dith)
   vec2 base_fbm_uv = uv * size + vec2(time * planet.time_speed, 0.0);
 
   float fbm1 =
-    ppfbm(size, sizeModifier, base_fbm_uv, octaves, seed + planet.seed);
+    ppfbm(size, sizeModifier, base_fbm_uv, octaves, seed, planet.center);
   float fbm2 = ppfbm(size, sizeModifier,
-    base_fbm_uv - planet.light_origin * fbm1, octaves, seed + planet.seed);
+    base_fbm_uv - planet.light_origin * fbm1, octaves, seed, planet.center);
   float fbm3 = ppfbm(size, sizeModifier,
-    base_fbm_uv - planet.light_origin * 1.5 * fbm1, octaves, seed + planet.seed);
+    base_fbm_uv - planet.light_origin * 1.5 * fbm1, octaves, seed,
+    planet.center);
   float fbm4 = ppfbm(size, sizeModifier,
-    base_fbm_uv - planet.light_origin * 2.0 * fbm1, octaves, seed + planet.seed);
+    base_fbm_uv - planet.light_origin * 2.0 * fbm1, octaves, seed,
+    planet.center);
 
   float river_fbm = ppfbm(size, sizeModifier,
-    base_fbm_uv + fbm1 * 6.0, octaves, seed + planet.seed);
+    base_fbm_uv + fbm1 * 6.0, octaves, seed, planet.center);
   river_fbm = step(river_cutoff, river_fbm);
 
   d_light *= d_light * 0.4;

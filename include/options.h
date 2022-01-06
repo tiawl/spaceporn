@@ -26,6 +26,9 @@
 #define ZOOM_FLAG "-z"
 #define ROADMAP_FLAG "-R"
 #define VERBOSE_FLAG "-V"
+#define MAXROADMAP_FLAG "-M"
+#define VERTEXFILEROADMAPS_FLAG "-T"
+#define FRAGMENTFILEROADMAPS_FLAG "-F"
 
 #define MIN_PIXELS 200
 #define MAX_PIXELS 600

@@ -34,10 +34,11 @@ typedef struct
 bool loadPng(PNG* png, bool verbose, Roadmap* roadmap);
 void pcg4d(uvec4* vector);
 bool generatePcgTexture(PNG* png, UniformValues* values, int* width,
-  int* height, bool verbose);
+  int* height, bool verbose, Roadmap* roadmap);
 bool writePng(PNG* png, UniformValues* values, int* width, int* height,
-  bool verbose);
-bool generateAtlas(PNG* png, UniformValues* values, bool verbose);
+  bool verbose, Roadmap* roadmap);
+bool generateAtlas(PNG* png, UniformValues* values, bool verbose,
+  Roadmap* roadmap);
 void freeTextures(Textures* textures, bool verbose);
 bool freePng(PNG* png, bool verbose);
 

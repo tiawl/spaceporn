@@ -3,11 +3,11 @@
 declare -r FRAGMENTS=$(find shaders/fragment -type f)
 declare -r VERTEXES=$(find shaders/vertex -type f)
 
-declare -a -r ROADMAPS=($(seq 2 73))
-
 make coverage > /dev/null 2>&1
 
 declare -r XTELESKOP="./bin/cov/xteleskop"
+
+declare -a -r ROADMAPS=($(seq 2 $(${XTELESKOP} -M))
 
 ${XTELESKOP} -h > /dev/null 2>&1
 ${XTELESKOP} -x -1 > /dev/null 2>&1
@@ -19,15 +19,22 @@ ${XTELESKOP} -V -R -1 > /dev/null 2>&1
 ${XTELESKOP} -R 54 > /dev/null 2>&1
 ${XTELESKOP} -R 54 fakefile > /dev/null 2>&1
 
+declare -r VERTEXFILE_MIN=$(${XTELESKOP} -T | tr ' ' '\n' | head -n 1)
+declare -r VERTEXFILE_MAX=$(${XTELESKOP} -T | tr ' ' '\n' | tail -n 1)
+declare -r FRAGMENTFILE_MIN=$(${XTELESKOP} -F | tr ' ' '\n' | head -n 1)
+declare -r FRAGMENTFILE_MAX=$(${XTELESKOP} -F | tr ' ' '\n' | tail -n 1)
+
 echo
 
 for ROADMAP in ${ROADMAPS[@]}; do
 
   FLAGS=""
-  if [[ ${ROADMAP} -ge 36 && ${ROADMAP} -le 48 ]]; then
-    FLAGS="${VERTEXES}"
-  elif [[ ${ROADMAP} -ge 49 && ${ROADMAP} -le 61 ]]; then
-    FLAGS="${FRAGMENTS}"
+  if [[ ${ROADMAP} -ge ${VERTEXFILE_MIN} \
+    && ${ROADMAP} -le ${VERTEXFILE_MAX} ]]; then
+      FLAGS="${VERTEXES}"
+  elif [[ ${ROADMAP} -ge ${FRAGMENTFILE_MIN} \
+    && ${ROADMAP} -le ${FRAGMENTFILE_MAX} ]]; then
+      FLAGS="${FRAGMENTS}"
   fi
 
   if [[ "x${FLAGS}" == "x" ]]; then

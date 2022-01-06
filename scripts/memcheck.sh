@@ -3,16 +3,23 @@
 declare -r FRAGMENTS=$(find shaders/fragment -type f)
 declare -r VERTEXES=$(find shaders/vertex -type f)
 
-declare -a -r ROADMAPS=($(seq 2 73))
-
 STATUS=0
 EQUALS=0
 
 echo -e "\nCompiling ...\n"
 make clean all > /dev/null 2>&1
 
+declare -r XTELESKOP="./bin/all/xteleskop"
+
+declare -a -r ROADMAPS=($(seq 2 $(${XTELESKOP} -M))
+
+declare -r VERTEXFILE_MIN=$(${XTELESKOP} -T | tr ' ' '\n' | head -n 1)
+declare -r VERTEXFILE_MAX=$(${XTELESKOP} -T | tr ' ' '\n' | tail -n 1)
+declare -r FRAGMENTFILE_MIN=$(${XTELESKOP} -F | tr ' ' '\n' | head -n 1)
+declare -r FRAGMENTFILE_MAX=$(${XTELESKOP} -F | tr ' ' '\n' | tail -n 1)
+
 VALGRIND_OUTPUT=$(valgrind --leak-check=summary --show-leak-kinds=all \
-  --suppressions=amd.supp ./bin/all/xteleskop -R 1 -s 1 2>&1 > /dev/null \
+  --suppressions=amd.supp ${XTELESKOP} -R 1 -s 1 2>&1 > /dev/null \
   | sed 's/==[[:digit:]]*==/ /g')
 
 [[ $(echo "${VALGRIND_OUTPUT}" | tee >(grep -E -A 4 "LEAK SUMMARY") \
@@ -34,15 +41,17 @@ echo -e "$(echo "${VALGRIND_OUTPUT}" | grep -E "ERROR SUMMARY")\n"
 for ROADMAP in ${ROADMAPS[@]}; do
 
   FLAGS=""
-  if [[ ${ROADMAP} -ge 36 && ${ROADMAP} -le 48 ]]; then
-    FLAGS="${VERTEXES}"
-  elif [[ ${ROADMAP} -ge 49 && ${ROADMAP} -le 61 ]]; then
-    FLAGS="${FRAGMENTS}"
+  if [[ ${ROADMAP} -ge ${VERTEXFILE_MIN} \
+    && ${ROADMAP} -le ${VERTEXFILE_MAX} ]]; then
+      FLAGS="${VERTEXES}"
+  elif [[ ${ROADMAP} -ge ${FRAGMENTFILE_MIN} \
+    && ${ROADMAP} -le ${FRAGMENTFILE_MAX} ]]; then
+      FLAGS="${FRAGMENTS}"
   fi
 
   if [[ "x${FLAGS}" == "x" ]]; then
     VALGRIND_OUTPUT=$(valgrind --leak-check=summary --show-leak-kinds=all \
-      --suppressions=amd.supp ./bin/all/xteleskop -a -m -p -x 500 -f 30 \
+      --suppressions=amd.supp ${XTELESKOP} -a -m -p -x 500 -f 30 \
       -R ${ROADMAP} 2>&1 > /dev/null | sed 's/==[[:digit:]]*==/ /g')
 
     [[ $(echo "${VALGRIND_OUTPUT}" | tee >(grep -E -A 4 "LEAK SUMMARY") \
@@ -64,7 +73,7 @@ for ROADMAP in ${ROADMAPS[@]}; do
   else
     for FILE in ${FLAGS}; do
       VALGRIND_OUTPUT=$(valgrind --leak-check=summary --show-leak-kinds=all \
-        --suppressions=amd.supp ./bin/all/xteleskop -a -m -p -x 500 -f 30 \
+        --suppressions=amd.supp ${XTELESKOP} -a -m -p -x 500 -f 30 \
         -R ${ROADMAP} $(echo ${FILE} | sed 's:^\([^/]\+/\)\{2\}::g') 2>&1 \
         > /dev/null | sed 's/==[[:digit:]]*==/ /g')
 

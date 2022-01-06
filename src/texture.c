@@ -38,7 +38,8 @@ bool loadPng(PNG* png, bool verbose, Roadmap* roadmap)
     LOG(verbose, printf("  Creating structure for reading PNG file ...\n"));
     if (roadmap->id != PNGCREATEREADSTRUCT_FAILED_RM)
     {
-      png->ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, 0, 0, 0);
+      png->ptr =
+        png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
     }
 
     if (!png->ptr)
@@ -52,7 +53,7 @@ bool loadPng(PNG* png, bool verbose, Roadmap* roadmap)
     LOG(verbose, printf("  Structure for reading PNG file created\n"));
 
     LOG(verbose, printf("  Creating PNG info structure ...\n"));
-    if (roadmap->id != PNGCREATEINFOSTRUCT_FAILED_RM)
+    if (roadmap->id != PNGCREATEREADINFOSTRUCT_FAILED_RM)
     {
       png->info = png_create_info_struct(png->ptr);
     }
@@ -69,7 +70,7 @@ bool loadPng(PNG* png, bool verbose, Roadmap* roadmap)
 
     LOG(verbose, printf("  Searching libPNG error ...\n"));
     if (setjmp(png_jmpbuf(png->ptr)) ||
-      (roadmap->id == PNG_JMPBUF_FAILED_RM))
+      (roadmap->id == PNG_READJMPBUF_FAILED_RM))
     {
       LOG(verbose, printf("  "));
       fprintf((verbose ? stdout : stderr),
@@ -137,7 +138,7 @@ are not power of two or smaller than 8 failed to load in OpenGL\n");
     LOG(verbose, printf("  Memory allocated successfully\n"));
 
     LOG(verbose, printf("  Allocating memory for read_row_pointers ...\n"));
-    if (roadmap->id != PNG_ROWPOINTERS_MALLOC_FAILED_RM)
+    if (roadmap->id != PNG_READROWPOINTERS_MALLOC_FAILED_RM)
     {
       png->read_row_pointers = malloc(h * sizeof(png_bytep));
     }
@@ -230,7 +231,7 @@ void pcg4d(uvec4* vector)
 }
 
 bool generatePcgTexture(PNG* png, UniformValues* values, int* width,
-  int* height, bool verbose)
+  int* height, bool verbose, Roadmap* roadmap)
 {
   bool status = true;
 
@@ -257,8 +258,12 @@ bool generatePcgTexture(PNG* png, UniformValues* values, int* width,
       *height));
 
     LOG(verbose, printf("    Allocating memory for write_row_pointers ...\n"));
-    png->write_row_pointers =
-      (png_byte**) malloc(sizeof(png_byte*) * (*height));
+    if (roadmap->id != PNG_WRITEROWPOINTERS_MALLOC_FAILED_RM)
+    {
+      png->write_row_pointers =
+        (png_byte**) malloc(sizeof(png_byte*) * (*height));
+    }
+
     if (!png->write_row_pointers)
     {
       LOG(verbose, printf("    "));
@@ -276,7 +281,11 @@ failed\n");
     {
       LOG(verbose, printf("      Allocating memory for \
 write_row_pointers[%d] ...\n", i));
-      png->write_row_pointers[i] = (png_byte*) malloc(4 * (*width));
+      if (roadmap->id != PNG_WRITEROWPOINTER_MALLOC_FAILED_RM)
+      {
+        png->write_row_pointers[i] = (png_byte*) malloc(4 * (*width));
+      }
+
       if (!png->write_row_pointers[i])
       {
         LOG(verbose, printf("      "));
@@ -325,14 +334,17 @@ malloc() failed\n", i);
 }
 
 bool writePng(PNG* png, UniformValues* values, int* width, int* height,
-  bool verbose)
+  bool verbose, Roadmap* roadmap)
 {
   bool status = true;
 
   do
   {
     LOG(verbose, printf("    Opening PNG file \"%s\" ...\n", png->path));
-    png->file = fopen(png->path, "wb");
+    if (roadmap->id != FOPEN_NEW_PNG_FILE_FAILED_RM)
+    {
+      png->file = fopen(png->path, "wb");
+    }
 
     if (!png->file)
     {
@@ -346,19 +358,27 @@ bool writePng(PNG* png, UniformValues* values, int* width, int* height,
     LOG(verbose, printf("    PNG file opened\n"));
 
     LOG(verbose, printf("    Creating structure for writing PNG file ...\n"));
-    png->ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+    if (roadmap->id != PNGCREATEWRITESTRUCT_FAILED_RM)
+    {
+      png->ptr =
+        png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+    }
 
     if (!png->ptr)
     {
       LOG(verbose, printf("    "));
       fprintf((verbose ? stdout : stderr), "png_create_write_struct() failed\n");
+
       status = false;
       break;
     }
     LOG(verbose, printf("    Structure for writing PNG file created\n"));
 
     LOG(verbose, printf("    Creating PNG info structure ...\n"));
-    png->info = png_create_info_struct(png->ptr);
+    if (roadmap->id != PNGCREATEWRITEINFOSTRUCT_FAILED_RM)
+    {
+      png->info = png_create_info_struct(png->ptr);
+    }
 
     if (!png->info)
     {
@@ -371,7 +391,8 @@ bool writePng(PNG* png, UniformValues* values, int* width, int* height,
     LOG(verbose, printf("    PNG info structure created\n"));
 
     LOG(verbose, printf("    Searching libPNG error ...\n"));
-    if (setjmp(png_jmpbuf(png->ptr)))
+    if (setjmp(png_jmpbuf(png->ptr)) ||
+      (roadmap->id == PNG_WRITEJMPBUF_FAILED_RM))
     {
       LOG(verbose, printf("    "));
       fprintf((verbose ? stdout : stderr),
@@ -409,7 +430,8 @@ PNG info structure ...\n"));
   return status;
 }
 
-bool generateAtlas(PNG* png, UniformValues* values, bool verbose)
+bool generateAtlas(PNG* png, UniformValues* values, bool verbose,
+  Roadmap* roadmap)
 {
   bool status = true;
   int width = 0;
@@ -418,7 +440,7 @@ bool generateAtlas(PNG* png, UniformValues* values, bool verbose)
   do
   {
     LOG(verbose, printf("  Generating PCG texture ...\n"));
-    if (!generatePcgTexture(png, values, &width, &height, verbose))
+    if (!generatePcgTexture(png, values, &width, &height, verbose, roadmap))
     {
       LOG(verbose, printf("  "));
       fprintf((verbose ? stdout : stderr), "Failed to generate PCG texture\n");
@@ -429,7 +451,7 @@ bool generateAtlas(PNG* png, UniformValues* values, bool verbose)
     LOG(verbose, printf("  PCG texture generated successfully\n"));
 
     LOG(verbose, printf("  Writing PNG textures atlas ...\n"));
-    if (!writePng(png, values, &width, &height, verbose))
+    if (!writePng(png, values, &width, &height, verbose, roadmap))
     {
       LOG(verbose, printf("  "));
       fprintf((verbose ? stdout : stderr), "Failed to write PNG textures \

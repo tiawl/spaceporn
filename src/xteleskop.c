@@ -136,7 +136,7 @@ are initialized\n"));
     GLuint uniformIds[UNIFORM_COUNT];
 
     LOG(verbose, printf("Generating textures atlas ...\n"));
-    if (!generateAtlas(&(textures.atlas), &uniform_values, verbose))
+    if (!generateAtlas(&(textures.atlas), &uniform_values, verbose, &roadmap))
     {
       fprintf((verbose ? stdout : stderr),
         "Failed to generate textures atlas\n");

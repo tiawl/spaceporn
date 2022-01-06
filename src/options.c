@@ -5,8 +5,10 @@ void help()
   fprintf(stderr, "\n%s v%s\n", NAME, VERSION);
   fprintf(stderr,
     "\nUsage: %s [%s] [%s FPS] [%s] [%s MINS] [%s] [%s PIXELS] [%s ZOOM]\n\
-  [%s] [%s ROADMAP]\n\n", NAME, ANIMATION_FLAG, FPS_FLAG, CAMERAMOTION_FLAG,
-  SLIDE_FLAG, PALETTES_FLAG, PIXEL_FLAG, ZOOM_FLAG, VERBOSE_FLAG, ROADMAP_FLAG);
+  [%s] [%s ROADMAP] [%s] [%s] [%s]\n\n", NAME, ANIMATION_FLAG, FPS_FLAG,
+  CAMERAMOTION_FLAG, SLIDE_FLAG, PALETTES_FLAG, PIXEL_FLAG, ZOOM_FLAG,
+  VERBOSE_FLAG, ROADMAP_FLAG, MAXROADMAP_FLAG, VERTEXFILEROADMAPS_FLAG,
+  FRAGMENTFILEROADMAPS_FLAG);
   fprintf(stderr, "User options:\n\n\
     %s  Enable shader animations.\n\n\
     %s  Frames per second between %d to %d.\n\
@@ -27,7 +29,13 @@ void help()
   fprintf(stderr, "Debug options:\n\n\
     %s  Verbose mode.\n\n\
     %s  Run the corresponding predefined execution roadmap.\n\
-        [default: 0]\n\n", VERBOSE_FLAG, ROADMAP_FLAG);
+        [default: 0]\n\n\
+    %s  Print last roadmap.\n\n\
+    %s  Print first and last roadmaps which need a vertex shader\n\
+        file as argument.\n\n\
+    %s  Print first and last roadmaps which need a fragment shader\n\
+        file as argument.\n\n", VERBOSE_FLAG, ROADMAP_FLAG, MAXROADMAP_FLAG,
+        VERTEXFILEROADMAPS_FLAG, FRAGMENTFILEROADMAPS_FLAG);
 }
 
 bool parsing_options(bool* verbose, int* fps, UniformValues* uniform_values,
@@ -158,6 +166,24 @@ bool parsing_options(bool* verbose, int* fps, UniformValues* uniform_values,
             }
           }
         }
+      } else if (strcmp(argv[i], MAXROADMAP_FLAG) == 0) {
+#if DEBUG
+        printf("%d\n", RM_NB - 2);
+#else
+        printf("%d\n", RM_NB - 1);
+#endif
+        status = false;
+        break;
+      } else if (strcmp(argv[i], VERTEXFILEROADMAPS_FLAG) == 0) {
+        printf("%d %d\n", VERTEX_FILE_SARH_HEADER_MALLOC_FAILED_RM,
+          VERTEX_FILE_SARH_REPLACE_2_REGEXEC_FAILED_RM);
+        status = false;
+        break;
+      } else if (strcmp(argv[i], FRAGMENTFILEROADMAPS_FLAG) == 0) {
+        printf("%d %d\n", FRAGMENT_FILE_SARH_HEADER_MALLOC_FAILED_RM,
+          FRAGMENT_FILE_SARH_REPLACE_2_REGEXEC_FAILED_RM);
+        status = false;
+        break;
       } else {
         help();
         status = false;

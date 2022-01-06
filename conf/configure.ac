@@ -13,8 +13,8 @@ fi
 
 # Checks for libraries and headers
 AC_CHECK_HEADERS([errno.h stdio.h stdlib.h string.h unistd.h \
-string.h regex.h math.h], [], AC_MSG_ERROR([Some GLibC headers are missing. \
-Install or check the GLibC library.]))
+string.h regex.h math.h limits.h], [], AC_MSG_ERROR([Some GLibC headers are \
+missing. Install or check the GLibC library.]))
 
 AC_CHECK_LIB([m], [pow], [], [AC_MSG_ERROR([lib math linking flag (-lm) is \
 missing. Install or check GLibC library.])])
@@ -64,12 +64,13 @@ but some of its types and strutures are missing.]),
 
 # Checks for predefined macros and variables.
 AC_CHECK_DECLS([NULL, EXIT_FAILURE, EXIT_SUCCESS, SEEK_END, SEEK_SET, errno,
-  REG_EXTENDED, REG_NEWLINE, REG_NOMATCH, F_OK], [], AC_MSG_ERROR([GLibC \
-library is installed but some of its declarations are missing.]),
-[[#include <stdlib.h>
+  REG_EXTENDED, REG_NEWLINE, REG_NOMATCH, F_OK, UINT_MAX], [],
+  AC_MSG_ERROR([GLibC library is installed but some of its declarations are \
+  missing.]), [[#include <stdlib.h>
 #include <stdio.h>
 #include <sys/time.h>
 #include <errno.h>
+#include <limits.h>
 #include <regex.h>
 #include <unistd.h>]])
 AC_CHECK_DECLS([PNG_LIBPNG_VER_STRING, PNG_INFO_tRNS, PNG_COLOR_MASK_ALPHA, \

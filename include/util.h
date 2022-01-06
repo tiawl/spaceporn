@@ -5,7 +5,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/time.h>
-#include <png.h>
 #include <GL/glew.h>
 #include <GL/glx.h>
 
@@ -128,15 +127,8 @@ enum RoadmapID
   FRAGMENT_FILE_ILS_REPLACE_REGEXEC_FAILED_RM,
   FRAGMENT_FILE_ILS_REGCOMP_FAILED_RM,
   FRAGMENT_FILE_ILS_REGEXEC_FAILED_RM,
-  ATLAS_TEXTURESPATH_MALLOC_FAILED_RM,
+  ATLASTEXELS_MALLOC_FAILED_RM,
 // -------------------------------------------------------------------  75
-  PNG_WRITEROWPOINTERS_MALLOC_FAILED_RM,
-  PNG_WRITEROWPOINTER_MALLOC_FAILED_RM,
-  FOPEN_NEW_PNG_FILE_FAILED_RM,
-  PNGCREATEWRITESTRUCT_FAILED_RM,
-  PNGCREATEWRITEINFOSTRUCT_FAILED_RM,
-// -------------------------------------------------------------------  80
-  PNG_WRITEJMPBUF_FAILED_RM,
 #if DEBUG
   XCREATEDEBUGWINDOW_FAILED_RM,
 #endif

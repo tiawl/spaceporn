@@ -75,8 +75,7 @@ bool initTexturePath(PNG* png, size_t len[4], char* home, char* path,
   return status;
 }
 
-bool initPaths(Shaders* shaders, Textures* textures, bool verbose,
-  Roadmap* roadmap)
+bool initPaths(Shaders* shaders, PNG* png, bool verbose, Roadmap* roadmap)
 {
   int status = true;
 
@@ -127,14 +126,9 @@ variable\n");
     const size_t len6 = strlen(MAIN_FILE);
     LOG(verbose, printf("  Length of \"%s\" is %lu\n", MAIN_FILE, len6));
 
-    LOG(verbose, printf("  Computing length of bigstars texture filename \
-...\n"));
+    LOG(verbose, printf("  Computing length of texture filename ...\n"));
     const size_t len7 = strlen(BIGSTARS_FILE);
     LOG(verbose, printf("  Length of \"%s\" is %lu\n", BIGSTARS_FILE, len7));
-
-    LOG(verbose, printf("  Computing length of atlas texture filename ...\n"));
-    const size_t len8 = strlen(ATLAS_FILE);
-    LOG(verbose, printf("  Length of \"%s\" is %lu\n", ATLAS_FILE, len8));
 
     size_t length[4] =
     {
@@ -178,44 +172,23 @@ initialization failed\n");
     length[2] = len7;
     length[3] = 0;
 
-    LOG(verbose, printf("  Initializing bigstars texture path ...\n"));
-    if (!initTexturePath(&(textures->bigstars), length, home, BIGSTARS_FILE,
-      verbose, roadmap))
+    LOG(verbose, printf("  Initializing texture path ...\n"));
+    if (!initTexturePath(png, length, home, BIGSTARS_FILE, verbose, roadmap))
     {
       LOG(verbose, printf("  "));
-      fprintf((verbose ? stdout : stderr), "bigstars texture path \
-initialization failed\n");
+      fprintf((verbose ? stdout : stderr), "Texture path initialization \
+failed\n");
 
       status = false;
       break;
     }
-    LOG(verbose, printf("  bigstars texture path initialized\n"));
-
-    length[2] = len8;
-
-    if (roadmap->id == ATLAS_TEXTURESPATH_MALLOC_FAILED_RM)
-    {
-      roadmap->id = TEXTUREPATH_MALLOC_FAILED_RM;
-    }
-
-    LOG(verbose, printf("  Initializing atlas texture path ...\n"));
-    if (!initTexturePath(&(textures->atlas), length, home, ATLAS_FILE,
-      verbose, roadmap))
-    {
-      LOG(verbose, printf("  "));
-      fprintf((verbose ? stdout : stderr), "atlas texture path \
-initialization failed\n");
-
-      status = false;
-      break;
-    }
-    LOG(verbose, printf("  atlas texture path initialized\n"));
+    LOG(verbose, printf("  Texture path initialized\n"));
   } while (false);
 
   return status;
 }
 
-void freePaths(Shaders* shaders, Textures* textures, bool verbose)
+void freePaths(Shaders* shaders, PNG* png, bool verbose)
 {
   if (shaders->fshaderpath)
   {
@@ -233,19 +206,11 @@ void freePaths(Shaders* shaders, Textures* textures, bool verbose)
     LOG(verbose, printf("vshaderpath freed\n"));
   }
 
-  if (textures->bigstars.path)
+  if (png->path)
   {
     LOG(verbose, printf("Freeing texturepath ...\n"));
-    free(textures->bigstars.path);
-    textures->bigstars.path = NULL;
-    LOG(verbose, printf("texturepath freed\n"));
-  }
-
-  if (textures->atlas.path)
-  {
-    LOG(verbose, printf("Freeing texturepath ...\n"));
-    free(textures->atlas.path);
-    textures->atlas.path = NULL;
+    free(png->path);
+    png->path = NULL;
     LOG(verbose, printf("texturepath freed\n"));
   }
 }

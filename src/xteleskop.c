@@ -32,23 +32,19 @@ int main(int argc, char** argv)
   shaders.fragment_shader = 0;
   shaders.program = 0;
 
-  Textures textures;
-  textures.bigstars.file = NULL;
-  textures.bigstars.data = NULL;
-  textures.bigstars.ptr = 0;
-  textures.bigstars.info = 0;
-  textures.bigstars.read_row_pointers = NULL;
-  textures.bigstars.write_row_pointers = NULL;
-  textures.bigstars.path = NULL;
-  textures.bigstars.texture = 0;
-  textures.atlas.file = NULL;
-  textures.atlas.data = NULL;
-  textures.atlas.ptr = 0;
-  textures.atlas.info = 0;
-  textures.atlas.read_row_pointers = NULL;
-  textures.atlas.write_row_pointers = NULL;
-  textures.atlas.path = NULL;
-  textures.atlas.texture = 0;
+  PNG png;
+  png.file = NULL;
+  png.data = NULL;
+  png.ptr = 0;
+  png.info = 0;
+  png.row_pointers = NULL;
+  png.path = NULL;
+  png.texture = 0;
+
+  Atlas atlas;
+  atlas.texels = NULL;
+  atlas.width = 0;
+  atlas.height = 0;
 
   Context context;
   context.display = NULL;
@@ -90,7 +86,7 @@ int main(int argc, char** argv)
 
     LOG(verbose, printf("Initializing fragment shader, vertex shader and \
 texture paths ...\n"));
-    if (!initPaths(&shaders, &textures, verbose, &roadmap))
+    if (!initPaths(&shaders, &png, verbose, &roadmap))
     {
       fprintf((verbose ? stdout : stderr), "Failed to initialize fragment \
 shader, vertex shader or texture paths\n");
@@ -111,6 +107,26 @@ are initialized\n"));
 
     uniform_values.width = context.window_attribs.width;
     uniform_values.height = context.window_attribs.height;
+
+    LOG(verbose, printf("Computing textures atlas dimensions ...\n"));
+    atlas.width = 5;
+    atlas.height = 3;
+
+//     if (values.width >= values.height)
+//     {
+//       atlas.width = values.pixels * 5 *
+//         ((int) round(((double) values.width) /
+//           ((double) values.height)));
+//       atlas.height = values.pixels * 5;
+//     } else {
+//       atlas.width = values.pixels * 5;
+//       atlas.height = values.pixels * 5 *
+//         ((int) round(((double) values.height) /
+//           ((double) values.width)));
+//     }
+    LOG(verbose, printf("Textures atlas dimensions are: %dx%d\n", atlas.width,
+      atlas.height));
+
 
     LOG(verbose, printf("Loading OpenGL program ...\n"));
     if (!loadProgram(&context, &shaders, verbose, &roadmap))
@@ -135,8 +151,19 @@ are initialized\n"));
 
     GLuint uniformIds[UNIFORM_COUNT];
 
+    LOG(verbose, printf("Loading PNG texture ...\n"));
+    if (!loadPng(&png, verbose, &roadmap))
+    {
+      fprintf((verbose ? stdout : stderr),
+        "Failed to load PNG file \"%s\"\n", png.path);
+
+      status = false;
+      break;
+    }
+    LOG(verbose, printf("PNG texture loaded\n"));
+
     LOG(verbose, printf("Generating textures atlas ...\n"));
-    if (!generateAtlas(&(textures.atlas), &uniform_values, verbose, &roadmap))
+    if (!generateAtlas(&atlas, verbose, &roadmap))
     {
       fprintf((verbose ? stdout : stderr),
         "Failed to generate textures atlas\n");
@@ -145,15 +172,14 @@ are initialized\n"));
     }
     LOG(verbose, printf("Textures atlas generated\n"));
 
-    LOG(verbose, printf("Loading bigstars PNG texture ...\n"));
-    if (!loadPng(&(textures.bigstars), verbose, &roadmap))
+    LOG(verbose, printf("Loading textures atlas ...\n"));
+    if (!loadAtlas(&atlas, verbose, &roadmap))
     {
-      fprintf((verbose ? stdout : stderr),
-        "Failed to load PNG file \"%s\"\n", textures.bigstars.path);
+      fprintf((verbose ? stdout : stderr), "Failed to load textures atlas\n");
       status = false;
       break;
     }
-    LOG(verbose, printf("bigstars PNG texture loaded\n"));
+    LOG(verbose, printf("Textures atlas loaded\n"));
 
     LOG(verbose, printf("Searching uniforms location ...\n"));
     getUniforms(uniforms, uniformIds, &shaders.program, verbose);
@@ -241,9 +267,10 @@ initialized\n"));
     }
   } while (false);
 
-  freePaths(&shaders, &textures, verbose);
+  freePaths(&shaders, &png, verbose);
   freeVertices(&vertices, verbose);
-  freeTextures(&textures, verbose);
+  freePng(&png, verbose);
+  freeAtlas(&atlas, verbose);
   freeProgram(&shaders, verbose, &roadmap);
   freeContext(&context, verbose);
 

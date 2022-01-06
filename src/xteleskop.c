@@ -40,11 +40,15 @@ int main(int argc, char** argv)
   png.row_pointers = NULL;
   png.path = NULL;
   png.texture = 0;
+  png.texture_unit = 0;
 
   Atlas atlas;
   atlas.texels = NULL;
   atlas.width = 0;
   atlas.height = 0;
+  atlas.depth = 1;
+  atlas.texture = 0;
+  atlas.texture_unit = 1;
 
   Context context;
   context.display = NULL;
@@ -109,8 +113,8 @@ are initialized\n"));
     uniform_values.height = context.window_attribs.height;
 
     LOG(verbose, printf("Computing textures atlas dimensions ...\n"));
-    atlas.width = 5;
-    atlas.height = 3;
+    atlas.width = 16;
+    atlas.height = 8;
 
 //     if (values.width >= values.height)
 //     {
@@ -152,7 +156,7 @@ are initialized\n"));
     GLuint uniformIds[UNIFORM_COUNT];
 
     LOG(verbose, printf("Loading PNG texture ...\n"));
-    if (!loadPng(&png, verbose, &roadmap))
+    if (!loadPng(&png, &shaders, verbose, &roadmap))
     {
       fprintf((verbose ? stdout : stderr),
         "Failed to load PNG file \"%s\"\n", png.path);
@@ -173,7 +177,7 @@ are initialized\n"));
     LOG(verbose, printf("Textures atlas generated\n"));
 
     LOG(verbose, printf("Loading textures atlas ...\n"));
-    if (!loadAtlas(&atlas, verbose, &roadmap))
+    if (!loadAtlas(&atlas, &shaders, verbose, &roadmap))
     {
       fprintf((verbose ? stdout : stderr), "Failed to load textures atlas\n");
       status = false;

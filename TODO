@@ -1,14 +1,10 @@
-- Load_atlas_fn() and activate several textures
-- new load_atlas_fn() roadmaps
 - memchecks
 - covchecks
-- add LOG in Load_atlas_fn()
 -------------------------------------------------------------
 - Precompute flag
 - Precompute and stop flag
 -------------------------------------------------------------
 - Redirect verbose to ~/.local/log/xteleskop to generate logs
-
 -------------------------------------------------------------
 https://www.khronos.org/opengl/wiki/Array_Texture
 https://opengl.developpez.com/tutoriels/apprendre-opengl/?page=textures#L8-2-1

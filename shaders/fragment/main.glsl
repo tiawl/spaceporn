@@ -40,12 +40,14 @@ void main()
 
   vec4 col = vec4(0.);
 
-  col = planets(px, dith);
-  if (col.x == -1.)
-  {
-    col = max(bigstars(unzoomed_UV), max(stars(unzoomed_px), max(dust(px, dith),
-      nebulae(px, dith)) * 0.8 * (sin(time * 2500.) * 0.015 + 1.)));
-  }
+//   col = planets(px, dith);
+//   if (col.x == -1.)
+//   {
+//     col = max(bigstars(unzoomed_UV), max(stars(unzoomed_px), max(dust(px, dith),
+//       nebulae(px, dith)) * 0.8 * (sin(time * 2500.) * 0.015 + 1.)));
+//   }
+
+  col = vec4(texture(atlas, vec3(gl_FragCoord.xy / resolution, 0.)).xyz, 1.);
 
   fragColor = col;
 }

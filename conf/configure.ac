@@ -82,7 +82,8 @@ AC_CHECK_DECLS([GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_TEXTURE_WRAP_T,
   GL_FRAGMENT_SHADER, GL_LINK_STATUS, GL_ARRAY_BUFFER, GL_STATIC_DRAW,
   GL_FLOAT, GL_COLOR_BUFFER_BIT, GL_DEPTH_BUFFER_BIT, GL_TRIANGLE_STRIP,
   GL_RGBA, GL_RGB, GL_UNSIGNED_BYTE, GL_CLAMP_TO_BORDER, GL_BLEND,
-  GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA], [], AC_MSG_ERROR([GL library is \
+  GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_TEXTURE_3D, GL_TEXTURE_2D_ARRAY,
+  GL_REPEAT, GL_RGBA8, GL_TEXTURE0], [], AC_MSG_ERROR([GL library is \
 installed but some of its declarations are missing.]),
   [[#include <GL/gl.h>]])
 AC_CHECK_DECL(glewExperimental, [], AC_MSG_ERROR([GLEW library is \
@@ -123,7 +124,8 @@ glDeleteShader glAttachShader glLinkProgram glGetProgramiv glValidateProgram \
 glDetachShader glGetUniformLocation glGenVertexArrays glBindVertexArray \
 glGenBuffers glBindBuffer glBufferData glEnableVertexAttribArray \
 glVertexAttribPointer glClearColor glClear glDrawArrays glGenTextures \
-glBindTexture glTexImage2D glTexParameteri glGetProgramInfoLog], [],
+glBindTexture glTexImage2D glTexParameteri glGetProgramInfoLog \
+glActiveTexture glTexImage3D glUniform1i], [],
 AC_MSG_ERROR([GL library is installed but some of its functions are missing.]))
 AC_CHECK_FUNC(glewInit, [], AC_MSG_ERROR([GLEW library is installed but some \
 of its functions are missing.]))

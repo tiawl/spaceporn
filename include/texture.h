@@ -3,7 +3,7 @@
 
 #include <png.h>
 
-#include "util.h"
+#include "shader.h"
 
 typedef struct
 {
@@ -14,9 +14,10 @@ typedef struct
   FILE* file;
   char* path;
   GLuint texture;
+  GLenum texture_unit;
 } PNG;
 
-bool loadPng(PNG* png, bool verbose, Roadmap* roadmap);
+bool loadPng(PNG* png, Shaders* shaders, bool verbose, Roadmap* roadmap);
 bool freePng(PNG* png, bool verbose);
 
 #endif

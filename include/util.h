@@ -129,6 +129,7 @@ enum RoadmapID
   FRAGMENT_FILE_ILS_REGEXEC_FAILED_RM,
   ATLASTEXELS_MALLOC_FAILED_RM,
 // -------------------------------------------------------------------  75
+  BAD_ATLAS_DIMENSIONS_RM,
 #if DEBUG
   XCREATEDEBUGWINDOW_FAILED_RM,
 #endif

@@ -33,7 +33,7 @@ float calc_square(vec2 xy, vec2 offset)
   {
     dist_center += floor(12.5 * size + 0.1) * uv_unit;
     dist_center.x += (25. * uv_unit.x * size) * (rd_bigstar - 1.);
-    vec4 text = texture2D(big_stars_texture,
+    vec4 text = texture2D(bigstars_texture,
       dist_center / (size * uv_unit * TEXTURE_SIZE));
     if (text.a > 0.)
     {

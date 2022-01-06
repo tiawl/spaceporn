@@ -1,6 +1,6 @@
 #include "texture.h"
 
-bool loadPng(PNG* png, bool verbose, Roadmap* roadmap)
+bool loadPng(PNG* png, Shaders* shaders, bool verbose, Roadmap* roadmap)
 {
   bool status = true;
 
@@ -100,11 +100,11 @@ structure ...\n"));
       w = 15;
     }
 
-    LOG(verbose, printf("  Testing PNG images dimensions ...\n"));
+    LOG(verbose, printf("  Testing textures dimensions ...\n"));
     if ((w & (w - 1)) || (h & (h - 1)) || (w < 8) || (h < 8))
     {
       LOG(verbose, printf("  "));
-      fprintf((verbose ? stdout : stderr), "PNG images with dimensions that \
+      fprintf((verbose ? stdout : stderr), "Textures with dimensions that \
 are not power of two or smaller than 8 failed to load in OpenGL\n");
 
       status = false;
@@ -176,12 +176,26 @@ the correct offsets of data ... %d/%d\n", h, h));
     GL_CHECK(glGenTextures(1, &(png->texture)), status);
     LOG(verbose, printf("  OpenGL texture is %d\n", png->texture));
 
+    LOG(verbose, printf("  Activating OpenGL texture ...\n"));
+    GL_CHECK(glActiveTexture(GL_TEXTURE0 + png->texture_unit), status);
+    LOG(verbose, printf("  OpenGL texture activated\n"));
+
     LOG(verbose, printf("  Binding OpenGL texture ...\n"));
     GL_CHECK(glBindTexture(GL_TEXTURE_2D, png->texture), status);
     LOG(verbose, printf("  OpenGL texture binded\n"));
 
+    LOG(verbose, printf("  Setting texture unit to use ...\n"));
+    GL_CHECK(glUniform1i(glGetUniformLocation(shaders->program,
+      "bigstars_texture"), png->texture_unit), status);
+    LOG(verbose, printf("  Texture unit ready to use\n"));
+
     GLenum texture_format =
       (color_type & PNG_COLOR_MASK_ALPHA) ? GL_RGBA : GL_RGB;
+
+    for(png_uint_32 i = 0; i < h; ++i)
+    {
+      printf("data %d = %u\n", i, png->data[i]);
+    }
 
     LOG(verbose, printf("  Specifying 2D OpenGL texture ...\n"));
     GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, texture_format, w, h,
@@ -213,45 +227,45 @@ bool freePng(PNG* png, bool verbose)
 
   if (png->ptr)
   {
-    LOG(verbose, printf("  Destroying PNG read struct and PNG info struct \
+    LOG(verbose, printf("Destroying PNG read struct and PNG info struct \
 ...\n"));
     png_destroy_read_struct(&(png->ptr), png->info ? &(png->info) : 0, 0);
     png->ptr = 0;
     png->info = 0;
-    LOG(verbose, printf("  PNG read struct and PNG info struct destroyed\n"));
+    LOG(verbose, printf("PNG read struct and PNG info struct destroyed\n"));
   }
 
   if (png->row_pointers)
   {
-    LOG(verbose, printf("  Freeing PNG row_pointers ...\n"));
+    LOG(verbose, printf("Freeing PNG row_pointers ...\n"));
     free(png->row_pointers);
     png->row_pointers = NULL;
-    LOG(verbose, printf("  PNG row_pointers freed\n"));
+    LOG(verbose, printf("PNG row_pointers freed\n"));
   }
 
   if (png->data)
   {
-    LOG(verbose, printf("  Freeing PNG data ...\n"));
+    LOG(verbose, printf("Freeing PNG data ...\n"));
     free(png->data);
     png->data = NULL;
-    LOG(verbose, printf("  PNG data freed\n"));
+    LOG(verbose, printf("PNG data freed\n"));
   }
 
   if (png->file)
   {
-    LOG(verbose, printf("  Closing PNG file ...\n"));
+    LOG(verbose, printf("Closing PNG file ...\n"));
     fclose(png->file);
     png->file = NULL;
-    LOG(verbose, printf("  PNG file closed\n"));
+    LOG(verbose, printf("PNG file closed\n"));
   }
 
   do
   {
     if (png->texture)
     {
-      LOG(verbose, printf("  Deleting OpenGL texture ...\n"));
+      LOG(verbose, printf("Deleting OpenGL texture ...\n"));
       GL_CHECK(glDeleteTextures(1, &(png->texture)), status);
-      LOG(verbose, printf("  OpenGL texture deleted\n"));
+      LOG(verbose, printf("OpenGL texture deleted\n"));
     }
   } while (false);
 

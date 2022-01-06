@@ -21,7 +21,7 @@ bool initShaderPath(char** path, size_t len[4], char* home, char* dir,
       status = false;
       break;
     }
-    LOG(verbose, printf("    Successfull allocated memory for shader path\n"));
+    LOG(verbose, printf("    Successful allocated memory for shader path\n"));
 
     LOG(verbose, printf("    Building shader path string ... 0/4\n"));
     memcpy(*path, home, len[0]);
@@ -60,7 +60,7 @@ bool initTexturePath(PNG* png, size_t len[4], char* home, char* path,
       status = false;
       break;
     }
-    LOG(verbose, printf("    Successfull allocated memory for texture path\n"));
+    LOG(verbose, printf("    Successful allocated memory for texture path\n"));
 
     LOG(verbose, printf("    Building texture path string ... 0/3\n"));
     memcpy(png->path, home, len[0]);

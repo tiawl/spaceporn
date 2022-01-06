@@ -8,7 +8,8 @@
 
 uniform float fflags[6];
 uniform bvec3 bflags;
-uniform sampler2D big_stars_texture;
+uniform sampler2D bigstars_texture;
+uniform sampler2DArray atlas;
 
 out vec4 fragColor;
 

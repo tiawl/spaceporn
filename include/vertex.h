@@ -1,5 +1,5 @@
-#ifndef XTELESKOP_VERTEX_H
-#define XTELESKOP_VERTEX_H
+#ifndef SPACEPORN_VERTEX_H
+#define SPACEPORN_VERTEX_H
 
 #include "util.h"
 

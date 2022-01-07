@@ -1,5 +1,5 @@
-#ifndef XTELESKOP_CONTEXT_H
-#define XTELESKOP_CONTEXT_H
+#ifndef SPACEPORN_CONTEXT_H
+#define SPACEPORN_CONTEXT_H
 
 #include <stdio.h>
 #include <stdlib.h>

@@ -1,5 +1,5 @@
-#ifndef XTELESKOP_OPTIONS_H
-#define XTELESKOP_OPTIONS_H
+#ifndef SPACEPORN_OPTIONS_H
+#define SPACEPORN_OPTIONS_H
 
 #include <string.h>
 #include <unistd.h>
@@ -7,7 +7,7 @@
 #include "path.h"
 #include "uniform.h"
 
-#define NAME "xteleskop"
+#define NAME "spaceporn"
 #define VERSION "0.1"
 
 #define DEFAULT_FPS 30

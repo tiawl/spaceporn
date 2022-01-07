@@ -1,5 +1,5 @@
-#ifndef XTELESKOP_UNIFORM_H
-#define XTELESKOP_UNIFORM_H
+#ifndef SPACEPORN_UNIFORM_H
+#define SPACEPORN_UNIFORM_H
 
 #include "util.h"
 

@@ -1,5 +1,5 @@
-#ifndef XTELESKOP_H
-#define XTELESKOP_H
+#ifndef SPACEPORN_H
+#define SPACEPORN_H
 
 #include "atlas.h"
 #include "context.h"

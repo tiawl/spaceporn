@@ -1,12 +1,12 @@
-#ifndef XTELESKOP_PATH_H
-#define XTELESKOP_PATH_H
+#ifndef SPACEPORN_PATH_H
+#define SPACEPORN_PATH_H
 
 #include <string.h>
 
 #include "texture.h"
 
-#define SHADERS_DIR "/Workspace/Perso/xteleskop/shaders/" //  "/.local/shaders/"
-#define TEXTURES_DIR "/Workspace/Perso/xteleskop/textures/" //  "/.local/textures/"
+#define SHADERS_DIR "/Workspace/Perso/spaceporn/shaders/" //  "/.local/shaders/"
+#define TEXTURES_DIR "/Workspace/Perso/spaceporn/textures/" //  "/.local/textures/"
 #define FRAGMENT_DIR "fragment/"
 #define VERTEX_DIR "vertex/"
 #define MAIN_FILE "main.glsl"

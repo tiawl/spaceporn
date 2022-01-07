@@ -1,6 +1,6 @@
 AC_PREREQ([2.69])
-AC_INIT([xteleskop], [0.1], [pabtomas@protonmail.com])
-AC_CONFIG_SRCDIR([../../src/xteleskop.c])
+AC_INIT([spaceporn], [0.1], [pabtomas@protonmail.com])
+AC_CONFIG_SRCDIR([../../src/spaceporn.c])
 
 AC_LANG(C)
 

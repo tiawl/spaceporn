@@ -6,7 +6,7 @@ bool updateFloatUniforms(GLint uniformId, UniformValues* values, bool verbose)
 
   do
   {
-    if ((values->slide > 0) || (!values->precomputed && (values-> seed < 0.)))
+    if ((values->slide > 0) || (values-> seed < 0.))
     {
       LOG(verbose, printf("    Generating random number to seed GPU hash() \
 ...\n"));

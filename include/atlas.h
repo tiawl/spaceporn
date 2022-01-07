@@ -1,5 +1,5 @@
-#ifndef XTELESKOP_ATLAS_H
-#define XTELESKOP_ATLAS_H
+#ifndef SPACEPORN_ATLAS_H
+#define SPACEPORN_ATLAS_H
 
 #include <limits.h>
 #include <png.h>

@@ -9,17 +9,17 @@ EQUALS=0
 echo -e "\nCompiling ...\n"
 make clean all > /dev/null 2>&1
 
-declare -r XTELESKOP="./bin/all/xteleskop"
+declare -r SPACEPORN="./bin/all/spaceporn"
 
-declare -a -r ROADMAPS=($(seq 2 $(${XTELESKOP} -M))
+declare -a -r ROADMAPS=($(seq 2 $(${SPACEPORN} -M))
 
-declare -r VERTEXFILE_MIN=$(${XTELESKOP} -T | tr ' ' '\n' | head -n 1)
-declare -r VERTEXFILE_MAX=$(${XTELESKOP} -T | tr ' ' '\n' | tail -n 1)
-declare -r FRAGMENTFILE_MIN=$(${XTELESKOP} -F | tr ' ' '\n' | head -n 1)
-declare -r FRAGMENTFILE_MAX=$(${XTELESKOP} -F | tr ' ' '\n' | tail -n 1)
+declare -r VERTEXFILE_MIN=$(${SPACEPORN} -T | tr ' ' '\n' | head -n 1)
+declare -r VERTEXFILE_MAX=$(${SPACEPORN} -T | tr ' ' '\n' | tail -n 1)
+declare -r FRAGMENTFILE_MIN=$(${SPACEPORN} -F | tr ' ' '\n' | head -n 1)
+declare -r FRAGMENTFILE_MAX=$(${SPACEPORN} -F | tr ' ' '\n' | tail -n 1)
 
 VALGRIND_OUTPUT=$(valgrind --leak-check=summary --show-leak-kinds=all \
-  --suppressions=amd.supp ${XTELESKOP} -R 1 -s 1 2>&1 > /dev/null \
+  --suppressions=amd.supp ${SPACEPORN} -R 1 -s 1 2>&1 > /dev/null \
   | sed 's/==[[:digit:]]*==/ /g')
 
 [[ $(echo "${VALGRIND_OUTPUT}" | tee >(grep -E -A 4 "LEAK SUMMARY") \
@@ -51,7 +51,7 @@ for ROADMAP in ${ROADMAPS[@]}; do
 
   if [[ "x${FLAGS}" == "x" ]]; then
     VALGRIND_OUTPUT=$(valgrind --leak-check=summary --show-leak-kinds=all \
-      --suppressions=amd.supp ${XTELESKOP} -a -m -p -x 500 -f 30 \
+      --suppressions=amd.supp ${SPACEPORN} -a -m -p -x 500 -f 30 \
       -R ${ROADMAP} 2>&1 > /dev/null | sed 's/==[[:digit:]]*==/ /g')
 
     [[ $(echo "${VALGRIND_OUTPUT}" | tee >(grep -E -A 4 "LEAK SUMMARY") \
@@ -73,7 +73,7 @@ for ROADMAP in ${ROADMAPS[@]}; do
   else
     for FILE in ${FLAGS}; do
       VALGRIND_OUTPUT=$(valgrind --leak-check=summary --show-leak-kinds=all \
-        --suppressions=amd.supp ${XTELESKOP} -a -m -p -x 500 -f 30 \
+        --suppressions=amd.supp ${SPACEPORN} -a -m -p -x 500 -f 30 \
         -R ${ROADMAP} $(echo ${FILE} | sed 's:^\([^/]\+/\)\{2\}::g') 2>&1 \
         > /dev/null | sed 's/==[[:digit:]]*==/ /g')
 

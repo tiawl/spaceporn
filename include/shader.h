@@ -1,5 +1,5 @@
-#ifndef XTELESKOP_SHADER_H
-#define XTELESKOP_SHADER_H
+#ifndef SPACEPORN_SHADER_H
+#define SPACEPORN_SHADER_H
 
 #include "parser.h"
 #include "context.h"

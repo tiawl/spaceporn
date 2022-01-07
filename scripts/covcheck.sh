@@ -5,24 +5,24 @@ declare -r VERTEXES=$(find shaders/vertex -type f)
 
 make coverage > /dev/null 2>&1
 
-declare -r XTELESKOP="./bin/cov/xteleskop"
+declare -r SPACEPORN="./bin/cov/spaceporn"
 
-declare -a -r ROADMAPS=($(seq 2 $(${XTELESKOP} -M))
+declare -a -r ROADMAPS=($(seq 2 $(${SPACEPORN} -M))
 
-${XTELESKOP} -h > /dev/null 2>&1
-${XTELESKOP} -x -1 > /dev/null 2>&1
-${XTELESKOP} -f 0 > /dev/null 2>&1
-${XTELESKOP} -z 0 > /dev/null 2>&1
-${XTELESKOP} -s 0 > /dev/null 2>&1
-${XTELESKOP} -s 1 -R 1 > /dev/null 2>&1
-${XTELESKOP} -V -R -1 > /dev/null 2>&1
-${XTELESKOP} -R 54 > /dev/null 2>&1
-${XTELESKOP} -R 54 fakefile > /dev/null 2>&1
+${SPACEPORN} -h > /dev/null 2>&1
+${SPACEPORN} -x -1 > /dev/null 2>&1
+${SPACEPORN} -f 0 > /dev/null 2>&1
+${SPACEPORN} -z 0 > /dev/null 2>&1
+${SPACEPORN} -s 0 > /dev/null 2>&1
+${SPACEPORN} -s 1 -R 1 > /dev/null 2>&1
+${SPACEPORN} -V -R -1 > /dev/null 2>&1
+${SPACEPORN} -R 54 > /dev/null 2>&1
+${SPACEPORN} -R 54 fakefile > /dev/null 2>&1
 
-declare -r VERTEXFILE_MIN=$(${XTELESKOP} -T | tr ' ' '\n' | head -n 1)
-declare -r VERTEXFILE_MAX=$(${XTELESKOP} -T | tr ' ' '\n' | tail -n 1)
-declare -r FRAGMENTFILE_MIN=$(${XTELESKOP} -F | tr ' ' '\n' | head -n 1)
-declare -r FRAGMENTFILE_MAX=$(${XTELESKOP} -F | tr ' ' '\n' | tail -n 1)
+declare -r VERTEXFILE_MIN=$(${SPACEPORN} -T | tr ' ' '\n' | head -n 1)
+declare -r VERTEXFILE_MAX=$(${SPACEPORN} -T | tr ' ' '\n' | tail -n 1)
+declare -r FRAGMENTFILE_MIN=$(${SPACEPORN} -F | tr ' ' '\n' | head -n 1)
+declare -r FRAGMENTFILE_MAX=$(${SPACEPORN} -F | tr ' ' '\n' | tail -n 1)
 
 echo
 
@@ -40,13 +40,13 @@ for ROADMAP in ${ROADMAPS[@]}; do
   if [[ "x${FLAGS}" == "x" ]]; then
     printf %80s | tr ' ' '='
     echo -e "\n\nCovering roadmap ${ROADMAP} ..."
-    ${XTELESKOP} -a -m -p -x 300 -f 30 -z 25 -R ${ROADMAP} &> /dev/null
+    ${SPACEPORN} -a -m -p -x 300 -f 30 -z 25 -R ${ROADMAP} &> /dev/null
     echo "Roadmap ${ROADMAP} covered" && echo
   else
     for FILE in ${FLAGS}; do
       printf %80s | tr ' ' '='
       echo -e "\n\nCovering roadmap ${ROADMAP} - ${FILE} ..."
-      ${XTELESKOP} -a -m -p -x 300 -f 30 -z 25 -R ${ROADMAP} $(echo ${FILE} \
+      ${SPACEPORN} -a -m -p -x 300 -f 30 -z 25 -R ${ROADMAP} $(echo ${FILE} \
         | sed 's:^\([^/]\+/\)\{2\}::g') &> /dev/null
       echo "Roadmap ${ROADMAP} - ${FILE} covered" && echo
     done

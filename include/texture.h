@@ -1,5 +1,5 @@
-#ifndef XTELESKOP_PNG_H
-#define XTELESKOP_PNG_H
+#ifndef SPACEPORN_PNG_H
+#define SPACEPORN_PNG_H
 
 #include <png.h>
 

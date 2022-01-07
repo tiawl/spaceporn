@@ -1,4 +1,4 @@
-#include "xteleskop.h"
+#include "spaceporn.h"
 
 int main(int argc, char** argv)
 {

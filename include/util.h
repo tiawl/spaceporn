@@ -1,5 +1,5 @@
-#ifndef XTELESKOP_UTIL_H
-#define XTELESKOP_UTIL_H
+#ifndef SPACEPORN_UTIL_H
+#define SPACEPORN_UTIL_H
 
 #include <stdbool.h>
 #include <stdio.h>

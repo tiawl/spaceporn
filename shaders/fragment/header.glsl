@@ -41,7 +41,6 @@ struct Planet
   float ring_a;
 };
 
-# define TEXTURE_SIZE vec2(256., 32.)
 # define NB_COLS 7.
 # define PLANET_COLS 12.
 

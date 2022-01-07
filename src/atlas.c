@@ -366,6 +366,24 @@ bool generateAtlas(Atlas* atlas, PNG* png, bool verbose, Roadmap* roadmap)
 
   do
   {
+     if (roadmap->id == BAD_ATLASPNG_DIMENSIONS_RM)
+    {
+      atlas->width = 15;
+    }
+
+    LOG(verbose, printf("  Testing textures atlas dimensions ...\n"));
+    if ((atlas->width & (atlas->width - 1)) || (atlas->width < 8) ||
+      (atlas->height & (atlas->height - 1)) || (atlas->height < 8))
+    {
+      LOG(verbose, printf("  "));
+      fprintf((verbose ? stdout : stderr), "Textures with dimensions that \
+are not power of two or smaller than 8 failed to load in OpenGL\n");
+
+      status = false;
+      break;
+    }
+    LOG(verbose, printf("  Valid textures atlas dimensions\n"));
+
     LOG(verbose, printf("  Generating PCG texture ...\n"));
     if (!generatePcgTexture(atlas, verbose, roadmap))
     {

@@ -68,13 +68,13 @@ bool generatePcgTexture(Atlas* atlas, bool verbose, Roadmap* roadmap)
         u.w = 0;
         pcg4d(&u);
         atlas->texels[atlas->height - 1 - y][x] =
-          (GLubyte) ceil((((double) u.x) / (double) UINT_MAX) * 256.);
+          (GLubyte) round((((double) u.x) / (double) UINT_MAX) * 255.);
         atlas->texels[atlas->height - 1 - y][x + 1] =
-          (GLubyte) ceil((((double) u.y) / (double) UINT_MAX) * 256.);
+          (GLubyte) round((((double) u.y) / (double) UINT_MAX) * 255.);
         atlas->texels[atlas->height - 1 - y][x + 2] =
-          (GLubyte) ceil((((double) u.z) / (double) UINT_MAX) * 256.);
+          (GLubyte) round((((double) u.z) / (double) UINT_MAX) * 255.);
         atlas->texels[atlas->height - 1 - y][x + 3] =
-          (GLubyte) ceil((((double) u.w) / (double) UINT_MAX) * 256.);
+          (GLubyte) round((((double) u.w) / (double) UINT_MAX) * 255.);
         LOG(verbose, printf("    Computing PCG texture ... %d/%d\n",
           (x / 4) + 1 + (y * atlas->width), atlas->width * atlas->height));
       }

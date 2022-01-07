@@ -74,7 +74,9 @@ AC_CHECK_DECLS([NULL, EXIT_FAILURE, EXIT_SUCCESS, SEEK_END, SEEK_SET, errno,
 #include <regex.h>
 #include <unistd.h>]])
 AC_CHECK_DECLS([PNG_LIBPNG_VER_STRING, PNG_INFO_tRNS, PNG_COLOR_MASK_ALPHA, \
-  png_jmpbuf], [], AC_MSG_ERROR([libPNG is installed but some of its \
+  png_jmpbuf, PNG_COLOR_TYPE_RGB_ALPHA, PNG_INTERLACE_NONE, \
+  PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT], [],
+  AC_MSG_ERROR([libPNG is installed but some of its \
 declarations are missing.]), [[#include <png.h>]])
 AC_CHECK_DECLS([GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_TEXTURE_WRAP_T,
   GL_TEXTURE_MAG_FILTER, GL_NEAREST, GL_TEXTURE_MIN_FILTER, GL_NO_ERROR,
@@ -114,8 +116,10 @@ AC_MSG_ERROR([GLibC library is installed but some of its functions are \
 missing.]))
 AC_CHECK_FUNCS([png_destroy_read_struct png_create_read_struct \
 png_create_info_struct png_init_io png_read_info png_get_IHDR \
-png_read_update_info png_get_rowbytes png_read_image], [],
-  AC_MSG_ERROR([libPNG is installed but some of its functions are missing.]))
+png_read_update_info png_get_rowbytes png_read_image png_destroy_write_struct \
+png_create_write_struct png_write_info png_write_image png_write_end \
+png_read_end png_set_IHDR], [], AC_MSG_ERROR([libPNG is installed but some of \
+  its functions are missing.]))
 AC_CHECK_FUNCS([glEnable glBlendFunc glDeleteProgram glUseProgram glViewport \
 glDisableVertexAttribArray glDeleteBuffers glDeleteVertexArrays \
 glDeleteTextures glGetError glUniform1fv glUniform3i glCreateShader \
@@ -125,7 +129,7 @@ glDetachShader glGetUniformLocation glGenVertexArrays glBindVertexArray \
 glGenBuffers glBindBuffer glBufferData glEnableVertexAttribArray \
 glVertexAttribPointer glClearColor glClear glDrawArrays glGenTextures \
 glBindTexture glTexImage2D glTexParameteri glGetProgramInfoLog \
-glActiveTexture glTexImage3D glUniform1i], [],
+glActiveTexture glTexImage3D glUniform1i glTexSubImage3D], [],
 AC_MSG_ERROR([GL library is installed but some of its functions are missing.]))
 AC_CHECK_FUNC(glewInit, [], AC_MSG_ERROR([GLEW library is installed but some \
 of its functions are missing.]))

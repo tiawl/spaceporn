@@ -1,11 +1,11 @@
 #ifndef XTELESKOP_ATLAS_H
 #define XTELESKOP_ATLAS_H
 
-#include <math.h>
 #include <limits.h>
+#include <math.h>
+#include <png.h>
 
-#include "shader.h"
-#include "uniform.h"
+#include "texture.h"
 
 typedef struct
 {
@@ -17,18 +17,19 @@ typedef struct
 
 typedef struct
 {
-  GLubyte* texels;
+  png_byte** texels;
   int width;
   int height;
   int depth;
-  GLuint texture;
-  GLenum texture_unit;
 } Atlas;
 
+bool writePng(Atlas* atlas, PNG* png, bool verbose, Roadmap* roadmap);
 void pcg4d(uvec4* vector);
 bool generatePcgTexture(Atlas* atlas, bool verbose, Roadmap* roadmap);
-bool generateAtlas(Atlas* atlas, bool verbose, Roadmap* roadmap);
-bool loadAtlas(Atlas* atlas, Shaders* shaders, bool verbose, Roadmap* roadmap);
+bool generateAtlas(Atlas* atlas, PNG* png, bool verbose, Roadmap* roadmap);
+bool readAtlas(Atlas* atlas, PNG* png, bool verbose, Roadmap* roadmap);
+bool loadAtlas(Atlas* atlas, PNG* png, Shaders* shaders, bool verbose,
+  Roadmap* roadmap);
 void freeAtlas(Atlas* atlas, bool verbose);
 
 #endif

@@ -42,13 +42,21 @@ int main(int argc, char** argv)
   png.texture = 0;
   png.texture_unit = 0;
 
+  PNG png_atlas;
+  png_atlas.file = NULL;
+  png_atlas.data = NULL;
+  png_atlas.ptr = 0;
+  png_atlas.info = 0;
+  png_atlas.row_pointers = NULL;
+  png_atlas.path = NULL;
+  png_atlas.texture = 0;
+  png_atlas.texture_unit = 1;
+
   Atlas atlas;
   atlas.texels = NULL;
   atlas.width = 0;
   atlas.height = 0;
   atlas.depth = 1;
-  atlas.texture = 0;
-  atlas.texture_unit = 1;
 
   Context context;
   context.display = NULL;
@@ -90,7 +98,7 @@ int main(int argc, char** argv)
 
     LOG(verbose, printf("Initializing fragment shader, vertex shader and \
 texture paths ...\n"));
-    if (!initPaths(&shaders, &png, verbose, &roadmap))
+    if (!initPaths(&shaders, &png, &png_atlas, verbose, &roadmap))
     {
       fprintf((verbose ? stdout : stderr), "Failed to initialize fragment \
 shader, vertex shader or texture paths\n");
@@ -167,7 +175,7 @@ are initialized\n"));
     LOG(verbose, printf("PNG texture loaded\n"));
 
     LOG(verbose, printf("Generating textures atlas ...\n"));
-    if (!generateAtlas(&atlas, verbose, &roadmap))
+    if (!generateAtlas(&atlas, &png_atlas, verbose, &roadmap))
     {
       fprintf((verbose ? stdout : stderr),
         "Failed to generate textures atlas\n");
@@ -177,7 +185,7 @@ are initialized\n"));
     LOG(verbose, printf("Textures atlas generated\n"));
 
     LOG(verbose, printf("Loading textures atlas ...\n"));
-    if (!loadAtlas(&atlas, &shaders, verbose, &roadmap))
+    if (!loadAtlas(&atlas, &png_atlas, &shaders, verbose, &roadmap))
     {
       fprintf((verbose ? stdout : stderr), "Failed to load textures atlas\n");
       status = false;
@@ -271,9 +279,10 @@ initialized\n"));
     }
   } while (false);
 
-  freePaths(&shaders, &png, verbose);
+  freePaths(&shaders, &png, &png_atlas, verbose);
   freeVertices(&vertices, verbose);
   freePng(&png, verbose);
+  freePng(&png_atlas, verbose);
   freeAtlas(&atlas, verbose);
   freeProgram(&shaders, verbose, &roadmap);
   freeContext(&context, verbose);

@@ -47,7 +47,7 @@ void main()
 //       nebulae(px, dith)) * 0.8 * (sin(time * 2500.) * 0.015 + 1.)));
 //   }
 
-  col = vec4(texture(atlas, vec3(gl_FragCoord.xy / resolution, 0.)).xyz, 1.);
+  col = vec4(texture(atlas, vec3(2. * gl_FragCoord.xy / resolution, 0.)).xyz, 1.);
 
   fragColor = col;
 }

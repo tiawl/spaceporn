@@ -192,11 +192,6 @@ the correct offsets of data ... %d/%d\n", h, h));
     GLenum texture_format =
       (color_type & PNG_COLOR_MASK_ALPHA) ? GL_RGBA : GL_RGB;
 
-    for(png_uint_32 i = 0; i < h; ++i)
-    {
-      printf("data %d = %u\n", i, png->data[i]);
-    }
-
     LOG(verbose, printf("  Specifying 2D OpenGL texture ...\n"));
     GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, texture_format, w, h,
       0, texture_format, GL_UNSIGNED_BYTE, png->data), status);

@@ -1,14 +1,7 @@
 - memchecks
 - covchecks
--------------------------------------------------------------
+- check configure.ac has deps
+- check loadAtlas() and generateAtlas() with several depth
 - Precompute flag
 - Precompute and stop flag
--------------------------------------------------------------
 - Redirect verbose to ~/.local/log/xteleskop to generate logs
--------------------------------------------------------------
-https://www.khronos.org/opengl/wiki/Array_Texture
-https://opengl.developpez.com/tutoriels/apprendre-opengl/?page=textures#L8-2-1
-https://opengl.developpez.com/tutoriels/open_gl/textures/
-https://opengl.developpez.com/tutoriels/open_gl/textures/fichiers/c3_multitexture.txt
-http://gaarlicbread.com/post/gl_2d_array
-https://computergraphics.stackexchange.com/questions/7773/how-do-you-load-multiple-textures-into-an-array-texture-with-opengl

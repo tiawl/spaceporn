@@ -1,7 +1,7 @@
 - memchecks
 - covchecks
 - check configure.ac has deps
-- check loadAtlas() and generateAtlas() with several depth
-- Precompute flag
-- Precompute and stop flag
+- make roadmap for precompute-and-stop flag
 - Redirect verbose to ~/.local/log/xteleskop to generate logs
+- if find texture/atlas.png: precompted = true && use atlas in shaders
+  else: precomputed = false && use hash function in shaders

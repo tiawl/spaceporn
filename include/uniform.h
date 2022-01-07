@@ -14,6 +14,7 @@ typedef struct
   GLboolean animations;
   GLboolean motion;
   GLboolean palettes;
+  GLboolean precomputed;
   GLfloat zoom;
   GLfloat seed;
 } UniformValues;
@@ -26,7 +27,7 @@ typedef struct
 
 #define UNIFORM_COUNT 2
 #define UNIFORM_FLOATS 6
-#define UNIFORM_BOOLEANS 3
+#define UNIFORM_BOOLEANS 4
 
 /* custom functions used to set uniform values */
 bool updateFloatUniforms(GLint uniformId, UniformValues* values,

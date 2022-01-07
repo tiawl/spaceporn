@@ -4,48 +4,52 @@ void help()
 {
   fprintf(stderr, "\n%s v%s\n", NAME, VERSION);
   fprintf(stderr,
-    "\nUsage: %s [%s] [%s FPS] [%s] [%s MINS] [%s] [%s PIXELS] [%s ZOOM]\n\
+    "\nUsage: %s [%s] [%s FPS] [%s STOP] [%s] [%s MINS] [%s] [%s PIXELS] [%s ZOOM]\n\
   [%s] [%s ROADMAP] [%s] [%s] [%s]\n\n", NAME, ANIMATION_FLAG, FPS_FLAG,
-  CAMERAMOTION_FLAG, SLIDE_FLAG, PALETTES_FLAG, PIXEL_FLAG, ZOOM_FLAG,
-  VERBOSE_FLAG, ROADMAP_FLAG, MAXROADMAP_FLAG, VERTEXFILEROADMAPS_FLAG,
-  FRAGMENTFILEROADMAPS_FLAG);
+  PRECOMPUTE_FLAG, CAMERAMOTION_FLAG, SLIDE_FLAG, PALETTES_FLAG, PIXEL_FLAG,
+  ZOOM_FLAG, VERBOSE_FLAG, ROADMAP_FLAG, MAXROADMAP_FLAG,
+  VERTEXFILEROADMAPS_FLAG, FRAGMENTFILEROADMAPS_FLAG);
   fprintf(stderr, "User options:\n\n\
-    %s  Enable shader animations.\n\n\
-    %s  Frames per second between %d to %d.\n\
-        [default: %d]\n\n\
-    %s  Enable camera motion.\n\n\
-    %s  Enable usage of unique palette for each object.\n\n\
-    %s  Enable slide mode: disable %s flag, disable %s flag, disable %s\n\
-        flag and generate a new background every MINS minutes. Reduce\n\
-        CPU and GPU usages.\n\n\
-    %s  Pixelization value between %d to %d.\n\
-        [default: %d]\n\n\
-    %s  Zoom value between %d to %d.\n\
-        [default: %d]\n\n", ANIMATION_FLAG, FPS_FLAG, MIN_FPS, MAX_FPS,
-        DEFAULT_FPS, CAMERAMOTION_FLAG, PALETTES_FLAG, SLIDE_FLAG,
-        ANIMATION_FLAG, FPS_FLAG, CAMERAMOTION_FLAG, PIXEL_FLAG, MIN_PIXELS,
-        MAX_PIXELS, DEFAULT_PIXELS, ZOOM_FLAG, MIN_ZOOM, MAX_ZOOM,
-        DEFAULT_ZOOM);
+  %s  Enable shader animations.\n\n\
+  %s  Frames per second between %d to %d.\n\
+      [default: %d]\n\n\
+  %s  Generate textures to reduce GPU usage. STOP can be 0 or 1.\n\
+      If STOP is 1, it stops execution after textures generation.\n\n\
+  %s  Enable camera motion.\n\n\
+  %s  Enable usage of unique palette for each object.\n\n\
+  %s  Enable slide mode: disable any animation to reduce drastically\n\
+      CPU and GPU usages and generate a new static wallpaper every MINS\n\
+      minutes. Slide mode disables %s, %s, %s and %s flags.\n\n\
+  %s  Pixelization value between %d to %d.\n\
+      [default: %d]\n\n\
+  %s  Zoom value between %d to %d.\n\
+      [default: %d]\n\n", ANIMATION_FLAG, FPS_FLAG, MIN_FPS, MAX_FPS,
+      DEFAULT_FPS, PRECOMPUTE_FLAG, CAMERAMOTION_FLAG, PALETTES_FLAG,
+      SLIDE_FLAG, ANIMATION_FLAG, FPS_FLAG, PRECOMPUTE_FLAG,
+      CAMERAMOTION_FLAG, PIXEL_FLAG, MIN_PIXELS, MAX_PIXELS, DEFAULT_PIXELS,
+      ZOOM_FLAG, MIN_ZOOM, MAX_ZOOM, DEFAULT_ZOOM);
   fprintf(stderr, "Debug options:\n\n\
-    %s  Verbose mode.\n\n\
-    %s  Run the corresponding predefined execution roadmap.\n\
-        [default: 0]\n\n\
-    %s  Print last roadmap.\n\n\
-    %s  Print first and last roadmaps which need a vertex shader\n\
-        file as argument.\n\n\
-    %s  Print first and last roadmaps which need a fragment shader\n\
-        file as argument.\n\n", VERBOSE_FLAG, ROADMAP_FLAG, MAXROADMAP_FLAG,
-        VERTEXFILEROADMAPS_FLAG, FRAGMENTFILEROADMAPS_FLAG);
+  %s  Verbose mode.\n\n\
+  %s  Run the corresponding execution roadmap.\n\
+      [default: 0]\n\n\
+  %s  Print last roadmap.\n\n\
+  %s  Print first and last roadmaps which need a vertex shader\n\
+      file as argument.\n\n\
+  %s  Print first and last roadmaps which need a fragment shader\n\
+      file as argument.\n\n", VERBOSE_FLAG, ROADMAP_FLAG, MAXROADMAP_FLAG,
+      VERTEXFILEROADMAPS_FLAG, FRAGMENTFILEROADMAPS_FLAG);
 }
 
-bool parsing_options(bool* verbose, int* fps, UniformValues* uniform_values,
-  Roadmap* roadmap, int* argc, char** argv)
+bool parsing_options(bool* verbose, long* fps, long* generation,
+  UniformValues* uniform_values, Roadmap* roadmap, int* argc, char** argv)
 {
   int status = true;
   char* dir = NULL;
 
   do
   {
+    errno = 0;
+    char* end;
     roadmap->glsl_file = "";
     for (int i = 1; i < *argc; i++)
     {
@@ -53,7 +57,23 @@ bool parsing_options(bool* verbose, int* fps, UniformValues* uniform_values,
       {
         if (++i < *argc)
         {
-          uniform_values->pixels = atof(argv[i]);
+          uniform_values->pixels = strtol(argv[i], &end, 10);
+          if (argv[i] == end)
+          {
+            fprintf(stderr,
+              "Unrecognized character in %s option parameter.\n",
+              PIXEL_FLAG);
+            status = false;
+            break;
+          }
+          if (errno == ERANGE)
+          {
+            fprintf(stderr,
+              "Range error occurred during %s option parsing.\n",
+              PIXEL_FLAG);
+            status = false;
+            break;
+          }
           if ((uniform_values->pixels > MAX_PIXELS) ||
             (uniform_values->pixels < MIN_PIXELS))
           {
@@ -66,8 +86,52 @@ bool parsing_options(bool* verbose, int* fps, UniformValues* uniform_values,
         (uniform_values->slide == 0)) {
           if (++i < *argc)
           {
-            *fps = atoi(argv[i]);
+            *fps = strtol(argv[i], &end, 10);
+            if (argv[i] == end)
+            {
+              fprintf(stderr,
+                "Unrecognized character in %s option parameter.\n",
+                FPS_FLAG);
+              status = false;
+              break;
+            }
+            if (errno == ERANGE)
+            {
+              fprintf(stderr,
+                "Range error occurred during %s option parsing.\n",
+                FPS_FLAG);
+              status = false;
+              break;
+            }
             if ((*fps < MIN_FPS) || (*fps > MAX_FPS))
+            {
+              help();
+              status = false;
+              break;
+            }
+          }
+      } else if ((strcmp(argv[i], PRECOMPUTE_FLAG) == 0) &&
+        (uniform_values->slide == 0)) {
+          if (++i < *argc)
+          {
+            *generation = strtol(argv[i], &end, 10);
+            if (argv[i] == end)
+            {
+              fprintf(stderr,
+                "Unrecognized character in %s option parameter.\n",
+                PRECOMPUTE_FLAG);
+              status = false;
+              break;
+            }
+            if (errno == ERANGE)
+            {
+              fprintf(stderr,
+                "Range error occurred during %s option parsing.\n",
+                PRECOMPUTE_FLAG);
+              status = false;
+              break;
+            }
+            if ((*generation != 0) && (*generation != 1))
             {
               help();
               status = false;
@@ -77,7 +141,23 @@ bool parsing_options(bool* verbose, int* fps, UniformValues* uniform_values,
       } else if (strcmp(argv[i], ZOOM_FLAG) == 0) {
         if (++i < *argc)
         {
-          uniform_values->zoom = atoi(argv[i]);
+          uniform_values->zoom = strtol(argv[i], &end, 10);
+          if (argv[i] == end)
+          {
+            fprintf(stderr,
+              "Unrecognized character in %s option parameter.\n",
+              ZOOM_FLAG);
+            status = false;
+            break;
+          }
+          if (errno == ERANGE)
+          {
+            fprintf(stderr,
+              "Range error occurred during %s option parsing.\n",
+              ZOOM_FLAG);
+            status = false;
+            break;
+          }
           if ((uniform_values->zoom < MIN_ZOOM) ||
             (uniform_values->zoom > MAX_ZOOM))
           {
@@ -89,7 +169,23 @@ bool parsing_options(bool* verbose, int* fps, UniformValues* uniform_values,
       } else if (strcmp(argv[i], SLIDE_FLAG) == 0) {
         if (++i < *argc)
         {
-          uniform_values->slide = atoi(argv[i]);
+          uniform_values->slide = strtol(argv[i], &end, 10);
+          if (argv[i] == end)
+          {
+            fprintf(stderr,
+              "Unrecognized character in %s option parameter.\n",
+              SLIDE_FLAG);
+            status = false;
+            break;
+          }
+          if (errno == ERANGE)
+          {
+            fprintf(stderr,
+              "Range error occurred during %s option parsing.\n",
+              SLIDE_FLAG);
+            status = false;
+            break;
+          }
           if (uniform_values->slide <= 0)
           {
             help();
@@ -99,6 +195,7 @@ bool parsing_options(bool* verbose, int* fps, UniformValues* uniform_values,
           uniform_values->animations = false;
           uniform_values->motion = false;
           *fps = 0;
+          *generation = -1;
         }
       } else if ((strcmp(argv[i], ANIMATION_FLAG) == 0) &&
         (uniform_values->slide == 0)) {
@@ -113,7 +210,23 @@ bool parsing_options(bool* verbose, int* fps, UniformValues* uniform_values,
       } else if (strcmp(argv[i], ROADMAP_FLAG) == 0) {
         if (++i < *argc)
         {
-          roadmap->id = atoi(argv[i]);
+          roadmap->id = strtol(argv[i], &end, 10);
+          if (argv[i] == end)
+          {
+            fprintf(stderr,
+              "Unrecognized character in %s option parameter.\n",
+              ROADMAP_FLAG);
+            status = false;
+            break;
+          }
+          if (errno == ERANGE)
+          {
+            fprintf(stderr,
+              "Range error occurred during %s option parsing.\n",
+              ROADMAP_FLAG);
+            status = false;
+            break;
+          }
           if ((roadmap->id < EXIT_SUCCESS_RM) || (roadmap->id >= RM_NB))
           {
             help();

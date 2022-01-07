@@ -122,7 +122,7 @@ png_read_end png_set_IHDR], [], AC_MSG_ERROR([libPNG is installed but some of \
   its functions are missing.]))
 AC_CHECK_FUNCS([glEnable glBlendFunc glDeleteProgram glUseProgram glViewport \
 glDisableVertexAttribArray glDeleteBuffers glDeleteVertexArrays \
-glDeleteTextures glGetError glUniform1fv glUniform3i glCreateShader \
+glDeleteTextures glGetError glUniform1fv glUniform1iv glCreateShader \
 glShaderSource glCompileShader glGetShaderiv glGetShaderInfoLog \
 glDeleteShader glAttachShader glLinkProgram glGetProgramiv glValidateProgram \
 glDetachShader glGetUniformLocation glGenVertexArrays glBindVertexArray \

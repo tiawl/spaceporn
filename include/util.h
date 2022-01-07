@@ -167,6 +167,7 @@ typedef struct
 bool checkOpenGLError(const char* stmt, const char* fname, int line);
 
 double timediff(struct timeval* start, struct timeval* end);
+int nextpow2(int n);
 
 #define GL_CHECK(stmt, status) { \
   stmt; \

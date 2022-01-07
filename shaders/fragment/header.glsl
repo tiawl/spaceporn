@@ -7,7 +7,7 @@
 // - palette gen
 
 uniform float fflags[6];
-uniform bvec3 bflags;
+uniform int bflags[4];
 uniform sampler2D bigstars_texture;
 uniform sampler2DArray atlas;
 
@@ -23,9 +23,10 @@ float time = fflags[3] / 50.;
 float pixels = fflags[4];
 float zoom = fflags[5];
 
-bool animation = bflags.x;
-bool motion = bflags.y;
-bool palettes = bflags.z;
+bool animation = (bflags[0] > 0 ? true : false);
+bool motion = (bflags[1] > 0 ? true : false);
+bool palettes = (bflags[2] > 0 ? true : false);
+bool precomputed = (bflags[3] > 0 ? true : false);
 
 struct Planet
 {

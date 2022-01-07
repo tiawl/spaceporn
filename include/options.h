@@ -19,6 +19,7 @@
 
 #define ANIMATION_FLAG "-a"
 #define FPS_FLAG "-f"
+#define PRECOMPUTE_FLAG "-g"
 #define CAMERAMOTION_FLAG "-m"
 #define PALETTES_FLAG "-p"
 #define SLIDE_FLAG "-s"
@@ -38,7 +39,7 @@
 #define MAX_ZOOM 50
 
 void help();
-bool parsing_options(bool* verbose, int* fps, UniformValues* uniform_values,
-  Roadmap* roadmap, int* argc, char** argv);
+bool parsing_options(bool* verbose, long* fps, long* generation,
+  UniformValues* uniform_values, Roadmap* roadmap, int* argc, char** argv);
 
 #endif

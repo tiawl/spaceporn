@@ -13,10 +13,13 @@ typedef struct
   int width;
   int height;
   int depth;
+  int pcg_depth;
+  unsigned seed[2];
 } Atlas;
 
 bool writePng(Atlas* atlas, PNG* png, bool verbose, Roadmap* roadmap);
-bool generatePcgTexture(Atlas* atlas, bool verbose, Roadmap* roadmap);
+void generatePcgTexture(Atlas* atlas, int offset, bool verbose,
+  Roadmap* roadmap);
 bool generateAtlas(Atlas* atlas, PNG* png, bool verbose, Roadmap* roadmap);
 bool readAtlas(Atlas* atlas, PNG* png, bool verbose, Roadmap* roadmap);
 bool loadAtlas(Atlas* atlas, PNG* png, Shaders* shaders, bool verbose,

@@ -17,3 +17,21 @@ double timediff(struct timeval* start, struct timeval* end)
   return (end->tv_sec + end->tv_usec / 1000000.0)
     - (start->tv_sec + start->tv_usec / 1000000.0);
 }
+
+int nextpow2(int n)
+{
+  unsigned count = 0;
+
+  if (n && !(n & (n - 1)))
+  {
+    return n;
+  }
+
+  while (n != 0)
+  {
+    n >>= 1;
+    count += 1;
+  }
+
+  return 1 << count;
+}

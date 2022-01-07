@@ -5,7 +5,8 @@ int main(int argc, char** argv)
   srand(time(NULL));
 
   bool status = true;
-  int fps = DEFAULT_FPS;
+  long fps = DEFAULT_FPS;
+  long generation = -1;
 
   bool verbose = false;
 
@@ -22,6 +23,7 @@ int main(int argc, char** argv)
   uniform_values.motion = DEFAULT_MOTION;
   uniform_values.palettes = DEFAULT_PALETTES;
   uniform_values.seed = -1.;
+  uniform_values.precomputed = false;
 
   Shaders shaders;
   shaders.vertex_file = NULL;
@@ -54,9 +56,12 @@ int main(int argc, char** argv)
 
   Atlas atlas;
   atlas.texels = NULL;
-  atlas.width = 0;
-  atlas.height = 0;
-  atlas.depth = 1;
+  atlas.width = 16;//nextpow2(MAX_PIXELS * 5);
+  atlas.height = 8;//nextpow2(MAX_PIXELS * 5);
+  atlas.depth = 4;
+  atlas.pcg_depth = 4;
+  atlas.seed[0] = rand();
+  atlas.seed[1] = rand();
 
   Context context;
   context.display = NULL;
@@ -76,8 +81,8 @@ int main(int argc, char** argv)
 
   do
   {
-    if (!parsing_options(&verbose, &fps, &uniform_values, &roadmap,
-      &argc, argv))
+    if (!parsing_options(&verbose, &fps, &generation, &uniform_values,
+      &roadmap, &argc, argv))
     {
       status = false;
       break;
@@ -120,25 +125,38 @@ are initialized\n"));
     uniform_values.width = context.window_attribs.width;
     uniform_values.height = context.window_attribs.height;
 
-    LOG(verbose, printf("Computing textures atlas dimensions ...\n"));
-    atlas.width = 16;
-    atlas.height = 8;
+    if (generation > -1)
+    {
+      LOG(verbose, printf("Computing textures atlas dimensions ...\n"));
 
-//     if (values.width >= values.height)
-//     {
-//       atlas.width = values.pixels * 5 *
-//         ((int) round(((double) values.width) /
-//           ((double) values.height)));
-//       atlas.height = values.pixels * 5;
-//     } else {
-//       atlas.width = values.pixels * 5;
-//       atlas.height = values.pixels * 5 *
-//         ((int) round(((double) values.height) /
-//           ((double) values.width)));
-//     }
-    LOG(verbose, printf("Textures atlas dimensions are: %dx%d\n", atlas.width,
-      atlas.height));
+//       if (context.window_attribs.width >= context.window_attribs.height)
+//       {
+//         atlas.width = nextpow2(MAX_PIXELS * 5 *
+//         ((int) round(((double) context.window_attribs.width) /
+//           ((double) context.window_attribs.height))));
+//       } else {
+//         atlas.height = nextpow2(MAX_PIXELS * 5 *
+//         ((int) round(((double) context.window_attribs.height) /
+//           ((double) context.window_attribs.width))));
+//       }
+      LOG(verbose, printf("Textures atlas dimensions are: %dx%d\n", atlas.width,
+        atlas.height));
 
+      LOG(verbose, printf("Generating textures atlas ...\n"));
+      if (!generateAtlas(&atlas, &png_atlas, verbose, &roadmap))
+      {
+        fprintf((verbose ? stdout : stderr),
+          "Failed to generate textures atlas\n");
+        status = false;
+        break;
+      }
+      LOG(verbose, printf("Textures atlas generated\n"));
+
+      if (generation == 1)
+      {
+        break;
+      }
+    }
 
     LOG(verbose, printf("Loading OpenGL program ...\n"));
     if (!loadProgram(&context, &shaders, verbose, &roadmap))
@@ -174,24 +192,26 @@ are initialized\n"));
     }
     LOG(verbose, printf("PNG texture loaded\n"));
 
-    LOG(verbose, printf("Generating textures atlas ...\n"));
-    if (!generateAtlas(&atlas, &png_atlas, verbose, &roadmap))
+    if (uniform_values.slide == 0)
     {
-      fprintf((verbose ? stdout : stderr),
-        "Failed to generate textures atlas\n");
-      status = false;
-      break;
-    }
-    LOG(verbose, printf("Textures atlas generated\n"));
+      LOG(verbose, printf("Checking if atlas PNG texture exists ...\n"));
+      if (access(png_atlas.path, F_OK) == 0)
+      {
+        uniform_values.precomputed = true;
+        LOG(verbose, printf("Atlas PNG texture exists\n"));
 
-    LOG(verbose, printf("Loading textures atlas ...\n"));
-    if (!loadAtlas(&atlas, &png_atlas, &shaders, verbose, &roadmap))
-    {
-      fprintf((verbose ? stdout : stderr), "Failed to load textures atlas\n");
-      status = false;
-      break;
+        LOG(verbose, printf("Loading textures atlas ...\n"));
+        if (!loadAtlas(&atlas, &png_atlas, &shaders, verbose, &roadmap))
+        {
+          fprintf((verbose ? stdout : stderr), "Failed to load textures atlas\n");
+          status = false;
+          break;
+        }
+        LOG(verbose, printf("Textures atlas loaded\n"));
+      } else {
+        LOG(verbose, printf("Atlas PNG texture does not exist\n"));
+      }
     }
-    LOG(verbose, printf("Textures atlas loaded\n"));
 
     LOG(verbose, printf("Searching uniforms location ...\n"));
     getUniforms(uniforms, uniformIds, &shaders.program, verbose);

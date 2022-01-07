@@ -6,7 +6,7 @@ bool updateFloatUniforms(GLint uniformId, UniformValues* values, bool verbose)
 
   do
   {
-    if ((values->slide > 0) || (values->seed < 0.))
+    if ((values->slide > 0) || (!values->precomputed && (values-> seed < 0.)))
     {
       LOG(verbose, printf("    Generating random number to seed GPU hash() \
 ...\n"));
@@ -47,14 +47,19 @@ bool updateBoolUniforms(GLint uniformId, UniformValues* values, bool verbose)
 
   do
   {
-    LOG(verbose, printf("    New bflags values: [%s, %s, %s]\n",
+    GLint bflags[UNIFORM_BOOLEANS] =
+    {
+      values->animations, values->motion, values->palettes, values->precomputed
+    };
+
+    LOG(verbose, printf("    New bflags values: [%s, %s, %s, %s]\n",
       values->animations ? "true" : "false", values->motion ? "true" : "false",
-      values->palettes ? "true" : "false"));
+      values->palettes ? "true" : "false",
+      values->precomputed ? "true" : "false" ));
 
     LOG(verbose, printf("    Specifying value of bflags in current program \
 ...\n"));
-    GL_CHECK(glUniform3i(uniformId, values->animations, values->motion,
-      values->palettes), status);
+    GL_CHECK(glUniform1iv(uniformId, UNIFORM_BOOLEANS, bflags), status);
     LOG(verbose, printf("    Value of bflags specified in current program\n"));
   } while (false);
 

@@ -1,88 +1,33 @@
 #include "atlas.h"
 
-bool generatePcgTexture(Atlas* atlas, bool verbose, Roadmap* roadmap)
+void generatePcgTexture(Atlas* atlas, int offset, bool verbose,
+  Roadmap* roadmap)
 {
-  bool status = true;
+  uvec4 u;
 
-  do
+  for (int y = 0; y < atlas->height; y++)
   {
-    uvec4 u;
-
-    LOG(verbose, printf("    Allocating memory for texels ...\n"));
-    if (roadmap->id != ATLASTEXELS_MALLOC_FAILED_RM)
+    for (int x = 0; x < atlas->width * 4; x += 4)
     {
-      atlas->texels =
-        (png_byte**) malloc(sizeof(png_byte*) * (atlas->height));
-    }
-
-    if (!atlas->texels)
-    {
-      LOG(verbose, printf("    "));
-      fprintf((verbose ? stdout : stderr), "Texels malloc() failed\n");
-
-      status = false;
-      break;
-    }
-    LOG(verbose, printf("    Memory allocated successfully\n"));
-
-    LOG(verbose, printf("    Allocating memory for each texels row ...\n"));
-    for (int i = 0; i < atlas->height; i++)
-    {
-      atlas->texels[i] = NULL;
-
-      LOG(verbose, printf("      Allocating memory for texels[%d] \
-...\n", i));
-      if (roadmap->id != ATLASTEXELROW_MALLOC_FAILED_RM)
-      {
-        atlas->texels[i] = (png_byte*) malloc(4 * atlas->width);
-      }
-
-      if (!atlas->texels[i])
-      {
-        LOG(verbose, printf("      "));
-        fprintf((verbose ? stdout : stderr), "texels[%d] malloc() failed\n", i);
-
-        atlas->height = i;
-        status = false;
-        break;
-      }
-      LOG(verbose, printf("      Memory allocated successfully\n"));
-    }
-
-    if (!status)
-    {
-      LOG(verbose, printf("    Failed to allocate memory\n"));
-      break;
-    }
-    LOG(verbose, printf("    Memory allocated successfully\n"));
-
-    LOG(verbose, printf("    Computing PCG texture ... 0/%d\n",
-      atlas->width * atlas->height));
-    for (int y = 0; y < atlas->height; y++)
-    {
-      for (int x = 0; x < atlas->width * 4; x += 4)
-      {
-        u.x = x / 4;
-        u.y = y;
-        u.z = 0;
-        u.w = 0;
-        pcg4d(&u);
-        atlas->texels[atlas->height - 1 - y][x] =
+      u.x = x / 4;
+      u.y = y;
+      u.z = atlas->seed[0] + offset;
+      u.w = atlas->seed[1];
+      pcg4d(&u);
+      atlas->texels[(atlas->pcg_depth - 1 - offset) * atlas->height
+        + atlas->height - 1 - y][x] =
           (GLubyte) round((((double) u.x) / (double) UINT_MAX) * 255.);
-        atlas->texels[atlas->height - 1 - y][x + 1] =
+      atlas->texels[(atlas->pcg_depth - 1 - offset) * atlas->height
+        + atlas->height - 1 - y][x + 1] =
           (GLubyte) round((((double) u.y) / (double) UINT_MAX) * 255.);
-        atlas->texels[atlas->height - 1 - y][x + 2] =
+      atlas->texels[(atlas->pcg_depth - 1 - offset) * atlas->height
+        + atlas->height - 1 - y][x + 2] =
           (GLubyte) round((((double) u.z) / (double) UINT_MAX) * 255.);
-        atlas->texels[atlas->height - 1 - y][x + 3] =
+      atlas->texels[(atlas->pcg_depth - 1 - offset) * atlas->height
+        + atlas->height - 1 - y][x + 3] =
           (GLubyte) round((((double) u.w) / (double) UINT_MAX) * 255.);
-        LOG(verbose, printf("    Computing PCG texture ... %d/%d\n",
-          (x / 4) + 1 + (y * atlas->width), atlas->width * atlas->height));
-      }
     }
-    LOG(verbose, printf("    PCG texture computed successfully\n"));
-  } while (false);
-
-  return status;
+  }
 }
 
 bool readAtlas(Atlas* atlas, PNG* png, bool verbose, Roadmap* roadmap)
@@ -384,16 +329,62 @@ are not power of two or smaller than 8 failed to load in OpenGL\n");
     }
     LOG(verbose, printf("  Valid textures atlas dimensions\n"));
 
-    LOG(verbose, printf("  Generating PCG texture ...\n"));
-    if (!generatePcgTexture(atlas, verbose, roadmap))
+    LOG(verbose, printf("  Allocating memory for texels ...\n"));
+    if (roadmap->id != ATLASTEXELS_MALLOC_FAILED_RM)
+    {
+      atlas->texels =
+        (png_byte**) malloc(sizeof(png_byte*) * atlas->height * atlas->depth);
+    }
+
+    if (!atlas->texels)
     {
       LOG(verbose, printf("  "));
-      fprintf((verbose ? stdout : stderr), "Failed to generate PCG texture\n");
+      fprintf((verbose ? stdout : stderr), "Texels malloc() failed\n");
 
       status = false;
       break;
     }
-    LOG(verbose, printf("  PCG texture generated successfully\n"));
+    LOG(verbose, printf("  Memory allocated successfully\n"));
+
+    LOG(verbose, printf("  Allocating memory for each texels row ...\n"));
+    for (int i = 0; i < atlas->height * atlas->depth; i++)
+    {
+      atlas->texels[i] = NULL;
+
+      LOG(verbose, printf("    Allocating memory for texels[%d] ...\n", i));
+      if (roadmap->id != ATLASTEXELROW_MALLOC_FAILED_RM)
+      {
+        atlas->texels[i] = (png_byte*) malloc(4 * atlas->width);
+      }
+
+      if (!atlas->texels[i])
+      {
+        LOG(verbose, printf("    "));
+        fprintf((verbose ? stdout : stderr), "texels[%d] malloc() failed\n", i);
+
+        atlas->height = i;
+        atlas->depth = 1;
+        status = false;
+        break;
+      }
+      LOG(verbose, printf("    Memory allocated successfully\n"));
+    }
+
+    if (!status)
+    {
+      LOG(verbose, printf("  Failed to allocate memory\n"));
+      break;
+    }
+    LOG(verbose, printf("  Memory allocated successfully\n"));
+
+    LOG(verbose, printf("  Generating PCG textures ...\n"));
+    for (int seed = 0; seed < atlas->pcg_depth; seed++)
+    {
+      LOG(verbose, printf("    Generating PCG texture %d ...\n", seed));
+      generatePcgTexture(atlas, seed, verbose, roadmap);
+      LOG(verbose, printf("    PCG texture %d generated successfully\n", seed));
+    }
+    LOG(verbose, printf("  PCG textures generated successfully\n"));
 
     LOG(verbose, printf("  Writing PNG textures atlas ...\n"));
     if (!writePng(atlas, png, verbose, roadmap))
@@ -411,7 +402,7 @@ atlas\n");
 
   if (atlas->texels != NULL)
   {
-    for (int i = 0; i < atlas->height; i++)
+    for (int i = 0; i < atlas->height * atlas->depth; i++)
     {
       if (atlas->texels[i] != NULL)
       {

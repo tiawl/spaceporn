@@ -10,6 +10,7 @@ bool loadPng(PNG* png, Shaders* shaders, bool verbose, Roadmap* roadmap)
     int bit_depth;
     int color_type;
 
+    LOG(verbose, printf("  Checking PNG filename ...\n"));
     if (!png->path || (roadmap->id == NO_PNG_FILENAME_RM))
     {
       LOG(verbose, printf("  "));
@@ -18,6 +19,7 @@ bool loadPng(PNG* png, Shaders* shaders, bool verbose, Roadmap* roadmap)
       status = false;
       break;
     }
+    LOG(verbose, printf("  PNG filename is not null ...\n"));
 
     LOG(verbose, printf("  Opening PNG file \"%s\" ...\n", png->path));
     if (roadmap->id != FOPEN_PNG_FILE_FAILED_RM)

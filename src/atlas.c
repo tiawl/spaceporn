@@ -1,28 +1,5 @@
 #include "atlas.h"
 
-void pcg4d(uvec4* vector)
-{
-  vector->x = vector->x * 1664525u + 1013904223u;
-  vector->y = vector->y * 1664525u + 1013904223u;
-  vector->z = vector->z * 1664525u + 1013904223u;
-  vector->w = vector->w * 1664525u + 1013904223u;
-
-  vector->x += vector->y * vector->w;
-  vector->y += vector->z * vector->x;
-  vector->z += vector->x * vector->y;
-  vector->w += vector->y * vector->z;
-
-  vector->x ^= vector->x >> 16u;
-  vector->y ^= vector->y >> 16u;
-  vector->z ^= vector->z >> 16u;
-  vector->w ^= vector->w >> 16u;
-
-  vector->x += vector->y * vector->w;
-  vector->y += vector->z * vector->x;
-  vector->z += vector->x * vector->y;
-  vector->w += vector->y * vector->z;
-}
-
 bool generatePcgTexture(Atlas* atlas, bool verbose, Roadmap* roadmap)
 {
   bool status = true;
@@ -48,9 +25,11 @@ bool generatePcgTexture(Atlas* atlas, bool verbose, Roadmap* roadmap)
     }
     LOG(verbose, printf("    Memory allocated successfully\n"));
 
-    LOG(verbose, printf("    Allocating memory for each row of texel ...\n"));
+    LOG(verbose, printf("    Allocating memory for each texels row ...\n"));
     for (int i = 0; i < atlas->height; i++)
     {
+      atlas->texels[i] = NULL;
+
       LOG(verbose, printf("      Allocating memory for texels[%d] \
 ...\n", i));
       if (roadmap->id != ATLASTEXELROW_MALLOC_FAILED_RM)
@@ -63,17 +42,19 @@ bool generatePcgTexture(Atlas* atlas, bool verbose, Roadmap* roadmap)
         LOG(verbose, printf("      "));
         fprintf((verbose ? stdout : stderr), "texels[%d] malloc() failed\n", i);
 
+        atlas->height = i;
         status = false;
         break;
       }
       LOG(verbose, printf("      Memory allocated successfully\n"));
     }
-    LOG(verbose, printf("    Memory allocated successfully\n"));
 
     if (!status)
     {
+      LOG(verbose, printf("    Failed to allocate memory\n"));
       break;
     }
+    LOG(verbose, printf("    Memory allocated successfully\n"));
 
     LOG(verbose, printf("    Computing PCG texture ... 0/%d\n",
       atlas->width * atlas->height));
@@ -114,16 +95,18 @@ bool readAtlas(Atlas* atlas, PNG* png, bool verbose, Roadmap* roadmap)
     int bit_depth;
     int color_type;
 
+    LOG(verbose, printf("    Checking PNG filename ...\n"));
     if (!png->path || (roadmap->id == NO_ATLASPNG_FILENAME_RM))
     {
-      LOG(verbose, printf("  "));
+      LOG(verbose, printf("    "));
       fprintf((verbose ? stdout : stderr), "PNG filename is null\n");
 
       status = false;
       break;
     }
+    LOG(verbose, printf("    PNG filename is not null ...\n"));
 
-    LOG(verbose, printf("  Opening PNG file \"%s\" ...\n", png->path));
+    LOG(verbose, printf("    Opening PNG file \"%s\" ...\n", png->path));
     if (roadmap->id != FOPEN_ATLASPNG_FILE_FAILED_RM)
     {
       png->file = fopen(png->path, "rb");
@@ -131,15 +114,15 @@ bool readAtlas(Atlas* atlas, PNG* png, bool verbose, Roadmap* roadmap)
 
     if (!png->file)
     {
-      LOG(verbose, printf("  "));
+      LOG(verbose, printf("    "));
       fprintf((verbose ? stdout : stderr), "Failed to open \"%s\"\n", png->path);
 
       status = false;
       break;
     }
-    LOG(verbose, printf("  PNG file opened\n"));
+    LOG(verbose, printf("    PNG file opened\n"));
 
-    LOG(verbose, printf("  Creating structure for reading PNG file ...\n"));
+    LOG(verbose, printf("    Creating structure for reading PNG file ...\n"));
     if (roadmap->id != ATLASPNGCREATEREADSTRUCT_FAILED_RM)
     {
       png->ptr =
@@ -148,15 +131,15 @@ bool readAtlas(Atlas* atlas, PNG* png, bool verbose, Roadmap* roadmap)
 
     if (!png->ptr)
     {
-      LOG(verbose, printf("  "));
+      LOG(verbose, printf("    "));
       fprintf((verbose ? stdout : stderr), "png_create_read_struct() failed\n");
 
       status = false;
       break;
     }
-    LOG(verbose, printf("  Structure for reading PNG file created\n"));
+    LOG(verbose, printf("    Structure for reading PNG file created\n"));
 
-    LOG(verbose, printf("  Creating PNG info structure ...\n"));
+    LOG(verbose, printf("    Creating PNG info structure ...\n"));
     if (roadmap->id != ATLASPNGCREATEREADINFOSTRUCT_FAILED_RM)
     {
       png->info = png_create_info_struct(png->ptr);
@@ -164,51 +147,51 @@ bool readAtlas(Atlas* atlas, PNG* png, bool verbose, Roadmap* roadmap)
 
     if (!png->info)
     {
-      LOG(verbose, printf("  "));
+      LOG(verbose, printf("    "));
       fprintf((verbose ? stdout : stderr), "png_create_info_struct() failed\n");
 
       status = false;
       break;
     }
-    LOG(verbose, printf("  PNG info structure created\n"));
+    LOG(verbose, printf("    PNG info structure created\n"));
 
-    LOG(verbose, printf("  Searching libPNG error ...\n"));
+    LOG(verbose, printf("    Searching libPNG error ...\n"));
     if (setjmp(png_jmpbuf(png->ptr)) ||
       (roadmap->id == ATLASPNG_READJMPBUF_FAILED_RM))
     {
-      LOG(verbose, printf("  "));
+      LOG(verbose, printf("    "));
       fprintf((verbose ? stdout : stderr),
         "Routine problem: libPNG encountered an error\n");
 
       status = false;
       break;
     }
-    LOG(verbose, printf("  No error found\n"));
+    LOG(verbose, printf("    No error found\n"));
 
-    LOG(verbose, printf("  Initializing PNG input/output ...\n"));
+    LOG(verbose, printf("    Initializing PNG input/output ...\n"));
     png_init_io(png->ptr, png->file);
-    LOG(verbose, printf("  PNG input/output initialized\n"));
+    LOG(verbose, printf("    PNG input/output initialized\n"));
 
-    LOG(verbose, printf("  Reading PNG info ...\n"));
+    LOG(verbose, printf("    Reading PNG info ...\n"));
     png_read_info(png->ptr, png->info);
-    LOG(verbose, printf("  PNG info read\n"));
+    LOG(verbose, printf("    PNG info read\n"));
 
-    LOG(verbose, printf("  Querying PNG_IHDR chunk information from PNG info \
+    LOG(verbose, printf("    Querying PNG_IHDR chunk information from PNG info \
 structure ...\n"));
     png_get_IHDR(
       png->ptr, png->info, &w, &h, &bit_depth, &color_type, 0, 0, 0);
-    LOG(verbose, printf("  PNG_IHDR chunk information found\n"));
+    LOG(verbose, printf("    PNG_IHDR chunk information found\n"));
 
-    LOG(verbose, printf("  Updating PNG info structure ...\n"));
+    LOG(verbose, printf("    Updating PNG info structure ...\n"));
     png_read_update_info(png->ptr, png->info);
-    LOG(verbose, printf("  PNG info structure updated\n"));
+    LOG(verbose, printf("    PNG info structure updated\n"));
 
-    LOG(verbose, printf("  Querying number of bytes for a row ...\n"));
+    LOG(verbose, printf("    Querying number of bytes for a row ...\n"));
     int rowbytes = png_get_rowbytes(png->ptr, png->info);
     rowbytes += 3 - ((rowbytes-1) % 4); // align to 4 bytes
-    LOG(verbose, printf("  Number of bytes for a row is %d\n", rowbytes));
+    LOG(verbose, printf("    Number of bytes for a row is %d\n", rowbytes));
 
-    LOG(verbose, printf("  Allocating memory for data ...\n"));
+    LOG(verbose, printf("    Allocating memory for data ...\n"));
     if (roadmap->id != ATLASPNG_DATA_MALLOC_FAILED_RM)
     {
       png->data = malloc(rowbytes * h * sizeof(png_byte) + 15);
@@ -216,15 +199,15 @@ structure ...\n"));
 
     if (!png->data)
     {
-      LOG(verbose, printf("  "));
+      LOG(verbose, printf("    "));
       fprintf((verbose ? stdout : stderr), "data malloc() failed\n");
 
       status = false;
       break;
     }
-    LOG(verbose, printf("  Memory allocated successfully\n"));
+    LOG(verbose, printf("    Memory allocated successfully\n"));
 
-    LOG(verbose, printf("  Allocating memory for row_pointers ...\n"));
+    LOG(verbose, printf("    Allocating memory for row_pointers ...\n"));
     if (roadmap->id != ATLASPNG_READROWPOINTERS_MALLOC_FAILED_RM)
     {
       png->row_pointers = malloc(h * sizeof(png_bytep));
@@ -232,32 +215,32 @@ structure ...\n"));
 
     if (!png->row_pointers)
     {
-      LOG(verbose, printf("  "));
+      LOG(verbose, printf("    "));
       fprintf((verbose ? stdout : stderr), "row_pointers malloc() \
 failed\n");
 
       status = false;
       break;
     }
-    LOG(verbose, printf("  Memory allocated successfully\n"));
+    LOG(verbose, printf("    Memory allocated successfully\n"));
 
     for(png_uint_32 i = 0; i < h; ++i)
     {
-      LOG(verbose, printf("  Setting individual row_pointers to point \
+      LOG(verbose, printf("    Setting individual row_pointers to point \
 at the correct offsets of data ... %d/%d\n", i, h));
       png->row_pointers[h - 1 - i] = png->data + i * rowbytes;
     }
-    LOG(verbose, printf("  Setting individual row_pointers to point at \
+    LOG(verbose, printf("    Setting individual row_pointers to point at \
 the correct offsets of data ... %d/%d\n", h, h));
-    LOG(verbose, printf("  Individual row_pointers set\n"));
+    LOG(verbose, printf("    Individual row_pointers set\n"));
 
-    LOG(verbose, printf("  Reading PNG image into memory ...\n"));
+    LOG(verbose, printf("    Reading PNG image into memory ...\n"));
     png_read_image(png->ptr, png->row_pointers);
-    LOG(verbose, printf("  PNG image read into memory\n"));
+    LOG(verbose, printf("    PNG image read into memory\n"));
 
-    LOG(verbose, printf("  Finishing PNG reading ...\n"));
+    LOG(verbose, printf("    Finishing PNG reading ...\n"));
     png_read_end(png->ptr, NULL);
-    LOG(verbose, printf("  PNG reading finished\n"));
+    LOG(verbose, printf("    PNG reading finished\n"));
   } while (false);
 
   return status;
@@ -277,7 +260,7 @@ bool writePng(Atlas* atlas, PNG* png, bool verbose, Roadmap* roadmap)
 
     if (!png->file)
     {
-      LOG(verbose, printf("  "));
+      LOG(verbose, printf("    "));
       fprintf((verbose ? stdout : stderr), "Failed to open \"%s\"\n",
         png->path);
 
@@ -358,20 +341,20 @@ PNG info structure ...\n"));
 
   if (png->file)
   {
-    LOG(verbose, printf("  Closing PNG file ...\n"));
+    LOG(verbose, printf("    Closing PNG file ...\n"));
     fclose(png->file);
     png->file = NULL;
-    LOG(verbose, printf("  PNG file closed\n"));
+    LOG(verbose, printf("    PNG file closed\n"));
   }
 
   if (png->ptr != NULL)
   {
-    LOG(verbose, printf("  Destroying PNG write struct and PNG info struct \
+    LOG(verbose, printf("    Destroying PNG write struct and PNG info struct \
 ...\n"));
     png_destroy_write_struct(&(png->ptr), png->info ? &(png->info) : 0);
     png->ptr = 0;
     png->info = 0;
-    LOG(verbose, printf("  PNG write struct and PNG info struct destroyed\n"));
+    LOG(verbose, printf("    PNG write struct and PNG info struct destroyed\n"));
   }
 
   return status;
@@ -407,21 +390,22 @@ atlas\n");
     LOG(verbose, printf("  PNG textures atlas written\n"));
   } while (false);
 
-  for (int i = 0; i < atlas->height; i++)
-  {
-    if (atlas->texels[i])
-    {
-      LOG(verbose, printf("  Freeing memory for write_row_pointers[%d] \
-...\n", i));
-      free(atlas->texels[i]);
-      atlas->texels[i] = NULL;
-      LOG(verbose, printf("  Memory freed successfully\n"));
-    }
-  }
 
-  if (atlas->texels)
+  if (atlas->texels != NULL)
   {
-    LOG(verbose, printf("  Freeing memory for write_row_pointers ...\n"));
+    for (int i = 0; i < atlas->height; i++)
+    {
+      if (atlas->texels[i] != NULL)
+      {
+        LOG(verbose, printf("  Freeing memory for texels[%d] \
+...\n", i));
+        free(atlas->texels[i]);
+        atlas->texels[i] = NULL;
+        LOG(verbose, printf("  Memory freed successfully\n"));
+      }
+    }
+
+    LOG(verbose, printf("  Freeing memory for texels ...\n"));
     free(atlas->texels);
     atlas->texels = NULL;
     LOG(verbose, printf("  Memory freed successfully\n"));

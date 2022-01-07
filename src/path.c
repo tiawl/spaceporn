@@ -191,6 +191,11 @@ failed\n");
 
     length[2] = len8;
 
+    if (roadmap->id == ATLASTEXTUREPATH_MALLOC_FAILED_RM)
+    {
+      roadmap->id = TEXTUREPATH_MALLOC_FAILED_RM;
+    }
+
     LOG(verbose, printf("  Initializing atlas texture path ...\n"));
     if (!initTexturePath(atlas, length, home, ATLAS_FILE, verbose, roadmap))
     {

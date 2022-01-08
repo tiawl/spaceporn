@@ -915,7 +915,9 @@ file ...\n"));
             ++end;
           }
         }
-        LOG(verbose, start = end - 1;
+        if (verbose)
+        {
+          start = end - 1;
           while ((*buffer)[start] != '\n')
           {
             start--;
@@ -923,7 +925,8 @@ file ...\n"));
           char buffer_line[end - start - 1];
           buffer_line[0] = '\0';
           strncat(buffer_line, (*buffer) + start + 1, end - start - 1);
-          printf("      Corresponding line is \"%s\"\n", buffer_line););
+          printf("      Corresponding line is \"%s\"\n", buffer_line);
+        }
 
         start = end;
 

@@ -133,7 +133,7 @@ structure ...\n"));
 
     LOG(verbose, printf("    Querying number of bytes for a row ...\n"));
     int rowbytes = png_get_rowbytes(png->ptr, png->info);
-    rowbytes += 3 - ((rowbytes-1) % 4); // align to 4 bytes
+    rowbytes += 3 - ((rowbytes-1) % 4);
     LOG(verbose, printf("    Number of bytes for a row is %d\n", rowbytes));
 
     LOG(verbose, printf("    Allocating memory for data ...\n"));

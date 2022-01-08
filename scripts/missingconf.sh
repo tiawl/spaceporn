@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 
-# WARNING: Avoid usage of multilines commenters in C files
+# WARNING: in C files, can not detect:
+# 1) multilines comments
+# 2) oneline comments after C code. ex:
+#        char c = 'c' // my comment after C code
 
 remove_array_dups() {
-    # Usage: remove_array_dups "array"
   declare -A tmp_array
 
   for i in "$@"; do

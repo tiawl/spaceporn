@@ -28,7 +28,7 @@ float ppfbm(float size, vec2 sizeModifier, vec2 coord, uint octaves,
   float value = 0.0;
   float scale = 0.5;
 
-  for(uint i = 0u; i < octaves; i++)
+  for (uint i = 0u; i < octaves; i++)
   {
     value += ppnoise(size, sizeModifier, coord, noise_seed, center) * scale;
     coord *= 2.0;

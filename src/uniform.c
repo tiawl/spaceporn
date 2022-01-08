@@ -8,8 +8,8 @@ bool updateFloatUniforms(GLint uniformId, UniformValues* values, bool verbose)
   {
     if ((values->slide > 0) || (values-> seed < 0.))
     {
-      LOG(verbose, printf("    Generating random number to seed GPU hash() \
-...\n"));
+      LOG(verbose, printf("    Generating random number to seed GPU hash \
+function ...\n"));
       values->seed = rand();
       LOG(verbose, printf("    Seed is %f\n", values->seed));
 

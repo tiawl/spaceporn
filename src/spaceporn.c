@@ -172,7 +172,7 @@ are initialized\n"));
       GL_CHECK(glBindBuffer(0, -1), status);
     }
 
-    /* array of all uniforms to pass to the shader */
+    // array of all uniforms to pass to the shader
     const Uniform uniforms[] =
     {
       {"fflags", &updateFloatUniforms},
@@ -223,7 +223,7 @@ object ...\n"));
     LOG(verbose, printf("Vertex buffer object and vertex array object \
 initialized\n"));
 
-    while(true)
+    while (true)
     {
       if ((fps > 0) && (uniform_values.slide == 0))
       {

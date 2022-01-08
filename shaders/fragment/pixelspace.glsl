@@ -20,7 +20,7 @@ float psfbm(vec2 coord, uint octaves, uint noise_seed)
   float value = 0.0;
   float scale = 0.5;
 
-  for(uint i = 0u; i < octaves; i++)
+  for (uint i = 0u; i < octaves; i++)
   {
     value += psnoise(coord, noise_seed) * scale;
     coord *= 2.0;

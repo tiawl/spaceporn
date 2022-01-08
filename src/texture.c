@@ -120,7 +120,7 @@ are not power of two or smaller than 8 failed to load in OpenGL\n");
 
     LOG(verbose, printf("  Querying number of bytes for a row ...\n"));
     int rowbytes = png_get_rowbytes(png->ptr, png->info);
-    rowbytes += 3 - ((rowbytes-1) % 4); // align to 4 bytes
+    rowbytes += 3 - ((rowbytes-1) % 4);
     LOG(verbose, printf("  Number of bytes for a row is %d\n", rowbytes));
 
     LOG(verbose, printf("  Allocating memory for data ...\n"));
@@ -156,7 +156,7 @@ failed\n");
     }
     LOG(verbose, printf("  Memory allocated successfully\n"));
 
-    for(png_uint_32 i = 0; i < h; ++i)
+    for (png_uint_32 i = 0; i < h; ++i)
     {
       LOG(verbose, printf("  Setting individual row_pointers to point \
 at the correct offsets of data ... %d/%d\n", i, h));

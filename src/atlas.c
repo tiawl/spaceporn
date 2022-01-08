@@ -169,7 +169,7 @@ failed\n");
     }
     LOG(verbose, printf("    Memory allocated successfully\n"));
 
-    for(png_uint_32 i = 0; i < h; ++i)
+    for (png_uint_32 i = 0; i < h; ++i)
     {
       LOG(verbose, printf("    Setting individual row_pointers to point \
 at the correct offsets of data ... %d/%d\n", i, h));

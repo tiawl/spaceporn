@@ -29,7 +29,7 @@ typedef struct
 #define UNIFORM_FLOATS 6
 #define UNIFORM_BOOLEANS 4
 
-/* custom functions used to set uniform values */
+// custom functions used to set uniform values
 bool updateFloatUniforms(GLint uniformId, UniformValues* values,
   bool verbose);
 bool updateBoolUniforms(GLint uniformId, UniformValues* values, bool verbose);

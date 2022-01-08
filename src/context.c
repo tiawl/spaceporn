@@ -13,7 +13,7 @@ bool isExtensionSupported(const char* extList, const char* extension,
     const char* where = NULL;
     const char* terminator = NULL;
 
-    /* Extension names should not have spaces. */
+    // Extension names should not have spaces.
     LOG(verbose, printf("    Testing presence of space in GLX extension \
 string ...\n"));
     where = strchr(extension, ' ');
@@ -25,8 +25,8 @@ string ...\n"));
     }
     LOG(verbose, printf("    No space in GLX extension name\n"));
 
-    /* It takes a bit of care to be fool-proof about parsing the
-       GLX extensions string. Don't be fooled by sub-strings, etc. */
+    // It takes a bit of care to be fool-proof about parsing the
+    // GLX extensions string. Don't be fooled by sub-strings, etc.
     LOG(verbose, printf("    Searching GLX extension \"%s\" in extensions \
 list ...\n", extension));
     for (start = extList;;)
@@ -399,13 +399,16 @@ bool initContext(Context* context, bool verbose, Roadmap* roadmap)
 ...\n"));
     const char* glxExts = glXQueryExtensionsString(context->display,
       DefaultScreen(context->display));
-    LOG(verbose, printf("  Default screen's GLX extensions list is:\n");
+    if (verbose)
+    {
+      printf("  Default screen's GLX extensions list is:\n");
       char* token = strtok((char*) glxExts, " ");
       while (token != NULL)
       {
         printf("  - %s\n", token);
         token = strtok(NULL, " ");
-      });
+      };
+    }
 
     LOG(verbose, printf("  Querying pointer to glXCreateContextAttribsARB() \
 function ...\n"));

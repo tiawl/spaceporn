@@ -247,7 +247,8 @@ allocated successfully\n", spaces));
 
         LOG(verbose, printf("%s      Reading file into buffer ...\n", spaces));
         fread(*buffer, 1, length, f);
-        (*buffer)[length] = '\0'; // fread does not 0 terminate strings
+        // fread does not 0 terminate strings
+        (*buffer)[length] = '\0';
         LOG(verbose, printf("%s      Buffer filled with:\n\
 ------------------------------------------------------------------------------\
 \n%s\

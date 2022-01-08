@@ -100,12 +100,12 @@ declare -a NO_USR=($(echo "${WORDS[@]} ${KEYWORDS[@]} ${KEYWORDS[@]} \
   | tr ' ' '\n' | sort | uniq -u))
 for N in ${NO_USR[@]}; do echo ${N}; done
 
-echo "--- undefined words in src ------------------------------------"
+echo "--- ctags unknown words in src --------------------------------"
 declare -a UNDEF=($(echo "${NO_USR[@]} ${LIBDEF[@]} ${LIBDEF[@]} \
   ${LIBMBR[@]} ${LIBMBR[@]}" | tr ' ' '\n' | sort | uniq -u))
 for U in ${UNDEF[@]}; do echo ${U}; done
 
-echo "--- undefined words not declared through lib macro ------------"
+echo "--- ctags unknown words not declared through lib macro --------"
 declare -a LIBMAC=()
 for V in ${VISITED[@]}; do
   LIBMAC+=($(grep "^\b__MATHCALL (\b\|^\b__MATHCALLX (\b\|^\bPNG_EXPORT(\b" \

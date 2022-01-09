@@ -5,3 +5,4 @@
 - Redirect verbose to ~/.local/log/xteleskop to generate logs
 - if find texture/atlas.png: precompted = true && use atlas in shaders
   else: precomputed = false && use hash function in shaders
+- use OpenMP for textures atlas generation

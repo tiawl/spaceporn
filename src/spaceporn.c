@@ -56,8 +56,10 @@ int main(int argc, char** argv)
 
   Atlas atlas;
   atlas.texels = NULL;
-  atlas.width = 16;//nextpow2(MAX_PIXELS * 5);
-  atlas.height = 8;//nextpow2(MAX_PIXELS * 5);
+// atlas.width = nextpow2(MAX_PIXELS * 5);
+// atlas.height = nextpow2(MAX_PIXELS * 5);
+  atlas.width = 16;
+  atlas.height = 8;
   atlas.depth = 4;
   atlas.pcg_depth = 4;
   atlas.seed[0] = rand();

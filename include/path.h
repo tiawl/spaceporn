@@ -5,8 +5,10 @@
 
 #include "texture.h"
 
-#define SHADERS_DIR "/Workspace/Perso/spaceporn/shaders/" //  "/.local/shaders/"
-#define TEXTURES_DIR "/Workspace/Perso/spaceporn/textures/" //  "/.local/textures/"
+// #define SHADERS_DIR "/.local/shaders/"
+// #define TEXTURES_DIR "/.local/textures/"
+#define SHADERS_DIR "/Workspace/Perso/spaceporn/shaders/"
+#define TEXTURES_DIR "/Workspace/Perso/spaceporn/textures/"
 #define FRAGMENT_DIR "fragment/"
 #define VERTEX_DIR "vertex/"
 #define MAIN_FILE "main.glsl"

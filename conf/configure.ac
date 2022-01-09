@@ -73,9 +73,9 @@ AC_CHECK_DECLS([NULL, EXIT_FAILURE, EXIT_SUCCESS, SEEK_END, SEEK_SET, errno,
 #include <limits.h>
 #include <regex.h>
 #include <unistd.h>]])
-AC_CHECK_DECLS([PNG_LIBPNG_VER_STRING, PNG_INFO_tRNS, PNG_COLOR_MASK_ALPHA, \
-  png_jmpbuf, PNG_COLOR_TYPE_RGB_ALPHA, PNG_INTERLACE_NONE, \
-  PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT], [],
+AC_CHECK_DECLS([PNG_LIBPNG_VER_STRING, PNG_COLOR_MASK_ALPHA, png_jmpbuf, \
+  PNG_COLOR_TYPE_RGB_ALPHA, PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT, \
+  PNG_FILTER_TYPE_DEFAULT], [],
   AC_MSG_ERROR([libPNG is installed but some of its \
 declarations are missing.]), [[#include <png.h>]])
 AC_CHECK_DECLS([GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_TEXTURE_WRAP_T,
@@ -84,7 +84,7 @@ AC_CHECK_DECLS([GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_TEXTURE_WRAP_T,
   GL_FRAGMENT_SHADER, GL_LINK_STATUS, GL_ARRAY_BUFFER, GL_STATIC_DRAW,
   GL_FLOAT, GL_COLOR_BUFFER_BIT, GL_DEPTH_BUFFER_BIT, GL_TRIANGLE_STRIP,
   GL_RGBA, GL_RGB, GL_UNSIGNED_BYTE, GL_CLAMP_TO_BORDER, GL_BLEND,
-  GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_TEXTURE_3D, GL_TEXTURE_2D_ARRAY,
+  GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_TEXTURE_2D_ARRAY,
   GL_REPEAT, GL_RGBA8, GL_TEXTURE0], [], AC_MSG_ERROR([GL library is \
 installed but some of its declarations are missing.]),
   [[#include <GL/gl.h>]])
@@ -94,8 +94,7 @@ installed but some of its declarations are missing.]),
 AC_CHECK_DECLS([GLX_WINDOW_BIT, GLX_RGBA_BIT, GLX_TRUE_COLOR,
   GLX_X_RENDERABLE, GLX_DRAWABLE_TYPE, GLX_RENDER_TYPE, GLX_X_VISUAL_TYPE,
   GLX_RED_SIZE, GLX_GREEN_SIZE, GLX_BLUE_SIZE, GLX_ALPHA_SIZE, GLX_DEPTH_SIZE,
-  GLX_STENCIL_SIZE, GLX_DOUBLEBUFFER, GLX_SAMPLE_BUFFERS, GLX_SAMPLES,
-  GLX_CONTEXT_MAJOR_VERSION_ARB, GLX_CONTEXT_MINOR_VERSION_ARB], [],
+  GLX_STENCIL_SIZE, GLX_DOUBLEBUFFER, GLX_SAMPLE_BUFFERS, GLX_SAMPLES], [],
 AC_MSG_ERROR([GLX library is installed but some of its declarations are \
 missing.]), [[#include <GL/glx.h>]])
 AC_CHECK_DECLS([XA_ATOM, True, False, None, CWBorderPixel, CWColormap,
@@ -110,8 +109,8 @@ installed but some of its declarations are missing.]),
 AC_FUNC_MALLOC
 AC_CHECK_FUNCS([strchr strerror strstr strlen strcmp strtok strcpy strcat \
 strncpy strncat strtoul getenv usleep memcpy printf fprintf snprintf free \
-srand rand atof atoi time gettimeofday fopen fseek fread fclose fgetc setjmp \
-exit atexit realloc regcomp regexec regerror regfree log10 floor access], [],
+srand rand time gettimeofday fopen fseek fread fclose setjmp \
+realloc regcomp regexec regerror regfree log10 floor access], [],
 AC_MSG_ERROR([GLibC library is installed but some of its functions are \
 missing.]))
 AC_CHECK_FUNCS([png_destroy_read_struct png_create_read_struct \
@@ -135,7 +134,7 @@ AC_CHECK_FUNC(glewInit, [], AC_MSG_ERROR([GLEW library is installed but some \
 of its functions are missing.]))
 AC_CHECK_FUNCS([glXQueryVersion glXChooseFBConfig glXGetVisualFromFBConfig \
 glXGetFBConfigAttrib glXQueryExtensionsString glXGetProcAddressARB \
-glXCreateContextAttribsARB glXMakeCurrent glXDestroyContext glXSwapBuffers],
+glXMakeCurrent glXDestroyContext glXSwapBuffers],
   [], AC_MSG_ERROR([GLX library is installed but some of its functions are \
 missing.]))
 AC_CHECK_FUNCS([XOpenDisplay XCloseDisplay XFree XCreateColormap \

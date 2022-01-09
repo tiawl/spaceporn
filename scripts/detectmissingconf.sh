@@ -4,6 +4,7 @@
 # 1) multilines comments
 # 2) oneline comments after C code. ex:
 #        char c = 'c' // my comment after C code
+# 3) lonely double quotes in comments
 
 remove_array_dups() {
   declare -A tmp_array
@@ -15,7 +16,34 @@ remove_array_dups() {
   printf '%s\n' "${!tmp_array[@]}"
 }
 
-echo "--- include/*.h parsed ----------------------------------------"
+declare -r CFILES="src/*.c include/*.h"
+declare -r RED="\e[38;5;1m"
+declare -r GREEN="\e[38;5;2m"
+declare -r RESET="\e[m"
+
+DQUOTES=($(grep -h -E "^[[:space:]]*//" ${CFILES} | grep -E '"' \
+  | sed 's/[^"]//g' | awk '{print length}'))
+for D in ${DQUOTES[@]}; do
+  [[ $(( ${D} & 1 )) -eq 1 ]] && echo -e -n "${RED}Lonely double quotes in " \
+    && echo -e "comments detected. Delete them and run again.${RESET}" && exit
+done
+echo -e "${GREEN}No lonely double quotes in comments.${RESET}"
+
+OLCOMMENTS=($(cat ${CFILES} | tr '\n' '\0' \
+  | perl -pe 's/""|"(\n|.)*?[^\\]"/""/g' | tr '\0' '\n' \
+  | grep -E -h -v '^[[:space:]]*//' | grep -E '//'))
+[[ ${#OLCOMMENTS[@]} -gt 0 ]] && echo -e -n "${RED}Oneline comments after " \
+  && echo -e "C code detected. Delete them and run again.${RESET}" && exit
+echo -e "${GREEN}No oneline comments after C code.${RESET}"
+
+MLCOMMENTS=($(cat ${CFILES} | tr '\n' '\0' \
+  | perl -pe 's/""|"(\n|.)*?[^\\]"/""/g' | tr '\0' '\n' \
+  | grep -E -h -v '^[[:space:]]*//' | grep -E '/\*|\*/'))
+[[ ${#MLCOMMENTS[@]} -gt 0 ]] && echo -e -n "${RED}Multiline comments " \
+  && echo -e "delected. Delete them and run again.${RESET}" && exit
+echo -e "${GREEN}No multiline comments.${RESET}"
+
+echo "--- included libraries --------------------------------------------------"
 declare -a INCL=()
 for I in include/*; do
   INCL+=($(grep -h -E '#[[:space:]]*include <' ${I} \
@@ -24,14 +52,14 @@ done
 INCL=( $(remove_array_dups "${INCL[@]}") )
 for I in ${INCL[@]}; do echo ${I}; done
 
-echo "--- GCC library paths parsed ----------------------------------"
+echo "--- GCC libraries paths -------------------------------------------------"
 declare -a GCCPATH=()
 for P in $(echo | gcc -E -Wp,-v - 2>&1); do
   [[ -d "${P}" ]] && GCCPATH+=(${P})
 done
 for P in ${GCCPATH[@]}; do echo ${P}; done
 
-echo "--- absolute path for included lib built ----------------------"
+echo "--- absolute path libraries ---------------------------------------------"
 declare -a LIB=()
 for I in ${INCL[@]}; do
   for P in ${GCCPATH[@]}; do
@@ -40,7 +68,7 @@ for I in ${INCL[@]}; do
 done
 for L in ${LIB[@]}; do echo ${L}; done
 
-echo "--- visited libs ----------------------------------------------"
+echo "--- visited libraries ---------------------------------------------------"
 declare -a LIBDEF=()
 declare -a LIBMBR=()
 declare -a VISITED=()
@@ -65,28 +93,40 @@ while [[ ${#LIB[@]} -gt 0 ]]; do
 done
 echo "${#VISITED[@]}"
 
-echo "--- libraries definitions -------------------------------------"
-LIBDEF=($(echo "${LIBDEF[@]}" | tr ' ' '\n' | sort | uniq))
+echo "--- libraries' definitions ----------------------------------------------"
+LIBDEF=($(echo "${LIBDEF[@]}" | tr ' ' '\n'))
+LIBDEF=($(remove_array_dups "${LIBDEF[@]}"))
 echo "${#LIBDEF[@]}"
 
-echo "--- libraries struct members ----------------------------------"
-LIBMBR=($(echo "${LIBMBR[@]}" | tr ' ' '\n' | sort | uniq))
+echo "--- libraries' struct members -------------------------------------------"
+LIBMBR=($(echo "${LIBMBR[@]}" | tr ' ' '\n'))
+LIBMBR=($(remove_array_dups "${LIBMBR[@]}"))
 echo "${#LIBMBR[@]}"
 
-echo "--- different user definitions found --------------------------"
+echo "--- library definitions declared through macro --------------------------"
+declare -a MAC=()
+for V in ${VISITED[@]}; do
+  MAC+=($(grep "^\b__MATHCALL[X]\?[[:space:]]*(\b" ${V} \
+    | awk '{printf $2}' | grep -E -o "\b[a-zA-Z]\w*\b"))
+  MAC+=($(grep "^\bPNG_EXPORT[A]\?[[:space:]]*(\b" ${V} \
+    | awk '{printf $3}' | grep -E -o "\b[a-zA-Z]\w*\b"))
+done
+LIBDEF=($(echo "${LIBDEF[@]} ${MAC[@]}" | tr ' ' '\n'))
+LIBDEF=($(remove_array_dups "${LIBDEF[@]}"))
+echo ${#LIBDEF[@]}
+
+echo "--- ctags user definitions ----------------------------------------------"
 declare -a USRDEF=($(find . -type f -name '*.[ch]' -exec \
   ctags -x --kinds-c=+lpzD {} ';' | grep -E -o '^[^[:space:]]+'))
 echo "${#USRDEF[@]}"
 
-echo "--- differend found words in src directory --------------------"
-declare -a WORDS=($(cat src/*.c | grep -E -v '^[[:space:]]*//' \
-  | grep -E -o '\b[a-zA-Z]\w*\b' | sort | uniq))
+echo "--- unique words in C files ---------------------------------------------"
+declare -a WORDS=($(cat ${CFILES} | tr '\n' '\0' \
+  | perl -pe 's/""|"(\n|.)*?[^\\]"/""/g' | tr '\0' '\n' \
+  | grep -E -h -v '^[[:space:]]*//' | grep -E -v '#[[:space:]]*include ' \
+  | grep -E -o '\b[a-zA-Z]\w*\b'))
+WORDS=($(remove_array_dups "${WORDS[@]}"))
 echo "${#WORDS[@]}"
-
-echo "--- different words in char* ----------------------------------"
-declare -a STRWORDS=($(grep -h -z -P -o '""|"(\n|.)*?[^\\]"' src/*.c \
-  | tr '\0' '\n' | grep -E -o '\b[a-zA-Z]\w*\b' | sort | uniq))
-echo "${#STRWORDS[@]}"
 
 declare -a KEYWORDS=("auto break case char const continue default do double")
 KEYWORDS+=("else enum extern float for goto if int long register return")
@@ -94,31 +134,42 @@ KEYWORDS+=("short signed sizeof static struct switch typedef union unsigned")
 KEYWORDS+=("void volatile while true false ifdef ifndef endif define include")
 KEYWORDS+=("undef bool")
 
-echo "--- non user words in src -------------------------------------"
+echo "--- non user definitions in C files -------------------------------------"
 declare -a NO_USR=($(echo "${WORDS[@]} ${KEYWORDS[@]} ${KEYWORDS[@]} \
-  ${USRDEF[@]} ${USRDEF[@]} ${STRWORDS[@]} ${STRWORDS[@]}" \
+  ${USRDEF[@]} ${USRDEF[@]} ${LIBMBR[@]} ${LIBMBR[@]}" \
   | tr ' ' '\n' | sort | uniq -u))
 for N in ${NO_USR[@]}; do echo ${N}; done
+echo "--- non user definitions in C files -------------------------------------"
+echo "${#NO_USR[@]}"
 
-echo "--- ctags unknown words in src --------------------------------"
-declare -a UNDEF=($(echo "${NO_USR[@]} ${LIBDEF[@]} ${LIBDEF[@]} \
-  ${LIBMBR[@]} ${LIBMBR[@]}" | tr ' ' '\n' | sort | uniq -u))
+echo "--- ctags unknown definitions in C files --------------------------------"
+declare -a UNDEF=($(echo "${NO_USR[@]} ${LIBDEF[@]} ${LIBDEF[@]}" \
+  | tr ' ' '\n' | sort | uniq -u))
 for U in ${UNDEF[@]}; do echo ${U}; done
 
-echo "--- ctags unknown words not declared through lib macro --------"
-declare -a LIBMAC=()
-for V in ${VISITED[@]}; do
-  LIBMAC+=($(grep "^\b__MATHCALL (\b\|^\b__MATHCALLX (\b\|^\bPNG_EXPORT(\b" \
-    ${V} | grep -E -o "$(echo "${UNDEF[@]}" | sed 's/ /|/g')"))
-done
-LIBMAC=($(echo "${UNDEF[@]} ${LIBMAC[@]}" | tr ' ' '\n' | sort | uniq -u))
-
-declare -r RED="\e[38;5;1m"
-declare -r GREEN="\e[38;5;2m"
-declare -r RESET="\e[m"
-
-[[ ${#LIBMAC[@]} -gt 0 ]] && for L in ${LIBMAC[@]}; do echo ${L}; done \
+[[ ${#UNDEF[@]} -gt 0 ]] && for L in ${UNDEF[@]}; do echo ${L}; done \
   && echo -e "${RED}EXIT WITH ERROR: Find definition for above words${RESET}" \
   && exit
-[[ ${#LIBMAC[@]} -eq 0 ]] && \
-  echo -e "${GREEN}Every written words in src files are known${RESET}"
+[[ ${#UNDEF[@]} -eq 0 ]] && \
+  echo -e "${GREEN}Every written words in C files are known${RESET}"
+
+echo "--- definitions in conf/configure.ac ------------------------------------"
+REGEX="AC_CHECK_TYPES\(\[(\n|.)*?\]|AC_CHECK_TYPE\((.)*?,"
+REGEX="${REGEX}|AC_CHECK_DECLS\(\[(\n|.)*?\]|AC_CHECK_DECL\((.)*?,"
+REGEX="${REGEX}|AC_CHECK_FUNCS\(\[(\n|.)*?\]|AC_CHECK_FUNC\((.)*?,"
+declare -a CONFWORDS=($(grep -z -h -P -o "${REGEX}" conf/configure.ac \
+  | tr '\0' '\n' | grep -E -o '\b[a-zA-Z]\w*\b' | grep -E -v 'AC_CHECK_'))
+CONFWORDS=($(remove_array_dups "${CONFWORDS[@]}"))
+echo "${#CONFWORDS[@]}"
+
+echo "--- defined in conf/configure.ac but not in C files ---------------------"
+for U in $(echo "${CONFWORDS[@]} ${NO_USR[@]} ${NO_USR[@]}" | tr ' ' '\n' \
+  | sort | uniq -u); do
+    echo ${U}
+done
+
+echo "--- defined in C files but not in conf/configure.ac ---------------------"
+for U in $(echo "${NO_USR[@]} ${CONFWORDS[@]} ${CONFWORDS[@]}" | tr ' ' '\n' \
+  | sort | uniq -u); do
+    echo ${U}
+done

@@ -21,6 +21,10 @@ declare -r RED="\e[38;5;1m"
 declare -r GREEN="\e[38;5;2m"
 declare -r RESET="\e[m"
 
+[[ ${#} -ne 1 ]] || [[ "${1}" != strict && "${1}" != nostrict ]] \
+  && echo -e "${RED}needs \"strict\" or \"nostrict\" argument${RESET}" \
+  && exit
+
 DQUOTES=($(grep -h -E "^[[:space:]]*//" ${CFILES} | grep -E '"' \
   | sed 's/[^"]//g' | awk '{print length}'))
 for D in ${DQUOTES[@]}; do
@@ -94,12 +98,10 @@ done
 echo "${#VISITED[@]}"
 
 echo "--- libraries' definitions ----------------------------------------------"
-LIBDEF=($(echo "${LIBDEF[@]}" | tr ' ' '\n'))
 LIBDEF=($(remove_array_dups "${LIBDEF[@]}"))
 echo "${#LIBDEF[@]}"
 
 echo "--- libraries' struct members -------------------------------------------"
-LIBMBR=($(echo "${LIBMBR[@]}" | tr ' ' '\n'))
 LIBMBR=($(remove_array_dups "${LIBMBR[@]}"))
 echo "${#LIBMBR[@]}"
 
@@ -111,13 +113,22 @@ for V in ${VISITED[@]}; do
   MAC+=($(grep "^\bPNG_EXPORT[A]\?[[:space:]]*(\b" ${V} \
     | awk '{printf $3}' | grep -E -o "\b[a-zA-Z]\w*\b"))
 done
-LIBDEF=($(echo "${LIBDEF[@]} ${MAC[@]}" | tr ' ' '\n'))
+LIBDEF=($(echo "${LIBDEF[@]} ${MAC[@]}"))
 LIBDEF=($(remove_array_dups "${LIBDEF[@]}"))
 echo ${#LIBDEF[@]}
 
-echo "--- ctags user definitions ----------------------------------------------"
-declare -a USRDEF=($(find . -type f -name '*.[ch]' -exec \
-  ctags -x --kinds-c=+lpzD {} ';' | grep -E -o '^[^[:space:]]+'))
+declare -a USRDEF=()
+if [[ "${1}" == strict ]]; then
+  echo "--- ctags user definitions ----------------------------------------------"
+  USRDEF+=($(find . -type f -name '*.[ch]' -exec \
+    ctags -x --kinds-c=+lpzD {} ';' | grep -E -o '^[^[:space:]]+'))
+  USRDEF=($(remove_array_dups "${USRDEF[@]} ${LIBMBR[@]}"))
+elif [[ "${1}" == nostrict ]]; then
+  echo "--- strictless ctags user definitions -----------------------------------"
+  USRDEF+=($(find . -type f -name '*.[ch]' -exec \
+    ctags -x --kinds-c=+p-vm {} ';' | grep -E -o '^[^[:space:]]+'))
+  LIBDEF=($(remove_array_dups "${LIBDEF[@]} ${LIBMBR[@]}"))
+fi
 echo "${#USRDEF[@]}"
 
 echo "--- unique words in C files ---------------------------------------------"
@@ -136,8 +147,7 @@ KEYWORDS+=("undef bool")
 
 echo "--- non user definitions in C files -------------------------------------"
 declare -a NO_USR=($(echo "${WORDS[@]} ${KEYWORDS[@]} ${KEYWORDS[@]} \
-  ${USRDEF[@]} ${USRDEF[@]} ${LIBMBR[@]} ${LIBMBR[@]}" \
-  | tr ' ' '\n' | sort | uniq -u))
+  ${USRDEF[@]} ${USRDEF[@]}" | tr ' ' '\n' | sort | uniq -u))
 for N in ${NO_USR[@]}; do echo ${N}; done
 echo "--- non user definitions in C files -------------------------------------"
 echo "${#NO_USR[@]}"
@@ -147,7 +157,8 @@ declare -a UNDEF=($(echo "${NO_USR[@]} ${LIBDEF[@]} ${LIBDEF[@]}" \
   | tr ' ' '\n' | sort | uniq -u))
 for U in ${UNDEF[@]}; do echo ${U}; done
 
-[[ ${#UNDEF[@]} -gt 0 ]] && for L in ${UNDEF[@]}; do echo ${L}; done \
+[[ ${#UNDEF[@]} -gt 0 && "${1}" == strict ]] \
+  && for L in ${UNDEF[@]}; do echo ${L}; done \
   && echo -e "${RED}EXIT WITH ERROR: Find definition for above words${RESET}" \
   && exit
 [[ ${#UNDEF[@]} -eq 0 ]] && \

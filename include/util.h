@@ -145,6 +145,9 @@ enum RoadmapID
   ATLASPNG_DATA_MALLOC_FAILED_RM,
   ATLASPNG_READROWPOINTERS_MALLOC_FAILED_RM,
   BAD_ATLASPNG_DIMENSIONS_RM,
+  PRECOMPUTE_AND_STOP_RM,
+// -------------------------------------------------------------------  90
+  PRECOMPUTE_AND_CONTINUE_RM,
 #if DEBUG
   XCREATEDEBUGWINDOW_FAILED_RM,
 #endif
@@ -157,9 +160,10 @@ typedef struct
   char* glsl_file;
 } Roadmap;
 
-#define LOG(v, stmt) do \
+#define LOG(log, stmt) do \
 { \
-  if (v) { \
+  if (log) \
+  { \
     stmt; \
   } \
 } while (0)

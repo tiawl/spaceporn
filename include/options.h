@@ -38,8 +38,11 @@
 #define MIN_ZOOM 10
 #define MAX_ZOOM 50
 
+#define UNDEFINED_SIZE -1
+
 void help();
 bool parsing_options(bool* verbose, long* fps, long* generation,
-  UniformValues* uniform_values, Roadmap* roadmap, int* argc, char** argv);
+  int* width, int* height, UniformValues* uniform_values, Roadmap* roadmap,
+  int* argc, char** argv);
 
 #endif

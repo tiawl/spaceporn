@@ -41,7 +41,8 @@ void help()
 }
 
 bool parsing_options(bool* verbose, long* fps, long* generation,
-  UniformValues* uniform_values, Roadmap* roadmap, int* argc, char** argv)
+  int* width, int* height, UniformValues* uniform_values, Roadmap* roadmap,
+  int* argc, char** argv)
 {
   int status = true;
   char* dir = NULL;
@@ -309,6 +310,34 @@ bool parsing_options(bool* verbose, long* fps, long* generation,
   {
     free(dir);
   }
+
+  if (roadmap->id == SLIDEMODE_SUCCESS_RM)
+  {
+    uniform_values->slide = 1;
+    uniform_values->animations = false;
+    uniform_values->motion = false;
+    *fps = 0;
+    *generation = -1;
+  } else if ((roadmap->id >= ATLASTEXTUREPATH_MALLOC_FAILED_RM) &&
+    (roadmap->id <= BAD_ATLASPNG_DIMENSIONS_RM)) {
+      *generation = 0;
+      uniform_values->slide = 0;
+      *width = UNDEFINED_SIZE;
+      *height = UNDEFINED_SIZE;
+  } else if (roadmap->id == PRECOMPUTE_AND_STOP_RM) {
+    *generation = 1;
+    uniform_values->slide = 0;
+    *width = UNDEFINED_SIZE;
+    *height = UNDEFINED_SIZE;
+  } else if (roadmap->id == PRECOMPUTE_AND_CONTINUE_RM) {
+    *generation = 0;
+    uniform_values->slide = 0;
+    *width = UNDEFINED_SIZE;
+    *height = UNDEFINED_SIZE;
+    roadmap->id = BREAK_SUCCESS_RM;
+  }
+
+  uniform_values->zoom /= 100.;
 
   return status;
 }

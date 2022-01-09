@@ -7,14 +7,13 @@ make coverage > /dev/null 2>&1
 
 declare -r SPACEPORN="./bin/cov/spaceporn"
 
-declare -a -r ROADMAPS=($(seq 2 $(${SPACEPORN} -M))
+declare -a -r ROADMAPS=($(seq 1 $(${SPACEPORN} -M))
 
 ${SPACEPORN} -h > /dev/null 2>&1
 ${SPACEPORN} -x -1 > /dev/null 2>&1
 ${SPACEPORN} -f 0 > /dev/null 2>&1
 ${SPACEPORN} -z 0 > /dev/null 2>&1
 ${SPACEPORN} -s 0 > /dev/null 2>&1
-${SPACEPORN} -s 1 -R 1 > /dev/null 2>&1
 ${SPACEPORN} -V -R -1 > /dev/null 2>&1
 ${SPACEPORN} -R 54 > /dev/null 2>&1
 ${SPACEPORN} -R 54 fakefile > /dev/null 2>&1

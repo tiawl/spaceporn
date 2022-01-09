@@ -83,14 +83,12 @@ int main(int argc, char** argv)
 
   do
   {
-    if (!parsing_options(&verbose, &fps, &generation, &uniform_values,
-      &roadmap, &argc, argv))
+    if (!parsing_options(&verbose, &fps, &generation, &(atlas.width),
+      &(atlas.height), &uniform_values, &roadmap, &argc, argv))
     {
       status = false;
       break;
     }
-
-    uniform_values.zoom /= 100.;
 
     struct timeval start_loop;
     struct timeval end_loop;
@@ -131,6 +129,11 @@ are initialized\n"));
     {
       LOG(verbose, printf("Computing textures atlas dimensions ...\n"));
 
+      if ((atlas.width == UNDEFINED_SIZE) || (atlas.height == UNDEFINED_SIZE))
+      {
+        atlas.width = 16;
+        atlas.height = 8;
+//     } else {
 //       if (context.window_attribs.width >= context.window_attribs.height)
 //       {
 //         atlas.width = nextpow2(MAX_PIXELS * 5 *
@@ -141,6 +144,7 @@ are initialized\n"));
 //         ((int) round(((double) context.window_attribs.height) /
 //           ((double) context.window_attribs.width))));
 //       }
+      }
       LOG(verbose, printf("Textures atlas dimensions are: %dx%d\n", atlas.width,
         atlas.height));
 

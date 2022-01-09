@@ -11,32 +11,12 @@ make clean all > /dev/null 2>&1
 
 declare -r SPACEPORN="./bin/all/spaceporn"
 
-declare -a -r ROADMAPS=($(seq 2 $(${SPACEPORN} -M))
+declare -a -r ROADMAPS=($(seq 1 $(${SPACEPORN} -M))
 
 declare -r VERTEXFILE_MIN=$(${SPACEPORN} -T | tr ' ' '\n' | head -n 1)
 declare -r VERTEXFILE_MAX=$(${SPACEPORN} -T | tr ' ' '\n' | tail -n 1)
 declare -r FRAGMENTFILE_MIN=$(${SPACEPORN} -F | tr ' ' '\n' | head -n 1)
 declare -r FRAGMENTFILE_MAX=$(${SPACEPORN} -F | tr ' ' '\n' | tail -n 1)
-
-VALGRIND_OUTPUT=$(valgrind --leak-check=summary --show-leak-kinds=all \
-  --suppressions=amd.supp ${SPACEPORN} -R 1 -s 1 2>&1 > /dev/null \
-  | sed 's/==[[:digit:]]*==/ /g')
-
-[[ $(echo "${VALGRIND_OUTPUT}" | tee >(grep -E -A 4 "LEAK SUMMARY") \
-  >(grep -E "ERROR SUMMARY") > /dev/null | grep -Po '^\D*\K(\d,?)+' \
-  | tr -d ',' | grep -E -v "^0$" | wc -l) -gt 0 ]] && STATUS=1
-
-EQUALS=$(( 77 / 2 ))
-
-BAR=$(printf %${EQUALS}s | tr ' ' '=')
-printf "${BAR} 1 ${BAR}="
-
-echo -e "\n\n$(echo "${VALGRIND_OUTPUT}" | grep -E -A 2 "HEAP SUMMARY")\n"
-[[ "${VALGRIND_OUTPUT}" =~ LEAK\ SUMMARY ]] && echo -e "$( \
-echo "${VALGRIND_OUTPUT}" | grep -E -A 5 "LEAK SUMMARY")\n"
-echo -e "$(echo "${VALGRIND_OUTPUT}" | grep -E "ERROR SUMMARY")\n"
-
-[[ ${STATUS} -ne 0 ]] && exit 1
 
 for ROADMAP in ${ROADMAPS[@]}; do
 

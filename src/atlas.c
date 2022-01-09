@@ -399,38 +399,28 @@ atlas\n");
     LOG(verbose, printf("  PNG textures atlas written\n"));
   } while (false);
 
+  return status;
+}
 
+void freeAtlas(Atlas* atlas, bool verbose)
+{
   if (atlas->texels != NULL)
   {
     for (int i = 0; i < atlas->height * atlas->depth; i++)
     {
       if (atlas->texels[i] != NULL)
       {
-        LOG(verbose, printf("  Freeing memory for texels[%d] \
-...\n", i));
+        LOG(verbose, printf("  Freeing texels[%d] memory ...\n", i));
         free(atlas->texels[i]);
         atlas->texels[i] = NULL;
         LOG(verbose, printf("  Memory freed successfully\n"));
       }
     }
 
-    LOG(verbose, printf("  Freeing memory for texels ...\n"));
+    LOG(verbose, printf("  Freeing texels memory ...\n"));
     free(atlas->texels);
     atlas->texels = NULL;
     LOG(verbose, printf("  Memory freed successfully\n"));
-  }
-
-  return status;
-}
-
-void freeAtlas(Atlas* atlas, bool verbose)
-{
-  if (atlas->texels)
-  {
-    LOG(verbose, printf("Freeing texels ...\n"));
-    free(atlas->texels);
-    atlas->texels = NULL;
-    LOG(verbose, printf("Texels freed\n"));
   }
 }
 

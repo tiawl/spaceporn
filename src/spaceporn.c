@@ -131,8 +131,8 @@ are initialized\n"));
 
       if ((atlas.width == UNDEFINED_SIZE) || (atlas.height == UNDEFINED_SIZE))
       {
-        atlas.width = 16;
-        atlas.height = 8;
+        atlas.width = nextpow2(15);
+        atlas.height = nextpow2(7);
 //     } else {
 //       if (context.window_attribs.width >= context.window_attribs.height)
 //       {

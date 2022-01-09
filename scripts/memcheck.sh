@@ -11,7 +11,7 @@ make clean all > /dev/null 2>&1
 
 declare -r SPACEPORN="./bin/all/spaceporn"
 
-declare -a -r ROADMAPS=($(seq 1 $(${SPACEPORN} -M))
+declare -a -r ROADMAPS=($(seq 1 $(${SPACEPORN} -M)))
 
 declare -r VERTEXFILE_MIN=$(${SPACEPORN} -T | tr ' ' '\n' | head -n 1)
 declare -r VERTEXFILE_MAX=$(${SPACEPORN} -T | tr ' ' '\n' | tail -n 1)
@@ -19,6 +19,8 @@ declare -r FRAGMENTFILE_MIN=$(${SPACEPORN} -F | tr ' ' '\n' | head -n 1)
 declare -r FRAGMENTFILE_MAX=$(${SPACEPORN} -F | tr ' ' '\n' | tail -n 1)
 
 for ROADMAP in ${ROADMAPS[@]}; do
+
+  [[ -f "textures/atlas.png" ]] && rm -f textures/atlas.png
 
   FLAGS=""
   if [[ ${ROADMAP} -ge ${VERTEXFILE_MIN} \

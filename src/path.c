@@ -86,17 +86,17 @@ bool initPaths(Shaders* shaders, PNG* png, PNG* atlas, bool verbose,
     char* home = NULL;
     if (roadmap->id != GETENV_HOME_FAILED_RM)
     {
-        home = getenv("HOME");
+      home = getenv("HOME");
     }
 
     if (!home)
     {
-        LOG(verbose, printf("  "));
-        fprintf((verbose ? stdout : stderr), "Unfoundable HOME environment \
+      LOG(verbose, printf("  "));
+      fprintf((verbose ? stdout : stderr), "Unfoundable HOME environment \
 variable\n");
 
-        status = false;
-        break;
+      status = false;
+      break;
     }
     LOG(verbose, printf("  HOME is \"%s\"\n", home));
 

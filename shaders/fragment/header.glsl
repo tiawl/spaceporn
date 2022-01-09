@@ -1,6 +1,7 @@
 // TODO:
-// - More parameters on different planets to add more variety
+// - More parameters on different planets to add more diversity
 // - dry planet
+// - lava planet
 // - galaxy
 // - dark hole (with event horizon animation)
 // - group of asteroids

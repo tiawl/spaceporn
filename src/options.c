@@ -46,6 +46,7 @@ bool parsing_options(bool* verbose, long* fps, long* generation,
 {
   int status = true;
   char* dir = NULL;
+  char* home = NULL;
 
   do
   {
@@ -241,26 +242,44 @@ bool parsing_options(bool* verbose, long* fps, long* generation,
               {
                 if (roadmap->id < FRAGMENT_FILE_SARH_HEADER_MALLOC_FAILED_RM)
                 {
-                  dir = malloc(sizeof(char) * (strlen(SHADERS_DIR) +
-                    strlen(VERTEX_DIR) + strlen(argv[i]) + 1));
+                  home = getenv("HOME");
+                  if (!home)
+                  {
+                    fprintf(stderr, "getenv() failed when parsing options.\n");
+                    status = false;
+                    break;
+                  }
+                  dir = malloc(sizeof(char) * (strlen(home) +
+                    strlen(SHADERS_DIR) + strlen(VERTEX_DIR) +
+                    strlen(argv[i]) + 1));
                   if (!dir)
                   {
                     fprintf(stderr, "malloc() failed when parsing options.\n");
                     status = false;
                     break;
                   }
-                  strcpy(dir, SHADERS_DIR);
+                  strcpy(dir, home);
+                  strcat(dir, SHADERS_DIR);
                   strcat(dir, VERTEX_DIR);
                 } else {
-                  dir = malloc(sizeof(char) * (strlen(SHADERS_DIR) +
-                    strlen(FRAGMENT_DIR) + strlen(argv[i]) + 1));
+                  home = getenv("HOME");
+                  if (!home)
+                  {
+                    fprintf(stderr, "getenv() failed when parsing options.\n");
+                    status = false;
+                    break;
+                  }
+                  dir = malloc(sizeof(char) * (strlen(home) +
+                    strlen(SHADERS_DIR) + strlen(FRAGMENT_DIR) +
+                    strlen(argv[i]) + 1));
                   if (!dir)
                   {
                     fprintf(stderr, "malloc() failed when parsing options.\n");
                     status = false;
                     break;
                   }
-                  strcpy(dir, SHADERS_DIR);
+                  strcpy(dir, home);
+                  strcat(dir, SHADERS_DIR);
                   strcat(dir, FRAGMENT_DIR);
                 }
                 strcat(dir, argv[i]);

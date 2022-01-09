@@ -7,7 +7,7 @@ make coverage > /dev/null 2>&1
 
 declare -r SPACEPORN="./bin/cov/spaceporn"
 
-declare -a -r ROADMAPS=($(seq 1 $(${SPACEPORN} -M))
+declare -a -r ROADMAPS=($(seq 1 $(${SPACEPORN} -M)))
 
 ${SPACEPORN} -h > /dev/null 2>&1
 ${SPACEPORN} -x -1 > /dev/null 2>&1
@@ -26,6 +26,8 @@ declare -r FRAGMENTFILE_MAX=$(${SPACEPORN} -F | tr ' ' '\n' | tail -n 1)
 echo
 
 for ROADMAP in ${ROADMAPS[@]}; do
+
+  [[ -f "textures/atlas.png" ]] && rm -f textures/atlas.png
 
   FLAGS=""
   if [[ ${ROADMAP} -ge ${VERTEXFILE_MIN} \

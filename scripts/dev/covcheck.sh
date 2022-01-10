@@ -3,6 +3,7 @@
 declare -r FRAGMENTS=$(find shaders/fragment -type f)
 declare -r VERTEXES=$(find shaders/vertex -type f)
 
+echo -e "\nCompiling ...\n"
 make clean coverage > /dev/null 2>&1
 
 declare -r SPACEPORN="./bin/cov/spaceporn"
@@ -12,6 +13,7 @@ declare -a -r ROADMAPS=($(seq 1 $(${SPACEPORN} -M)))
 
 ${SPACEPORN} -h > /dev/null 2>&1
 ${SPACEPORN} -s 0 > /dev/null 2>&1
+${SPACEPORN} -s 1 -R c > /dev/null 2>&1
 ${SPACEPORN} -s c > /dev/null 2>&1
 ${SPACEPORN} -s ${BIG_INT} > /dev/null 2>&1
 ${SPACEPORN} -g 1 > /dev/null 2>&1

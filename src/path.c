@@ -1,7 +1,7 @@
 #include "path.h"
 
-bool initShaderPath(char** path, size_t len[4], char* home, char* dir,
-  bool verbose, Roadmap* roadmap)
+bool initShaderPath(char** path, size_t len[4], char* dir, bool verbose,
+  Roadmap* roadmap)
 {
   int status = true;
 
@@ -24,7 +24,7 @@ bool initShaderPath(char** path, size_t len[4], char* home, char* dir,
     LOG(verbose, printf("    Successful allocated memory for shader path\n"));
 
     LOG(verbose, printf("    Building shader path string ... 0/4\n"));
-    memcpy(*path, home, len[0]);
+    memcpy(*path, ROOT, len[0]);
     LOG(verbose, printf("    Building shader path string ... 1/4\n"));
     memcpy(*path + len[0], SHADERS_DIR, len[1]);
     LOG(verbose, printf("    Building shader path string ... 2/4\n"));
@@ -38,8 +38,8 @@ bool initShaderPath(char** path, size_t len[4], char* home, char* dir,
   return status;
 }
 
-bool initTexturePath(PNG* png, size_t len[4], char* home, char* path,
-  bool verbose, Roadmap* roadmap)
+bool initTexturePath(PNG* png, size_t len[4], char* path, bool verbose,
+  Roadmap* roadmap)
 {
   int status = true;
 
@@ -63,7 +63,7 @@ bool initTexturePath(PNG* png, size_t len[4], char* home, char* path,
     LOG(verbose, printf("    Successful allocated memory for texture path\n"));
 
     LOG(verbose, printf("    Building texture path string ... 0/3\n"));
-    memcpy(png->path, home, len[0]);
+    memcpy(png->path, ROOT, len[0]);
     LOG(verbose, printf("    Building texture path string ... 1/3\n"));
     memcpy(png->path + len[0], TEXTURES_DIR, len[1]);
     LOG(verbose, printf("    Building texture path string ... 2/3\n"));
@@ -82,27 +82,9 @@ bool initPaths(Shaders* shaders, PNG* png, PNG* atlas, bool verbose,
 
   do
   {
-    LOG(verbose, printf("  Querying HOME environment variable ...\n"));
-    char* home = NULL;
-    if (roadmap->id != GETENV_HOME_FAILED_RM)
-    {
-      home = getenv("HOME");
-    }
-
-    if (!home)
-    {
-      LOG(verbose, printf("  "));
-      fprintf((verbose ? stdout : stderr), "Unfoundable HOME environment \
-variable\n");
-
-      status = false;
-      break;
-    }
-    LOG(verbose, printf("  HOME is \"%s\"\n", home));
-
-    LOG(verbose, printf("  Computing HOME length ...\n"));
-    const size_t len1 = strlen(home);
-    LOG(verbose, printf("  Length of \"%s\" is %lu\n", home, len1));
+    LOG(verbose, printf("  Computing ROOT length ...\n"));
+    const size_t len1 = strlen(ROOT);
+    LOG(verbose, printf("  Length of \"%s\" is %lu\n", ROOT, len1));
 
     LOG(verbose, printf("  Computing length of shaders directory path ...\n"));
     const size_t len2 = strlen(SHADERS_DIR);
@@ -141,7 +123,7 @@ variable\n");
     };
 
     LOG(verbose, printf("  Initializing fragment shader path ...\n"));
-    if (!initShaderPath(&(shaders->fshaderpath), length, home, FRAGMENT_DIR,
+    if (!initShaderPath(&(shaders->fshaderpath), length, FRAGMENT_DIR,
       verbose, roadmap))
     {
       LOG(verbose, printf("  "));
@@ -161,7 +143,7 @@ initialization failed\n");
     }
 
     LOG(verbose, printf("  Initializing vertex shader path ...\n"));
-    if (!initShaderPath(&(shaders->vshaderpath), length, home, VERTEX_DIR,
+    if (!initShaderPath(&(shaders->vshaderpath), length, VERTEX_DIR,
       verbose, roadmap))
     {
       LOG(verbose, printf("  "));
@@ -178,7 +160,7 @@ initialization failed\n");
     length[3] = 0;
 
     LOG(verbose, printf("  Initializing texture path ...\n"));
-    if (!initTexturePath(png, length, home, BIGSTARS_FILE, verbose, roadmap))
+    if (!initTexturePath(png, length, BIGSTARS_FILE, verbose, roadmap))
     {
       LOG(verbose, printf("  "));
       fprintf((verbose ? stdout : stderr), "Texture path initialization \
@@ -197,7 +179,7 @@ failed\n");
     }
 
     LOG(verbose, printf("  Initializing atlas texture path ...\n"));
-    if (!initTexturePath(atlas, length, home, ATLAS_FILE, verbose, roadmap))
+    if (!initTexturePath(atlas, length, ATLAS_FILE, verbose, roadmap))
     {
       LOG(verbose, printf("  "));
       fprintf((verbose ? stdout : stderr), "Atlas texture path \

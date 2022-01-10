@@ -2,8 +2,6 @@
 
 int main(int argc, char** argv)
 {
-  printf("PREFIX = %s\n", PREFIX);
-  return 0;
   srand(time(NULL));
 
   bool status = true;

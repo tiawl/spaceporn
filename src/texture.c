@@ -10,18 +10,18 @@ bool loadPng(PNG* png, Shaders* shaders, Log* log)
     int bit_depth;
     int color_type;
 
-    LOG(verbose, printf("  Checking PNG filename ...\n"));
+    writeLog(log, stdout, "", "  Checking PNG filename ...\n");
     if (!png->path || (log->roadmap.id == NO_PNG_FILENAME_RM))
     {
-      LOG(verbose, printf("  "));
-      fprintf((verbose ? stdout : stderr), "PNG filename is null\n");
+      writeLog(log, (log->verbose ? stdout : stderr), "  ",
+        "PNG filename is null\n");
 
       status = false;
       break;
     }
-    LOG(verbose, printf("  PNG filename is not null ...\n"));
+    writeLog(log, stdout, "", "  PNG filename is not null ...\n");
 
-    LOG(verbose, printf("  Opening PNG file \"%s\" ...\n", png->path));
+    writeLog(log, stdout, "", "  Opening PNG file \"%s\" ...\n", png->path);
     if (log->roadmap.id != FOPEN_PNG_FILE_FAILED_RM)
     {
       png->file = fopen(png->path, "rb");
@@ -29,15 +29,16 @@ bool loadPng(PNG* png, Shaders* shaders, Log* log)
 
     if (!png->file)
     {
-      LOG(verbose, printf("  "));
-      fprintf((verbose ? stdout : stderr), "Failed to open \"%s\"\n", png->path);
+      writeLog(log, (log->verbose ? stdout : stderr), "  ",
+        "Failed to open \"%s\"\n", png->path);
 
       status = false;
       break;
     }
-    LOG(verbose, printf("  PNG file opened\n"));
+    writeLog(log, stdout, "", "  PNG file opened\n");
 
-    LOG(verbose, printf("  Creating structure for reading PNG file ...\n"));
+    writeLog(log, stdout, "",
+      "  Creating structure for reading PNG file ...\n");
     if (log->roadmap.id != PNGCREATEREADSTRUCT_FAILED_RM)
     {
       png->ptr =
@@ -46,15 +47,15 @@ bool loadPng(PNG* png, Shaders* shaders, Log* log)
 
     if (!png->ptr)
     {
-      LOG(verbose, printf("  "));
-      fprintf((verbose ? stdout : stderr), "png_create_read_struct() failed\n");
+      writeLog(log, (log->verbose ? stdout : stderr), "  ",
+        "png_create_read_struct() failed\n");
 
       status = false;
       break;
     }
-    LOG(verbose, printf("  Structure for reading PNG file created\n"));
+    writeLog(log, stdout, "", "  Structure for reading PNG file created\n");
 
-    LOG(verbose, printf("  Creating PNG info structure ...\n"));
+    writeLog(log, stdout, "", "  Creating PNG info structure ...\n");
     if (log->roadmap.id != PNGCREATEREADINFOSTRUCT_FAILED_RM)
     {
       png->info = png_create_info_struct(png->ptr);
@@ -62,68 +63,67 @@ bool loadPng(PNG* png, Shaders* shaders, Log* log)
 
     if (!png->info)
     {
-      LOG(verbose, printf("  "));
-      fprintf((verbose ? stdout : stderr), "png_create_info_struct() failed\n");
+      writeLog(log, (log->verbose ? stdout : stderr), "  ",
+        "png_create_info_struct() failed\n");
 
       status = false;
       break;
     }
-    LOG(verbose, printf("  PNG info structure created\n"));
+    writeLog(log, stdout, "", "  PNG info structure created\n");
 
-    LOG(verbose, printf("  Searching libPNG error ...\n"));
+    writeLog(log, stdout, "", "  Searching libPNG error ...\n");
     if (setjmp(png_jmpbuf(png->ptr)) ||
       (log->roadmap.id == PNG_READJMPBUF_FAILED_RM))
     {
-      LOG(verbose, printf("  "));
-      fprintf((verbose ? stdout : stderr),
+      writeLog(log, (log->verbose ? stdout : stderr), "  ",
         "Routine problem: libPNG encountered an error\n");
 
       status = false;
       break;
     }
-    LOG(verbose, printf("  No error found\n"));
+    writeLog(log, stdout, "", "  No error found\n");
 
-    LOG(verbose, printf("  Initializing PNG input/output ...\n"));
+    writeLog(log, stdout, "", "  Initializing PNG input/output ...\n");
     png_init_io(png->ptr, png->file);
-    LOG(verbose, printf("  PNG input/output initialized\n"));
+    writeLog(log, stdout, "", "  PNG input/output initialized\n");
 
-    LOG(verbose, printf("  Reading PNG info ...\n"));
+    writeLog(log, stdout, "", "  Reading PNG info ...\n");
     png_read_info(png->ptr, png->info);
-    LOG(verbose, printf("  PNG info read\n"));
+    writeLog(log, stdout, "", "  PNG info read\n");
 
-    LOG(verbose, printf("  Querying PNG_IHDR chunk information from PNG info \
-structure ...\n"));
+    writeLog(log, stdout, "",
+      "  Querying PNG_IHDR chunk information from PNG info structure ...\n");
     png_get_IHDR(
       png->ptr, png->info, &w, &h, &bit_depth, &color_type, 0, 0, 0);
-    LOG(verbose, printf("  PNG_IHDR chunk information found\n"));
+    writeLog(log, stdout, "", "  PNG_IHDR chunk information found\n");
 
     if (log->roadmap.id == BAD_PNG_DIMENSIONS_RM)
     {
       w = 15;
     }
 
-    LOG(verbose, printf("  Testing textures dimensions ...\n"));
+    writeLog(log, stdout, "", "  Testing textures dimensions ...\n");
     if ((w & (w - 1)) || (h & (h - 1)) || (w < 8) || (h < 8))
     {
-      LOG(verbose, printf("  "));
-      fprintf((verbose ? stdout : stderr), "Textures with dimensions that \
-are not power of two or smaller than 8 failed to load in OpenGL\n");
+      writeLog(log, (log->verbose ? stdout : stderr), "  ",
+        "Textures with dimensions that are not power of two or smaller %s",
+        "than 8 failed to load in OpenGL\n");
 
       status = false;
       break;
     }
-    LOG(verbose, printf("  Valid PNG images dimensions\n"));
+    writeLog(log, stdout, "", "  Valid PNG images dimensions\n");
 
-    LOG(verbose, printf("  Updating PNG info structure ...\n"));
+    writeLog(log, stdout, "", "  Updating PNG info structure ...\n");
     png_read_update_info(png->ptr, png->info);
-    LOG(verbose, printf("  PNG info structure updated\n"));
+    writeLog(log, stdout, "", "  PNG info structure updated\n");
 
-    LOG(verbose, printf("  Querying number of bytes for a row ...\n"));
+    writeLog(log, stdout, "", "  Querying number of bytes for a row ...\n");
     int rowbytes = png_get_rowbytes(png->ptr, png->info);
     rowbytes += 3 - ((rowbytes-1) % 4);
-    LOG(verbose, printf("  Number of bytes for a row is %d\n", rowbytes));
+    writeLog(log, stdout, "", "  Number of bytes for a row is %d\n", rowbytes);
 
-    LOG(verbose, printf("  Allocating memory for data ...\n"));
+    writeLog(log, stdout, "", "  Allocating memory for data ...\n");
     if (log->roadmap.id != PNG_DATA_MALLOC_FAILED_RM)
     {
       png->data = malloc(rowbytes * h * sizeof(png_byte) + 15);
@@ -131,15 +131,15 @@ are not power of two or smaller than 8 failed to load in OpenGL\n");
 
     if (!png->data)
     {
-      LOG(verbose, printf("  "));
-      fprintf((verbose ? stdout : stderr), "data malloc() failed\n");
+      writeLog(log, (log->verbose ? stdout : stderr), "  ",
+        "data malloc() failed\n");
 
       status = false;
       break;
     }
-    LOG(verbose, printf("  Memory allocated successfully\n"));
+    writeLog(log, stdout, "", "  Memory allocated successfully\n");
 
-    LOG(verbose, printf("  Allocating memory for row_pointers ...\n"));
+    writeLog(log, stdout, "", "  Allocating memory for row_pointers ...\n");
     if (log->roadmap.id != PNG_READROWPOINTERS_MALLOC_FAILED_RM)
     {
       png->row_pointers = malloc(h * sizeof(png_bytep));
@@ -147,72 +147,71 @@ are not power of two or smaller than 8 failed to load in OpenGL\n");
 
     if (!png->row_pointers)
     {
-      LOG(verbose, printf("  "));
-      fprintf((verbose ? stdout : stderr), "row_pointers malloc() \
-failed\n");
+      writeLog(log, (log->verbose ? stdout : stderr), "  ",
+        "row_pointers malloc() failed\n");
 
       status = false;
       break;
     }
-    LOG(verbose, printf("  Memory allocated successfully\n"));
+    writeLog(log, stdout, "", "  Memory allocated successfully\n");
 
     for (png_uint_32 i = 0; i < h; ++i)
     {
-      LOG(verbose, printf("  Setting individual row_pointers to point \
-at the correct offsets of data ... %d/%d\n", i, h));
+      writeLog(log, stdout, "", "  Setting individual row_pointers %s %d/%d\n",
+        "to point at the correct offsets of data ...", i, h);
       png->row_pointers[h - 1 - i] = png->data + i * rowbytes;
     }
-    LOG(verbose, printf("  Setting individual row_pointers to point at \
-the correct offsets of data ... %d/%d\n", h, h));
-    LOG(verbose, printf("  Individual row_pointers set\n"));
+    writeLog(log, stdout, "", "  Setting individual row_pointers %s %d/%d\n",
+      "to point at the correct offsets of data ...", h, h);
+    writeLog(log, stdout, "", "  Individual row_pointers set\n");
 
-    LOG(verbose, printf("  Reading PNG image into memory ...\n"));
+    writeLog(log, stdout, "", "  Reading PNG image into memory ...\n");
     png_read_image(png->ptr, png->row_pointers);
-    LOG(verbose, printf("  PNG image read into memory\n"));
+    writeLog(log, stdout, "", "  PNG image read into memory\n");
 
-    LOG(verbose, printf("  Finishing PNG reading ...\n"));
+    writeLog(log, stdout, "", "  Finishing PNG reading ...\n");
     png_read_end(png->ptr, NULL);
-    LOG(verbose, printf("  PNG reading finished\n"));
+    writeLog(log, stdout, "", "  PNG reading finished\n");
 
-    LOG(verbose, printf("  Generating OpenGL texture ...\n"));
-    GL_CHECK(glGenTextures(1, &(png->texture)), status);
-    LOG(verbose, printf("  OpenGL texture is %d\n", png->texture));
+    writeLog(log, stdout, "", "  Generating OpenGL texture ...\n");
+    GL_CHECK(glGenTextures(1, &(png->texture)), status, log);
+    writeLog(log, stdout, "", "  OpenGL texture is %d\n", png->texture);
 
-    LOG(verbose, printf("  Activating OpenGL texture ...\n"));
-    GL_CHECK(glActiveTexture(GL_TEXTURE0 + png->texture_unit), status);
-    LOG(verbose, printf("  OpenGL texture activated\n"));
+    writeLog(log, stdout, "", "  Activating OpenGL texture ...\n");
+    GL_CHECK(glActiveTexture(GL_TEXTURE0 + png->texture_unit), status, log);
+    writeLog(log, stdout, "", "  OpenGL texture activated\n");
 
-    LOG(verbose, printf("  Binding OpenGL texture ...\n"));
-    GL_CHECK(glBindTexture(GL_TEXTURE_2D, png->texture), status);
-    LOG(verbose, printf("  OpenGL texture binded\n"));
+    writeLog(log, stdout, "", "  Binding OpenGL texture ...\n");
+    GL_CHECK(glBindTexture(GL_TEXTURE_2D, png->texture), status, log);
+    writeLog(log, stdout, "", "  OpenGL texture binded\n");
 
-    LOG(verbose, printf("  Setting texture unit to use ...\n"));
+    writeLog(log, stdout, "", "  Setting texture unit to use ...\n");
     GL_CHECK(glUniform1i(glGetUniformLocation(shaders->program,
-      "bigstars_texture"), png->texture_unit), status);
-    LOG(verbose, printf("  Texture unit ready to use\n"));
+      "bigstars_texture"), png->texture_unit), status, log);
+    writeLog(log, stdout, "", "  Texture unit ready to use\n");
 
     GLenum texture_format =
       (color_type & PNG_COLOR_MASK_ALPHA) ? GL_RGBA : GL_RGB;
 
-    LOG(verbose, printf("  Specifying 2D OpenGL texture ...\n"));
+    writeLog(log, stdout, "", "  Specifying 2D OpenGL texture ...\n");
     GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, texture_format, w, h,
-      0, texture_format, GL_UNSIGNED_BYTE, png->data), status);
-    LOG(verbose, printf("  2D OpenGL texture specified\n"));
+      0, texture_format, GL_UNSIGNED_BYTE, png->data), status, log);
+    writeLog(log, stdout, "", "  2D OpenGL texture specified\n");
 
-    LOG(verbose, printf("  Disabling OpenGL Texture repetition ...\n"));
+    writeLog(log, stdout, "", "  Disabling OpenGL Texture repetition ...\n");
     GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
-      GL_CLAMP_TO_BORDER), status);
+      GL_CLAMP_TO_BORDER), status, log);
     GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,
-      GL_CLAMP_TO_BORDER), status);
-    LOG(verbose, printf("  OpenGL texture repetition disabled\n"));
+      GL_CLAMP_TO_BORDER), status, log);
+    writeLog(log, stdout, "", "  OpenGL texture repetition disabled\n");
 
-    LOG(verbose, printf("  Specifying texture element value to the nearest \
-texture coordinates ...\n"));
+    writeLog(log, stdout, "", "  Specifying texture element value to the %s",
+      "nearest texture coordinates ...\n");
     GL_CHECK(glTexParameteri(
-      GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST), status);
+      GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST), status, log);
     GL_CHECK(glTexParameteri(
-      GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST), status);
-    LOG(verbose, printf("  Texture element value specified ...\n"));
+      GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST), status, log);
+    writeLog(log, stdout, "", "  Texture element value specified ...\n");
   } while (false);
 
   return status;
@@ -224,53 +223,54 @@ bool freePng(PNG* png, Log* log)
 
   if (png->path)
   {
-    LOG(verbose, printf("Freeing texture path ...\n"));
+    writeLog(log, stdout, "", "Freeing texture path ...\n");
     free(png->path);
     png->path = NULL;
-    LOG(verbose, printf("Texture path freed\n"));
+    writeLog(log, stdout, "", "Texture path freed\n");
   }
 
   if (png->ptr)
   {
-    LOG(verbose, printf("Destroying PNG read struct and PNG info struct \
-...\n"));
+    writeLog(log, stdout, "",
+      "Destroying PNG read struct and PNG info struct ...\n");
     png_destroy_read_struct(&(png->ptr), png->info ? &(png->info) : 0, 0);
     png->ptr = 0;
     png->info = 0;
-    LOG(verbose, printf("PNG read struct and PNG info struct destroyed\n"));
+    writeLog(log, stdout, "",
+      "PNG read struct and PNG info struct destroyed\n");
   }
 
   if (png->row_pointers)
   {
-    LOG(verbose, printf("Freeing PNG row_pointers ...\n"));
+    writeLog(log, stdout, "", "Freeing PNG row_pointers ...\n");
     free(png->row_pointers);
     png->row_pointers = NULL;
-    LOG(verbose, printf("PNG row_pointers freed\n"));
+    writeLog(log, stdout, "", "PNG row_pointers freed\n");
   }
 
   if (png->data)
   {
-    LOG(verbose, printf("Freeing PNG data ...\n"));
+    writeLog(log, stdout, "", "Freeing PNG data ...\n");
     free(png->data);
     png->data = NULL;
-    LOG(verbose, printf("PNG data freed\n"));
+    writeLog(log, stdout, "", "PNG data freed\n");
   }
 
   if (png->file)
   {
-    LOG(verbose, printf("Closing PNG file ...\n"));
+    writeLog(log, stdout, "", "Closing PNG file ...\n");
     fclose(png->file);
     png->file = NULL;
-    LOG(verbose, printf("PNG file closed\n"));
+    writeLog(log, stdout, "", "PNG file closed\n");
   }
 
   do
   {
     if (png->texture)
     {
-      LOG(verbose, printf("Deleting OpenGL texture ...\n"));
-      GL_CHECK(glDeleteTextures(1, &(png->texture)), status);
-      LOG(verbose, printf("OpenGL texture deleted\n"));
+      writeLog(log, stdout, "", "Deleting OpenGL texture ...\n");
+      GL_CHECK(glDeleteTextures(1, &(png->texture)), status, log);
+      writeLog(log, stdout, "", "OpenGL texture deleted\n");
     }
   } while (false);
 

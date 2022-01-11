@@ -1,80 +1,26 @@
 #include "util.h"
 
-void freeLog(Log* log)
+void writeLog(Log* log, FILE* stream, const char* stdoutstr,
+  const char* str, ...)
 {
-  if (log->path)
-  {
-    LOG(verbose, printf("Freeing log path ...\n"));
-    free(log->path);
-    log->path = NULL;
-    LOG(verbose, printf("Log path freed\n"));
-  }
-
-  if (log->buffer)
-  {
-    LOG(verbose, printf("Freeing log buffer ...\n"));
-    free(log->buffer);
-    log->buffer = NULL;
-    LOG(verbose, printf("Log buffer freed\n"));
-  }
-
-  if (log->file)
-  {
-    LOG(verbose, printf("Closing log file ...\nLog file closed\n"));
-    fclose(log->file);
-    log->file = NULL;
-  }
-}
-
-bool initLog(Log* log)
-{
-  bool status = true;
-  do
-  {
-    LOG(verbose, printf("  Opening log file \"%s\" ...\n", log->path));
-    if (log->roadmap.id != FOPEN_LOG_FAILED_RM)
-    {
-      log->file = fopen(log->path, "wb");
-    }
-
-    if (!log->file)
-    {
-      LOG(verbose, printf("  "));
-      fprintf((verbose ? stdout : stderr), "Failed to open \"%s\"\n",
-        log->path);
-
-      status = false;
-      break;
-    }
-    LOG(verbose, printf("  Log file opened ...\n"));
-
-    if (log->buffer)
-    {
-      fprintf(log->file, log->buffer);
-      free(log->buffer);
-      log->buffer = NULL;
-    }
-  } while (false);
-
-  return status
-}
-
-void writeLog(Log* log, FILE* stream, char* stdoutstr, const char* str, ...)
-{
-  char* expanded_str = NULL
+  char* expanded_str = NULL;
 
   va_list args;
   va_start(args, str);
 
   size_t expanded_len = vsnprintf(NULL, 0, str, args) + 1;
+  size_t stdoutstr_len = strlen(stdoutstr);
+
+  va_end(args);
+  va_start(args, str);
 
   do
   {
     expanded_str = malloc(sizeof(char) * expanded_len);
     if (!expanded_str)
     {
-      fprintf(stderr, "Failed to allocate memory in writeLog function \
-to expanded_str\n");
+      fprintf(stderr,
+        "Failed to allocate memory in writeLog function to expanded_str\n");
       break;
     }
 
@@ -85,41 +31,44 @@ to expanded_str\n");
       if (!log->buffer)
       {
         log->buffer =
-          malloc(sizeof(char) * (expanded_len + strlen(stdoutstr)));
+          malloc(sizeof(char) * (expanded_len + stdoutstr_len));
 
         if (!log->buffer)
         {
-          fprintf(stderr, "Failed to allocate memory in writeLog function to \
-log buffer\n");
+          fprintf(stderr,
+            "Failed to allocate memory in writeLog function to log buffer\n");
           break;
         }
+
+        strcpy(log->buffer, stdoutstr);
       } else {
         log->buffer = realloc(log->buffer, sizeof(char) *
-          (strlen(log->buffer) + expanded_len + strlen(stdoutstr)));
+          (strlen(log->buffer) + expanded_len + stdoutstr_len));
 
         if (!log->buffer)
         {
-          fprintf(stderr, "Failed to reallocate memory in writeLog function \
-to log buffer\n");
+          fprintf(stderr,
+            "Failed to reallocate memory in writeLog function to log buffer\n");
           break;
         }
+
+        strncat(log->buffer, stdoutstr, stdoutstr_len);
       }
 
-      strcat(log->buffer, stdoutstr);
-      strcat(log->buffer, expanded_str);
+      strncat(log->buffer, expanded_str, expanded_len);
     } else {
-      fprintf(log->file, stdoutstr);
-      fprintf(log->file, expanded_str);
+      fputs(stdoutstr, log->file);
+      fputs(expanded_str, log->file);
     }
 
     if (log->verbose)
     {
-      fprintf(stdout, stdoutstr);
+      fputs(stdoutstr, stdout);
     }
 
     if (log->verbose || (stream == stderr))
     {
-      fprintf(stream, expanded_str);
+      fputs(expanded_str, stream);
     }
 
     free(expanded_str);
@@ -128,13 +77,71 @@ to log buffer\n");
   va_end(args);
 }
 
-bool checkOpenGLError(const char* stmt, const char* fname, int line)
+void freeLog(Log* log)
+{
+  if (log->path)
+  {
+    writeLog(log, stdout, "", "Freeing log path ...\n");
+    free(log->path);
+    log->path = NULL;
+    writeLog(log, stdout, "", "Log path freed\n");
+  }
+
+  if (log->buffer)
+  {
+    writeLog(log, stdout, "", "Freeing log buffer ...\nLog buffer freed\n");
+    free(log->buffer);
+    log->buffer = NULL;
+  }
+
+  if (log->file)
+  {
+    writeLog(log, stdout, "", "Closing log file ...\nLog file closed\n");
+    fclose(log->file);
+    log->file = NULL;
+  }
+}
+
+bool initLog(Log* log)
+{
+  bool status = true;
+  do
+  {
+    writeLog(log, stdout, "",
+      "  Opening log file \"%s\" ...\n  Log file opened ...\n", log->path);
+    if (log->roadmap.id != FOPEN_LOG_FAILED_RM)
+    {
+      log->file = fopen(log->path, "wb");
+    }
+
+    if (!log->file)
+    {
+      writeLog(log, (log->verbose ? stdout : stderr), "  ",
+        "Failed to open \"%s\"\n", log->path);
+
+      status = false;
+      break;
+    }
+
+    if (log->buffer)
+    {
+      fputs(log->buffer, log->file);
+      free(log->buffer);
+      log->buffer = NULL;
+    }
+  } while (false);
+
+  return status;
+}
+
+bool checkOpenGLError(const char* stmt, const char* fname, int line, Log* log)
 {
   bool status = true;
   GLenum error = glGetError();
   if (error != GL_NO_ERROR)
   {
-    printf("OpenGL error %08x, at %s:%i - for %s\n", error, fname, line, stmt);
+    writeLog(log, (log->verbose ? stdout : stderr), "",
+      "OpenGL error %08x, at %s:%i - for %s\n", error, fname, line, stmt);
     status = false;
   }
   return status;

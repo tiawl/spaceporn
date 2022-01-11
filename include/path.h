@@ -18,7 +18,7 @@
 
 bool initShaderPath(char** path, size_t len[4], char* dir, Log* log);
 bool initTexturePath(PNG* png, size_t len[4], char* path, Log* log);
-bool initLogPath(size_t len[4], Log* log);
+bool initLogPath(Log* log);
 bool initPaths(Shaders* shaders, PNG* png, PNG* atlas, Log* log);
 
 #endif

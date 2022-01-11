@@ -12,7 +12,7 @@ int main(int argc, char** argv)
   Log log;
   log.verbose = false;
   log.path = NULL;
-  log.file = NULL
+  log.file = NULL;
   log.buffer = NULL;
   log.roadmap.id = EXIT_SUCCESS_RM;
 
@@ -104,48 +104,52 @@ int main(int argc, char** argv)
       delay = uniform_values.slide;
     }
 
-    LOG(verbose, printf("Initializing log path ...\n"));
+    writeLog(&log, stdout, "", "Initializing log path ...\n");
     if (!initLogPath(&log))
     {
-      fprintf((verbose ? stdout : stderr), "Failed to initialize log path\n");
+      writeLog(&log, (log.verbose ? stdout : stderr), "",
+        "Failed to initialize log path\n");
       status = false;
       break;
     }
-    LOG(verbose, printf("Log path is initialized\n"));
+    writeLog(&log, stdout, "", "Log path is initialized\n");
 
-    LOG(verbose, printf("Initializing log ...\n"));
+    writeLog(&log, stdout, "", "Initializing log ...\n");
     if (!initLog(&log))
     {
-      fprintf((verbose ? stdout : stderr), "Failed to initialize log\n");
+      writeLog(&log, (log.verbose ? stdout : stderr), "",
+        "Failed to initialize log\n");
       status = false;
       break;
     }
-    LOG(verbose, printf("Log is initialized\n"));
+    writeLog(&log, stdout, "", "Log is initialized\n");
 
-    LOG(verbose, printf("Initializing paths ...\n"));
+    writeLog(&log, stdout, "", "Initializing paths ...\n");
     if (!initPaths(&shaders, &png, &png_atlas, &log))
     {
-      fprintf((verbose ? stdout : stderr), "Failed to initialize paths\n");
+      writeLog(&log, (log.verbose ? stdout : stderr), "",
+        "Failed to initialize paths\n");
       status = false;
       break;
     }
-    LOG(verbose, printf("Paths are initialized\n"));
+    writeLog(&log, stdout, "", "Paths are initialized\n");
 
-    LOG(verbose, printf("Creating GLX context ...\n"));
+    writeLog(&log, stdout, "", "Creating GLX context ...\n");
     if (!initContext(&context, &log))
     {
-      fprintf((verbose ? stdout : stderr), "Failed to create a GLX context\n");
+      writeLog(&log, (log.verbose ? stdout : stderr), "",
+        "Failed to create a GLX context\n");
       status = false;
       break;
     }
-    LOG(verbose, printf("GLX context created\n"));
+    writeLog(&log, stdout, "", "GLX context created\n");
 
     uniform_values.width = context.window_attribs.width;
     uniform_values.height = context.window_attribs.height;
 
     if (generation > -1)
     {
-      LOG(verbose, printf("Computing textures atlas dimensions ...\n"));
+      writeLog(&log, stdout, "", "Computing textures atlas dimensions ...\n");
 
       if ((atlas.width == UNDEFINED_SIZE) || (atlas.height == UNDEFINED_SIZE))
       {
@@ -163,18 +167,18 @@ int main(int argc, char** argv)
 //           ((double) context.window_attribs.width))));
 //       }
       }
-      LOG(verbose, printf("Textures atlas dimensions are: %dx%d\n", atlas.width,
-        atlas.height));
+      writeLog(&log, stdout, "", "Textures atlas dimensions are: %dx%d\n",
+        atlas.width, atlas.height);
 
-      LOG(verbose, printf("Generating textures atlas ...\n"));
+      writeLog(&log, stdout, "", "Generating textures atlas ...\n");
       if (!generateAtlas(&atlas, &png_atlas, &log))
       {
-        fprintf((verbose ? stdout : stderr),
+        writeLog(&log, (log.verbose ? stdout : stderr), "",
           "Failed to generate textures atlas\n");
         status = false;
         break;
       }
-      LOG(verbose, printf("Textures atlas generated\n"));
+      writeLog(&log, stdout, "", "Textures atlas generated\n");
 
       if (generation == 1)
       {
@@ -182,18 +186,19 @@ int main(int argc, char** argv)
       }
     }
 
-    LOG(verbose, printf("Loading OpenGL program ...\n"));
+    writeLog(&log, stdout, "", "Loading OpenGL program ...\n");
     if (!loadProgram(&context, &shaders, &log))
     {
-      fprintf((verbose ? stdout : stderr), "OpenGL program failed to load\n");
+      writeLog(&log, (log.verbose ? stdout : stderr), "",
+        "OpenGL program failed to load\n");
       status = false;
       break;
     }
-    LOG(verbose, printf("OpenGL program loaded\n"));
+    writeLog(&log, stdout, "", "OpenGL program loaded\n");
 
     if (log.roadmap.id == OPENGL_ERROR_RM)
     {
-      GL_CHECK(glBindBuffer(0, -1), status);
+      GL_CHECK(glBindBuffer(0, -1), status, &log);
     }
 
     // array of all uniforms to pass to the shader
@@ -205,47 +210,48 @@ int main(int argc, char** argv)
 
     GLuint uniformIds[UNIFORM_COUNT];
 
-    LOG(verbose, printf("Loading PNG texture ...\n"));
+    writeLog(&log, stdout, "", "Loading PNG texture ...\n");
     if (!loadPng(&png, &shaders, &log))
     {
-      fprintf((verbose ? stdout : stderr),
+      writeLog(&log, (log.verbose ? stdout : stderr), ""
         "Failed to load PNG file \"%s\"\n", png.path);
 
       status = false;
       break;
     }
-    LOG(verbose, printf("PNG texture loaded\n"));
+    writeLog(&log, stdout, "", "PNG texture loaded\n");
 
     if (uniform_values.slide == 0)
     {
-      LOG(verbose, printf("Checking if atlas PNG texture exists ...\n"));
+      writeLog(&log, stdout, "", "Checking if atlas PNG texture exists ...\n");
       if (access(png_atlas.path, F_OK) == 0)
       {
         uniform_values.precomputed = true;
-        LOG(verbose, printf("Atlas PNG texture exists\n"));
+        writeLog(&log, stdout, "", "Atlas PNG texture exists\n");
 
-        LOG(verbose, printf("Loading textures atlas ...\n"));
+        writeLog(&log, stdout, "", "Loading textures atlas ...\n");
         if (!loadAtlas(&atlas, &png_atlas, &shaders, &log))
         {
-          fprintf((verbose ? stdout : stderr), "Failed to load textures atlas\n");
+          writeLog(&log, (log.verbose ? stdout : stderr), "",
+            "Failed to load textures atlas\n");
           status = false;
           break;
         }
-        LOG(verbose, printf("Textures atlas loaded\n"));
+        writeLog(&log, stdout, "", "Textures atlas loaded\n");
       } else {
-        LOG(verbose, printf("Atlas PNG texture does not exist\n"));
+        writeLog(&log, stdout, "", "Atlas PNG texture does not exist\n");
       }
     }
 
-    LOG(verbose, printf("Searching uniforms location ...\n"));
+    writeLog(&log, stdout, "", "Searching uniforms location ...\n");
     getUniforms(uniforms, uniformIds, &shaders.program, &log);
-    LOG(verbose, printf("Uniforms location found\n"));
+    writeLog(&log, stdout, "", "Uniforms location found\n");
 
-    LOG(verbose, printf("Initializing vertex buffer object and vertex array \
-object ...\n"));
+    writeLog(&log, stdout, "",
+      "Initializing vertex buffer object and vertex array object ...\n");
     initVertices(&vertices, &log);
-    LOG(verbose, printf("Vertex buffer object and vertex array object \
-initialized\n"));
+    writeLog(&log, stdout, "",
+      "Vertex buffer object and vertex array object initialized\n");
 
     while (true)
     {
@@ -266,31 +272,31 @@ initialized\n"));
 #endif
       }
 
-      LOG(verbose, printf("Updating uniforms ...\n"));
+      writeLog(&log, stdout, "", "Updating uniforms ...\n");
       updateUniforms(uniforms, uniformIds, &uniform_values, &log);
-      LOG(verbose, printf("Uniforms updated\n"));
+      writeLog(&log, stdout, "", "Uniforms updated\n");
 
-      LOG(verbose, printf("Drawing on window ...\n"));
+      writeLog(&log, stdout, "", "Drawing on window ...\n");
       draw(&log);
-      LOG(verbose, printf("Window drawing done\n"));
+      writeLog(&log, stdout, "", "Window drawing done\n");
 
-      LOG(verbose, printf("Swapping front and back buffers ...\n"));
+      writeLog(&log, stdout, "", "Swapping front and back buffers ...\n");
       glXSwapBuffers(context.display, context.window);
-      LOG(verbose, printf("Front and back buffers swapped\n"));
+      writeLog(&log, stdout, "", "Front and back buffers swapped\n");
 
 #if DEBUG
 #define ESCAPE 0x09
-      LOG(verbose, printf("Searching for key press event ...\n"));
+      writeLog(&log, stdout, "", "Searching for key press event ...\n");
       if (XCheckMaskEvent(context.display, KeyPressMask, &context.event))
       {
         if (context.event.xkey.keycode == ESCAPE)
         {
-          LOG(verbose, printf("Escape key press event occured\n"));
+          writeLog(&log, stdout, "", "Escape key press event occured\n");
           break;
         }
-        LOG(verbose, printf("Key press event occured\n"));
+        writeLog(&log, stdout, "", "Key press event occured\n");
       } else {
-        LOG(verbose, printf("Key press event did not occured\n"));
+        writeLog(&log, stdout, "", "Key press event did not occured\n");
       }
 #endif
 
@@ -298,15 +304,15 @@ initialized\n"));
       {
         gettimeofday(&end_loop, NULL);
         gpu_time = timediff(&start_loop, &end_loop) * 1000000.0f;
-        LOG(verbose, printf("Sleeping for %d ms ...\n",
-          gpu_time >= delay ? 0 : delay - gpu_time));
+        writeLog(&log, stdout, "", "Sleeping for %d ms ...\n",
+          gpu_time >= delay ? 0 : delay - gpu_time);
         usleep(gpu_time >= delay ? 0 : delay - gpu_time);
 #if DEBUG
         fps_timer -= (gpu_time > delay ? gpu_time : delay);
         fps_counter++;
 #endif
       } else {
-        LOG(verbose, printf("Sleeping for %d min ...\n", delay));
+        writeLog(&log, stdout, "", "Sleeping for %d min ...\n", delay);
         if (log.roadmap.id == SLIDEMODE_SUCCESS_RM)
         {
           delay = 0;
@@ -314,7 +320,7 @@ initialized\n"));
         }
         sleep(delay * 60);
       }
-      LOG(verbose, printf("Ready to loop again\n"));
+      writeLog(&log, stdout, "", "Ready to loop again\n");
 
       if (log.roadmap.id == BREAK_SUCCESS_RM)
       {

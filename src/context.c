@@ -521,12 +521,12 @@ bool initContext(Context* context, Log* log)
 
     writeLog(log, stdout, "",
       "  Enabling transparency for current window ...\n");
-    GL_CHECK(glEnable(GL_BLEND), status);
+    GL_CHECK(glEnable(GL_BLEND), status, log);
     writeLog(log, stdout, "", "  Transparency enabled for current window\n");
 
     writeLog(log, stdout, "",
       "  Selecting transparency function for current window ...\n");
-    GL_CHECK(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA), status);
+    GL_CHECK(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA), status, log);
     writeLog(log, stdout, "",
       "  Transparency function selected for current window\n");
 

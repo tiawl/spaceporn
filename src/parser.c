@@ -476,7 +476,7 @@ bool searchAndReplaceHeaders(char** filepath, char** buffer, Log* log)
       {
         writeLog(log, (log->verbose ? stdout : stderr), "    ",
           "headers malloc() failed\n");
-        freeRegex(&regex, "", verbose);
+        freeRegex(&regex, "", log);
 
         status = false;
         break;
@@ -496,7 +496,7 @@ bool searchAndReplaceHeaders(char** filepath, char** buffer, Log* log)
       {
         writeLog(log, (log->verbose ? stdout : stderr), "    ",
           "headers[0] malloc() failed\n");
-        freeRegex(&regex, "", verbose);
+        freeRegex(&regex, "", log);
 
         status = false;
         break;
@@ -516,7 +516,7 @@ bool searchAndReplaceHeaders(char** filepath, char** buffer, Log* log)
       {
         writeLog(log, (log->verbose ? stdout : stderr), "    ",
           "Unable to mark the file\n");
-        freeRegex(&regex, "", verbose);
+        freeRegex(&regex, "", log);
 
         status = false;
         break;
@@ -590,7 +590,7 @@ bool searchAndReplaceHeaders(char** filepath, char** buffer, Log* log)
           {
             writeLog(log, (log->verbose ? stdout : stderr), "      ",
               "replace() failed\n");
-            freeRegex(&regex, "  ", verbose);
+            freeRegex(&regex, "  ", log);
 
             status = false;
             break;
@@ -628,7 +628,7 @@ bool searchAndReplaceHeaders(char** filepath, char** buffer, Log* log)
           {
             writeLog(log, (log->verbose ? stdout : stderr), "      ",
               "headers realloc() failed\n");
-            freeRegex(&regex, "  ", verbose);
+            freeRegex(&regex, "  ", log);
 
             status = false;
             break;
@@ -651,7 +651,7 @@ bool searchAndReplaceHeaders(char** filepath, char** buffer, Log* log)
           {
             writeLog(log, (log->verbose ? stdout : stderr), "      ",
               "headers[%lu] malloc() failed\n", regex.headers_length);
-            freeRegex(&regex, "  ", verbose);
+            freeRegex(&regex, "  ", log);
 
             status = false;
             break;
@@ -701,7 +701,7 @@ bool searchAndReplaceHeaders(char** filepath, char** buffer, Log* log)
           {
             writeLog(log, (log->verbose ? stdout : stderr), "      ",
               "Failed to read file\n");
-            freeRegex(&regex, "  ", verbose);
+            freeRegex(&regex, "  ", log);
 
             status = false;
             break;
@@ -727,7 +727,7 @@ bool searchAndReplaceHeaders(char** filepath, char** buffer, Log* log)
           {
             writeLog(log, (log->verbose ? stdout : stderr), "      ",
               "Unable to mark the file\n");
-            freeRegex(&regex, "  ", verbose);
+            freeRegex(&regex, "  ", log);
 
             status = false;
             break;
@@ -759,7 +759,7 @@ bool searchAndReplaceHeaders(char** filepath, char** buffer, Log* log)
           {
             writeLog(log, (log->verbose ? stdout : stderr), "      ",
               "replace() failed\n");
-            freeRegex(&regex, "  ", verbose);
+            freeRegex(&regex, "  ", log);
 
             status = false;
             break;
@@ -795,7 +795,7 @@ bool searchAndReplaceHeaders(char** filepath, char** buffer, Log* log)
       writeLog(log, stdout, "", "    File buffer is now:\n%s\n%s%s\n",
         BAR, *buffer, BAR);
 
-      freeRegex(&regex, "", verbose);
+      freeRegex(&regex, "", log);
 
       writeLog(log, stdout, "", "    Searching for regex error ...\n");
       if ((match != REG_NOMATCH) ||

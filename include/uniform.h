@@ -22,7 +22,7 @@ typedef struct
 typedef struct
 {
   char* name;
-  bool (*update)(GLint, UniformValues*, bool);
+  bool (*update)(GLint, UniformValues*, Log*);
 } Uniform;
 
 #define UNIFORM_COUNT 2

@@ -6,15 +6,15 @@ bool buildFile(char** filepath, char** buffer, Log* log)
 
   do
   {
-    LOG(verbose, printf("    Reading file \"%s\" ...\n", *filepath));
+    writeLog(log, stdout, "", "    Reading file \"%s\" ...\n", *filepath);
     if (!readFile(filepath, buffer, "", log))
     {
-      LOG(verbose, printf("    "));
-      fprintf((verbose ? stdout : stderr), "Failed to read file\n");
+      writeLog(log, (log->verbose ? stdout : stderr), "    ",
+        "Failed to read file\n");
       status = false;
       break;
     }
-    LOG(verbose, printf("    File read successfully\n"));
+    writeLog(log, stdout, "", "    File read successfully\n");
 
     if (!searchAndReplaceHeaders(filepath, buffer, log))
     {
@@ -41,20 +41,25 @@ bool buildVertexShaderFile(Shaders* shaders, Log* log)
     log->roadmap.id = SARH_HEADERS_MALLOC_FAILED_RM;
   } else if (log->roadmap.id == VERTEX_FILE_SARH_HEADER_MALLOC_FAILED_RM) {
     log->roadmap.id = SARH_HEADER_MALLOC_FAILED_RM;
-  } else if (log->roadmap.id == VERTEX_FILE_SARH_ADDMARKERS_REALLOC_FAILED_RM) {
-    log->roadmap.id = SARH_ADDMARKERS_REALLOC_FAILED_RM;
-  } else if (log->roadmap.id == VERTEX_FILE_SARH_REPLACE_1_REGCOMP_FAILED_RM) {
-    log->roadmap.id = SARH_REPLACE_1_REGCOMP_FAILED_RM;
-  } else if (log->roadmap.id == VERTEX_FILE_SARH_REPLACE_1_REALLOC_FAILED_RM) {
-    log->roadmap.id = SARH_REPLACE_1_REALLOC_FAILED_RM;
-  } else if (log->roadmap.id == VERTEX_FILE_SARH_REPLACE_1_REGEXEC_FAILED_RM) {
-    log->roadmap.id = SARH_REPLACE_1_REGEXEC_FAILED_RM;
+  } else if (log->roadmap.id ==
+    VERTEX_FILE_SARH_ADDMARKERS_REALLOC_FAILED_RM) {
+      log->roadmap.id = SARH_ADDMARKERS_REALLOC_FAILED_RM;
+  } else if (log->roadmap.id ==
+    VERTEX_FILE_SARH_REPLACE_1_REGCOMP_FAILED_RM) {
+      log->roadmap.id = SARH_REPLACE_1_REGCOMP_FAILED_RM;
+  } else if (log->roadmap.id ==
+    VERTEX_FILE_SARH_REPLACE_1_REALLOC_FAILED_RM) {
+      log->roadmap.id = SARH_REPLACE_1_REALLOC_FAILED_RM;
+  } else if (log->roadmap.id ==
+    VERTEX_FILE_SARH_REPLACE_1_REGEXEC_FAILED_RM) {
+      log->roadmap.id = SARH_REPLACE_1_REGEXEC_FAILED_RM;
   } else if (log->roadmap.id == VERTEX_FILE_SARH_HEADERS_REALLOC_FAILED_RM) {
     log->roadmap.id = SARH_HEADERS_REALLOC_FAILED_RM;
   } else if (log->roadmap.id == VERTEX_FILE_SARH_HEADER_REALLOC_FAILED_RM) {
     log->roadmap.id = SARH_HEADER_REALLOC_FAILED_RM;
-  } else if (log->roadmap.id == VERTEX_FILE_SARH_READFILE_BUFFER_MALLOC_FAILED_RM) {
-    log->roadmap.id = SARH_READFILE_BUFFER_MALLOC_FAILED_RM;
+  } else if (log->roadmap.id ==
+    VERTEX_FILE_SARH_READFILE_BUFFER_MALLOC_FAILED_RM) {
+      log->roadmap.id = SARH_READFILE_BUFFER_MALLOC_FAILED_RM;
   } else if (log->roadmap.id == VERTEX_FILE_SARH_READFILE_FOPEN_FAILED_RM) {
     log->roadmap.id = SARH_READFILE_FOPEN_FAILED_RM;
   } else if (log->roadmap.id ==
@@ -72,8 +77,7 @@ bool buildVertexShaderFile(Shaders* shaders, Log* log)
 
   if (!buildFile(&(shaders->vshaderpath), &(shaders->vertex_file), log))
   {
-    LOG(verbose, printf("  "));
-    fprintf((verbose ? stdout : stderr),
+    writeLog(log, (log->verbose ? stdout : stderr), "  ",
       "Failed to build vertex shader file\n");
     status = false;
   }
@@ -96,16 +100,21 @@ bool buildFragmentShaderFile(Shaders* shaders, Log* log)
     log->roadmap.id = SARH_HEADERS_MALLOC_FAILED_RM;
   } else if (log->roadmap.id == FRAGMENT_FILE_SARH_HEADER_MALLOC_FAILED_RM) {
     log->roadmap.id = SARH_HEADER_MALLOC_FAILED_RM;
-  } else if (log->roadmap.id == FRAGMENT_FILE_SARH_ADDMARKERS_REALLOC_FAILED_RM) {
-    log->roadmap.id = SARH_ADDMARKERS_REALLOC_FAILED_RM;
-  } else if (log->roadmap.id == FRAGMENT_FILE_SARH_REPLACE_1_REGCOMP_FAILED_RM) {
-    log->roadmap.id = SARH_REPLACE_1_REGCOMP_FAILED_RM;
-  } else if (log->roadmap.id == FRAGMENT_FILE_SARH_REPLACE_1_REALLOC_FAILED_RM) {
-    log->roadmap.id = SARH_REPLACE_1_REALLOC_FAILED_RM;
-  } else if (log->roadmap.id == FRAGMENT_FILE_SARH_REPLACE_1_REGEXEC_FAILED_RM) {
-    log->roadmap.id = SARH_REPLACE_1_REGEXEC_FAILED_RM;
-  } else if (log->roadmap.id == FRAGMENT_FILE_SARH_HEADERS_REALLOC_FAILED_RM) {
-    log->roadmap.id = SARH_HEADERS_REALLOC_FAILED_RM;
+  } else if (log->roadmap.id ==
+    FRAGMENT_FILE_SARH_ADDMARKERS_REALLOC_FAILED_RM) {
+      log->roadmap.id = SARH_ADDMARKERS_REALLOC_FAILED_RM;
+  } else if (log->roadmap.id ==
+    FRAGMENT_FILE_SARH_REPLACE_1_REGCOMP_FAILED_RM) {
+      log->roadmap.id = SARH_REPLACE_1_REGCOMP_FAILED_RM;
+  } else if (log->roadmap.id ==
+    FRAGMENT_FILE_SARH_REPLACE_1_REALLOC_FAILED_RM) {
+      log->roadmap.id = SARH_REPLACE_1_REALLOC_FAILED_RM;
+  } else if (log->roadmap.id ==
+    FRAGMENT_FILE_SARH_REPLACE_1_REGEXEC_FAILED_RM) {
+      log->roadmap.id = SARH_REPLACE_1_REGEXEC_FAILED_RM;
+  } else if (log->roadmap.id ==
+    FRAGMENT_FILE_SARH_HEADERS_REALLOC_FAILED_RM) {
+      log->roadmap.id = SARH_HEADERS_REALLOC_FAILED_RM;
   } else if (log->roadmap.id == FRAGMENT_FILE_SARH_HEADER_REALLOC_FAILED_RM) {
     log->roadmap.id = SARH_HEADER_REALLOC_FAILED_RM;
   } else if (log->roadmap.id ==
@@ -116,20 +125,22 @@ bool buildFragmentShaderFile(Shaders* shaders, Log* log)
   } else if (log->roadmap.id ==
     FRAGMENT_FILE_SARH_ADDMARKERS_IN_LOOP_REALLOC_FAILED_RM) {
       log->roadmap.id = SARH_ADDMARKERS_IN_LOOP_REALLOC_FAILED_RM;
-  } else if (log->roadmap.id == FRAGMENT_FILE_SARH_REPLACE_2_REGCOMP_FAILED_RM) {
-    log->roadmap.id = SARH_REPLACE_2_REGCOMP_FAILED_RM;
-  } else if (log->roadmap.id == FRAGMENT_FILE_SARH_REPLACE_2_REALLOC_FAILED_RM) {
-    log->roadmap.id = SARH_REPLACE_2_REALLOC_FAILED_RM;
-  } else if (log->roadmap.id == FRAGMENT_FILE_SARH_REPLACE_2_REGEXEC_FAILED_RM) {
-    log->roadmap.id = SARH_REPLACE_2_REGEXEC_FAILED_RM;
+  } else if (log->roadmap.id ==
+    FRAGMENT_FILE_SARH_REPLACE_2_REGCOMP_FAILED_RM) {
+      log->roadmap.id = SARH_REPLACE_2_REGCOMP_FAILED_RM;
+  } else if (log->roadmap.id ==
+    FRAGMENT_FILE_SARH_REPLACE_2_REALLOC_FAILED_RM) {
+      log->roadmap.id = SARH_REPLACE_2_REALLOC_FAILED_RM;
+  } else if (log->roadmap.id ==
+    FRAGMENT_FILE_SARH_REPLACE_2_REGEXEC_FAILED_RM) {
+      log->roadmap.id = SARH_REPLACE_2_REGEXEC_FAILED_RM;
   } else if (log->roadmap.id == FRAGMENT_FILE_SARH_REGEXEC_FAILED_RM) {
     log->roadmap.id = SARH_REGEXEC_FAILED_RM;
   }
 
   if (!buildFile(&(shaders->fshaderpath), &(shaders->fragment_file), log))
   {
-    LOG(verbose, printf("  "));
-    fprintf((verbose ? stdout : stderr),
+    writeLog(log, (log->verbose ? stdout : stderr), "  ",
       "Failed to build fragment shader file\n");
     status = false;
   }
@@ -145,30 +156,31 @@ bool checkLogShader(GLuint* shader, GLenum shaderType, char* buffer, Log* log)
   {
     GLint shaderCompiled = GL_FALSE;
     GL_CHECK(glGetShaderiv(*shader, GL_COMPILE_STATUS, &shaderCompiled),
-      status);
+      status, log);
 
     if (shaderCompiled != GL_TRUE)
     {
-      LOG(verbose, printf("    "));
-      fprintf((verbose ? stdout : stderr), "Unable to compile %s shader\n",
+      writeLog(log, (log->verbose ? stdout : stderr), "    ",
+        "Unable to compile %s shader\n",
         shaderType == GL_FRAGMENT_SHADER ? "fragment" : "vertex");
 
       GLint maxLength = 0;
 
-      LOG(verbose, printf("    Querying log length of %s shader ...\n",
-        shaderType == GL_FRAGMENT_SHADER ? "fragment" : "vertex"));
-      GL_CHECK(glGetShaderiv(*shader, GL_INFO_LOG_LENGTH, &maxLength), status);
-      LOG(verbose, printf("    Log length of %s shader is %d\n",
-        shaderType == GL_FRAGMENT_SHADER ? "fragment" : "vertex", maxLength));
+      writeLog(log, stdout, "", "    Querying log length of %s shader ...\n",
+        shaderType == GL_FRAGMENT_SHADER ? "fragment" : "vertex");
+      GL_CHECK(glGetShaderiv(*shader, GL_INFO_LOG_LENGTH, &maxLength), status,
+        log);
+      writeLog(log, stdout, "", "    Log length of %s shader is %d\n",
+        shaderType == GL_FRAGMENT_SHADER ? "fragment" : "vertex", maxLength);
 
       if (maxLength > 0)
       {
         char* message = malloc(sizeof(char) * maxLength);
 
-        LOG(verbose, printf("    Querying log info of %s shader ...\n",
-          shaderType == GL_FRAGMENT_SHADER ? "fragment" : "vertex"));
+        writeLog(log, stdout, "", "    Querying log info of %s shader ...\n",
+          shaderType == GL_FRAGMENT_SHADER ? "fragment" : "vertex");
         GL_CHECK(glGetShaderInfoLog(*shader, maxLength, &maxLength, message),
-          status);
+          status, log);
 
         if (!improveLogShader(&message, &buffer, maxLength, log))
         {
@@ -177,13 +189,9 @@ bool checkLogShader(GLuint* shader, GLenum shaderType, char* buffer, Log* log)
           break;
         }
 
-        LOG(verbose, printf("    Log info of %s shader found:\n",
-          shaderType == GL_FRAGMENT_SHADER ? "fragment" : "vertex"));
-        fprintf((verbose ? stdout : stderr), "\
-------------------------------------------------------------------------------\
-\n%s\
-------------------------------------------------------------------------------\
-\n", message);
+        writeLog(log, stdout, "", "    Log info of %s shader found:\n",
+          shaderType == GL_FRAGMENT_SHADER ? "fragment" : "vertex");
+        writeLog(log, stdout, "", "%s\n%s%s\n", BAR, message, BAR);
 
         free(message);
       }
@@ -205,36 +213,36 @@ bool loadShader(Shaders* shaders, GLenum shaderType, Log* log)
     GLuint* shader = shaderType == GL_FRAGMENT_SHADER ?
       &(shaders->fragment_shader) : &(shaders->vertex_shader);
 
-    LOG(verbose, printf("    Creating %s shader ...\n",
-      shaderType == GL_FRAGMENT_SHADER ? "fragment" : "vertex"));
-    GL_CHECK(*shader = glCreateShader(shaderType), status);
-    LOG(verbose, printf("    %s shader %d created\n",
-      shaderType == GL_FRAGMENT_SHADER ? "Fragment" : "Vertex", *shader));
+    writeLog(log, stdout, "", "    Creating %s shader ...\n",
+      shaderType == GL_FRAGMENT_SHADER ? "fragment" : "vertex");
+    GL_CHECK(*shader = glCreateShader(shaderType), status, log);
+    writeLog(log, stdout, "", "    %s shader %d created\n",
+      shaderType == GL_FRAGMENT_SHADER ? "Fragment" : "Vertex", *shader);
 
-    LOG(verbose, printf("    Setting source code in %s shader ...\n",
-      shaderType == GL_FRAGMENT_SHADER ? "fragment" : "vertex"));
+    writeLog(log, stdout, "", "    Setting source code in %s shader ...\n",
+      shaderType == GL_FRAGMENT_SHADER ? "fragment" : "vertex");
     GL_CHECK(glShaderSource(*shader, 1, shaderType == GL_FRAGMENT_SHADER ?
       (const GLchar**) &(shaders->fragment_file) :
-        (const GLchar**) &(shaders->vertex_file), NULL), status);
-    LOG(verbose, printf("    Source code in %s shader set\n",
-      shaderType == GL_FRAGMENT_SHADER ? "fragment" : "vertex"));
+        (const GLchar**) &(shaders->vertex_file), NULL), status, log);
+    writeLog(log, stdout, "", "    Source code in %s shader set\n",
+      shaderType == GL_FRAGMENT_SHADER ? "fragment" : "vertex");
 
-    LOG(verbose, printf("    Compiling %s shader ...\n",
-      shaderType == GL_FRAGMENT_SHADER ? "fragment" : "vertex"));
-    GL_CHECK(glCompileShader(*shader), status);
-    LOG(verbose, printf("    %s shader probably compiled\n",
-      shaderType == GL_FRAGMENT_SHADER ? "Fragment" : "Vertex"));
+    writeLog(log, stdout, "", "    Compiling %s shader ...\n",
+      shaderType == GL_FRAGMENT_SHADER ? "fragment" : "vertex");
+    GL_CHECK(glCompileShader(*shader), status, log);
+    writeLog(log, stdout, "", "    %s shader probably compiled\n",
+      shaderType == GL_FRAGMENT_SHADER ? "Fragment" : "Vertex");
 
-    LOG(verbose, printf("    Checking compile status of %s shader ...\n",
-      shaderType == GL_FRAGMENT_SHADER ? "fragment" : "vertex"));
+    writeLog(log, stdout, "", "    Checking compile status of %s shader ...\n",
+      shaderType == GL_FRAGMENT_SHADER ? "fragment" : "vertex");
     if (!checkLogShader(shader, shaderType, shaderType == GL_FRAGMENT_SHADER ?
       shaders->fragment_file : shaders->vertex_file, log))
     {
       status = false;
       break;
     }
-    LOG(verbose, printf("    %s shader compiled\n",
-      shaderType == GL_FRAGMENT_SHADER ? "Fragment" : "Vertex"));
+    writeLog(log, stdout, "", "    %s shader compiled\n",
+      shaderType == GL_FRAGMENT_SHADER ? "Fragment" : "Vertex");
   } while (false);
 
   return status;
@@ -258,8 +266,8 @@ bool loadVertexShader(Shaders* shaders, Log* log)
   }
   if (!loadShader(shaders, GL_VERTEX_SHADER, log))
   {
-    LOG(verbose, printf("  "));
-    fprintf((verbose ? stdout : stderr), "Failed to compile vertex shader\n");
+    writeLog(log, (log->verbose ? stdout : stderr), "  ",
+      "Failed to compile vertex shader\n");
     status = false;
   }
 
@@ -284,8 +292,8 @@ bool loadFragmentShader(Shaders* shaders, Log* log)
   }
   if (!loadShader(shaders, GL_FRAGMENT_SHADER, log))
   {
-    LOG(verbose, printf("  "));
-    fprintf((verbose ? stdout : stderr), "Failed to compile fragment shader\n");
+    writeLog(log, (log->verbose ? stdout : stderr), "  ",
+      "Failed to compile fragment shader\n");
     status = false;
   }
 
@@ -298,40 +306,38 @@ bool checkLogProgram(Shaders* shaders, Log* log)
 
   do
   {
-    LOG(verbose, printf("  Checking linking status of OpenGL program ...\n"));
+    writeLog(log, stdout, "",
+      "  Checking linking status of OpenGL program ...\n");
 
     GLint programSuccess = GL_TRUE;
     GL_CHECK(glGetProgramiv(shaders->program, GL_LINK_STATUS, &programSuccess),
-      status);
+      status, log);
 
     if (programSuccess != GL_TRUE)
     {
-      LOG(verbose, printf("  "));
-      fprintf((verbose ? stdout : stderr), "Unable to link OpenGL program\n");
+      writeLog(log, (log->verbose ? stdout : stderr), "  ",
+       "Unable to link OpenGL program\n");
 
       GLint maxLength = 0;
 
-      LOG(verbose, printf("  Querying log length of OpenGL program \
-...\n"));
+      writeLog(log, stdout, "",
+        "  Querying log length of OpenGL program ...\n");
       GL_CHECK(glGetProgramiv(shaders->program, GL_INFO_LOG_LENGTH,
-        &maxLength), status);
-      LOG(verbose, printf("  Log length of OpenGL program is %d\n",
-        maxLength));
+        &maxLength), status, log);
+      writeLog(log, stdout, "", "  Log length of OpenGL program is %d\n",
+        maxLength);
 
       if (maxLength > 0)
       {
         char message[maxLength];
 
-        LOG(verbose, printf("  Querying log info of OpenGL program ...\n"));
+        writeLog(log, stdout, "",
+          "  Querying log info of OpenGL program ...\n");
         GL_CHECK(glGetProgramInfoLog(shaders->program, maxLength, &maxLength,
-          message), status);
-        LOG(verbose, printf("  Log info of OpenGL program found:\n"));
+          message), status, log);
+        writeLog(log, stdout, "", "  Log info of OpenGL program found:\n");
 
-        fprintf((verbose ? stdout : stderr), "\
-------------------------------------------------------------------------------\
-\n%s\
-------------------------------------------------------------------------------\
-\n", &(message[0]));
+        writeLog(log, stdout, "", "%s\n%s%s\n", BAR, &(message[0]), BAR);
       }
 
       status = false;
@@ -348,86 +354,91 @@ bool loadProgram(Context* context, Shaders* shaders, Log* log)
 
   do
   {
-    LOG(verbose, printf("  Creating OpenGL Program ...\n"));
-    GL_CHECK(shaders->program = glCreateProgram(), status);
-    LOG(verbose, printf("  OpenGL Program %d created\n", shaders->program));
+    writeLog(log, stdout, "", "  Creating OpenGL Program ...\n");
+    GL_CHECK(shaders->program = glCreateProgram(), status, log);
+    writeLog(log, stdout, "", "  OpenGL Program %d created\n",
+      shaders->program);
 
-    LOG(verbose, printf("  Building vertex shader file ...\n"));
+    writeLog(log, stdout, "", "  Building vertex shader file ...\n");
     if (!buildVertexShaderFile(shaders, log))
     {
       status = false;
       break;
     }
-    LOG(verbose, printf("  Vertex shader file built\n"));
+    writeLog(log, stdout, "", "  Vertex shader file built\n");
 
-    LOG(verbose, printf("  Building fragment shader file ...\n"));
+    writeLog(log, stdout, "", "  Building fragment shader file ...\n");
     if (!buildFragmentShaderFile(shaders, log))
     {
       status = false;
       break;
     }
-    LOG(verbose, printf("  Fragment shader file built\n"));
+    writeLog(log, stdout, "", "  Fragment shader file built\n");
 
-    LOG(verbose, printf("  Loading vertex shader ...\n"));
+    writeLog(log, stdout, "", "  Loading vertex shader ...\n");
     if (!loadVertexShader(shaders, log))
     {
       status = false;
       break;
     }
-    LOG(verbose, printf("  Vertex shader loaded\n"));
+    writeLog(log, stdout, "", "  Vertex shader loaded\n");
 
-    LOG(verbose, printf("  Loading fragment shader ...\n"));
+    writeLog(log, stdout, "", "  Loading fragment shader ...\n");
     if (!loadFragmentShader(shaders, log))
     {
       status = false;
       break;
     }
-    LOG(verbose, printf("  Fragment shader loaded\n"));
+    writeLog(log, stdout, "", "  Fragment shader loaded\n");
 
-    LOG(verbose, printf("  Attaching vertex shader to OpenGL program ...\n"));
-    GL_CHECK(glAttachShader(shaders->program, shaders->vertex_shader), status);
-    LOG(verbose, printf("  Vertex shader attached\n"));
+    writeLog(log, stdout, "",
+      "  Attaching vertex shader to OpenGL program ...\n");
+    GL_CHECK(glAttachShader(shaders->program, shaders->vertex_shader), status,
+      log);
+    writeLog(log, stdout, "", "  Vertex shader attached\n");
 
-    LOG(verbose, printf("  Attaching fragment shader to OpenGL program \
-  ...\n"));
+    writeLog(log, stdout, "",
+      "  Attaching fragment shader to OpenGL program ...\n");
     GL_CHECK(glAttachShader(shaders->program, shaders->fragment_shader),
-      status);
-    LOG(verbose, printf("  Fragment shader attached\n"));
+      status, log);
+    writeLog(log, stdout, "", "  Fragment shader attached\n");
 
-    LOG(verbose, printf("  Linking OpenGL program ...\n"));
-    GL_CHECK(glLinkProgram(shaders->program), status);
-    LOG(verbose, printf("  OpenGL program probably linked\n"));
+    writeLog(log, stdout, "", "  Linking OpenGL program ...\n");
+    GL_CHECK(glLinkProgram(shaders->program), status, log);
+    writeLog(log, stdout, "", "  OpenGL program probably linked\n");
 
     if (!checkLogProgram(shaders, log))
     {
       status = false;
       break;
     }
-    LOG(verbose, printf("  OpenGL program linked\n"));
+    writeLog(log, stdout, "", "  OpenGL program linked\n");
 
-    LOG(verbose, printf("  Checking OpenGL program execution ...\n"));
-    GL_CHECK(glValidateProgram(shaders->program), status);
-    LOG(verbose, printf("  OpenGL program execution checked\n"));
+    writeLog(log, stdout, "", "  Checking OpenGL program execution ...\n");
+    GL_CHECK(glValidateProgram(shaders->program), status, log);
+    writeLog(log, stdout, "", "  OpenGL program execution checked\n");
 
-    LOG(verbose, printf("  Installing OpenGL program as part of current \
-rendering state...\n"));
-    GL_CHECK(glUseProgram(shaders->program), status);
-    LOG(verbose, printf("  OpenGL program installed\n"));
+    writeLog(log, stdout, "",
+      "  Installing OpenGL program as part of current rendering state...\n");
+    GL_CHECK(glUseProgram(shaders->program), status, log);
+    writeLog(log, stdout, "", "  OpenGL program installed\n");
 
-    LOG(verbose, printf("  Specifying viewport ...\n"));
+    writeLog(log, stdout, "", "  Specifying viewport ...\n");
     GL_CHECK(glViewport(0, 0, context->window_attribs.width,
-      context->window_attribs.height), status);
-    LOG(verbose, printf("  Viewport specified\n"));
+      context->window_attribs.height), status, log);
+    writeLog(log, stdout, "", "  Viewport specified\n");
 
-    LOG(verbose, printf("  Detaching vertex shader to OpenGL program ...\n"));
-    GL_CHECK(glDetachShader(shaders->program, shaders->vertex_shader), status);
-    LOG(verbose, printf("  Vertex shader detached\n"));
+    writeLog(log, stdout, "",
+      "  Detaching vertex shader to OpenGL program ...\n");
+    GL_CHECK(glDetachShader(shaders->program, shaders->vertex_shader), status,
+      log);
+    writeLog(log, stdout, "", "  Vertex shader detached\n");
 
-    LOG(verbose, printf("  Detaching fragment shader to OpenGL program \
-...\n"));
+    writeLog(log, stdout, "",
+      "  Detaching fragment shader to OpenGL program ...\n");
     GL_CHECK(glDetachShader(shaders->program, shaders->fragment_shader),
-      status);
-    LOG(verbose, printf("  Fragment shader detached\n"));
+      status, log);
+    writeLog(log, stdout, "", "  Fragment shader detached\n");
   } while (false);
 
   return status;
@@ -439,44 +450,44 @@ bool freeProgram(Shaders* shaders, Log* log)
 
   if (shaders->fshaderpath)
   {
-    LOG(verbose, printf("Freeing fragment shader path ...\n"));
+    writeLog(log, stdout, "", "Freeing fragment shader path ...\n");
     free(shaders->fshaderpath);
     shaders->fshaderpath = NULL;
-    LOG(verbose, printf("fragment shader path freed\n"));
+    writeLog(log, stdout, "", "fragment shader path freed\n");
   }
 
   if (shaders->vshaderpath)
   {
-    LOG(verbose, printf("Freeing vertex shader path ...\n"));
+    writeLog(log, stdout, "", "Freeing vertex shader path ...\n");
     free(shaders->vshaderpath);
     shaders->vshaderpath = NULL;
-    LOG(verbose, printf("Vertex shader path freed\n"));
+    writeLog(log, stdout, "", "Vertex shader path freed\n");
   }
 
   if (shaders->vertex_file)
   {
-    LOG(verbose, printf("Freeing vertex file ...\n"));
+    writeLog(log, stdout, "", "Freeing vertex file ...\n");
     free(shaders->vertex_file);
     shaders->vertex_file = NULL;
-    LOG(verbose, printf("Vertex file freed\n"));
+    writeLog(log, stdout, "", "Vertex file freed\n");
   }
 
   if (shaders->fragment_file)
   {
-    LOG(verbose, printf("Freeing fragment file ...\n"));
+    writeLog(log, stdout, "", "Freeing fragment file ...\n");
     free(shaders->fragment_file);
     shaders->fragment_file = NULL;
-    LOG(verbose, printf("Fragment file freed\n"));
+    writeLog(log, stdout, "", "Fragment file freed\n");
   }
 
   do
   {
     if (shaders->vertex_shader)
     {
-      LOG(verbose, printf("Deleting vertex shader ...\n"));
-      GL_CHECK(glDeleteShader(shaders->vertex_shader), status);
+      writeLog(log, stdout, "", "Deleting vertex shader ...\n");
+      GL_CHECK(glDeleteShader(shaders->vertex_shader), status, log);
       shaders->vertex_shader = 0;
-      LOG(verbose, printf("Vertex shader deleted\n"));
+      writeLog(log, stdout, "", "Vertex shader deleted\n");
     }
   } while (false);
 
@@ -484,10 +495,10 @@ bool freeProgram(Shaders* shaders, Log* log)
   {
     if (shaders->fragment_shader)
     {
-      LOG(verbose, printf("Deleting fragment shader ...\n"));
-      GL_CHECK(glDeleteShader(shaders->fragment_shader), status);
+      writeLog(log, stdout, "", "Deleting fragment shader ...\n");
+      GL_CHECK(glDeleteShader(shaders->fragment_shader), status, log);
       shaders->fragment_shader = 0;
-      LOG(verbose, printf("Fragment shader deleted\n"));
+      writeLog(log, stdout, "", "Fragment shader deleted\n");
     }
   } while (false);
 
@@ -495,10 +506,10 @@ bool freeProgram(Shaders* shaders, Log* log)
   {
     if (shaders->program)
     {
-      LOG(verbose, printf("Deleting OpenGL program ...\n"));
-      GL_CHECK(glDeleteProgram(shaders->program), status);
+      writeLog(log, stdout, "", "Deleting OpenGL program ...\n");
+      GL_CHECK(glDeleteProgram(shaders->program), status, log);
       shaders->program = 0;
-      LOG(verbose, printf("OpenGL program deleted\n"));
+      writeLog(log, stdout, "", "OpenGL program deleted\n");
     }
   } while (false);
 

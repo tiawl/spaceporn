@@ -6,7 +6,7 @@ bool initShaderPath(char** path, size_t len[4], char* dir, Log* log)
 
   do
   {
-    LOG(verbose, printf("    Allocating memory for shader path ...\n"));
+    writeLog(log, stdout, "", "    Allocating memory for shader path ...\n");
     if (log->roadmap.id != SHADERPATH_MALLOC_FAILED_RM)
     {
       *path = malloc(len[0] + len[1] + len[2] + len[3] + 1);
@@ -14,24 +14,25 @@ bool initShaderPath(char** path, size_t len[4], char* dir, Log* log)
 
     if (!(*path))
     {
-      LOG(verbose, printf("    "));
-      fprintf((verbose ? stdout : stderr), "shader path malloc() failed\n");
+      writeLog(log, (log->verbose ? stdout : stderr), "    ",
+        "shader path malloc() failed\n");
 
       status = false;
       break;
     }
-    LOG(verbose, printf("    Successful allocated memory for shader path\n"));
+    writeLog(log, stdout, "",
+      "    Successful allocated memory for shader path\n");
 
-    LOG(verbose, printf("    Building shader path string ... 0/4\n"));
+    writeLog(log, stdout, "", "    Building shader path string ... 0/4\n");
     memcpy(*path, ROOT, len[0]);
-    LOG(verbose, printf("    Building shader path string ... 1/4\n"));
+    writeLog(log, stdout, "", "    Building shader path string ... 1/4\n");
     memcpy(*path + len[0], SHADERS_DIR, len[1]);
-    LOG(verbose, printf("    Building shader path string ... 2/4\n"));
+    writeLog(log, stdout, "", "    Building shader path string ... 2/4\n");
     memcpy(*path + len[0] + len[1], dir, len[2]);
-    LOG(verbose, printf("    Building shader path string ... 3/4\n"));
+    writeLog(log, stdout, "", "    Building shader path string ... 3/4\n");
     memcpy(*path + len[0] + len[1] + len[2], MAIN_FILE, len[3] + 1);
-    LOG(verbose, printf("    Building shader path string ... 4/4\n"));
-    LOG(verbose, printf("    Shader path string built: %s\n", *path));
+    writeLog(log, stdout, "", "    Building shader path string ... 4/4\n");
+    writeLog(log, stdout, "", "    Shader path string built: %s\n", *path);
   } while (false);
 
   return status;
@@ -43,7 +44,7 @@ bool initTexturePath(PNG* png, size_t len[4], char* path, Log* log)
 
   do
   {
-    LOG(verbose, printf("    Allocating memory for texture path ...\n"));
+    writeLog(log, stdout, "", "    Allocating memory for texture path ...\n");
 
     if (log->roadmap.id != TEXTUREPATH_MALLOC_FAILED_RM)
     {
@@ -52,22 +53,23 @@ bool initTexturePath(PNG* png, size_t len[4], char* path, Log* log)
 
     if (!png->path)
     {
-      LOG(verbose, printf("    "));
-      fprintf((verbose ? stdout : stderr), "texture path malloc() failed\n");
+      writeLog(log, (log->verbose ? stdout : stderr), "    ",
+        "texture path malloc() failed\n");
 
       status = false;
       break;
     }
-    LOG(verbose, printf("    Successful allocated memory for texture path\n"));
+    writeLog(log, stdout, "",
+      "    Successful allocated memory for texture path\n");
 
-    LOG(verbose, printf("    Building texture path string ... 0/3\n"));
+    writeLog(log, stdout, "", "    Building texture path string ... 0/3\n");
     memcpy(png->path, ROOT, len[0]);
-    LOG(verbose, printf("    Building texture path string ... 1/3\n"));
+    writeLog(log, stdout, "", "    Building texture path string ... 1/3\n");
     memcpy(png->path + len[0], TEXTURES_DIR, len[1]);
-    LOG(verbose, printf("    Building texture path string ... 2/3\n"));
+    writeLog(log, stdout, "", "    Building texture path string ... 2/3\n");
     memcpy(png->path + len[0] + len[1], path, len[2] + 1);
-    LOG(verbose, printf("    Building texture path string ... 3/3\n"));
-    LOG(verbose, printf("    Texture path string built: %s\n", png->path));
+    writeLog(log, stdout, "", "    Building texture path string ... 3/3\n");
+    writeLog(log, stdout, "", "    Texture path string built: %s\n", png->path);
   } while (false);
 
   return status;
@@ -77,21 +79,21 @@ bool initLogPath(Log* log)
 {
   int status = true;
 
-  LOG(verbose, printf("  Computing ROOT length ...\n"));
+  writeLog(log, stdout, "", "  Computing ROOT length ...\n");
   const size_t len1 = strlen(ROOT);
-  LOG(verbose, printf("  Length of \"%s\" is %lu\n", ROOT, len1));
+  writeLog(log, stdout, "", "  Length of \"%s\" is %lu\n", ROOT, len1);
 
-  LOG(verbose, printf("  Computing length of log directory path ...\n"));
+  writeLog(log, stdout, "", "  Computing length of log directory path ...\n");
   const size_t len2 = strlen(LOG_DIR);
-  LOG(verbose, printf("  Length of \"%s\" is %lu\n", LOG_DIR, len2));
+  writeLog(log, stdout, "", "  Length of \"%s\" is %lu\n", LOG_DIR, len2);
 
-  LOG(verbose, printf("  Computing length of log filename ...\n"));
+  writeLog(log, stdout, "", "  Computing length of log filename ...\n");
   const size_t len3 = strlen(NAME);
-  LOG(verbose, printf("  Length of \"%s\" is %lu\n", NAME, len3));
+  writeLog(log, stdout, "", "  Length of \"%s\" is %lu\n", NAME, len3);
 
   do
   {
-    LOG(verbose, printf("    Allocating memory for log path ...\n"));
+    writeLog(log, stdout, "", "  Allocating memory for log path ...\n");
 
     if (log->roadmap.id != LOGPATH_MALLOC_FAILED_RM)
     {
@@ -100,22 +102,22 @@ bool initLogPath(Log* log)
 
     if (!log->path)
     {
-      LOG(verbose, printf("    "));
-      fprintf((verbose ? stdout : stderr), "log path malloc() failed\n");
+      writeLog(log, (log->verbose ? stdout : stderr), "  ",
+        "log path malloc() failed\n");
 
       status = false;
       break;
     }
-    LOG(verbose, printf("    Successful allocated memory for log path\n"));
+    writeLog(log, stdout, "", "  Successful allocated memory for log path\n");
 
-    LOG(verbose, printf("    Building log path string ... 0/3\n"));
+    writeLog(log, stdout, "", "  Building log path string ... 0/3\n");
     memcpy(log->path, ROOT, len1);
-    LOG(verbose, printf("    Building log path string ... 1/3\n"));
+    writeLog(log, stdout, "", "  Building log path string ... 1/3\n");
     memcpy(log->path + len1, LOG_DIR, len2);
-    LOG(verbose, printf("    Building log path string ... 2/3\n"));
+    writeLog(log, stdout, "", "  Building log path string ... 2/3\n");
     memcpy(log->path + len1 + len2, NAME, len3 + 1);
-    LOG(verbose, printf("    Building log path string ... 3/3\n"));
-    LOG(verbose, printf("    Log path string built: %s\n", log->path));
+    writeLog(log, stdout, "", "  Building log path string ... 3/3\n");
+    writeLog(log, stdout, "", "  Log path string built: %s\n", log->path);
   } while (false);
 
   return status;
@@ -127,57 +129,61 @@ bool initPaths(Shaders* shaders, PNG* png, PNG* atlas, Log* log)
 
   do
   {
-    LOG(verbose, printf("  Computing ROOT length ...\n"));
+    writeLog(log, stdout, "", "  Computing ROOT length ...\n");
     const size_t len1 = strlen(ROOT);
-    LOG(verbose, printf("  Length of \"%s\" is %lu\n", ROOT, len1));
+    writeLog(log, stdout, "", "  Length of \"%s\" is %lu\n", ROOT, len1);
 
-    LOG(verbose, printf("  Computing length of shaders directory path ...\n"));
+    writeLog(log, stdout, "",
+      "  Computing length of shaders directory path ...\n");
     const size_t len2 = strlen(SHADERS_DIR);
-    LOG(verbose, printf("  Length of \"%s\" is %lu\n", SHADERS_DIR, len2));
+    writeLog(log, stdout, "", "  Length of \"%s\" is %lu\n", SHADERS_DIR, len2);
 
-    LOG(verbose, printf("  Computing length of textures directory path \
-...\n"));
+    writeLog(log, stdout, "",
+      "  Computing length of textures directory path ...\n");
     const size_t len3 = strlen(TEXTURES_DIR);
-    LOG(verbose, printf("  Length of \"%s\" is %lu\n", TEXTURES_DIR, len3));
+    writeLog(log, stdout, "", "  Length of \"%s\" is %lu\n", TEXTURES_DIR,
+      len3);
 
-    LOG(verbose, printf("  Computing length of fragment shader directory \
-...\n"));
+    writeLog(log, stdout, "",
+      "  Computing length of fragment shader directory ...\n");
     const size_t len4 = strlen(FRAGMENT_DIR);
-    LOG(verbose, printf("  Length of \"%s\" is %lu\n", FRAGMENT_DIR, len4));
+    writeLog(log, stdout, "", "  Length of \"%s\" is %lu\n", FRAGMENT_DIR,
+      len4);
 
-    LOG(verbose, printf("  Computing length of vertex shader directory \
-...\n"));
+    writeLog(log, stdout, "",
+      "  Computing length of vertex shader directory ...\n");
     const size_t len5 = strlen(VERTEX_DIR);
-    LOG(verbose, printf("  Length of \"%s\" is %lu\n", VERTEX_DIR, len5));
+    writeLog(log, stdout, "", "  Length of \"%s\" is %lu\n", VERTEX_DIR, len5);
 
-    LOG(verbose, printf("  Computing length of shader main filename ...\n"));
+    writeLog(log, stdout, "",
+      "  Computing length of shader main filename ...\n");
     const size_t len6 = strlen(MAIN_FILE);
-    LOG(verbose, printf("  Length of \"%s\" is %lu\n", MAIN_FILE, len6));
+    writeLog(log, stdout, "", "  Length of \"%s\" is %lu\n", MAIN_FILE, len6);
 
-    LOG(verbose, printf("  Computing length of texture filename ...\n"));
+    writeLog(log, stdout, "", "  Computing length of texture filename ...\n");
     const size_t len7 = strlen(BIGSTARS_FILE);
-    LOG(verbose, printf("  Length of \"%s\" is %lu\n", BIGSTARS_FILE, len7));
+    writeLog(log, stdout, "", "  Length of \"%s\" is %lu\n", BIGSTARS_FILE,
+      len7);
 
-    LOG(verbose, printf("  Computing length of atlas filename ...\n"));
+    writeLog(log, stdout, "", "  Computing length of atlas filename ...\n");
     const size_t len8 = strlen(ATLAS_FILE);
-    LOG(verbose, printf("  Length of \"%s\" is %lu\n", ATLAS_FILE, len8));
+    writeLog(log, stdout, "", "  Length of \"%s\" is %lu\n", ATLAS_FILE, len8);
 
     size_t length[4] =
     {
       len1, len2, len4, len6
     };
 
-    LOG(verbose, printf("  Initializing fragment shader path ...\n"));
+    writeLog(log, stdout, "", "  Initializing fragment shader path ...\n");
     if (!initShaderPath(&(shaders->fshaderpath), length, FRAGMENT_DIR, log))
     {
-      LOG(verbose, printf("  "));
-      fprintf((verbose ? stdout : stderr), "Fragment shader path \
-initialization failed\n");
+      writeLog(log, (log->verbose ? stdout : stderr), "  ",
+        "Fragment shader path initialization failed\n");
 
       status = false;
       break;
     }
-    LOG(verbose, printf("  Fragment shader path initialized\n"));
+    writeLog(log, stdout, "", "  Fragment shader path initialized\n");
 
     length[2] = len5;
 
@@ -186,33 +192,31 @@ initialization failed\n");
       log->roadmap.id = SHADERPATH_MALLOC_FAILED_RM;
     }
 
-    LOG(verbose, printf("  Initializing vertex shader path ...\n"));
+    writeLog(log, stdout, "", "  Initializing vertex shader path ...\n");
     if (!initShaderPath(&(shaders->vshaderpath), length, VERTEX_DIR, log))
     {
-      LOG(verbose, printf("  "));
-      fprintf((verbose ? stdout : stderr), "Vertex shader path \
-initialization failed\n");
+      writeLog(log, (log->verbose ? stdout : stderr), "  ",
+        "Vertex shader path initialization failed\n");
 
       status = false;
       break;
     }
-    LOG(verbose, printf("  Vertex shader path initialized\n"));
+    writeLog(log, stdout, "", "  Vertex shader path initialized\n");
 
     length[1] = len3;
     length[2] = len7;
     length[3] = 0;
 
-    LOG(verbose, printf("  Initializing texture path ...\n"));
+    writeLog(log, stdout, "", "  Initializing texture path ...\n");
     if (!initTexturePath(png, length, BIGSTARS_FILE, log))
     {
-      LOG(verbose, printf("  "));
-      fprintf((verbose ? stdout : stderr), "Texture path initialization \
-failed\n");
+      writeLog(log, (log->verbose ? stdout : stderr), "  ",
+        "Texture path initialization failed\n");
 
       status = false;
       break;
     }
-    LOG(verbose, printf("  Texture path initialized\n"));
+    writeLog(log, stdout, "", "  Texture path initialized\n");
 
     length[2] = len8;
 
@@ -221,17 +225,16 @@ failed\n");
       log->roadmap.id = TEXTUREPATH_MALLOC_FAILED_RM;
     }
 
-    LOG(verbose, printf("  Initializing atlas texture path ...\n"));
+    writeLog(log, stdout, "", "  Initializing atlas texture path ...\n");
     if (!initTexturePath(atlas, length, ATLAS_FILE, log))
     {
-      LOG(verbose, printf("  "));
-      fprintf((verbose ? stdout : stderr), "Atlas texture path \
-initialization failed\n");
+      writeLog(log, (log->verbose ? stdout : stderr), "  ",
+        "Atlas texture path initialization failed\n");
 
       status = false;
       break;
     }
-    LOG(verbose, printf("  Atlas texture path initialized\n"));
+    writeLog(log, stdout, "", "  Atlas texture path initialized\n");
   } while (false);
 
   return status;

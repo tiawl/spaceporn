@@ -40,7 +40,7 @@ bool readAtlas(Atlas* atlas, PNG* png, Log* log)
     int color_type;
 
     writeLog(log, stdout, "", "    Checking PNG filename ...\n");
-    if (!png->path || (lof->roadmap.id == NO_ATLASPNG_FILENAME_RM))
+    if (!png->path || (log->roadmap.id == NO_ATLASPNG_FILENAME_RM))
     {
       writeLog(log, (log->verbose ? stdout : stderr), "    ",
         "PNG filename is null\n");
@@ -50,7 +50,7 @@ bool readAtlas(Atlas* atlas, PNG* png, Log* log)
     }
     writeLog(log, stdout, "", "    PNG filename is not null ...\n");
 
-    writeLog(log, stdout, "", "    Opening PNG file \"%s\" ...\n", png->path)
+    writeLog(log, stdout, "", "    Opening PNG file \"%s\" ...\n", png->path);
     if (log->roadmap.id != FOPEN_ATLASPNG_FILE_FAILED_RM)
     {
       png->file = fopen(png->path, "rb");
@@ -67,7 +67,7 @@ bool readAtlas(Atlas* atlas, PNG* png, Log* log)
     writeLog(log, stdout, "", "    PNG file opened\n");
 
     writeLog(log, stdout, "",
-      "    Creating structure for reading PNG file ...\n")
+      "    Creating structure for reading PNG file ...\n");
     if (log->roadmap.id != ATLASPNGCREATEREADSTRUCT_FAILED_RM)
     {
       png->ptr =
@@ -77,7 +77,7 @@ bool readAtlas(Atlas* atlas, PNG* png, Log* log)
     if (!png->ptr)
     {
       writeLog(log, (log->verbose ? stdout : stderr), "    ",
-        "png_create_read_struct() failed\n")
+        "png_create_read_struct() failed\n");
 
       status = false;
       break;
@@ -100,7 +100,7 @@ bool readAtlas(Atlas* atlas, PNG* png, Log* log)
     }
     writeLog(log, stdout, "", "    PNG info structure created\n");
 
-    writeLog(log, stdout, "", "    Searching libPNG error ...\n")
+    writeLog(log, stdout, "", "    Searching libPNG error ...\n");
     if (setjmp(png_jmpbuf(png->ptr)) ||
       (log->roadmap.id == ATLASPNG_READJMPBUF_FAILED_RM))
     {
@@ -160,7 +160,7 @@ bool readAtlas(Atlas* atlas, PNG* png, Log* log)
 
     if (!png->row_pointers)
     {
-      writeLog(log, (log->verbose ? stdout : stderr),
+      writeLog(log, (log->verbose ? stdout : stderr), "    ",
         "row_pointers malloc() failed\n");
 
       status = false;
@@ -382,14 +382,14 @@ bool generateAtlas(Atlas* atlas, PNG* png, Log* log)
     for (int seed = 0; seed < atlas->pcg_depth; seed++)
     {
       writeLog(log, stdout, "", "    Generating PCG texture %d ...\n", seed);
-      generatePcgTexture(atlas, seed, verbose);
+      generatePcgTexture(atlas, seed);
       writeLog(log, stdout, "", "    PCG texture %d generated successfully\n",
         seed);
     }
     writeLog(log, stdout, "", "  PCG textures generated successfully\n");
 
     writeLog(log, stdout, "", "  Writing PNG textures atlas ...\n");
-    if (!writePng(atlas, png, verbose, log))
+    if (!writePng(atlas, png, log))
     {
       writeLog(log, (log->verbose ? stdout : stderr), "  ",
         "Failed to write PNG textures atlas\n");
@@ -405,14 +405,6 @@ bool generateAtlas(Atlas* atlas, PNG* png, Log* log)
 
 void freeAtlas(Atlas* atlas, Log* log)
 {
-  if (atlas->path)
-  {
-    writeLog(log, stdout, "", "Freeing atlas texture path ...\n");
-    free(atlas->path);
-    atlas->path = NULL;
-    writeLog(log, stdout, "", "Atlas texture path freed\n");
-  }
-
   if (atlas->texels != NULL)
   {
     for (int i = 0; i < atlas->height * atlas->depth; i++)
@@ -451,25 +443,26 @@ bool loadAtlas(Atlas* atlas, PNG* png, Shaders* shaders, Log* log)
     writeLog(log, stdout, "", "  Atlas PNG texture read\n");
 
     writeLog(log, stdout, "", "  Generating OpenGL texture ...\n");
-    GL_CHECK(glGenTextures(1, &(png->texture)), status);
+    GL_CHECK(glGenTextures(1, &(png->texture)), status, log);
     writeLog(log, stdout, "", "  OpenGL texture is %d\n", png->texture);
 
     writeLog(log, stdout, "", "  Activating OpenGL texture ...\n");
-    GL_CHECK(glActiveTexture(GL_TEXTURE0 + png->texture_unit), status);
+    GL_CHECK(glActiveTexture(GL_TEXTURE0 + png->texture_unit), status, log);
     writeLog(log, stdout, "", "  OpenGL texture activated\n");
 
     writeLog(log, stdout, "", "  Binding OpenGL textures array ...\n");
-    GL_CHECK(glBindTexture(GL_TEXTURE_2D_ARRAY, png->texture), status);
+    GL_CHECK(glBindTexture(GL_TEXTURE_2D_ARRAY, png->texture), status, log);
     writeLog(log, stdout, "", "  OpenGL textures array binded\n");
 
     writeLog(log, stdout, "", "  Setting texture unit to use ...\n");
     GL_CHECK(glUniform1i(glGetUniformLocation(shaders->program, "atlas"),
-      png->texture_unit), status);
+      png->texture_unit), status, log);
     writeLog(log, stdout, "", "  Texture unit ready to use\n");
 
     writeLog(log, stdout, "", "  Specifying 2D textures array ...\n");
     GL_CHECK(glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGBA8, atlas->width,
-      atlas->height, atlas->depth, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0), status);
+      atlas->height, atlas->depth, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0),
+        status, log);
     writeLog(log, stdout, "", "  2D textures array specified\n");
 
     writeLog(log, stdout, "",
@@ -480,17 +473,17 @@ bool loadAtlas(Atlas* atlas, PNG* png, Shaders* shaders, Log* log)
 
     writeLog(log, stdout, "", "  Enabling OpenGL textures repetition ...\n");
     GL_CHECK(glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S,
-      GL_REPEAT), status);
+      GL_REPEAT), status, log);
     GL_CHECK(glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T,
-      GL_REPEAT), status);
+      GL_REPEAT), status, log);
     writeLog(log, stdout, "", "  OpenGL textures repetition disabled\n");
 
     writeLog(log, stdout, "", "  Specifying textures element value to %s",
-      "the nearest texture coordinates ...\n"));
+      "the nearest texture coordinates ...\n");
     GL_CHECK(glTexParameteri(
-      GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST), status);
+      GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST), status, log);
     GL_CHECK(glTexParameteri(
-      GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST), status);
+      GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST), status, log);
     writeLog(log, stdout, "", "  Textures element value specified ...\n");
   } while (false);
 

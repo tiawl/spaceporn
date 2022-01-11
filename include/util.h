@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/time.h>
 #include <GL/glew.h>
 #include <GL/glx.h>
@@ -148,6 +149,8 @@ enum RoadmapID
   PRECOMPUTE_AND_STOP_RM,
   PRECOMPUTE_AND_CONTINUE_RM,
 // -------------------------------------------------------------------  90
+  LOGPATH_MALLOC_FAILED_RM,
+  FOPEN_LOG_FAILED_RM,
 #if DEBUG
   XCREATEDEBUGWINDOW_FAILED_RM,
 #endif
@@ -170,17 +173,18 @@ typedef struct
 } Log;
 
 bool initLog(Log* log);
-void writeLog(Log* log, FILE* stream, char* stdoutstr, char* str, ...);
-void freeLog(Log* log)
+void writeLog(Log* log, FILE* stream, const char* stdoutstr,
+  const char* str, ...);
+void freeLog(Log* log);
 
-bool checkOpenGLError(const char* stmt, const char* fname, int line);
+bool checkOpenGLError(const char* stmt, const char* fname, int line, Log* log);
 
 double timediff(struct timeval* start, struct timeval* end);
 int nextpow2(int n);
 
-#define GL_CHECK(stmt, status) { \
+#define GL_CHECK(stmt, status, log) { \
   stmt; \
-  status = checkOpenGLError(#stmt, __FILE__, __LINE__); \
+  status = checkOpenGLError(#stmt, __FILE__, __LINE__, log); \
   if (!(status)) \
   { \
     break; \

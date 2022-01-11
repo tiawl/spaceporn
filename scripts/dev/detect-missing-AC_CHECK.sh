@@ -153,8 +153,14 @@ echo "--- non user definitions in C files -------------------------------------"
 echo "${#NO_USR[@]}"
 
 echo "--- ctags unknown definitions in C files --------------------------------"
-declare -a UNDEF=($(echo "${NO_USR[@]} ${LIBDEF[@]} ${LIBDEF[@]}" \
-  | tr ' ' '\n' | sort | uniq -u))
+declare -a UNDEF=()
+if [[ "${1}" == strict ]]; then
+  UNDEF+=($(echo "${NO_USR[@]} ${LIBDEF[@]} ${LIBDEF[@]}" \
+    | grep -E -v "PREFIX" | tr ' ' '\n' | sort | uniq -u))
+else
+  UNDEF+=($(echo "${NO_USR[@]} ${LIBDEF[@]} ${LIBDEF[@]}" \
+    | tr ' ' '\n' | sort | uniq -u))
+fi
 for U in ${UNDEF[@]}; do echo ${U}; done
 
 [[ ${#UNDEF[@]} -gt 0 && "${1}" == strict ]] \

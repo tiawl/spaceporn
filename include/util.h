@@ -163,12 +163,15 @@ typedef struct
   char* glsl_file;
 } Roadmap;
 
+#define DATE_LENGTH 23
+
 typedef struct
 {
   bool verbose;
   char* path;
   char* buffer;
   FILE* file;
+  char date[DATE_LENGTH];
   Roadmap roadmap;
 } Log;
 

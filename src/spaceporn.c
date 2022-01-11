@@ -2,7 +2,9 @@
 
 int main(int argc, char** argv)
 {
-  srand(time(NULL));
+  time_t now = time(NULL);
+  struct tm local_time = *localtime(&now);
+  srand(now);
   fflush(stdin);
 
   bool status = true;
@@ -15,6 +17,10 @@ int main(int argc, char** argv)
   log.file = NULL;
   log.buffer = NULL;
   log.roadmap.id = EXIT_SUCCESS_RM;
+
+  snprintf(log.date, DATE_LENGTH, "%d-%02d-%02d %02d:%02d:%02d | ",
+    local_time.tm_year + 1900, local_time.tm_mon + 1, local_time.tm_mday,
+    local_time.tm_hour, local_time.tm_min, local_time.tm_sec);
 
   UniformValues uniform_values;
   uniform_values.time = 0.0f;

@@ -31,7 +31,7 @@ void writeLog(Log* log, FILE* stream, const char* stdoutstr,
       if (!log->buffer)
       {
         log->buffer =
-          malloc(sizeof(char) * (expanded_len + stdoutstr_len));
+          malloc(sizeof(char) * (DATE_LENGTH + expanded_len + stdoutstr_len));
 
         if (!log->buffer)
         {
@@ -40,10 +40,10 @@ void writeLog(Log* log, FILE* stream, const char* stdoutstr,
           break;
         }
 
-        strcpy(log->buffer, stdoutstr);
+        strcpy(log->buffer, log->date);
       } else {
         log->buffer = realloc(log->buffer, sizeof(char) *
-          (strlen(log->buffer) + expanded_len + stdoutstr_len));
+          (strlen(log->buffer) + DATE_LENGTH + expanded_len + stdoutstr_len));
 
         if (!log->buffer)
         {
@@ -52,11 +52,13 @@ void writeLog(Log* log, FILE* stream, const char* stdoutstr,
           break;
         }
 
-        strncat(log->buffer, stdoutstr, stdoutstr_len);
+        strncat(log->buffer, log->date, DATE_LENGTH);
       }
 
+      strncat(log->buffer, stdoutstr, stdoutstr_len);
       strncat(log->buffer, expanded_str, expanded_len);
     } else {
+      fputs(log->date, log->file);
       fputs(stdoutstr, log->file);
       fputs(expanded_str, log->file);
     }
@@ -70,9 +72,12 @@ void writeLog(Log* log, FILE* stream, const char* stdoutstr,
     {
       fputs(expanded_str, stream);
     }
-
-    free(expanded_str);
   } while (false);
+
+  if (expanded_str)
+  {
+    free(expanded_str);
+  }
 
   va_end(args);
 }
@@ -82,21 +87,35 @@ void freeLog(Log* log)
   if (log->path)
   {
     writeLog(log, stdout, "", "Freeing log path ...\n");
-    free(log->path);
-    log->path = NULL;
     writeLog(log, stdout, "", "Log path freed\n");
   }
 
   if (log->buffer)
   {
-    writeLog(log, stdout, "", "Freeing log buffer ...\nLog buffer freed\n");
+    writeLog(log, stdout, "", "Freeing log buffer ...\n");
+    writeLog(log, stdout, "", "Log buffer freed\n");
+  }
+
+  if (log->file)
+  {
+    writeLog(log, stdout, "", "Closing log file ...\n");
+    writeLog(log, stdout, "", "Log file closed\n");
+  }
+
+  if (log->path)
+  {
+    free(log->path);
+    log->path = NULL;
+  }
+
+  if (log->buffer)
+  {
     free(log->buffer);
     log->buffer = NULL;
   }
 
   if (log->file)
   {
-    writeLog(log, stdout, "", "Closing log file ...\nLog file closed\n");
     fclose(log->file);
     log->file = NULL;
   }
@@ -108,10 +127,10 @@ bool initLog(Log* log)
   do
   {
     writeLog(log, stdout, "",
-      "  Opening log file \"%s\" ...\n  Log file opened ...\n", log->path);
+      "  Opening log file \"%s\" ...\n", log->path);
     if (log->roadmap.id != FOPEN_LOG_FAILED_RM)
     {
-      log->file = fopen(log->path, "wb");
+      log->file = fopen(log->path, "ab");
     }
 
     if (!log->file)
@@ -129,6 +148,7 @@ bool initLog(Log* log)
       free(log->buffer);
       log->buffer = NULL;
     }
+    writeLog(log, stdout, "", "  Log file opened ...\n");
   } while (false);
 
   return status;

@@ -240,30 +240,26 @@ bool parsing_options(long* fps, long* generation, int* width, int* height,
               {
                 if (log->roadmap.id < FRAGMENT_FILE_SARH_HEADER_MALLOC_FAILED_RM)
                 {
-                  dir = malloc(sizeof(char) * (strlen(ROOT) +
-                    strlen(SHADERS_DIR) + strlen(VERTEX_DIR) +
-                    strlen(argv[i]) + 1));
+                  dir = malloc(sizeof(char) * (strlen(SHADERS_DIR) +
+                    strlen(VERTEX_DIR) + strlen(argv[i]) + 1));
                   if (!dir)
                   {
                     fprintf(stderr, "malloc() failed when parsing options.\n");
                     status = false;
                     break;
                   }
-                  strcpy(dir, ROOT);
-                  strcat(dir, SHADERS_DIR);
+                  strcpy(dir, SHADERS_DIR);
                   strcat(dir, VERTEX_DIR);
                 } else {
-                  dir = malloc(sizeof(char) * (strlen(ROOT) +
-                    strlen(SHADERS_DIR) + strlen(FRAGMENT_DIR) +
-                    strlen(argv[i]) + 1));
+                  dir = malloc(sizeof(char) * (strlen(SHADERS_DIR) +
+                    strlen(FRAGMENT_DIR) + strlen(argv[i]) + 1));
                   if (!dir)
                   {
                     fprintf(stderr, "malloc() failed when parsing options.\n");
                     status = false;
                     break;
                   }
-                  strcpy(dir, ROOT);
-                  strcat(dir, SHADERS_DIR);
+                  strcpy(dir, SHADERS_DIR);
                   strcat(dir, FRAGMENT_DIR);
                 }
                 strcat(dir, argv[i]);

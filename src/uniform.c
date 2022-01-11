@@ -1,6 +1,6 @@
 #include "uniform.h"
 
-bool updateFloatUniforms(GLint uniformId, UniformValues* values, bool verbose)
+bool updateFloatUniforms(GLint uniformId, UniformValues* values, Log* log)
 {
   bool status = true;
 
@@ -41,7 +41,7 @@ function ...\n"));
   return status;
 }
 
-bool updateBoolUniforms(GLint uniformId, UniformValues* values, bool verbose)
+bool updateBoolUniforms(GLint uniformId, UniformValues* values, Log* log)
 {
   bool status = true;
 
@@ -67,7 +67,7 @@ bool updateBoolUniforms(GLint uniformId, UniformValues* values, bool verbose)
 }
 
 bool getUniforms(const Uniform uniforms[UNIFORM_COUNT],
-  GLuint uniformIds[UNIFORM_COUNT], GLuint* program, bool verbose)
+  GLuint uniformIds[UNIFORM_COUNT], GLuint* program, Log* log)
 {
   bool status = true;
 
@@ -87,7 +87,7 @@ bool getUniforms(const Uniform uniforms[UNIFORM_COUNT],
 }
 
 void updateUniforms(const Uniform uniforms[UNIFORM_COUNT],
-  GLuint uniformIds[UNIFORM_COUNT], UniformValues* values, bool verbose)
+  GLuint uniformIds[UNIFORM_COUNT], UniformValues* values, Log* log)
 {
   for (int i = 0; i < UNIFORM_COUNT; i++)
   {

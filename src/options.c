@@ -40,9 +40,8 @@ void help()
       VERTEXFILEROADMAPS_FLAG, FRAGMENTFILEROADMAPS_FLAG);
 }
 
-bool parsing_options(bool* verbose, long* fps, long* generation,
-  int* width, int* height, UniformValues* uniform_values, Roadmap* roadmap,
-  int* argc, char** argv)
+bool parsing_options(long* fps, long* generation, int* width, int* height,
+  UniformValues* uniform_values, Log* log, int* argc, char** argv)
 {
   int status = true;
   char* dir = NULL;
@@ -51,7 +50,7 @@ bool parsing_options(bool* verbose, long* fps, long* generation,
   {
     errno = 0;
     char* end;
-    roadmap->glsl_file = "";
+    log->roadmap.glsl_file = "";
     for (int i = 1; i < *argc; i++)
     {
       if (strcmp(argv[i], PIXEL_FLAG) == 0)
@@ -207,11 +206,11 @@ bool parsing_options(bool* verbose, long* fps, long* generation,
       } else if (strcmp(argv[i], PALETTES_FLAG) == 0) {
         uniform_values->palettes = true;
       } else if (strcmp(argv[i], VERBOSE_FLAG) == 0) {
-        *verbose = true;
+        log->verbose = true;
       } else if (strcmp(argv[i], ROADMAP_FLAG) == 0) {
         if (++i < *argc)
         {
-          roadmap->id = strtol(argv[i], &end, 10);
+          log->roadmap.id = strtol(argv[i], &end, 10);
           if (argv[i] == end)
           {
             fprintf(stderr,
@@ -228,18 +227,18 @@ bool parsing_options(bool* verbose, long* fps, long* generation,
             status = false;
             break;
           }
-          if ((roadmap->id < EXIT_SUCCESS_RM) || (roadmap->id >= RM_NB))
+          if ((log->roadmap.id < EXIT_SUCCESS_RM) || (log->roadmap.id >= RM_NB))
           {
             help();
             status = false;
             break;
           } else {
-            if ((roadmap->id >= VERTEX_FILE_SARH_HEADER_MALLOC_FAILED_RM) &&
-              (roadmap->id <= FRAGMENT_FILE_SARH_REPLACE_2_REGEXEC_FAILED_RM))
+            if ((log->roadmap.id >= VERTEX_FILE_SARH_HEADER_MALLOC_FAILED_RM) &&
+              (log->roadmap.id <= FRAGMENT_FILE_SARH_REPLACE_2_REGEXEC_FAILED_RM))
             {
               if (++i < *argc)
               {
-                if (roadmap->id < FRAGMENT_FILE_SARH_HEADER_MALLOC_FAILED_RM)
+                if (log->roadmap.id < FRAGMENT_FILE_SARH_HEADER_MALLOC_FAILED_RM)
                 {
                   dir = malloc(sizeof(char) * (strlen(ROOT) +
                     strlen(SHADERS_DIR) + strlen(VERTEX_DIR) +
@@ -270,7 +269,7 @@ bool parsing_options(bool* verbose, long* fps, long* generation,
                 strcat(dir, argv[i]);
                 if (access(dir, F_OK) == 0)
                 {
-                  roadmap->glsl_file = argv[i];
+                  log->roadmap.glsl_file = argv[i];
                 } else {
                   fprintf(stderr, "%s does not exist\n", dir);
                   status = false;
@@ -315,30 +314,30 @@ bool parsing_options(bool* verbose, long* fps, long* generation,
     free(dir);
   }
 
-  if (roadmap->id == SLIDEMODE_SUCCESS_RM)
+  if (log->roadmap.id == SLIDEMODE_SUCCESS_RM)
   {
     uniform_values->slide = 1;
     uniform_values->animations = false;
     uniform_values->motion = false;
     *fps = 0;
     *generation = -1;
-  } else if ((roadmap->id >= ATLASTEXTUREPATH_MALLOC_FAILED_RM) &&
-    (roadmap->id <= BAD_ATLASPNG_DIMENSIONS_RM)) {
+  } else if ((log->roadmap.id >= ATLASTEXTUREPATH_MALLOC_FAILED_RM) &&
+    (log->roadmap.id <= BAD_ATLASPNG_DIMENSIONS_RM)) {
       *generation = 0;
       uniform_values->slide = 0;
       *width = UNDEFINED_SIZE;
       *height = UNDEFINED_SIZE;
-  } else if (roadmap->id == PRECOMPUTE_AND_STOP_RM) {
+  } else if (log->roadmap.id == PRECOMPUTE_AND_STOP_RM) {
     *generation = 1;
     uniform_values->slide = 0;
     *width = UNDEFINED_SIZE;
     *height = UNDEFINED_SIZE;
-  } else if (roadmap->id == PRECOMPUTE_AND_CONTINUE_RM) {
+  } else if (log->roadmap.id == PRECOMPUTE_AND_CONTINUE_RM) {
     *generation = 0;
     uniform_values->slide = 0;
     *width = UNDEFINED_SIZE;
     *height = UNDEFINED_SIZE;
-    roadmap->id = BREAK_SUCCESS_RM;
+    log->roadmap.id = BREAK_SUCCESS_RM;
   }
 
   uniform_values->zoom /= 100.;

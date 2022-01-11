@@ -1,13 +1,13 @@
 #include "shader.h"
 
-bool buildFile(char** filepath, char** buffer, bool verbose, Roadmap* roadmap)
+bool buildFile(char** filepath, char** buffer, Log* log)
 {
   bool status = true;
 
   do
   {
     LOG(verbose, printf("    Reading file \"%s\" ...\n", *filepath));
-    if (!readFile(filepath, buffer, "", verbose, roadmap))
+    if (!readFile(filepath, buffer, "", log))
     {
       LOG(verbose, printf("    "));
       fprintf((verbose ? stdout : stderr), "Failed to read file\n");
@@ -16,7 +16,7 @@ bool buildFile(char** filepath, char** buffer, bool verbose, Roadmap* roadmap)
     }
     LOG(verbose, printf("    File read successfully\n"));
 
-    if (!searchAndReplaceHeaders(filepath, buffer, verbose, roadmap))
+    if (!searchAndReplaceHeaders(filepath, buffer, log))
     {
       status = false;
       break;
@@ -26,52 +26,51 @@ bool buildFile(char** filepath, char** buffer, bool verbose, Roadmap* roadmap)
   return status;
 }
 
-bool buildVertexShaderFile(Shaders* shaders, bool verbose, Roadmap* roadmap)
+bool buildVertexShaderFile(Shaders* shaders, Log* log)
 {
   bool status = true;
 
-  if (roadmap->id == FOPEN_VERTEX_FILE_FAILED_RM)
+  if (log->roadmap.id == FOPEN_VERTEX_FILE_FAILED_RM)
   {
-    roadmap->id = FOPEN_FAILED_RM;
-  } else if (roadmap->id == BUFFER_VERTEX_FILE_MALLOC_FAILED_RM) {
-    roadmap->id = BUFFER_MALLOC_FAILED_RM;
-  } else if (roadmap->id == VERTEX_FILE_SARH_REGCOMP_FAILED_RM) {
-    roadmap->id = SARH_REGCOMP_FAILED_RM;
-  } else if (roadmap->id == VERTEX_FILE_SARH_HEADERS_MALLOC_FAILED_RM) {
-    roadmap->id = SARH_HEADERS_MALLOC_FAILED_RM;
-  } else if (roadmap->id == VERTEX_FILE_SARH_HEADER_MALLOC_FAILED_RM) {
-    roadmap->id = SARH_HEADER_MALLOC_FAILED_RM;
-  } else if (roadmap->id == VERTEX_FILE_SARH_ADDMARKERS_REALLOC_FAILED_RM) {
-    roadmap->id = SARH_ADDMARKERS_REALLOC_FAILED_RM;
-  } else if (roadmap->id == VERTEX_FILE_SARH_REPLACE_1_REGCOMP_FAILED_RM) {
-    roadmap->id = SARH_REPLACE_1_REGCOMP_FAILED_RM;
-  } else if (roadmap->id == VERTEX_FILE_SARH_REPLACE_1_REALLOC_FAILED_RM) {
-    roadmap->id = SARH_REPLACE_1_REALLOC_FAILED_RM;
-  } else if (roadmap->id == VERTEX_FILE_SARH_REPLACE_1_REGEXEC_FAILED_RM) {
-    roadmap->id = SARH_REPLACE_1_REGEXEC_FAILED_RM;
-  } else if (roadmap->id == VERTEX_FILE_SARH_HEADERS_REALLOC_FAILED_RM) {
-    roadmap->id = SARH_HEADERS_REALLOC_FAILED_RM;
-  } else if (roadmap->id == VERTEX_FILE_SARH_HEADER_REALLOC_FAILED_RM) {
-    roadmap->id = SARH_HEADER_REALLOC_FAILED_RM;
-  } else if (roadmap->id == VERTEX_FILE_SARH_READFILE_BUFFER_MALLOC_FAILED_RM) {
-    roadmap->id = SARH_READFILE_BUFFER_MALLOC_FAILED_RM;
-  } else if (roadmap->id == VERTEX_FILE_SARH_READFILE_FOPEN_FAILED_RM) {
-    roadmap->id = SARH_READFILE_FOPEN_FAILED_RM;
-  } else if (roadmap->id ==
+    log->roadmap.id = FOPEN_FAILED_RM;
+  } else if (log->roadmap.id == BUFFER_VERTEX_FILE_MALLOC_FAILED_RM) {
+    log->roadmap.id = BUFFER_MALLOC_FAILED_RM;
+  } else if (log->roadmap.id == VERTEX_FILE_SARH_REGCOMP_FAILED_RM) {
+    log->roadmap.id = SARH_REGCOMP_FAILED_RM;
+  } else if (log->roadmap.id == VERTEX_FILE_SARH_HEADERS_MALLOC_FAILED_RM) {
+    log->roadmap.id = SARH_HEADERS_MALLOC_FAILED_RM;
+  } else if (log->roadmap.id == VERTEX_FILE_SARH_HEADER_MALLOC_FAILED_RM) {
+    log->roadmap.id = SARH_HEADER_MALLOC_FAILED_RM;
+  } else if (log->roadmap.id == VERTEX_FILE_SARH_ADDMARKERS_REALLOC_FAILED_RM) {
+    log->roadmap.id = SARH_ADDMARKERS_REALLOC_FAILED_RM;
+  } else if (log->roadmap.id == VERTEX_FILE_SARH_REPLACE_1_REGCOMP_FAILED_RM) {
+    log->roadmap.id = SARH_REPLACE_1_REGCOMP_FAILED_RM;
+  } else if (log->roadmap.id == VERTEX_FILE_SARH_REPLACE_1_REALLOC_FAILED_RM) {
+    log->roadmap.id = SARH_REPLACE_1_REALLOC_FAILED_RM;
+  } else if (log->roadmap.id == VERTEX_FILE_SARH_REPLACE_1_REGEXEC_FAILED_RM) {
+    log->roadmap.id = SARH_REPLACE_1_REGEXEC_FAILED_RM;
+  } else if (log->roadmap.id == VERTEX_FILE_SARH_HEADERS_REALLOC_FAILED_RM) {
+    log->roadmap.id = SARH_HEADERS_REALLOC_FAILED_RM;
+  } else if (log->roadmap.id == VERTEX_FILE_SARH_HEADER_REALLOC_FAILED_RM) {
+    log->roadmap.id = SARH_HEADER_REALLOC_FAILED_RM;
+  } else if (log->roadmap.id == VERTEX_FILE_SARH_READFILE_BUFFER_MALLOC_FAILED_RM) {
+    log->roadmap.id = SARH_READFILE_BUFFER_MALLOC_FAILED_RM;
+  } else if (log->roadmap.id == VERTEX_FILE_SARH_READFILE_FOPEN_FAILED_RM) {
+    log->roadmap.id = SARH_READFILE_FOPEN_FAILED_RM;
+  } else if (log->roadmap.id ==
     VERTEX_FILE_SARH_ADDMARKERS_IN_LOOP_REALLOC_FAILED_RM) {
-      roadmap->id = SARH_ADDMARKERS_IN_LOOP_REALLOC_FAILED_RM;
-  } else if (roadmap->id == VERTEX_FILE_SARH_REPLACE_2_REGCOMP_FAILED_RM) {
-    roadmap->id = SARH_REPLACE_2_REGCOMP_FAILED_RM;
-  } else if (roadmap->id == VERTEX_FILE_SARH_REPLACE_2_REALLOC_FAILED_RM) {
-    roadmap->id = SARH_REPLACE_2_REALLOC_FAILED_RM;
-  } else if (roadmap->id == VERTEX_FILE_SARH_REPLACE_2_REGEXEC_FAILED_RM) {
-    roadmap->id = SARH_REPLACE_2_REGEXEC_FAILED_RM;
-  } else if (roadmap->id == VERTEX_FILE_SARH_REGEXEC_FAILED_RM) {
-    roadmap->id = SARH_REGEXEC_FAILED_RM;
+      log->roadmap.id = SARH_ADDMARKERS_IN_LOOP_REALLOC_FAILED_RM;
+  } else if (log->roadmap.id == VERTEX_FILE_SARH_REPLACE_2_REGCOMP_FAILED_RM) {
+    log->roadmap.id = SARH_REPLACE_2_REGCOMP_FAILED_RM;
+  } else if (log->roadmap.id == VERTEX_FILE_SARH_REPLACE_2_REALLOC_FAILED_RM) {
+    log->roadmap.id = SARH_REPLACE_2_REALLOC_FAILED_RM;
+  } else if (log->roadmap.id == VERTEX_FILE_SARH_REPLACE_2_REGEXEC_FAILED_RM) {
+    log->roadmap.id = SARH_REPLACE_2_REGEXEC_FAILED_RM;
+  } else if (log->roadmap.id == VERTEX_FILE_SARH_REGEXEC_FAILED_RM) {
+    log->roadmap.id = SARH_REGEXEC_FAILED_RM;
   }
 
-  if (!buildFile(&(shaders->vshaderpath), &(shaders->vertex_file), verbose,
-    roadmap))
+  if (!buildFile(&(shaders->vshaderpath), &(shaders->vertex_file), log))
   {
     LOG(verbose, printf("  "));
     fprintf((verbose ? stdout : stderr),
@@ -82,53 +81,52 @@ bool buildVertexShaderFile(Shaders* shaders, bool verbose, Roadmap* roadmap)
   return status;
 }
 
-bool buildFragmentShaderFile(Shaders* shaders, bool verbose, Roadmap* roadmap)
+bool buildFragmentShaderFile(Shaders* shaders, Log* log)
 {
   bool status = true;
 
-  if (roadmap->id == FOPEN_FRAGMENT_FILE_FAILED_RM)
+  if (log->roadmap.id == FOPEN_FRAGMENT_FILE_FAILED_RM)
   {
-    roadmap->id = FOPEN_FAILED_RM;
-  } else if (roadmap->id == BUFFER_FRAGMENT_FILE_MALLOC_FAILED_RM) {
-    roadmap->id = BUFFER_MALLOC_FAILED_RM;
-  } else if (roadmap->id == FRAGMENT_FILE_SARH_REGCOMP_FAILED_RM) {
-    roadmap->id = SARH_REGCOMP_FAILED_RM;
-  } else if (roadmap->id == FRAGMENT_FILE_SARH_HEADERS_MALLOC_FAILED_RM) {
-    roadmap->id = SARH_HEADERS_MALLOC_FAILED_RM;
-  } else if (roadmap->id == FRAGMENT_FILE_SARH_HEADER_MALLOC_FAILED_RM) {
-    roadmap->id = SARH_HEADER_MALLOC_FAILED_RM;
-  } else if (roadmap->id == FRAGMENT_FILE_SARH_ADDMARKERS_REALLOC_FAILED_RM) {
-    roadmap->id = SARH_ADDMARKERS_REALLOC_FAILED_RM;
-  } else if (roadmap->id == FRAGMENT_FILE_SARH_REPLACE_1_REGCOMP_FAILED_RM) {
-    roadmap->id = SARH_REPLACE_1_REGCOMP_FAILED_RM;
-  } else if (roadmap->id == FRAGMENT_FILE_SARH_REPLACE_1_REALLOC_FAILED_RM) {
-    roadmap->id = SARH_REPLACE_1_REALLOC_FAILED_RM;
-  } else if (roadmap->id == FRAGMENT_FILE_SARH_REPLACE_1_REGEXEC_FAILED_RM) {
-    roadmap->id = SARH_REPLACE_1_REGEXEC_FAILED_RM;
-  } else if (roadmap->id == FRAGMENT_FILE_SARH_HEADERS_REALLOC_FAILED_RM) {
-    roadmap->id = SARH_HEADERS_REALLOC_FAILED_RM;
-  } else if (roadmap->id == FRAGMENT_FILE_SARH_HEADER_REALLOC_FAILED_RM) {
-    roadmap->id = SARH_HEADER_REALLOC_FAILED_RM;
-  } else if (roadmap->id ==
+    log->roadmap.id = FOPEN_FAILED_RM;
+  } else if (log->roadmap.id == BUFFER_FRAGMENT_FILE_MALLOC_FAILED_RM) {
+    log->roadmap.id = BUFFER_MALLOC_FAILED_RM;
+  } else if (log->roadmap.id == FRAGMENT_FILE_SARH_REGCOMP_FAILED_RM) {
+    log->roadmap.id = SARH_REGCOMP_FAILED_RM;
+  } else if (log->roadmap.id == FRAGMENT_FILE_SARH_HEADERS_MALLOC_FAILED_RM) {
+    log->roadmap.id = SARH_HEADERS_MALLOC_FAILED_RM;
+  } else if (log->roadmap.id == FRAGMENT_FILE_SARH_HEADER_MALLOC_FAILED_RM) {
+    log->roadmap.id = SARH_HEADER_MALLOC_FAILED_RM;
+  } else if (log->roadmap.id == FRAGMENT_FILE_SARH_ADDMARKERS_REALLOC_FAILED_RM) {
+    log->roadmap.id = SARH_ADDMARKERS_REALLOC_FAILED_RM;
+  } else if (log->roadmap.id == FRAGMENT_FILE_SARH_REPLACE_1_REGCOMP_FAILED_RM) {
+    log->roadmap.id = SARH_REPLACE_1_REGCOMP_FAILED_RM;
+  } else if (log->roadmap.id == FRAGMENT_FILE_SARH_REPLACE_1_REALLOC_FAILED_RM) {
+    log->roadmap.id = SARH_REPLACE_1_REALLOC_FAILED_RM;
+  } else if (log->roadmap.id == FRAGMENT_FILE_SARH_REPLACE_1_REGEXEC_FAILED_RM) {
+    log->roadmap.id = SARH_REPLACE_1_REGEXEC_FAILED_RM;
+  } else if (log->roadmap.id == FRAGMENT_FILE_SARH_HEADERS_REALLOC_FAILED_RM) {
+    log->roadmap.id = SARH_HEADERS_REALLOC_FAILED_RM;
+  } else if (log->roadmap.id == FRAGMENT_FILE_SARH_HEADER_REALLOC_FAILED_RM) {
+    log->roadmap.id = SARH_HEADER_REALLOC_FAILED_RM;
+  } else if (log->roadmap.id ==
     FRAGMENT_FILE_SARH_READFILE_BUFFER_MALLOC_FAILED_RM) {
-      roadmap->id = SARH_READFILE_BUFFER_MALLOC_FAILED_RM;
-  } else if (roadmap->id == FRAGMENT_FILE_SARH_READFILE_FOPEN_FAILED_RM) {
-    roadmap->id = SARH_READFILE_FOPEN_FAILED_RM;
-  } else if (roadmap->id ==
+      log->roadmap.id = SARH_READFILE_BUFFER_MALLOC_FAILED_RM;
+  } else if (log->roadmap.id == FRAGMENT_FILE_SARH_READFILE_FOPEN_FAILED_RM) {
+    log->roadmap.id = SARH_READFILE_FOPEN_FAILED_RM;
+  } else if (log->roadmap.id ==
     FRAGMENT_FILE_SARH_ADDMARKERS_IN_LOOP_REALLOC_FAILED_RM) {
-      roadmap->id = SARH_ADDMARKERS_IN_LOOP_REALLOC_FAILED_RM;
-  } else if (roadmap->id == FRAGMENT_FILE_SARH_REPLACE_2_REGCOMP_FAILED_RM) {
-    roadmap->id = SARH_REPLACE_2_REGCOMP_FAILED_RM;
-  } else if (roadmap->id == FRAGMENT_FILE_SARH_REPLACE_2_REALLOC_FAILED_RM) {
-    roadmap->id = SARH_REPLACE_2_REALLOC_FAILED_RM;
-  } else if (roadmap->id == FRAGMENT_FILE_SARH_REPLACE_2_REGEXEC_FAILED_RM) {
-    roadmap->id = SARH_REPLACE_2_REGEXEC_FAILED_RM;
-  } else if (roadmap->id == FRAGMENT_FILE_SARH_REGEXEC_FAILED_RM) {
-    roadmap->id = SARH_REGEXEC_FAILED_RM;
+      log->roadmap.id = SARH_ADDMARKERS_IN_LOOP_REALLOC_FAILED_RM;
+  } else if (log->roadmap.id == FRAGMENT_FILE_SARH_REPLACE_2_REGCOMP_FAILED_RM) {
+    log->roadmap.id = SARH_REPLACE_2_REGCOMP_FAILED_RM;
+  } else if (log->roadmap.id == FRAGMENT_FILE_SARH_REPLACE_2_REALLOC_FAILED_RM) {
+    log->roadmap.id = SARH_REPLACE_2_REALLOC_FAILED_RM;
+  } else if (log->roadmap.id == FRAGMENT_FILE_SARH_REPLACE_2_REGEXEC_FAILED_RM) {
+    log->roadmap.id = SARH_REPLACE_2_REGEXEC_FAILED_RM;
+  } else if (log->roadmap.id == FRAGMENT_FILE_SARH_REGEXEC_FAILED_RM) {
+    log->roadmap.id = SARH_REGEXEC_FAILED_RM;
   }
 
-  if (!buildFile(&(shaders->fshaderpath), &(shaders->fragment_file), verbose,
-    roadmap))
+  if (!buildFile(&(shaders->fshaderpath), &(shaders->fragment_file), log))
   {
     LOG(verbose, printf("  "));
     fprintf((verbose ? stdout : stderr),
@@ -139,8 +137,7 @@ bool buildFragmentShaderFile(Shaders* shaders, bool verbose, Roadmap* roadmap)
   return status;
 }
 
-bool checkLogShader(GLuint* shader, GLenum shaderType, char* buffer,
-  bool verbose, Roadmap* roadmap)
+bool checkLogShader(GLuint* shader, GLenum shaderType, char* buffer, Log* log)
 {
   bool status = true;
 
@@ -173,7 +170,7 @@ bool checkLogShader(GLuint* shader, GLenum shaderType, char* buffer,
         GL_CHECK(glGetShaderInfoLog(*shader, maxLength, &maxLength, message),
           status);
 
-        if (!improveLogShader(&message, &buffer, maxLength, verbose, roadmap))
+        if (!improveLogShader(&message, &buffer, maxLength, log))
         {
           free(message);
           status = false;
@@ -199,8 +196,7 @@ bool checkLogShader(GLuint* shader, GLenum shaderType, char* buffer,
   return status;
 }
 
-bool loadShader(Shaders* shaders, GLenum shaderType, bool verbose,
-  Roadmap* roadmap)
+bool loadShader(Shaders* shaders, GLenum shaderType, Log* log)
 {
   bool status = true;
 
@@ -232,7 +228,7 @@ bool loadShader(Shaders* shaders, GLenum shaderType, bool verbose,
     LOG(verbose, printf("    Checking compile status of %s shader ...\n",
       shaderType == GL_FRAGMENT_SHADER ? "fragment" : "vertex"));
     if (!checkLogShader(shader, shaderType, shaderType == GL_FRAGMENT_SHADER ?
-      shaders->fragment_file : shaders->vertex_file, verbose, roadmap))
+      shaders->fragment_file : shaders->vertex_file, log))
     {
       status = false;
       break;
@@ -244,23 +240,23 @@ bool loadShader(Shaders* shaders, GLenum shaderType, bool verbose,
   return status;
 }
 
-bool loadVertexShader(Shaders* shaders, bool verbose, Roadmap* roadmap)
+bool loadVertexShader(Shaders* shaders, Log* log)
 {
   bool status = true;
 
-  if (roadmap->id == VERTEX_FILE_ILS_REPLACE_REGCOMP_FAILED_RM)
+  if (log->roadmap.id == VERTEX_FILE_ILS_REPLACE_REGCOMP_FAILED_RM)
   {
-    roadmap->id = IMPROVELOGSHADER_REPLACE_REGCOMP_FAILED_RM;
-  } else if (roadmap->id == VERTEX_FILE_ILS_REPLACE_REALLOC_FAILED_RM) {
-    roadmap->id = IMPROVELOGSHADER_REPLACE_REALLOC_FAILED_RM;
-  } else if (roadmap->id == VERTEX_FILE_ILS_REPLACE_REGEXEC_FAILED_RM) {
-    roadmap->id = IMPROVELOGSHADER_REPLACE_REGEXEC_FAILED_RM;
-  } else if (roadmap->id == VERTEX_FILE_ILS_REGCOMP_FAILED_RM) {
-    roadmap->id = IMPROVELOGSHADER_REGCOMP_FAILED_RM;
-  } else if (roadmap->id == VERTEX_FILE_ILS_REGEXEC_FAILED_RM) {
-    roadmap->id = IMPROVELOGSHADER_REGEXEC_FAILED_RM;
+    log->roadmap.id = IMPROVELOGSHADER_REPLACE_REGCOMP_FAILED_RM;
+  } else if (log->roadmap.id == VERTEX_FILE_ILS_REPLACE_REALLOC_FAILED_RM) {
+    log->roadmap.id = IMPROVELOGSHADER_REPLACE_REALLOC_FAILED_RM;
+  } else if (log->roadmap.id == VERTEX_FILE_ILS_REPLACE_REGEXEC_FAILED_RM) {
+    log->roadmap.id = IMPROVELOGSHADER_REPLACE_REGEXEC_FAILED_RM;
+  } else if (log->roadmap.id == VERTEX_FILE_ILS_REGCOMP_FAILED_RM) {
+    log->roadmap.id = IMPROVELOGSHADER_REGCOMP_FAILED_RM;
+  } else if (log->roadmap.id == VERTEX_FILE_ILS_REGEXEC_FAILED_RM) {
+    log->roadmap.id = IMPROVELOGSHADER_REGEXEC_FAILED_RM;
   }
-  if (!loadShader(shaders, GL_VERTEX_SHADER, verbose, roadmap))
+  if (!loadShader(shaders, GL_VERTEX_SHADER, log))
   {
     LOG(verbose, printf("  "));
     fprintf((verbose ? stdout : stderr), "Failed to compile vertex shader\n");
@@ -270,23 +266,23 @@ bool loadVertexShader(Shaders* shaders, bool verbose, Roadmap* roadmap)
   return status;
 }
 
-bool loadFragmentShader(Shaders* shaders, bool verbose, Roadmap* roadmap)
+bool loadFragmentShader(Shaders* shaders, Log* log)
 {
   bool status = true;
 
-  if (roadmap->id == FRAGMENT_FILE_ILS_REPLACE_REGCOMP_FAILED_RM)
+  if (log->roadmap.id == FRAGMENT_FILE_ILS_REPLACE_REGCOMP_FAILED_RM)
   {
-    roadmap->id = IMPROVELOGSHADER_REPLACE_REGCOMP_FAILED_RM;
-  } else if (roadmap->id == FRAGMENT_FILE_ILS_REPLACE_REALLOC_FAILED_RM) {
-    roadmap->id = IMPROVELOGSHADER_REPLACE_REALLOC_FAILED_RM;
-  } else if (roadmap->id == FRAGMENT_FILE_ILS_REPLACE_REGEXEC_FAILED_RM) {
-    roadmap->id = IMPROVELOGSHADER_REPLACE_REGEXEC_FAILED_RM;
-  } else if (roadmap->id == FRAGMENT_FILE_ILS_REGCOMP_FAILED_RM) {
-    roadmap->id = IMPROVELOGSHADER_REGCOMP_FAILED_RM;
-  } else if (roadmap->id == FRAGMENT_FILE_ILS_REGEXEC_FAILED_RM) {
-    roadmap->id = IMPROVELOGSHADER_REGEXEC_FAILED_RM;
+    log->roadmap.id = IMPROVELOGSHADER_REPLACE_REGCOMP_FAILED_RM;
+  } else if (log->roadmap.id == FRAGMENT_FILE_ILS_REPLACE_REALLOC_FAILED_RM) {
+    log->roadmap.id = IMPROVELOGSHADER_REPLACE_REALLOC_FAILED_RM;
+  } else if (log->roadmap.id == FRAGMENT_FILE_ILS_REPLACE_REGEXEC_FAILED_RM) {
+    log->roadmap.id = IMPROVELOGSHADER_REPLACE_REGEXEC_FAILED_RM;
+  } else if (log->roadmap.id == FRAGMENT_FILE_ILS_REGCOMP_FAILED_RM) {
+    log->roadmap.id = IMPROVELOGSHADER_REGCOMP_FAILED_RM;
+  } else if (log->roadmap.id == FRAGMENT_FILE_ILS_REGEXEC_FAILED_RM) {
+    log->roadmap.id = IMPROVELOGSHADER_REGEXEC_FAILED_RM;
   }
-  if (!loadShader(shaders, GL_FRAGMENT_SHADER, verbose, roadmap))
+  if (!loadShader(shaders, GL_FRAGMENT_SHADER, log))
   {
     LOG(verbose, printf("  "));
     fprintf((verbose ? stdout : stderr), "Failed to compile fragment shader\n");
@@ -296,7 +292,7 @@ bool loadFragmentShader(Shaders* shaders, bool verbose, Roadmap* roadmap)
   return status;
 }
 
-bool checkLogProgram(Shaders* shaders, bool verbose, Roadmap* roadmap)
+bool checkLogProgram(Shaders* shaders, Log* log)
 {
   bool status = true;
 
@@ -346,8 +342,7 @@ bool checkLogProgram(Shaders* shaders, bool verbose, Roadmap* roadmap)
   return status;
 }
 
-bool loadProgram(Context* context, Shaders* shaders, bool verbose,
-  Roadmap* roadmap)
+bool loadProgram(Context* context, Shaders* shaders, Log* log)
 {
   bool status = true;
 
@@ -358,7 +353,7 @@ bool loadProgram(Context* context, Shaders* shaders, bool verbose,
     LOG(verbose, printf("  OpenGL Program %d created\n", shaders->program));
 
     LOG(verbose, printf("  Building vertex shader file ...\n"));
-    if (!buildVertexShaderFile(shaders, verbose, roadmap))
+    if (!buildVertexShaderFile(shaders, log))
     {
       status = false;
       break;
@@ -366,7 +361,7 @@ bool loadProgram(Context* context, Shaders* shaders, bool verbose,
     LOG(verbose, printf("  Vertex shader file built\n"));
 
     LOG(verbose, printf("  Building fragment shader file ...\n"));
-    if (!buildFragmentShaderFile(shaders, verbose, roadmap))
+    if (!buildFragmentShaderFile(shaders, log))
     {
       status = false;
       break;
@@ -374,7 +369,7 @@ bool loadProgram(Context* context, Shaders* shaders, bool verbose,
     LOG(verbose, printf("  Fragment shader file built\n"));
 
     LOG(verbose, printf("  Loading vertex shader ...\n"));
-    if (!loadVertexShader(shaders, verbose, roadmap))
+    if (!loadVertexShader(shaders, log))
     {
       status = false;
       break;
@@ -382,7 +377,7 @@ bool loadProgram(Context* context, Shaders* shaders, bool verbose,
     LOG(verbose, printf("  Vertex shader loaded\n"));
 
     LOG(verbose, printf("  Loading fragment shader ...\n"));
-    if (!loadFragmentShader(shaders, verbose, roadmap))
+    if (!loadFragmentShader(shaders, log))
     {
       status = false;
       break;
@@ -403,7 +398,7 @@ bool loadProgram(Context* context, Shaders* shaders, bool verbose,
     GL_CHECK(glLinkProgram(shaders->program), status);
     LOG(verbose, printf("  OpenGL program probably linked\n"));
 
-    if (!checkLogProgram(shaders, verbose, roadmap))
+    if (!checkLogProgram(shaders, log))
     {
       status = false;
       break;
@@ -438,9 +433,25 @@ rendering state...\n"));
   return status;
 }
 
-bool freeProgram(Shaders* shaders, bool verbose, Roadmap* roadmap)
+bool freeProgram(Shaders* shaders, Log* log)
 {
   bool status = true;
+
+  if (shaders->fshaderpath)
+  {
+    LOG(verbose, printf("Freeing fragment shader path ...\n"));
+    free(shaders->fshaderpath);
+    shaders->fshaderpath = NULL;
+    LOG(verbose, printf("fragment shader path freed\n"));
+  }
+
+  if (shaders->vshaderpath)
+  {
+    LOG(verbose, printf("Freeing vertex shader path ...\n"));
+    free(shaders->vshaderpath);
+    shaders->vshaderpath = NULL;
+    LOG(verbose, printf("Vertex shader path freed\n"));
+  }
 
   if (shaders->vertex_file)
   {

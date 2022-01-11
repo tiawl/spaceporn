@@ -30,13 +30,12 @@ typedef struct
 #define UNIFORM_BOOLEANS 4
 
 // custom functions used to set uniform values
-bool updateFloatUniforms(GLint uniformId, UniformValues* values,
-  bool verbose);
-bool updateBoolUniforms(GLint uniformId, UniformValues* values, bool verbose);
+bool updateFloatUniforms(GLint uniformId, UniformValues* values, Log* log);
+bool updateBoolUniforms(GLint uniformId, UniformValues* values, Log* log);
 
 bool getUniforms(const Uniform uniforms[UNIFORM_COUNT],
-  GLuint uniformIds[UNIFORM_COUNT], GLuint* program, bool verbose);
+  GLuint uniformIds[UNIFORM_COUNT], GLuint* program, Log* log);
 void updateUniforms(const Uniform uniforms[UNIFORM_COUNT],
-  GLuint uniformIds[UNIFORM_COUNT], UniformValues* values, bool verbose);
+  GLuint uniformIds[UNIFORM_COUNT], UniformValues* values, Log* log);
 
 #endif

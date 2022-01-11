@@ -1,38 +1,39 @@
 #include "parser.h"
 
-void freeRegex(Regex* regex, const char* spaces, bool verbose)
+void freeRegex(Regex* regex, const char* spaces, Log* log)
 {
   if (regex->header_buffer)
   {
-    LOG(verbose, printf("%s    Freeing header_buffer memory ...\n", spaces));
+    writeLog(log, stdout, "", "%s    Freeing header_buffer memory ...\n",
+      spaces);
     free(regex->header_buffer);
     regex->header_buffer = NULL;
-    LOG(verbose, printf("%s    Memory freed successfully\n", spaces));
+    writeLog(log, stdout, "", "%s    Memory freed successfully\n", spaces);
   }
 
   if (regex->headers)
   {
     for (size_t i = 0; i < regex->headers_length; ++i)
     {
-      LOG(verbose, printf("%s    Freeing headers[%lu] memory ...\n", spaces,
-        i));
+      writeLog(log, stdout, "", "%s    Freeing headers[%lu] memory ...\n",
+        spaces, i);
       free((regex->headers)[i]);
-      LOG(verbose, printf("%s    Memory freed successfully\n", spaces));
+      writeLog(log, stdout, "", "%s    Memory freed successfully\n", spaces);
     }
 
-    LOG(verbose, printf("%s    Freeing headers memory ...\n", spaces));
+    writeLog(log, stdout, "", "%s    Freeing headers memory ...\n", spaces);
     free(regex->headers);
     regex->headers = NULL;
-    LOG(verbose, printf("%s    Memory freed successfully\n", spaces));
+    writeLog(log, stdout, "", "%s    Memory freed successfully\n", spaces);
   }
 
-  LOG(verbose, printf("%s    Freeing regex structure ...\n", spaces));
+  writeLog(log, stdout, "", "%s    Freeing regex structure ...\n", spaces);
   regfree(&(regex->regex));
-  LOG(verbose, printf("%s    Memory freed successfully\n", spaces));
+  writeLog(log, stdout, "", "%s    Memory freed successfully\n", spaces);
 }
 
 bool replace(char** str, const char* pattern, const char* replace,
-  const char* spaces, bool verbose, Roadmap* roadmap)
+  const char* spaces, Log* log)
 {
   bool status = true;
 
@@ -40,18 +41,18 @@ bool replace(char** str, const char* pattern, const char* replace,
   {
     regex_t regex;
 
-    LOG(verbose, printf("%s      Compiling regex pattern: \"%s\" ...\n",
-      spaces, pattern));
+    writeLog(log, stdout, "", "%s      Compiling regex pattern: \"%s\" ...\n",
+      spaces, pattern);
 
-    if ((roadmap->id != REPLACE_REGCOMP_FAILED_RM) &&
+    if ((log->roadmap.id != REPLACE_REGCOMP_FAILED_RM) &&
       (regcomp(&regex, pattern, REG_EXTENDED | REG_NEWLINE) == 0))
     {
-      LOG(verbose, printf("%s      Regex pattern compiled successfully\n",
-        spaces));
+      writeLog(log, stdout, "",
+        "%s      Regex pattern compiled successfully\n", spaces);
 
       size_t nmatch = regex.re_nsub;
-      LOG(verbose, printf("%s      Regex subexpressions found: %lu\n", spaces,
-        nmatch));
+      writeLog(log, stdout, "", "%s      Regex subexpressions found: %lu\n",
+        spaces, nmatch);
 
       regmatch_t m[nmatch + 1];
 
@@ -59,45 +60,46 @@ bool replace(char** str, const char* pattern, const char* replace,
       size_t end;
 
       // replace only first occurence
-      LOG(verbose, printf("%s      Comparing regex pattern ...\n", spaces));
+      writeLog(log, stdout, "", "%s      Comparing regex pattern ...\n",
+        spaces);
       int match = regexec(&regex, *str, nmatch + 1, m, 0);
-      if ((match == 0) && (roadmap->id != REPLACE_REGEXEC_FAILED_RM))
+      if ((match == 0) && (log->roadmap.id != REPLACE_REGEXEC_FAILED_RM))
       {
-        LOG(verbose, printf("%s      Regex pattern found\n", spaces));
+        writeLog(log, stdout, "", "%s      Regex pattern found\n", spaces);
 
         start = m[0].rm_so;
-        LOG(verbose, printf("%s      Start index of first match is %lu\n",
-          spaces, start));
+        writeLog(log, stdout, "",
+          "%s      Start index of first match is %lu\n", spaces, start);
         end = m[0].rm_eo;
-        LOG(verbose, printf("%s      End index of first match is %lu\n",
-          spaces, end));
+        writeLog(log, stdout, "", "%s      End index of first match is %lu\n",
+          spaces, end);
 
         char new[strlen(*str) + strlen(replace)];
         new[0] = '\0';
 
-        LOG(verbose, printf("%s      Building new string ...\n", spaces));
-        LOG(verbose, printf("%s        Copying first part of the \
-original string ...\n", spaces));
+        writeLog(log, stdout, "", "%s      Building new string ...\n", spaces);
+        writeLog(log, stdout, "", "%s        Copying first part of the %s",
+          spaces, "original string ...\n");
         strncat(new, *str, start);
-        LOG(verbose, printf("%s        Strings copied successfully\n",
-          spaces));
+        writeLog(log, stdout, "", "%s        Strings copied successfully\n",
+          spaces);
 
-        LOG(verbose, printf("%s        Concatenating replaced part \
-...\n", spaces));
+        writeLog(log, stdout, "",
+          "%s        Concatenating replaced part ...\n", spaces);
         strcat(new, replace);
-        LOG(verbose, printf("%s        Replaced part added successfully\n",
-          spaces));
+        writeLog(log, stdout, "",
+          "%s        Replaced part added successfully\n", spaces);
 
-        LOG(verbose, printf("%s        Concatenating last part of the \
-original string ...\n", spaces));
+        writeLog(log, stdout, "", "%s        Concatenating last part of %s",
+          spaces, "the original string ...\n");
         strncat(new, *str + end, strlen(*str) - end);
-        LOG(verbose, printf("%s        Strings concatenated successfully\n",
-          spaces));
-        LOG(verbose, printf("%s      New string built\n", spaces));
+        writeLog(log, stdout, "",
+          "%s        Strings concatenated successfully\n", spaces);
+        writeLog(log, stdout, "", "%s      New string built\n", spaces);
 
-        LOG(verbose, printf("%s      Reallocating memory for *str ...\n",
-          spaces));
-        if (roadmap->id != REPLACE_REALLOC_FAILED_RM)
+        writeLog(log, stdout, "",
+          "%s      Reallocating memory for *str ...\n", spaces);
+        if (log->roadmap.id != REPLACE_REALLOC_FAILED_RM)
         {
           *str = realloc(*str, sizeof(char) * (strlen(new) + 1));
         } else {
@@ -107,61 +109,70 @@ original string ...\n", spaces));
 
         if (!*str)
         {
-          LOG(verbose, printf("%s      ", spaces));
-          fprintf((verbose ? stdout : stderr), "*str realloc() failed\n");
+          writeLog(log, (log->verbose ? stdout : stderr),
+            (strlen(spaces) > 0 ? "        " : "      "),
+            "*str realloc() failed\n");
           regfree(&regex);
 
           status = false;
           break;
         }
-        LOG(verbose, printf("%s      Memory reallocated successfully\n",
-          spaces));
+        writeLog(log, stdout, "", "%s      Memory reallocated successfully\n",
+          spaces);
 
-        LOG(verbose, printf("%s      Copying new in *str ...\n", spaces));
+        writeLog(log, stdout, "", "%s      Copying new in *str ...\n", spaces);
         strcpy(*str, new);
-        LOG(verbose, printf("%s      Copied successfully\n", spaces));
+        writeLog(log, stdout, "", "%s      Copied successfully\n", spaces);
       } else if ((match == REG_NOMATCH)
-        && (roadmap->id != REPLACE_REGEXEC_FAILED_RM)) {
-          LOG(verbose, printf("%s      Regex pattern not found\n", spaces));
+        && (log->roadmap.id != REPLACE_REGEXEC_FAILED_RM)) {
+          writeLog(log, stdout, "", "%s      Regex pattern not found\n",
+            spaces);
       } else {
-        if (roadmap->id != REPLACE_REGEXEC_FAILED_RM)
+        if (log->roadmap.id != REPLACE_REGEXEC_FAILED_RM)
         {
           int regex_error = 1;
           size_t size = regerror(regex_error, &regex, NULL, 0);
-          LOG(verbose, printf("%s      Message size of regex error is %lu\n",
-            spaces, size));
+          writeLog(log, stdout, "",
+            "%s      Message size of regex error is %lu\n", spaces, size);
 
           char text[size];
 
           regerror(regex_error, &regex, &(text[0]), size);
 
-          LOG(verbose, printf("%s      Freeing regex structure ...\n", spaces));
+          writeLog(log, stdout, "", "%s      Freeing regex structure ...\n",
+            spaces);
           regfree(&regex);
-          LOG(verbose, printf("%s      Memory freed successfully\n", spaces));
+          writeLog(log, stdout, "", "%s      Memory freed successfully\n",
+            spaces);
 
-          LOG(verbose, printf("%s      ", spaces));
-          fprintf((verbose ? stdout : stderr), "Regex error: %s\n", text);
+          writeLog(log, (log->verbose ? stdout : stderr),
+            (strlen(spaces) > 0 ? "        " : "      "),
+            "Regex error: %s\n", text);
 
           status = false;
           break;
         } else {
-          LOG(verbose, printf("%s      Freeing regex structure ...\n", spaces));
+          writeLog(log, stdout, "", "%s      Freeing regex structure ...\n",
+            spaces);
           regfree(&regex);
-          LOG(verbose, printf("%s      Memory freed successfully\n", spaces));
+          writeLog(log, stdout, "", "%s      Memory freed successfully\n",
+            spaces);
 
           status = false;
           break;
         }
       }
 
-      LOG(verbose, printf("%s      Freeing regex structure ...\n", spaces));
+      writeLog(log, stdout, "", "%s      Freeing regex structure ...\n",
+        spaces);
       regfree(&regex);
-      LOG(verbose, printf("%s      Memory freed successfully\n", spaces));
+      writeLog(log, stdout, "", "%s      Memory freed successfully\n", spaces);
 
       break;
     } else {
-      LOG(verbose, printf("%s      ", spaces));
-      fprintf((verbose ? stdout : stderr), "Regex compilation failed\n");
+      writeLog(log, (log->verbose ? stdout : stderr), "",
+        (strlen(spaces) ? "        " : "      "),
+        "Regex compilation failed\n");
 
       status = false;
       break;
@@ -171,8 +182,7 @@ original string ...\n", spaces));
   return status;
 }
 
-bool readFile(char** filepath, char** buffer, const char* spaces,
-  bool verbose, Roadmap* roadmap)
+bool readFile(char** filepath, char** buffer, const char* spaces, Log* log)
 {
   bool status = true;
 
@@ -180,96 +190,100 @@ bool readFile(char** filepath, char** buffer, const char* spaces,
   {
     long length;
 
-    LOG(verbose, printf("%s      Opening \"%s\" ...\n", spaces, *filepath));
+    writeLog(log, stdout, "", "%s      Opening \"%s\" ...\n", spaces,
+      *filepath);
     FILE* f = NULL;
 
-    if (roadmap->id != FOPEN_FAILED_RM)
+    if (log->roadmap.id != FOPEN_FAILED_RM)
     {
-      f = fopen(*filepath, "r");
+      f = fopen(*filepath, "rb");
     }
 
     if (f)
     {
-      LOG(verbose, printf("%s      File opened successfully\n", spaces));
+      writeLog(log, stdout, "", "%s      File opened successfully\n", spaces);
 
-      LOG(verbose, printf("%s      Setting file position of the stream to the \
-end ...\n", spaces));
+      writeLog(log, stdout, "",
+        "%s      Setting file position of the stream to the end ...\n",
+        spaces);
       fseek(f, 0, SEEK_END);
-      LOG(verbose, printf("%s      Stream positionned\n", spaces));
+      writeLog(log, stdout, "", "%s      Stream positionned\n", spaces);
 
-      LOG(verbose, printf("%s      Computing file position of the stream \
-...\n", spaces));
+      writeLog(log, stdout, "",
+        "%s      Computing file position of the stream ...\n", spaces);
       char relative_path[19];
       strncpy(relative_path, *filepath + (strlen(*filepath) - 18), 18);
       relative_path[18] = '\0';
-      if (((roadmap->id == VERTEX_SHADER_COMPILATION_FAILED_RM)
-        || (roadmap->id == VERTEX_FILE_ILS_REPLACE_REGCOMP_FAILED_RM)
-        || (roadmap->id == VERTEX_FILE_ILS_REPLACE_REALLOC_FAILED_RM)
-        || (roadmap->id == VERTEX_FILE_ILS_REPLACE_REGEXEC_FAILED_RM)
-        || (roadmap->id == VERTEX_FILE_ILS_REGCOMP_FAILED_RM)
-        || (roadmap->id == VERTEX_FILE_ILS_REGEXEC_FAILED_RM))
+      if (((log->roadmap.id == VERTEX_SHADER_COMPILATION_FAILED_RM)
+        || (log->roadmap.id == VERTEX_FILE_ILS_REPLACE_REGCOMP_FAILED_RM)
+        || (log->roadmap.id == VERTEX_FILE_ILS_REPLACE_REALLOC_FAILED_RM)
+        || (log->roadmap.id == VERTEX_FILE_ILS_REPLACE_REGEXEC_FAILED_RM)
+        || (log->roadmap.id == VERTEX_FILE_ILS_REGCOMP_FAILED_RM)
+        || (log->roadmap.id == VERTEX_FILE_ILS_REGEXEC_FAILED_RM))
         && (strcmp(relative_path, "s/vertex/main.glsl") == 0))
       {
         length = ERRONEOUS_VERTEX_SHADER;
-      } else if (((roadmap->id == FRAGMENT_SHADER_COMPILATION_FAILED_RM)
-        || (roadmap->id == FRAGMENT_FILE_ILS_REPLACE_REGCOMP_FAILED_RM)
-        || (roadmap->id == FRAGMENT_FILE_ILS_REPLACE_REALLOC_FAILED_RM)
-        || (roadmap->id == FRAGMENT_FILE_ILS_REPLACE_REGEXEC_FAILED_RM)
-        || (roadmap->id == FRAGMENT_FILE_ILS_REGCOMP_FAILED_RM)
-        || (roadmap->id == FRAGMENT_FILE_ILS_REGEXEC_FAILED_RM))
+      } else if (((log->roadmap.id == FRAGMENT_SHADER_COMPILATION_FAILED_RM)
+        || (log->roadmap.id == FRAGMENT_FILE_ILS_REPLACE_REGCOMP_FAILED_RM)
+        || (log->roadmap.id == FRAGMENT_FILE_ILS_REPLACE_REALLOC_FAILED_RM)
+        || (log->roadmap.id == FRAGMENT_FILE_ILS_REPLACE_REGEXEC_FAILED_RM)
+        || (log->roadmap.id == FRAGMENT_FILE_ILS_REGCOMP_FAILED_RM)
+        || (log->roadmap.id == FRAGMENT_FILE_ILS_REGEXEC_FAILED_RM))
         && (strcmp(relative_path, "fragment/main.glsl") == 0)) {
           length = ERRONEOUS_FRAGMENT_SHADER;
-      } else if ((roadmap->id == LINKING_PROGRAM_FAILED_RM)
+      } else if ((log->roadmap.id == LINKING_PROGRAM_FAILED_RM)
         && (strcmp(relative_path, "s/vertex/main.glsl") == 0)) {
           length = MISSINGMAIN_VERTEX_SHADER;
       } else {
         length = ftell(f);
       }
-      LOG(verbose, printf("%s      File position of the stream computed\n",
-        spaces));
+      writeLog(log, stdout, "",
+        "%s      File position of the stream computed\n", spaces);
 
-      LOG(verbose, printf("%s      Setting file position of the stream to the \
-beginning ...\n", spaces));
+      writeLog(log, stdout, "",
+        "%s      Setting file position of the stream to the beginning ...\n",
+        spaces);
       fseek(f, 0, SEEK_SET);
-      LOG(verbose, printf("%s      Stream positionned\n", spaces));
+      writeLog(log, stdout, "", "%s      Stream positionned\n", spaces);
 
-      LOG(verbose, printf("%s      Allocating memory for reading file buffer \
-...\n", spaces));
-      if (roadmap->id != BUFFER_MALLOC_FAILED_RM)
+      writeLog(log, stdout, "",
+        "%s      Allocating memory for reading file buffer ...\n", spaces);
+      if (log->roadmap.id != BUFFER_MALLOC_FAILED_RM)
       {
         *buffer = malloc(length + 1);
       }
 
       if (*buffer)
       {
-        LOG(verbose, printf("%s      Memory for reading file buffer \
-allocated successfully\n", spaces));
+        writeLog(log, stdout, "",
+          "%s      Memory for reading file buffer allocated successfully\n",
+          spaces);
 
-        LOG(verbose, printf("%s      Reading file into buffer ...\n", spaces));
+        writeLog(log, stdout, "", "%s      Reading file into buffer ...\n",
+          spaces);
         fread(*buffer, 1, length, f);
         // fread does not 0 terminate strings
         (*buffer)[length] = '\0';
-        LOG(verbose, printf("%s      Buffer filled with:\n\
-------------------------------------------------------------------------------\
-\n%s\
-------------------------------------------------------------------------------\
-\n", spaces, *buffer));
+        writeLog(log, stdout, "", "%s      Buffer filled with:\n%s\n%s%s\n",
+          spaces, BAR, *buffer, BAR);
 
       } else {
-        LOG(verbose, printf("%s      ", spaces));
-        fprintf((verbose ? stdout : stderr), "Buffer malloc() failed\n");
+        writeLog(log, (log->verbose ? stdout : stderr),
+          (strlen(spaces) > 0 ? "        " : "      "),
+          "Buffer malloc() failed\n");
 
         status = false;
         break;
       }
 
-      LOG(verbose, printf("%s      Closing \"%s\" ...\n", spaces, *filepath));
+      writeLog(log, stdout, "", "%s      Closing \"%s\" ...\n", spaces,
+        *filepath);
       fclose(f);
-      LOG(verbose, printf("%s      File closed successfully\n", spaces));
+      writeLog(log, stdout, "", "%s      File closed successfully\n", spaces);
 
     } else {
-      LOG(verbose, printf("%s      ", spaces));
-      fprintf((verbose ? stdout : stderr),
+      writeLog(log, (log->verbose ? stdout : stderr),
+        (strlen(spaces) > 0 ? "        " : "      "),
         "Failed to read inside \"%s\": %s\n", *filepath, strerror(errno));
 
       status = false;
@@ -281,7 +295,7 @@ allocated successfully\n", spaces));
 }
 
 bool addMarkers(char** filename, char** buffer, const char* dir_path,
-  const char* spaces, bool verbose, Roadmap* roadmap)
+  const char* spaces, Log* log)
 {
   bool status = true;
 
@@ -292,14 +306,14 @@ bool addMarkers(char** filename, char** buffer, const char* dir_path,
     size_t marker_length;
     unsigned line = 1;
 
-    LOG(verbose, printf("%s    Computing length of buffer file ...\n",
-      spaces));
+    writeLog(log, stdout, "", "%s    Computing length of buffer file ...\n",
+      spaces);
     size_t buffer_length = strlen(*buffer);
-    LOG(verbose, printf("%s    Length of buffer file is %lu\n", spaces,
-      buffer_length));
+    writeLog(log, stdout, "", "%s    Length of buffer file is %lu\n", spaces,
+      buffer_length);
 
-    LOG(verbose, printf("%s    Computing lines number in buffer file ...\n",
-      spaces));
+    writeLog(log, stdout, "",
+      "%s    Computing lines number in buffer file ...\n", spaces);
     unsigned buffer_lines = 0;
     while (i <= buffer_length)
     {
@@ -309,19 +323,19 @@ bool addMarkers(char** filename, char** buffer, const char* dir_path,
       }
       ++i;
     }
-    LOG(verbose, printf("%s    Lines number of buffer file is %u\n", spaces,
-      buffer_lines));
+    writeLog(log, stdout, "", "%s    Lines number of buffer file is %u\n",
+      spaces, buffer_lines);
 
     i = 0;
 
-    LOG(verbose, printf("%s    Reallocating memory for buffer ...\n",
-      spaces));
-    if ((roadmap->id != SARH_ADDMARKERS_REALLOC_FAILED_RM)
-      || (strcmp(roadmap->glsl_file, *filename) != 0))
+    writeLog(log, stdout, "", "%s    Reallocating memory for buffer ...\n",
+      spaces);
+    if ((log->roadmap.id != SARH_ADDMARKERS_REALLOC_FAILED_RM)
+      || (strcmp(log->roadmap.glsl_file, *filename) != 0))
     {
       *buffer = realloc(*buffer, sizeof(char) * (buffer_length + 1 +
-        (strlen(*filename) + strlen(" // :") + floor(log10(buffer_lines)) + 1) *
-        buffer_lines));
+        (strlen(*filename) + strlen(" // :") + floor(log10(buffer_lines)) + 1)
+        * buffer_lines));
     } else {
       free(*buffer);
       *buffer = NULL;
@@ -329,77 +343,81 @@ bool addMarkers(char** filename, char** buffer, const char* dir_path,
 
     if (!*buffer)
     {
-      LOG(verbose, printf("%s      ", spaces));
-      fprintf((verbose ? stdout : stderr), "realloc() buffer failed\n");
+      writeLog(log, (log->verbose ? stdout : stderr),
+        (strlen(spaces) > 0 ? "        " : "      "),
+        "realloc() buffer failed\n");
 
       status = false;
       break;
     }
-    LOG(verbose, printf("%s    Memory reallocated successfully\n",
-      spaces));
+    writeLog(log, stdout, "", "%s    Memory reallocated successfully\n",
+      spaces);
 
-    LOG(verbose, printf("%s    Iterating over the buffer ...\n", spaces));
+    writeLog(log, stdout, "", "%s    Iterating over the buffer ...\n", spaces);
     while (i <= buffer_length)
     {
       if ((*buffer)[i] == '\n')
       {
-        LOG(verbose, printf("%s      New line detected\n", spaces));
+        writeLog(log, stdout, "", "%s      New line detected\n", spaces);
 
-        LOG(verbose, printf("%s      Computing length of marker ...\n",
-          spaces));
+        writeLog(log, stdout, "", "%s      Computing length of marker ...\n",
+          spaces);
         marker_length = strlen(*filename) + strlen(" // :") +
           floor(log10(line)) + 1 + 1;
-        LOG(verbose, printf("%s      Length of marker is %lu\n", spaces,
-          marker_length));
+        writeLog(log, stdout, "", "%s      Length of marker is %lu\n", spaces,
+          marker_length);
 
-        LOG(verbose, printf("%s      Building marker ...\n", spaces));
+        writeLog(log, stdout, "", "%s      Building marker ...\n", spaces);
         char marker[marker_length];
         snprintf(marker, marker_length + 1, " // %s:%u", *filename, line);
-        LOG(verbose, printf("%s      Marker is \"%s\"\n", spaces, marker));
+        writeLog(log, stdout, "", "%s      Marker is \"%s\"\n", spaces, marker);
 
-        LOG(verbose, printf("%s      Building new file buffer ...\n",
-          spaces));
+        writeLog(log, stdout, "", "%s      Building new file buffer ...\n",
+          spaces);
 
         char new[buffer_length + marker_length];
         new[0] = '\0';
 
-        LOG(verbose, printf("%s        Copying first file buffer part \
-...\n", spaces));
+        writeLog(log, stdout, "",
+          "%s        Copying first file buffer part ...\n", spaces);
         strncat(new, *buffer, i);
-        LOG(verbose, printf("%s        First file buffer part copied \
-successfully\n", spaces));
+        writeLog(log, stdout, "",
+          "%s        First file buffer part copied successfully\n", spaces);
 
-        LOG(verbose, printf("%s        Concatenating marker ...\n", spaces));
+        writeLog(log, stdout, "", "%s        Concatenating marker ...\n",
+          spaces);
         strcat(new, marker);
-        LOG(verbose, printf("%s        Marker concatenated\n", spaces));
+        writeLog(log, stdout, "", "%s        Marker concatenated\n", spaces);
 
-        LOG(verbose, printf("%s        Concatenating last file buffer part \
-...\n", spaces));
+        writeLog(log, stdout, "",
+          "%s        Concatenating last file buffer part ...\n", spaces);
         strncat(new, *buffer + i, buffer_length - i);
-        LOG(verbose, printf("%s        Last file buffer part concatenated \
-successfully\n", spaces));
+        writeLog(log, stdout, "",
+          "%s        Last file buffer part concatenated successfully\n",
+          spaces);
 
-        LOG(verbose, printf("%s      New buffer file built\n", spaces));
+        writeLog(log, stdout, "", "%s      New buffer file built\n", spaces);
 
-        LOG(verbose, printf("%s      Copying temporary variable into file \
-buffer ...\n", spaces));
+        writeLog(log, stdout, "",
+          "%s      Copying temporary variable into file buffer ...\n", spaces);
         strcpy(*buffer, new);
-        LOG(verbose, printf("%s      Temporary variable copied \
-successfully\n", spaces));
+        writeLog(log, stdout, "",
+          "%s      Temporary variable copied successfully\n", spaces);
 
-        LOG(verbose, printf("%s      Recomputing length of buffer file \
-...\n", spaces));
+        writeLog(log, stdout, "",
+          "%s      Recomputing length of buffer file ...\n", spaces);
         buffer_length = strlen(*buffer);
-        LOG(verbose, printf("%s      Length of buffer files is %lu\n",
-          spaces, buffer_length));
+        writeLog(log, stdout, "", "%s      Length of buffer files is %lu\n",
+          spaces, buffer_length);
 
-        LOG(verbose, printf("%s      Iterating until the end of the newly \
-created marker ...\n", spaces));
+        writeLog(log, stdout, "",
+          "%s      Iterating until the end of the newly created marker ...\n",
+          spaces);
         while (((*buffer)[i] != '\n') && ((*buffer)[i] != '\0'))
         {
           ++i;
         }
-        LOG(verbose, printf("%s      Marker found\n", spaces));
+        writeLog(log, stdout, "", "%s      Marker found\n", spaces);
         ++line;
       }
       ++i;
@@ -409,8 +427,7 @@ created marker ...\n", spaces));
   return status;
 }
 
-bool searchAndReplaceHeaders(char** filepath, char** buffer, bool verbose,
-  Roadmap* roadmap)
+bool searchAndReplaceHeaders(char** filepath, char** buffer, Log* log)
 {
   bool status = true;
 
@@ -424,14 +441,14 @@ bool searchAndReplaceHeaders(char** filepath, char** buffer, bool verbose,
     char dir_path[strlen(*filepath) - 9];
     dir_path[0] = '\0';
 
-    LOG(verbose, printf("    Copying string into dir_path ...\n"));
+    writeLog(log, stdout, "", "    Copying string into dir_path ...\n");
     strncat(dir_path, *filepath, strlen(*filepath) - 9);
-    LOG(verbose, printf("    \"%s\" successfully copied\n", dir_path));
+    writeLog(log, stdout, "", "    \"%s\" successfully copied\n", dir_path);
 
-    LOG(verbose, printf("    Compiling regex pattern: \"%s\" ...\n",
-      INCLUDE_HEADER_PATTERN));
+    writeLog(log, stdout, "", "    Compiling regex pattern: \"%s\" ...\n",
+      INCLUDE_HEADER_PATTERN);
     int regex_error = 1;
-    if (roadmap->id != SARH_REGCOMP_FAILED_RM)
+    if (log->roadmap.id != SARH_REGCOMP_FAILED_RM)
     {
       regex_error = regcomp(&(regex.regex), INCLUDE_HEADER_PATTERN,
         REG_EXTENDED | REG_NEWLINE);
@@ -439,35 +456,36 @@ bool searchAndReplaceHeaders(char** filepath, char** buffer, bool verbose,
 
     if (regex_error == 0)
     {
-      LOG(verbose, printf("    Regex pattern compiled successfully\n"));
+      writeLog(log, stdout, "", "    Regex pattern compiled successfully\n");
 
       size_t nmatch = regex.regex.re_nsub;
-      LOG(verbose, printf("    Regex subexpressions found: %lu\n", nmatch));
+      writeLog(log, stdout, "", "    Regex subexpressions found: %lu\n",
+        nmatch);
 
       regmatch_t m[nmatch + 1];
 
       bool is_already_included = false;
 
-      LOG(verbose, printf("    Allocating memory for headers ...\n"));
-      if (roadmap->id != SARH_HEADERS_MALLOC_FAILED_RM)
+      writeLog(log, stdout, "", "    Allocating memory for headers ...\n");
+      if (log->roadmap.id != SARH_HEADERS_MALLOC_FAILED_RM)
       {
         regex.headers = malloc(sizeof(char*));
       }
 
       if (!regex.headers)
       {
-        LOG(verbose, printf("    "));
-        fprintf((verbose ? stdout : stderr), "headers malloc() failed\n");
+        writeLog(log, (log->verbose ? stdout : stderr), "    ",
+          "headers malloc() failed\n");
         freeRegex(&regex, "", verbose);
 
         status = false;
         break;
       }
-      LOG(verbose, printf("    Memory allocated successfully\n"));
+      writeLog(log, stdout, "", "    Memory allocated successfully\n");
 
-      LOG(verbose, printf("    Allocating memory for headers[0] ...\n"));
-      if ((roadmap->id != SARH_HEADER_MALLOC_FAILED_RM)
-        || (strcmp(roadmap->glsl_file, "main.glsl") != 0))
+      writeLog(log, stdout, "", "    Allocating memory for headers[0] ...\n");
+      if ((log->roadmap.id != SARH_HEADER_MALLOC_FAILED_RM)
+        || (strcmp(log->roadmap.glsl_file, "main.glsl") != 0))
       {
         (regex.headers)[0] = malloc(sizeof(char) * (strlen("main.glsl") + 1));
       } else {
@@ -476,41 +494,38 @@ bool searchAndReplaceHeaders(char** filepath, char** buffer, bool verbose,
 
       if (!(regex.headers)[0])
       {
-        LOG(verbose, printf("    "));
-        fprintf((verbose ? stdout : stderr), "headers[0] malloc() failed\n");
+        writeLog(log, (log->verbose ? stdout : stderr), "    ",
+          "headers[0] malloc() failed\n");
         freeRegex(&regex, "", verbose);
 
         status = false;
         break;
       }
-      LOG(verbose, printf("    Memory allocated successfully\n"));
+      writeLog(log, stdout, "", "    Memory allocated successfully\n");
       regex.headers_length = 1;
 
-      LOG(verbose, printf("    Copying string into headers[0] ...\n"));
+      writeLog(log, stdout, "", "    Copying string into headers[0] ...\n");
       strcpy((regex.headers)[0], "main.glsl");
       (regex.headers)[0][strlen((regex.headers)[0])] = '\0';
-      LOG(verbose, printf("    \"%s\" successfully copied\n",
-        (regex.headers)[0]));
+      writeLog(log, stdout, "", "    \"%s\" successfully copied\n",
+        (regex.headers)[0]);
 
-      LOG(verbose, printf("    Adding markers to \"%s\" ...\n",
-        (regex.headers)[0]));
-      if (!addMarkers(&((regex.headers)[0]), buffer, dir_path, "", verbose,
-        roadmap))
+      writeLog(log, stdout, "", "    Adding markers to \"%s\" ...\n",
+        (regex.headers)[0]);
+      if (!addMarkers(&((regex.headers)[0]), buffer, dir_path, "", log))
       {
-        LOG(verbose, printf("    "));
-        fprintf((verbose ? stdout : stderr), "Unable to mark the file\n");
+        writeLog(log, (log->verbose ? stdout : stderr), "    ",
+          "Unable to mark the file\n");
         freeRegex(&regex, "", verbose);
 
         status = false;
         break;
       }
-      LOG(verbose, printf("    Markers added:\n\
-------------------------------------------------------------------------------\
-\n%s\
-------------------------------------------------------------------------------\
-\n", *buffer));
+      writeLog(log, stdout, "", "    Markers added:\n%s\n%s%s\n", BAR,
+        *buffer, BAR);
 
-      LOG(verbose, printf("    Comparing regex pattern to buffer file ...\n"));
+      writeLog(log, stdout, "",
+        "    Comparing regex pattern to buffer file ...\n");
       int match = regexec(&(regex.regex), *buffer, nmatch + 1, m, 0);
 
       size_t start_header;
@@ -518,82 +533,85 @@ bool searchAndReplaceHeaders(char** filepath, char** buffer, bool verbose,
 
       while (match == 0)
       {
-        LOG(verbose, printf("    Regex pattern found into buffer file\n"));
+        writeLog(log, stdout, "", "    Regex pattern found into buffer file\n");
         start_header = m[1].rm_so;
-        LOG(verbose, printf("    Start index of header is %lu\n",
-          start_header));
+        writeLog(log, stdout, "", "    Start index of header is %lu\n",
+          start_header);
         end_header = m[1].rm_eo;
-        LOG(verbose, printf("    End index of header is %lu\n", end_header));
+        writeLog(log, stdout, "", "    End index of header is %lu\n",
+          end_header);
 
         char first_match[end_header - start_header];
-        LOG(verbose, printf("    Header length is %lu\n",
-          end_header - start_header));
+        writeLog(log, stdout, "", "    Header length is %lu\n",
+          end_header - start_header);
 
         first_match[0] = '\0';
 
-        LOG(verbose, printf("      Copying into first_match ...\n"));
+        writeLog(log, stdout, "", "      Copying into first_match ...\n");
         strncat(first_match, (*buffer) + start_header,
           end_header - start_header);
-        LOG(verbose, printf("      \"%s\" successfully copied\n",
-          first_match));
+        writeLog(log, stdout, "", "      \"%s\" successfully copied\n",
+          first_match);
 
-        LOG(verbose, printf("      Comparing first_match to the cache ...\n"));
+        writeLog(log, stdout, "",
+          "      Comparing first_match to the cache ...\n");
         is_already_included = false;
         for (size_t i = 0; (i < regex.headers_length) &&
           !is_already_included; ++i)
         {
-          LOG(verbose, printf("        Comparing \"%s\" to \"%s\" ...\n",
-            (regex.headers)[i], first_match));
+          writeLog(log, stdout, "", "        Comparing \"%s\" to \"%s\" ...\n",
+            (regex.headers)[i], first_match);
           is_already_included |= (strcmp((regex.headers)[i], first_match) == 0);
-          LOG(verbose, printf("        %s\n",
-            is_already_included ? "Same strings" : "Not same strings"));
+          writeLog(log, stdout, "", "        %s\n",
+            is_already_included ? "Same strings" : "Not same strings");
         }
 
         if (is_already_included)
         {
-          LOG(verbose, printf("      \"%s\" is already included\n",
-            first_match));
+          writeLog(log, stdout, "", "      \"%s\" is already included\n",
+            first_match);
 
-          LOG(verbose, printf("      Deleting first occurence of #header \
-\"%s\" line into buffer file with replace() ...\n", first_match));
-          if ((roadmap->id == SARH_REPLACE_1_REGCOMP_FAILED_RM) &&
-            (strcmp(roadmap->glsl_file, first_match) == 0))
+          writeLog(log, stdout, "", "      Deleting first %s \"%s\" %s\n",
+            "occurence of header", first_match,
+            "line into buffer file with replace() ...");
+          if ((log->roadmap.id == SARH_REPLACE_1_REGCOMP_FAILED_RM) &&
+            (strcmp(log->roadmap.glsl_file, first_match) == 0))
           {
-              roadmap->id = REPLACE_REGCOMP_FAILED_RM;
-          } else if ((roadmap->id == SARH_REPLACE_1_REALLOC_FAILED_RM) &&
-            (strcmp(roadmap->glsl_file, first_match) == 0)) {
-              roadmap->id = REPLACE_REALLOC_FAILED_RM;
-          } else if ((roadmap->id == SARH_REPLACE_1_REGEXEC_FAILED_RM) &&
-            (strcmp(roadmap->glsl_file, first_match) == 0)) {
-              roadmap->id = REPLACE_REGEXEC_FAILED_RM;
+              log->roadmap.id = REPLACE_REGCOMP_FAILED_RM;
+          } else if ((log->roadmap.id == SARH_REPLACE_1_REALLOC_FAILED_RM) &&
+            (strcmp(log->roadmap.glsl_file, first_match) == 0)) {
+              log->roadmap.id = REPLACE_REALLOC_FAILED_RM;
+          } else if ((log->roadmap.id == SARH_REPLACE_1_REGEXEC_FAILED_RM) &&
+            (strcmp(log->roadmap.glsl_file, first_match) == 0)) {
+              log->roadmap.id = REPLACE_REGEXEC_FAILED_RM;
           }
 
-          if (!replace(buffer, INCLUDE_HEADER_PATTERN, "", "  ", verbose,
-            roadmap))
+          if (!replace(buffer, INCLUDE_HEADER_PATTERN, "", "  ", log))
           {
-            LOG(verbose, printf("      "));
-            fprintf((verbose ? stdout : stderr), "replace() failed\n");
+            writeLog(log, (log->verbose ? stdout : stderr), "      ",
+              "replace() failed\n");
             freeRegex(&regex, "  ", verbose);
 
             status = false;
             break;
           }
 
-          if ((roadmap->id == REPLACE_REGCOMP_FAILED_RM) ||
-            (roadmap->id == REPLACE_REALLOC_FAILED_RM) ||
-            (roadmap->id == REPLACE_REGEXEC_FAILED_RM))
+          if ((log->roadmap.id == REPLACE_REGCOMP_FAILED_RM) ||
+            (log->roadmap.id == REPLACE_REALLOC_FAILED_RM) ||
+            (log->roadmap.id == REPLACE_REGEXEC_FAILED_RM))
           {
-            roadmap->id = BREAK_SUCCESS_RM;
+            log->roadmap.id = BREAK_SUCCESS_RM;
           }
-          LOG(verbose, printf("      Line successfully deleted\n"));
+          writeLog(log, stdout, "", "      Line successfully deleted\n");
         } else {
 
-          LOG(verbose, printf("      \"%s\" is not already included\n",
-            first_match));
+          writeLog(log, stdout, "", "      \"%s\" is not already included\n",
+            first_match);
 
-          LOG(verbose, printf("      Reallocating memory for headers ...\n"));
-          if ((roadmap->id != SARH_HEADERS_REALLOC_FAILED_RM) ||
-            (strcmp(roadmap->glsl_file, first_match) != 0))
+          writeLog(log, stdout, "",
+            "      Reallocating memory for headers ...\n");
+          if ((log->roadmap.id != SARH_HEADERS_REALLOC_FAILED_RM) ||
+            (strcmp(log->roadmap.glsl_file, first_match) != 0))
           {
             regex.headers = realloc(regex.headers,
               sizeof(char*) * (regex.headers_length + 1));
@@ -608,19 +626,20 @@ bool searchAndReplaceHeaders(char** filepath, char** buffer, bool verbose,
 
           if (!regex.headers)
           {
-            LOG(verbose, printf("      "));
-            fprintf((verbose ? stdout : stderr), "headers realloc() failed\n");
+            writeLog(log, (log->verbose ? stdout : stderr), "      ",
+              "headers realloc() failed\n");
             freeRegex(&regex, "  ", verbose);
 
             status = false;
             break;
           }
-          LOG(verbose, printf("      Memory reallocated successfully\n"));
+          writeLog(log, stdout, "", "      Memory reallocated successfully\n");
 
-          LOG(verbose, printf("      Allocating memory for headers[%lu] \
-...\n", regex.headers_length));
-          if ((roadmap->id == SARH_HEADER_REALLOC_FAILED_RM) &&
-            (strcmp(roadmap->glsl_file, first_match) == 0))
+          writeLog(log, stdout, "",
+            "      Allocating memory for headers[%lu] ...\n",
+            regex.headers_length);
+          if ((log->roadmap.id == SARH_HEADER_REALLOC_FAILED_RM) &&
+            (strcmp(log->roadmap.glsl_file, first_match) == 0))
           {
             (regex.headers)[regex.headers_length] = NULL;
           } else {
@@ -630,146 +649,140 @@ bool searchAndReplaceHeaders(char** filepath, char** buffer, bool verbose,
 
           if (!(regex.headers)[regex.headers_length])
           {
-            LOG(verbose, printf("      "));
-            fprintf((verbose ? stdout : stderr),
+            writeLog(log, (log->verbose ? stdout : stderr), "      ",
               "headers[%lu] malloc() failed\n", regex.headers_length);
             freeRegex(&regex, "  ", verbose);
 
             status = false;
             break;
           }
-          LOG(verbose, printf("      Memory allocated successfully\n"));
+          writeLog(log, stdout, "", "      Memory allocated successfully\n");
 
           regex.headers_length++;
 
-          LOG(verbose, printf("      Copying string into headers[%lu] ...\n",
-            regex.headers_length - 1));
+          writeLog(log, stdout, "",
+            "      Copying string into headers[%lu] ...\n",
+            regex.headers_length - 1);
           strncpy((regex.headers)[regex.headers_length - 1], first_match,
             end_header - start_header);
           (regex.headers)[regex.headers_length - 1]
             [end_header - start_header] = '\0';
-          LOG(verbose, printf("      \"%s\" successfully copied\n",
-            (regex.headers)[regex.headers_length - 1]));
+          writeLog(log, stdout, "", "      \"%s\" successfully copied\n",
+            (regex.headers)[regex.headers_length - 1]);
 
           char header_filepath[strlen(dir_path) + strlen(first_match) + 1];
 
-          LOG(verbose, printf("      Copying string into header_filepath \
-...\n"));
+          writeLog(log, stdout, "",
+            "      Copying string into header_filepath ...\n");
           strcpy(header_filepath, dir_path);
-          LOG(verbose, printf("      \"%s\" successfully copied\n",
-            header_filepath));
+          writeLog(log, stdout, "", "      \"%s\" successfully copied\n",
+            header_filepath);
 
-          LOG(verbose, printf("      Concatenating string into \
-header_filepath ...\n"));
+          writeLog(log, stdout, "",
+            "      Concatenating string into header_filepath ...\n");
           strcat(header_filepath, first_match);
-          LOG(verbose, printf("      \"%s\" successfully copied\n",
-            header_filepath));
+          writeLog(log, stdout, "", "      \"%s\" successfully copied\n",
+            header_filepath);
 
-          LOG(verbose, printf("      Reading file \"%s\" ...\n",
-            header_filepath));
+          writeLog(log, stdout, "", "      Reading file \"%s\" ...\n",
+            header_filepath);
           char* header_filepath_p = &(header_filepath[0]);
 
-          if ((roadmap->id == SARH_READFILE_BUFFER_MALLOC_FAILED_RM) &&
-            (strcmp(roadmap->glsl_file, first_match) == 0))
+          if ((log->roadmap.id == SARH_READFILE_BUFFER_MALLOC_FAILED_RM) &&
+            (strcmp(log->roadmap.glsl_file, first_match) == 0))
           {
-            roadmap->id = BUFFER_MALLOC_FAILED_RM;
-          } else if ((roadmap->id == SARH_READFILE_FOPEN_FAILED_RM) &&
-            (strcmp(roadmap->glsl_file, first_match) == 0)) {
-              roadmap->id = FOPEN_FAILED_RM;
+            log->roadmap.id = BUFFER_MALLOC_FAILED_RM;
+          } else if ((log->roadmap.id == SARH_READFILE_FOPEN_FAILED_RM) &&
+            (strcmp(log->roadmap.glsl_file, first_match) == 0)) {
+              log->roadmap.id = FOPEN_FAILED_RM;
           }
 
-          if (!readFile(&header_filepath_p, &(regex.header_buffer), "  ",
-            verbose, roadmap))
+          if (!readFile(&header_filepath_p, &(regex.header_buffer), "  ", log))
           {
-            LOG(verbose, printf("      "));
-            fprintf((verbose ? stdout : stderr), "Failed to read file\n");
+            writeLog(log, (log->verbose ? stdout : stderr), "      ",
+              "Failed to read file\n");
             freeRegex(&regex, "  ", verbose);
 
             status = false;
             break;
           }
 
-          if ((roadmap->id == BUFFER_MALLOC_FAILED_RM) ||
-            (roadmap->id == FOPEN_FAILED_RM))
+          if ((log->roadmap.id == BUFFER_MALLOC_FAILED_RM) ||
+            (log->roadmap.id == FOPEN_FAILED_RM))
           {
-            roadmap->id = BREAK_SUCCESS_RM;
+            log->roadmap.id = BREAK_SUCCESS_RM;
           }
-          LOG(verbose, printf("      File read successfully\n"));
+          writeLog(log, stdout, "", "      File read successfully\n");
 
-          LOG(verbose, printf("      Adding markers to \"%s\" ...\n",
-            (regex.headers)[regex.headers_length - 1]));
-          if ((roadmap->id == SARH_ADDMARKERS_IN_LOOP_REALLOC_FAILED_RM) &&
-            (strcmp(roadmap->glsl_file, first_match) == 0))
+          writeLog(log, stdout, "", "      Adding markers to \"%s\" ...\n",
+            (regex.headers)[regex.headers_length - 1]);
+          if ((log->roadmap.id == SARH_ADDMARKERS_IN_LOOP_REALLOC_FAILED_RM) &&
+            (strcmp(log->roadmap.glsl_file, first_match) == 0))
           {
-            roadmap->id = SARH_ADDMARKERS_REALLOC_FAILED_RM;
+            log->roadmap.id = SARH_ADDMARKERS_REALLOC_FAILED_RM;
           }
 
           if (!addMarkers(&((regex.headers)[regex.headers_length - 1]),
-            &(regex.header_buffer), dir_path, "  ", verbose, roadmap))
+            &(regex.header_buffer), dir_path, "  ", log))
           {
-            LOG(verbose, printf("      "));
-            fprintf((verbose ? stdout : stderr), "Unable to mark the file\n");
+            writeLog(log, (log->verbose ? stdout : stderr), "      ",
+              "Unable to mark the file\n");
             freeRegex(&regex, "  ", verbose);
 
             status = false;
             break;
           }
 
-          if (roadmap->id == SARH_ADDMARKERS_REALLOC_FAILED_RM)
+          if (log->roadmap.id == SARH_ADDMARKERS_REALLOC_FAILED_RM)
           {
-            roadmap->id = BREAK_SUCCESS_RM;
+            log->roadmap.id = BREAK_SUCCESS_RM;
           }
-          LOG(verbose, printf("      Markers added:\n\
-------------------------------------------------------------------------------\
-\n%s\
-------------------------------------------------------------------------------\
-\n", regex.header_buffer));
+          writeLog(log, stdout, "", "      Markers added:\n%s\n%s%s\n",
+            BAR, regex.header_buffer, BAR);
 
-          LOG(verbose, printf("      Replacing header \"%s\" by its content \
-into buffer file ...\n", first_match));
-          if ((roadmap->id == SARH_REPLACE_2_REGCOMP_FAILED_RM) &&
-            (strcmp(roadmap->glsl_file, first_match) == 0))
+          writeLog(log, stdout, "", "      Replacing header \"%s\" by %s",
+            first_match, "its content into buffer file ...\n");
+          if ((log->roadmap.id == SARH_REPLACE_2_REGCOMP_FAILED_RM) &&
+            (strcmp(log->roadmap.glsl_file, first_match) == 0))
           {
-            roadmap->id = REPLACE_REGCOMP_FAILED_RM;
-          } else if ((roadmap->id == SARH_REPLACE_2_REALLOC_FAILED_RM) &&
-            (strcmp(roadmap->glsl_file, first_match) == 0)) {
-              roadmap->id = REPLACE_REALLOC_FAILED_RM;
-          } else if ((roadmap->id == SARH_REPLACE_2_REGEXEC_FAILED_RM) &&
-            (strcmp(roadmap->glsl_file, first_match) == 0)) {
-              roadmap->id = REPLACE_REGEXEC_FAILED_RM;
+            log->roadmap.id = REPLACE_REGCOMP_FAILED_RM;
+          } else if ((log->roadmap.id == SARH_REPLACE_2_REALLOC_FAILED_RM) &&
+            (strcmp(log->roadmap.glsl_file, first_match) == 0)) {
+              log->roadmap.id = REPLACE_REALLOC_FAILED_RM;
+          } else if ((log->roadmap.id == SARH_REPLACE_2_REGEXEC_FAILED_RM) &&
+            (strcmp(log->roadmap.glsl_file, first_match) == 0)) {
+              log->roadmap.id = REPLACE_REGEXEC_FAILED_RM;
           }
 
           if (!replace(buffer, INCLUDE_HEADER_PATTERN,
-            regex.header_buffer, "  ", verbose, roadmap))
+            regex.header_buffer, "  ", log))
           {
-            LOG(verbose, printf("      "));
-            fprintf((verbose ? stdout : stderr), "replace() failed\n");
+            writeLog(log, (log->verbose ? stdout : stderr), "      ",
+              "replace() failed\n");
             freeRegex(&regex, "  ", verbose);
 
             status = false;
             break;
           }
 
-          if ((roadmap->id == REPLACE_REGCOMP_FAILED_RM) ||
-            (roadmap->id == REPLACE_REALLOC_FAILED_RM) ||
-            (roadmap->id == REPLACE_REGEXEC_FAILED_RM))
+          if ((log->roadmap.id == REPLACE_REGCOMP_FAILED_RM) ||
+            (log->roadmap.id == REPLACE_REALLOC_FAILED_RM) ||
+            (log->roadmap.id == REPLACE_REGEXEC_FAILED_RM))
           {
-            roadmap->id = BREAK_SUCCESS_RM;
+            log->roadmap.id = BREAK_SUCCESS_RM;
           }
-          LOG(verbose, printf("      Buffer file filled with header content:\n\
-------------------------------------------------------------------------------\
-\n%s\
-------------------------------------------------------------------------------\
-\n", *buffer));
+          writeLog(log, stdout, "", "      %s\n%s\n%s%s\n",
+            "Buffer file filled with header content:", BAR, *buffer, BAR);
 
-          LOG(verbose, printf("      Freeing header_buffer memory ...\n"));
+          writeLog(log, stdout, "",
+            "      Freeing header_buffer memory ...\n");
           free(regex.header_buffer);
           regex.header_buffer = NULL;
-          LOG(verbose, printf("      Memory freed successfully\n"));
+          writeLog(log, stdout, "", "      Memory freed successfully\n");
         }
 
-        LOG(verbose,
-          printf("      Comparing regex pattern to buffer file ...\n"));
+        writeLog(log, stdout, "",
+          "      Comparing regex pattern to buffer file ...\n");
         match = regexec(&(regex.regex), *buffer, nmatch + 1, m, 0);
       }
 
@@ -778,67 +791,66 @@ into buffer file ...\n", first_match));
         break;
       }
 
-      LOG(verbose, printf("    Regex pattern not found\n"));
-      LOG(verbose, printf("    File buffer is now:\n\
-------------------------------------------------------------------------------\
-\n%s\
-------------------------------------------------------------------------------\
-\n", *buffer));
+      writeLog(log, stdout, "", "    Regex pattern not found\n");
+      writeLog(log, stdout, "", "    File buffer is now:\n%s\n%s%s\n",
+        BAR, *buffer, BAR);
 
       freeRegex(&regex, "", verbose);
 
-      LOG(verbose, printf("    Searching for regex error ...\n"));
-      if ((match != REG_NOMATCH) || (roadmap->id == SARH_REGEXEC_FAILED_RM))
+      writeLog(log, stdout, "", "    Searching for regex error ...\n");
+      if ((match != REG_NOMATCH) ||
+        (log->roadmap.id == SARH_REGEXEC_FAILED_RM))
       {
-        if (roadmap->id != SARH_REGEXEC_FAILED_RM)
+        if (log->roadmap.id != SARH_REGEXEC_FAILED_RM)
         {
           size_t size = regerror(regex_error, &(regex.regex), NULL, 0);
-          LOG(verbose, printf("    Message size of regex error is %lu\n", size));
+          writeLog(log, stdout, "",
+            "    Message size of regex error is %lu\n", size);
 
           char text[size];
 
           regerror(regex_error, &(regex.regex), &(text[0]), size);
 
-          LOG(verbose, printf("    "));
-          fprintf((verbose ? stdout : stderr), "Regex error: %s\n", text);
+          writeLog(log, (log->verbose ? stdout : stderr), "    ",
+            "Regex error: %s\n", text);
         }
 
         status = false;
         break;
       }
-      LOG(verbose, printf("    No regex error\n"));
+      writeLog(log, stdout, "", "    No regex error\n");
     } else {
-      LOG(verbose, printf("    "));
-      fprintf((verbose ? stdout : stderr), "Regex compilation failed\n");
+      writeLog(log, (log->verbose ? stdout : stderr), "    ",
+        "Regex compilation failed\n");
 
       status = false;
       break;
     }
   } while (false);
 
-  if ((roadmap->id == SARH_ADDMARKERS_REALLOC_FAILED_RM) ||
-    (roadmap->id == SARH_HEADER_MALLOC_FAILED_RM) ||
-    (roadmap->id == SARH_REGEXEC_FAILED_RM) ||
-    (roadmap->id == SARH_REPLACE_2_REGEXEC_FAILED_RM) ||
-    (roadmap->id == SARH_REPLACE_2_REALLOC_FAILED_RM) ||
-    (roadmap->id == SARH_REPLACE_2_REGCOMP_FAILED_RM) ||
-    (roadmap->id == SARH_ADDMARKERS_IN_LOOP_REALLOC_FAILED_RM) ||
-    (roadmap->id == SARH_READFILE_FOPEN_FAILED_RM) ||
-    (roadmap->id == SARH_READFILE_BUFFER_MALLOC_FAILED_RM) ||
-    (roadmap->id == SARH_HEADER_REALLOC_FAILED_RM) ||
-    (roadmap->id == SARH_HEADERS_REALLOC_FAILED_RM) ||
-    (roadmap->id == SARH_REPLACE_1_REGEXEC_FAILED_RM) ||
-    (roadmap->id == SARH_REPLACE_1_REALLOC_FAILED_RM) ||
-    (roadmap->id == SARH_REPLACE_1_REGCOMP_FAILED_RM))
+  if ((log->roadmap.id == SARH_ADDMARKERS_REALLOC_FAILED_RM) ||
+    (log->roadmap.id == SARH_HEADER_MALLOC_FAILED_RM) ||
+    (log->roadmap.id == SARH_REGEXEC_FAILED_RM) ||
+    (log->roadmap.id == SARH_REPLACE_2_REGEXEC_FAILED_RM) ||
+    (log->roadmap.id == SARH_REPLACE_2_REALLOC_FAILED_RM) ||
+    (log->roadmap.id == SARH_REPLACE_2_REGCOMP_FAILED_RM) ||
+    (log->roadmap.id == SARH_ADDMARKERS_IN_LOOP_REALLOC_FAILED_RM) ||
+    (log->roadmap.id == SARH_READFILE_FOPEN_FAILED_RM) ||
+    (log->roadmap.id == SARH_READFILE_BUFFER_MALLOC_FAILED_RM) ||
+    (log->roadmap.id == SARH_HEADER_REALLOC_FAILED_RM) ||
+    (log->roadmap.id == SARH_HEADERS_REALLOC_FAILED_RM) ||
+    (log->roadmap.id == SARH_REPLACE_1_REGEXEC_FAILED_RM) ||
+    (log->roadmap.id == SARH_REPLACE_1_REALLOC_FAILED_RM) ||
+    (log->roadmap.id == SARH_REPLACE_1_REGCOMP_FAILED_RM))
   {
-    roadmap->id = BREAK_SUCCESS_RM;
+    log->roadmap.id = BREAK_SUCCESS_RM;
   }
 
   return status;
 }
 
 bool improveLogShader(char** message, char** buffer, size_t maxLength,
-  bool verbose, Roadmap* roadmap)
+  Log* log)
 {
   bool status = true;
 
@@ -846,11 +858,11 @@ bool improveLogShader(char** message, char** buffer, size_t maxLength,
   {
     regex_t regex;
 
-    LOG(verbose, printf("      Compiling regex pattern: \"%s\" ...\n",
-      STARTLINE_SHADERLOG_PATTERN));
+    writeLog(log, stdout, "", "      Compiling regex pattern: \"%s\" ...\n",
+      STARTLINE_SHADERLOG_PATTERN);
 
     int regex_error = 1;
-    if (roadmap->id != IMPROVELOGSHADER_REGCOMP_FAILED_RM)
+    if (log->roadmap.id != IMPROVELOGSHADER_REGCOMP_FAILED_RM)
     {
       regex_error = regcomp(&regex, STARTLINE_SHADERLOG_PATTERN,
         REG_EXTENDED | REG_NEWLINE);
@@ -858,14 +870,15 @@ bool improveLogShader(char** message, char** buffer, size_t maxLength,
 
     if (regex_error == 0)
     {
-      LOG(verbose, printf("      Regex pattern compiled successfully\n"));
+      writeLog(log, stdout, "", "      Regex pattern compiled successfully\n");
 
       size_t nmatch = regex.re_nsub;
-      LOG(verbose, printf("      Regex subexpressions found: %lu\n", nmatch));
+      writeLog(log, stdout, "", "      Regex subexpressions found: %lu\n",
+        nmatch);
 
       regmatch_t m[nmatch + 1];
 
-      LOG(verbose, printf("      Comparing regex pattern ...\n"));
+      writeLog(log, stdout, "", "      Comparing regex pattern ...\n");
       int match = regexec(&regex, *message, nmatch + 1, m, 0);
 
       size_t start;
@@ -875,35 +888,35 @@ bool improveLogShader(char** message, char** buffer, size_t maxLength,
 
       while (match == 0)
       {
-        LOG(verbose, printf("      Regex pattern found\n"));
+        writeLog(log, stdout, "", "      Regex pattern found\n");
 
         start = m[1].rm_so;
-        LOG(verbose, printf("      Start index of parenthesis expression is \
-%lu\n", start));
+        writeLog(log, stdout, "",
+          "      Start index of parenthesis expression is %lu\n", start);
         end = m[1].rm_eo;
-        LOG(verbose, printf("      End index of parenthesis expression is %lu\n",
-          end));
+        writeLog(log, stdout, "",
+          "      End index of parenthesis expression is %lu\n", end);
 
         char line[end - start];
         line[0] = '\0';
 
-        LOG(verbose, printf("      Copying line number of buffer file error \
-...\n"));
+        writeLog(log, stdout, "",
+          "      Copying line number of buffer file error ...\n");
         strncat(line, *message + start, end - start);
-        LOG(verbose, printf("      Line number successfully copied\n"));
+        writeLog(log, stdout, "", "      Line number successfully copied\n");
 
-        LOG(verbose, printf("      Casting line number string to unsigned int \
-...\n"));
+        writeLog(log, stdout, "",
+          "      Casting line number string to unsigned int ...\n");
         l = strtoul(line, NULL, 10);
-        LOG(verbose, printf("      Line number successfully casted\n"));
+        writeLog(log, stdout, "", "      Line number successfully casted\n");
 
-        LOG(verbose, printf("      Line number is %u\n", l));
+        writeLog(log, stdout, "", "      Line number is %u\n", l);
 
         unsigned i = 0;
         end = 0;
 
-        LOG(verbose, printf("      Searching corresponding line into buffer \
-file ...\n"));
+        writeLog(log, stdout, "",
+          "      Searching corresponding line into buffer file ...\n");
         while ((i < l) && ((*buffer)[end] != '\0'))
         {
           if ((*buffer)[end] == '\n')
@@ -915,61 +928,60 @@ file ...\n"));
             ++end;
           }
         }
-        if (verbose)
+        start = end - 1;
+        while ((*buffer)[start] != '\n')
         {
-          start = end - 1;
-          while ((*buffer)[start] != '\n')
-          {
-            start--;
-          }
-          char buffer_line[end - start - 1];
-          buffer_line[0] = '\0';
-          strncat(buffer_line, (*buffer) + start + 1, end - start - 1);
-          printf("      Corresponding line is \"%s\"\n", buffer_line);
+          start--;
         }
+        char buffer_line[end - start - 1];
+        buffer_line[0] = '\0';
+        strncat(buffer_line, (*buffer) + start + 1, end - start - 1);
+        writeLog(log, stdout, "", "      Corresponding line is \"%s\"\n",
+          buffer_line);
 
         start = end;
 
-        LOG(verbose, printf("      Searching marker into line ...\n"));
+        writeLog(log, stdout, "", "      Searching marker into line ...\n");
         while (((*buffer)[start - 3] != ' ') || ((*buffer)[start - 2] != '/') ||
           ((*buffer)[start - 1] != '/') || ((*buffer)[start] != ' '))
         {
           --start;
         }
         start++;
-        LOG(verbose, printf("      Corresponding marker found\n"));
+        writeLog(log, stdout, "", "      Corresponding marker found\n");
 
         char marker[end - start];
         marker[0] = '\0';
 
-        LOG(verbose, printf("      Copying marker ...\n"));
+        writeLog(log, stdout, "", "      Copying marker ...\n");
         strncat(marker, (*buffer) + start, end - start);
-        LOG(verbose, printf("      Marker successfully copied\n"));
+        writeLog(log, stdout, "", "      Marker successfully copied\n");
 
-        LOG(verbose, printf("      Replacing original log data by marker \
-...\n"));
-        if (roadmap->id == IMPROVELOGSHADER_REPLACE_REGCOMP_FAILED_RM)
+        writeLog(log, stdout, "",
+          "      Replacing original log data by marker ...\n");
+        if (log->roadmap.id == IMPROVELOGSHADER_REPLACE_REGCOMP_FAILED_RM)
         {
-          roadmap->id = REPLACE_REGCOMP_FAILED_RM;
-        } else if (roadmap->id == IMPROVELOGSHADER_REPLACE_REALLOC_FAILED_RM) {
-          roadmap->id = REPLACE_REALLOC_FAILED_RM;
-        } else if (roadmap->id == IMPROVELOGSHADER_REPLACE_REGEXEC_FAILED_RM) {
-          roadmap->id = REPLACE_REGEXEC_FAILED_RM;
+          log->roadmap.id = REPLACE_REGCOMP_FAILED_RM;
+        } else if (log->roadmap.id ==
+          IMPROVELOGSHADER_REPLACE_REALLOC_FAILED_RM) {
+            log->roadmap.id = REPLACE_REALLOC_FAILED_RM;
+        } else if (log->roadmap.id ==
+          IMPROVELOGSHADER_REPLACE_REGEXEC_FAILED_RM) {
+            log->roadmap.id = REPLACE_REGEXEC_FAILED_RM;
         }
 
-        if (!replace(message, STARTLINE_SHADERLOG_PATTERN, marker, "  ",
-          verbose, roadmap))
+        if (!replace(message, STARTLINE_SHADERLOG_PATTERN, marker, "  ", log))
         {
-          LOG(verbose, printf("      "));
-          fprintf((verbose ? stdout : stderr), "replace() failed\n");
+          writeLog(log, (log->verbose ? stdout : stderr), "      ",
+            "replace() failed\n");
           regfree(&regex);
 
           status = false;
           break;
         }
-        LOG(verbose, printf("      Log data replaced\n"));
+        writeLog(log, stdout, "", "      Log data replaced\n");
 
-        LOG(verbose, printf("      Comparing regex pattern ...\n"));
+        writeLog(log, stdout, "", "      Comparing regex pattern ...\n");
         match = regexec(&regex, *message, nmatch + 1, m, 0);
       }
 
@@ -978,51 +990,52 @@ file ...\n"));
         break;
       }
 
-      LOG(verbose, printf("      Searching for regex error ...\n"));
+      writeLog(log, stdout, "", "      Searching for regex error ...\n");
       if ((match != REG_NOMATCH)
-        || (roadmap->id == IMPROVELOGSHADER_REGEXEC_FAILED_RM))
+        || (log->roadmap.id == IMPROVELOGSHADER_REGEXEC_FAILED_RM))
       {
-        if (roadmap->id != IMPROVELOGSHADER_REGEXEC_FAILED_RM)
+        if (log->roadmap.id != IMPROVELOGSHADER_REGEXEC_FAILED_RM)
         {
           regex_error = 1;
           size_t size = regerror(regex_error, &regex, NULL, 0);
-          LOG(verbose, printf("      Message size of regex error is %lu\n",
-            size));
+          writeLog(log, stdout, "",
+            "      Message size of regex error is %lu\n", size);
 
           char text[size];
 
           regerror(regex_error, &regex, &(text[0]), size);
 
-          LOG(verbose, printf("      Freeing regex structure ...\n"));
+          writeLog(log, stdout, "", "      Freeing regex structure ...\n");
           regfree(&regex);
-          LOG(verbose, printf("      Memory freed successfully\n"));
+          writeLog(log, stdout, "", "      Memory freed successfully\n");
 
-          LOG(verbose, printf("      "));
-          fprintf((verbose ? stdout : stderr), "Regex error: %s\n", text);
+          writeLog(log, (log->verbose ? stdout : stderr), "      ",
+            "Regex error: %s\n", text);
 
           status = false;
           break;
         } else {
-          LOG(verbose, printf("      Freeing regex structure ...\n"));
+          writeLog(log, stdout, "", "      Freeing regex structure ...\n");
           regfree(&regex);
-          LOG(verbose, printf("      Memory freed successfully\n"));
+          writeLog(log, stdout, "", "      Memory freed successfully\n");
 
           status = false;
           break;
         }
       }
-      LOG(verbose, printf("      No regex error. Regex pattern not found\n"));
+      writeLog(log, stdout, "",
+        "      No regex error. Regex pattern not found\n");
     } else {
-      LOG(verbose, printf("      "));
-      fprintf((verbose ? stdout : stderr), "Regex compilation failed\n");
+      writeLog(log, (log->verbose ? stdout : stderr), "      ",
+        "Regex compilation failed\n");
 
       status = false;
       break;
     }
 
-    LOG(verbose, printf("      Freeing regex structure ...\n"));
+    writeLog(log, stdout, "", "      Freeing regex structure ...\n");
     regfree(&regex);
-    LOG(verbose, printf("      Memory freed successfully\n"));
+    writeLog(log, stdout, "", "      Memory freed successfully\n");
   } while (false);
 
   return status;

@@ -1,6 +1,7 @@
 #ifndef SPACEPORN_UTIL_H
 #define SPACEPORN_UTIL_H
 
+#include <stdarg.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -159,13 +160,18 @@ typedef struct
   char* glsl_file;
 } Roadmap;
 
-#define LOG(log, stmt) do \
-{ \
-  if (log) \
-  { \
-    stmt; \
-  } \
-} while (0)
+typedef struct
+{
+  bool verbose;
+  char* path;
+  char* buffer;
+  FILE* file;
+  Roadmap roadmap;
+} Log;
+
+bool initLog(Log* log);
+void writeLog(Log* log, FILE* stream, char* stdoutstr, char* str, ...);
+void freeLog(Log* log)
 
 bool checkOpenGLError(const char* stmt, const char* fname, int line);
 

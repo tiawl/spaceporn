@@ -1,6 +1,6 @@
 #include "texture.h"
 
-bool loadPng(PNG* png, Shaders* shaders, bool verbose, Roadmap* roadmap)
+bool loadPng(PNG* png, Shaders* shaders, Log* log)
 {
   bool status = true;
 
@@ -11,7 +11,7 @@ bool loadPng(PNG* png, Shaders* shaders, bool verbose, Roadmap* roadmap)
     int color_type;
 
     LOG(verbose, printf("  Checking PNG filename ...\n"));
-    if (!png->path || (roadmap->id == NO_PNG_FILENAME_RM))
+    if (!png->path || (log->roadmap.id == NO_PNG_FILENAME_RM))
     {
       LOG(verbose, printf("  "));
       fprintf((verbose ? stdout : stderr), "PNG filename is null\n");
@@ -22,7 +22,7 @@ bool loadPng(PNG* png, Shaders* shaders, bool verbose, Roadmap* roadmap)
     LOG(verbose, printf("  PNG filename is not null ...\n"));
 
     LOG(verbose, printf("  Opening PNG file \"%s\" ...\n", png->path));
-    if (roadmap->id != FOPEN_PNG_FILE_FAILED_RM)
+    if (log->roadmap.id != FOPEN_PNG_FILE_FAILED_RM)
     {
       png->file = fopen(png->path, "rb");
     }
@@ -38,7 +38,7 @@ bool loadPng(PNG* png, Shaders* shaders, bool verbose, Roadmap* roadmap)
     LOG(verbose, printf("  PNG file opened\n"));
 
     LOG(verbose, printf("  Creating structure for reading PNG file ...\n"));
-    if (roadmap->id != PNGCREATEREADSTRUCT_FAILED_RM)
+    if (log->roadmap.id != PNGCREATEREADSTRUCT_FAILED_RM)
     {
       png->ptr =
         png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
@@ -55,7 +55,7 @@ bool loadPng(PNG* png, Shaders* shaders, bool verbose, Roadmap* roadmap)
     LOG(verbose, printf("  Structure for reading PNG file created\n"));
 
     LOG(verbose, printf("  Creating PNG info structure ...\n"));
-    if (roadmap->id != PNGCREATEREADINFOSTRUCT_FAILED_RM)
+    if (log->roadmap.id != PNGCREATEREADINFOSTRUCT_FAILED_RM)
     {
       png->info = png_create_info_struct(png->ptr);
     }
@@ -72,7 +72,7 @@ bool loadPng(PNG* png, Shaders* shaders, bool verbose, Roadmap* roadmap)
 
     LOG(verbose, printf("  Searching libPNG error ...\n"));
     if (setjmp(png_jmpbuf(png->ptr)) ||
-      (roadmap->id == PNG_READJMPBUF_FAILED_RM))
+      (log->roadmap.id == PNG_READJMPBUF_FAILED_RM))
     {
       LOG(verbose, printf("  "));
       fprintf((verbose ? stdout : stderr),
@@ -97,7 +97,7 @@ structure ...\n"));
       png->ptr, png->info, &w, &h, &bit_depth, &color_type, 0, 0, 0);
     LOG(verbose, printf("  PNG_IHDR chunk information found\n"));
 
-    if (roadmap->id == BAD_PNG_DIMENSIONS_RM)
+    if (log->roadmap.id == BAD_PNG_DIMENSIONS_RM)
     {
       w = 15;
     }
@@ -124,7 +124,7 @@ are not power of two or smaller than 8 failed to load in OpenGL\n");
     LOG(verbose, printf("  Number of bytes for a row is %d\n", rowbytes));
 
     LOG(verbose, printf("  Allocating memory for data ...\n"));
-    if (roadmap->id != PNG_DATA_MALLOC_FAILED_RM)
+    if (log->roadmap.id != PNG_DATA_MALLOC_FAILED_RM)
     {
       png->data = malloc(rowbytes * h * sizeof(png_byte) + 15);
     }
@@ -140,7 +140,7 @@ are not power of two or smaller than 8 failed to load in OpenGL\n");
     LOG(verbose, printf("  Memory allocated successfully\n"));
 
     LOG(verbose, printf("  Allocating memory for row_pointers ...\n"));
-    if (roadmap->id != PNG_READROWPOINTERS_MALLOC_FAILED_RM)
+    if (log->roadmap.id != PNG_READROWPOINTERS_MALLOC_FAILED_RM)
     {
       png->row_pointers = malloc(h * sizeof(png_bytep));
     }
@@ -218,9 +218,17 @@ texture coordinates ...\n"));
   return status;
 }
 
-bool freePng(PNG* png, bool verbose)
+bool freePng(PNG* png, Log* log)
 {
   int status = true;
+
+  if (png->path)
+  {
+    LOG(verbose, printf("Freeing texture path ...\n"));
+    free(png->path);
+    png->path = NULL;
+    LOG(verbose, printf("Texture path freed\n"));
+  }
 
   if (png->ptr)
   {

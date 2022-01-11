@@ -15,20 +15,15 @@ typedef struct
   GLuint program;
 } Shaders;
 
-bool buildFile(char** filepath, char** buffer, bool verbose,
-  Roadmap* roadmap);
-bool buildVertexShaderFile(Shaders* shaders, bool verbose, Roadmap* roadmap);
-bool buildFragmentShaderFile(Shaders* shaders, bool verbose,
-  Roadmap* roadmap);
-bool checkLogShader(GLuint* shader, GLenum shaderType, char* buffer,
-  bool verbose, Roadmap* roadmap);
-bool loadShader(Shaders* shaders, GLenum shaderType, bool verbose,
-  Roadmap* roadmap);
-bool loadVertexShader(Shaders* shaders, bool verbose, Roadmap* roadmap);
-bool loadFragmentShader(Shaders* shaders, bool verbose, Roadmap* roadmap);
-bool checkLogProgram(Shaders* shaders, bool verbose, Roadmap* roadmap);
-bool loadProgram(Context* context, Shaders* shaders, bool verbose,
-  Roadmap* roadmap);
-bool freeProgram(Shaders* shaders, bool verbose, Roadmap* roadmap);
+bool buildFile(char** filepath, char** buffer, Log* log);
+bool buildVertexShaderFile(Shaders* shaders, Log* log);
+bool buildFragmentShaderFile(Shaders* shaders, Log* log);
+bool checkLogShader(GLuint* shader, GLenum shaderType, char* buffer, Log* log);
+bool loadShader(Shaders* shaders, GLenum shaderType, Log* log);
+bool loadVertexShader(Shaders* shaders, Log* log);
+bool loadFragmentShader(Shaders* shaders, Log* log);
+bool checkLogProgram(Shaders* shaders, Log* log);
+bool loadProgram(Context* context, Shaders* shaders, Log* log);
+bool freeProgram(Shaders* shaders, Log* log);
 
 #endif

@@ -1,14 +1,13 @@
 #include "path.h"
 
-bool initShaderPath(char** path, size_t len[4], char* dir, bool verbose,
-  Roadmap* roadmap)
+bool initShaderPath(char** path, size_t len[4], char* dir, Log* log)
 {
   int status = true;
 
   do
   {
     LOG(verbose, printf("    Allocating memory for shader path ...\n"));
-    if (roadmap->id != SHADERPATH_MALLOC_FAILED_RM)
+    if (log->roadmap.id != SHADERPATH_MALLOC_FAILED_RM)
     {
       *path = malloc(len[0] + len[1] + len[2] + len[3] + 1);
     }
@@ -38,8 +37,7 @@ bool initShaderPath(char** path, size_t len[4], char* dir, bool verbose,
   return status;
 }
 
-bool initTexturePath(PNG* png, size_t len[4], char* path, bool verbose,
-  Roadmap* roadmap)
+bool initTexturePath(PNG* png, size_t len[4], char* path, Log* log)
 {
   int status = true;
 
@@ -47,7 +45,7 @@ bool initTexturePath(PNG* png, size_t len[4], char* path, bool verbose,
   {
     LOG(verbose, printf("    Allocating memory for texture path ...\n"));
 
-    if (roadmap->id != TEXTUREPATH_MALLOC_FAILED_RM)
+    if (log->roadmap.id != TEXTUREPATH_MALLOC_FAILED_RM)
     {
       png->path = malloc(len[0] + len[1] + len[2] + 1);
     }
@@ -55,7 +53,7 @@ bool initTexturePath(PNG* png, size_t len[4], char* path, bool verbose,
     if (!png->path)
     {
       LOG(verbose, printf("    "));
-      fprintf((verbose ? stdout : stderr), "texturepath malloc() failed\n");
+      fprintf((verbose ? stdout : stderr), "texture path malloc() failed\n");
 
       status = false;
       break;
@@ -75,8 +73,55 @@ bool initTexturePath(PNG* png, size_t len[4], char* path, bool verbose,
   return status;
 }
 
-bool initPaths(Shaders* shaders, PNG* png, PNG* atlas, bool verbose,
-  Roadmap* roadmap)
+bool initLogPath(Log* log)
+{
+  int status = true;
+
+  LOG(verbose, printf("  Computing ROOT length ...\n"));
+  const size_t len1 = strlen(ROOT);
+  LOG(verbose, printf("  Length of \"%s\" is %lu\n", ROOT, len1));
+
+  LOG(verbose, printf("  Computing length of log directory path ...\n"));
+  const size_t len2 = strlen(LOG_DIR);
+  LOG(verbose, printf("  Length of \"%s\" is %lu\n", LOG_DIR, len2));
+
+  LOG(verbose, printf("  Computing length of log filename ...\n"));
+  const size_t len3 = strlen(NAME);
+  LOG(verbose, printf("  Length of \"%s\" is %lu\n", NAME, len3));
+
+  do
+  {
+    LOG(verbose, printf("    Allocating memory for log path ...\n"));
+
+    if (log->roadmap.id != LOGPATH_MALLOC_FAILED_RM)
+    {
+      log->path = malloc(len1 + len2 + len3 + 1);
+    }
+
+    if (!log->path)
+    {
+      LOG(verbose, printf("    "));
+      fprintf((verbose ? stdout : stderr), "log path malloc() failed\n");
+
+      status = false;
+      break;
+    }
+    LOG(verbose, printf("    Successful allocated memory for log path\n"));
+
+    LOG(verbose, printf("    Building log path string ... 0/3\n"));
+    memcpy(log->path, ROOT, len1);
+    LOG(verbose, printf("    Building log path string ... 1/3\n"));
+    memcpy(log->path + len1, LOG_DIR, len2);
+    LOG(verbose, printf("    Building log path string ... 2/3\n"));
+    memcpy(log->path + len1 + len2, NAME, len3 + 1);
+    LOG(verbose, printf("    Building log path string ... 3/3\n"));
+    LOG(verbose, printf("    Log path string built: %s\n", log->path));
+  } while (false);
+
+  return status;
+}
+
+bool initPaths(Shaders* shaders, PNG* png, PNG* atlas, Log* log)
 {
   int status = true;
 
@@ -123,8 +168,7 @@ bool initPaths(Shaders* shaders, PNG* png, PNG* atlas, bool verbose,
     };
 
     LOG(verbose, printf("  Initializing fragment shader path ...\n"));
-    if (!initShaderPath(&(shaders->fshaderpath), length, FRAGMENT_DIR,
-      verbose, roadmap))
+    if (!initShaderPath(&(shaders->fshaderpath), length, FRAGMENT_DIR, log))
     {
       LOG(verbose, printf("  "));
       fprintf((verbose ? stdout : stderr), "Fragment shader path \
@@ -137,14 +181,13 @@ initialization failed\n");
 
     length[2] = len5;
 
-    if (roadmap->id == VSHADERPATH_MALLOC_FAILED_RM)
+    if (log->roadmap.id == VSHADERPATH_MALLOC_FAILED_RM)
     {
-      roadmap->id = SHADERPATH_MALLOC_FAILED_RM;
+      log->roadmap.id = SHADERPATH_MALLOC_FAILED_RM;
     }
 
     LOG(verbose, printf("  Initializing vertex shader path ...\n"));
-    if (!initShaderPath(&(shaders->vshaderpath), length, VERTEX_DIR,
-      verbose, roadmap))
+    if (!initShaderPath(&(shaders->vshaderpath), length, VERTEX_DIR, log))
     {
       LOG(verbose, printf("  "));
       fprintf((verbose ? stdout : stderr), "Vertex shader path \
@@ -160,7 +203,7 @@ initialization failed\n");
     length[3] = 0;
 
     LOG(verbose, printf("  Initializing texture path ...\n"));
-    if (!initTexturePath(png, length, BIGSTARS_FILE, verbose, roadmap))
+    if (!initTexturePath(png, length, BIGSTARS_FILE, log))
     {
       LOG(verbose, printf("  "));
       fprintf((verbose ? stdout : stderr), "Texture path initialization \
@@ -173,13 +216,13 @@ failed\n");
 
     length[2] = len8;
 
-    if (roadmap->id == ATLASTEXTUREPATH_MALLOC_FAILED_RM)
+    if (log->roadmap.id == ATLASTEXTUREPATH_MALLOC_FAILED_RM)
     {
-      roadmap->id = TEXTUREPATH_MALLOC_FAILED_RM;
+      log->roadmap.id = TEXTUREPATH_MALLOC_FAILED_RM;
     }
 
     LOG(verbose, printf("  Initializing atlas texture path ...\n"));
-    if (!initTexturePath(atlas, length, ATLAS_FILE, verbose, roadmap))
+    if (!initTexturePath(atlas, length, ATLAS_FILE, log))
     {
       LOG(verbose, printf("  "));
       fprintf((verbose ? stdout : stderr), "Atlas texture path \
@@ -192,39 +235,4 @@ initialization failed\n");
   } while (false);
 
   return status;
-}
-
-void freePaths(Shaders* shaders, PNG* png, PNG* atlas, bool verbose)
-{
-  if (shaders->fshaderpath)
-  {
-    LOG(verbose, printf("Freeing fragment shader path ...\n"));
-    free(shaders->fshaderpath);
-    shaders->fshaderpath = NULL;
-    LOG(verbose, printf("fragment shader path freed\n"));
-  }
-
-  if (shaders->vshaderpath)
-  {
-    LOG(verbose, printf("Freeing vertex shader path ...\n"));
-    free(shaders->vshaderpath);
-    shaders->vshaderpath = NULL;
-    LOG(verbose, printf("Vertex shader path freed\n"));
-  }
-
-  if (png->path)
-  {
-    LOG(verbose, printf("Freeing texture path ...\n"));
-    free(png->path);
-    png->path = NULL;
-    LOG(verbose, printf("Texture path freed\n"));
-  }
-
-  if (atlas->path)
-  {
-    LOG(verbose, printf("Freeing atlas texture path ...\n"));
-    free(atlas->path);
-    atlas->path = NULL;
-    LOG(verbose, printf("Atlas texture path freed\n"));
-  }
 }

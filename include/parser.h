@@ -10,6 +10,8 @@
   "^[[:space:]]*#[[:space:]]*include \"([/-_[:alnum:]]+\\.glsl)\""
 #define STARTLINE_SHADERLOG_PATTERN \
   "^[[:digit:]]+:([[:digit:]]+)\\([[:digit:]]+\\)"
+#define BAR \
+  "---------------------------------------------------------------------------"
 
 #include "util.h"
 
@@ -21,16 +23,14 @@ typedef struct
   regex_t regex;
 } Regex;
 
-void freeRegex(Regex* regex, const char* spaces, bool verbose);
+void freeRegex(Regex* regex, const char* spaces, Log* log);
 bool replace(char** str, const char* pattern, const char* replace,
-  const char* spaces, bool verbose, Roadmap* roadmap);
-bool readFile(char** filepath, char** buffer, const char* spaces,
-  bool verbose, Roadmap* roadmap);
+  const char* spaces, Log* log);
+bool readFile(char** filepath, char** buffer, const char* spaces, Log* log);
 bool addMarkers(char** filename, char** buffer, const char* dir_path,
-  const char* spaces, bool verbose, Roadmap* roadmap);
-bool searchAndReplaceHeaders(char** filepath, char** buffer, bool verbose,
-  Roadmap* roadmap);
+  const char* spaces, Log* log);
+bool searchAndReplaceHeaders(char** filepath, char** buffer, Log* log);
 bool improveLogShader(char** message, char** buffer, size_t maxLength,
-  bool verbose, Roadmap* roadmap);
+  Log* log);
 
 #endif

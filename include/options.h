@@ -7,7 +7,6 @@
 #include "path.h"
 #include "uniform.h"
 
-#define NAME "spaceporn"
 #define VERSION "0.1"
 
 #define DEFAULT_FPS 30
@@ -41,8 +40,7 @@
 #define UNDEFINED_SIZE -1
 
 void help();
-bool parsing_options(bool* verbose, long* fps, long* generation,
-  int* width, int* height, UniformValues* uniform_values, Roadmap* roadmap,
-  int* argc, char** argv);
+bool parsing_options(long* fps, long* generation, int* width, int* height,
+  UniformValues* uniform_values, Log* log, int* argc, char** argv);
 
 #endif

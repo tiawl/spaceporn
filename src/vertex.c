@@ -1,6 +1,6 @@
 #include "vertex.h"
 
-bool initVertices(Vertices* vertices, bool verbose)
+bool initVertices(Vertices* vertices, Log* log)
 {
   bool status = true;
 
@@ -51,7 +51,7 @@ bool initVertices(Vertices* vertices, bool verbose)
   return status;
 }
 
-bool draw(bool verbose)
+bool draw(Log* log)
 {
   bool status = true;
 
@@ -75,7 +75,7 @@ buffers enabled for color writing ...\n"));
   return status;
 }
 
-bool freeVertices(Vertices* vertices, bool verbose)
+bool freeVertices(Vertices* vertices, Log* log)
 {
   bool status = true;
 

@@ -3,15 +3,18 @@
 int main(int argc, char** argv)
 {
   srand(time(NULL));
+  fflush(stdin);
 
   bool status = true;
   long fps = DEFAULT_FPS;
   long generation = -1;
 
-  bool verbose = false;
-
-  Roadmap roadmap;
-  roadmap.id = EXIT_SUCCESS_RM;
+  Log log;
+  log.verbose = false;
+  log.path = NULL;
+  log.file = NULL
+  log.buffer = NULL;
+  log.roadmap.id = EXIT_SUCCESS_RM;
 
   UniformValues uniform_values;
   uniform_values.time = 0.0f;
@@ -83,8 +86,8 @@ int main(int argc, char** argv)
 
   do
   {
-    if (!parsing_options(&verbose, &fps, &generation, &(atlas.width),
-      &(atlas.height), &uniform_values, &roadmap, &argc, argv))
+    if (!parsing_options(&fps, &generation, &(atlas.width), &(atlas.height),
+      &uniform_values, &log, &argc, argv))
     {
       status = false;
       break;
@@ -101,20 +104,35 @@ int main(int argc, char** argv)
       delay = uniform_values.slide;
     }
 
-    LOG(verbose, printf("Initializing fragment shader, vertex shader and \
-texture paths ...\n"));
-    if (!initPaths(&shaders, &png, &png_atlas, verbose, &roadmap))
+    LOG(verbose, printf("Initializing log path ...\n"));
+    if (!initLogPath(&log))
     {
-      fprintf((verbose ? stdout : stderr), "Failed to initialize fragment \
-shader, vertex shader or texture paths\n");
+      fprintf((verbose ? stdout : stderr), "Failed to initialize log path\n");
       status = false;
       break;
     }
-    LOG(verbose, printf("Fragment shader, vertex shader and texture paths \
-are initialized\n"));
+    LOG(verbose, printf("Log path is initialized\n"));
+
+    LOG(verbose, printf("Initializing log ...\n"));
+    if (!initLog(&log))
+    {
+      fprintf((verbose ? stdout : stderr), "Failed to initialize log\n");
+      status = false;
+      break;
+    }
+    LOG(verbose, printf("Log is initialized\n"));
+
+    LOG(verbose, printf("Initializing paths ...\n"));
+    if (!initPaths(&shaders, &png, &png_atlas, &log))
+    {
+      fprintf((verbose ? stdout : stderr), "Failed to initialize paths\n");
+      status = false;
+      break;
+    }
+    LOG(verbose, printf("Paths are initialized\n"));
 
     LOG(verbose, printf("Creating GLX context ...\n"));
-    if (!initContext(&context, verbose, &roadmap))
+    if (!initContext(&context, &log))
     {
       fprintf((verbose ? stdout : stderr), "Failed to create a GLX context\n");
       status = false;
@@ -149,7 +167,7 @@ are initialized\n"));
         atlas.height));
 
       LOG(verbose, printf("Generating textures atlas ...\n"));
-      if (!generateAtlas(&atlas, &png_atlas, verbose, &roadmap))
+      if (!generateAtlas(&atlas, &png_atlas, &log))
       {
         fprintf((verbose ? stdout : stderr),
           "Failed to generate textures atlas\n");
@@ -165,7 +183,7 @@ are initialized\n"));
     }
 
     LOG(verbose, printf("Loading OpenGL program ...\n"));
-    if (!loadProgram(&context, &shaders, verbose, &roadmap))
+    if (!loadProgram(&context, &shaders, &log))
     {
       fprintf((verbose ? stdout : stderr), "OpenGL program failed to load\n");
       status = false;
@@ -173,7 +191,7 @@ are initialized\n"));
     }
     LOG(verbose, printf("OpenGL program loaded\n"));
 
-    if (roadmap.id == OPENGL_ERROR_RM)
+    if (log.roadmap.id == OPENGL_ERROR_RM)
     {
       GL_CHECK(glBindBuffer(0, -1), status);
     }
@@ -188,7 +206,7 @@ are initialized\n"));
     GLuint uniformIds[UNIFORM_COUNT];
 
     LOG(verbose, printf("Loading PNG texture ...\n"));
-    if (!loadPng(&png, &shaders, verbose, &roadmap))
+    if (!loadPng(&png, &shaders, &log))
     {
       fprintf((verbose ? stdout : stderr),
         "Failed to load PNG file \"%s\"\n", png.path);
@@ -207,7 +225,7 @@ are initialized\n"));
         LOG(verbose, printf("Atlas PNG texture exists\n"));
 
         LOG(verbose, printf("Loading textures atlas ...\n"));
-        if (!loadAtlas(&atlas, &png_atlas, &shaders, verbose, &roadmap))
+        if (!loadAtlas(&atlas, &png_atlas, &shaders, &log))
         {
           fprintf((verbose ? stdout : stderr), "Failed to load textures atlas\n");
           status = false;
@@ -220,12 +238,12 @@ are initialized\n"));
     }
 
     LOG(verbose, printf("Searching uniforms location ...\n"));
-    getUniforms(uniforms, uniformIds, &shaders.program, verbose);
+    getUniforms(uniforms, uniformIds, &shaders.program, &log);
     LOG(verbose, printf("Uniforms location found\n"));
 
     LOG(verbose, printf("Initializing vertex buffer object and vertex array \
 object ...\n"));
-    initVertices(&vertices, verbose);
+    initVertices(&vertices, &log);
     LOG(verbose, printf("Vertex buffer object and vertex array object \
 initialized\n"));
 
@@ -249,11 +267,11 @@ initialized\n"));
       }
 
       LOG(verbose, printf("Updating uniforms ...\n"));
-      updateUniforms(uniforms, uniformIds, &uniform_values, verbose);
+      updateUniforms(uniforms, uniformIds, &uniform_values, &log);
       LOG(verbose, printf("Uniforms updated\n"));
 
       LOG(verbose, printf("Drawing on window ...\n"));
-      draw(verbose);
+      draw(&log);
       LOG(verbose, printf("Window drawing done\n"));
 
       LOG(verbose, printf("Swapping front and back buffers ...\n"));
@@ -289,29 +307,29 @@ initialized\n"));
 #endif
       } else {
         LOG(verbose, printf("Sleeping for %d min ...\n", delay));
-        if (roadmap.id == SLIDEMODE_SUCCESS_RM)
+        if (log.roadmap.id == SLIDEMODE_SUCCESS_RM)
         {
           delay = 0;
-          roadmap.id = BREAK_SUCCESS_RM;
+          log.roadmap.id = BREAK_SUCCESS_RM;
         }
         sleep(delay * 60);
       }
       LOG(verbose, printf("Ready to loop again\n"));
 
-      if (roadmap.id == BREAK_SUCCESS_RM)
+      if (log.roadmap.id == BREAK_SUCCESS_RM)
       {
         break;
       }
     }
   } while (false);
 
-  freePaths(&shaders, &png, &png_atlas, verbose);
-  freeVertices(&vertices, verbose);
-  freePng(&png, verbose);
-  freePng(&png_atlas, verbose);
-  freeAtlas(&atlas, verbose);
-  freeProgram(&shaders, verbose, &roadmap);
-  freeContext(&context, verbose);
+  freeVertices(&vertices, &log);
+  freePng(&png, &log);
+  freePng(&png_atlas, &log);
+  freeAtlas(&atlas, &log);
+  freeProgram(&shaders, &log);
+  freeContext(&context, &log);
+  freeLog(&log);
 
   return (status ? EXIT_SUCCESS : EXIT_FAILURE);
 }

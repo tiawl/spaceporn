@@ -30,14 +30,13 @@ typedef GLXContext (*glXCreateContextAttribsARBProc)(Display*, GLXFBConfig,
   GLXContext, Bool, const int*);
 
 bool isExtensionSupported(const char* extList, const char* extension,
-  bool verbose, Roadmap* roadmap);
+  Log* log);
 int contextErrorHandler(Display* display, XErrorEvent* event);
-bool queryingGlxVersion(Context* context, bool verbose, Roadmap* roadmap);
-bool searchingBestFbc(Context* context, GLXFBConfig* bestFbc, bool verbose,
-  Roadmap* roadmap);
-bool initWindow(Context* context, bool verbose, Roadmap* roadmap);
-bool initDebugWindow(Context* context, bool verbose, Roadmap* roadmap);
-bool initContext(Context* context, bool verbose, Roadmap* roadmap);
-void freeContext(Context* context, bool verbose);
+bool queryingGlxVersion(Context* context, Log* log);
+bool searchingBestFbc(Context* context, GLXFBConfig* bestFbc, Log* log);
+bool initWindow(Context* context, Log* log);
+bool initDebugWindow(Context* context, Log* log);
+bool initContext(Context* context, Log* log);
+void freeContext(Context* context, Log* log);
 
 #endif

@@ -4,7 +4,6 @@ HEAD_DIR := include
 SHAD_DIR := shaders
 TEXT_DIR := textures
 CONF_DIR := conf
-LOG_DIR := log
 BIN := spaceporn
 BIN_DIR := bin
 ALL_DIR := $(BIN_DIR)/all
@@ -42,6 +41,6 @@ init:
 	./$(MAKE_SCRIPTS)/init $(PREFIX) $(SPREFIX) $(TPREFIX) $(ALL_DIR) $(OBJ_DIR)
 
 clean:
-	./$(MAKE_SCRIPTS)/clean $(OBJ_DIR) $(BIN_DIR) $(LOG_DIR)/$(BIN)
+	./$(MAKE_SCRIPTS)/clean $(OBJ_DIR) $(BIN_DIR)
 
 install: all

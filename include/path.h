@@ -5,8 +5,8 @@
 
 #include "texture.h"
 
-#define SHADERS_DIR SPREFIX
-#define TEXTURES_DIR TPREFIX
+#define SHADERS_DIR GCC_SPREFIX
+#define TEXTURES_DIR GCC_TPREFIX
 #define FRAGMENT_DIR "fragment/"
 #define VERTEX_DIR "vertex/"
 #define MAIN_FILE "main.glsl"

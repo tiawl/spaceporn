@@ -2,10 +2,5 @@
 
 PWD_DIR=$PWD
 
-mkdir -p bin/conf
-cp conf/configure.ac bin/conf
-cd bin/conf
-autoconf
-rm configure.ac
-cd $PWD_DIR
-mv bin/conf/configure conf/
+mkdir -p bin/conf && cp conf/configure.ac bin/conf && cd bin/conf \
+  && autoconf && rm configure.ac && cd $PWD_DIR && mv bin/conf/configure conf/

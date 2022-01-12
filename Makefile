@@ -16,24 +16,27 @@ OBJ_FILES := $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(SRC_FILES))
 PREFIX := /usr/local/bin/
 SPREFIX := /usr/share/$(BIN)/$(SHAD_DIR)/
 TPREFIX := /usr/share/$(BIN)/$(TEXT_DIR)/
-LIB_FLAGS := -lX11 -lGL -lGLEW -lpng -lm -lsystemd
+LIB_FLAGS := -lX11 -lGL -lGLEW -lpng -lm -lsystemd -fopenmp
 ALL_FLAGS := $(LIB_FLAGS)
 
-all: ENV_FLAGS := -D'SPREFIX="$(SPREFIX)"' -D'TPREFIX="$(TPREFIX)"'
+all: ENV_FLAGS := -D'GCC_SPREFIX="$(SPREFIX)"' -D'GCC_TPREFIX="$(TPREFIX)"' \
+  -D'GCC_DEBUG=false'
 all: OBJ_FLAGS := -Wall -g -I ./$(HEAD_DIR) $(ENV_FLAGS)
 all: $(ALL_DIR)/$(BIN)
 
 dev: PREFIX := ${PWD}
 dev: SPREFIX := ${PWD}/$(SHAD_DIR)/
 dev: TPREFIX := ${PWD}/$(TEXT_DIR)/
-dev: ENV_FLAGS := -D'SPREFIX="$(SPREFIX)"' -D'TPREFIX="$(TPREFIX)"'
+dev: ENV_FLAGS := -D'GCC_SPREFIX="$(SPREFIX)"' -D'GCC_TPREFIX="$(TPREFIX)"' \
+  -D'GCC_DEBUG=true'
 dev: OBJ_FLAGS := -Wall -g -I ./$(HEAD_DIR) $(ENV_FLAGS)
 dev: $(ALL_DIR)/$(BIN)
 
 cov: PREFIX := ${PWD}
 cov: SPREFIX := ${PWD}/$(SHAD_DIR)/
 cov: TPREFIX := ${PWD}/$(TEXT_DIR)/
-cov: ENV_FLAGS := -D'SPREFIX="$(SPREFIX)"' -D'TPREFIX="$(TPREFIX)"'
+dev: ENV_FLAGS := -D'GCC_SPREFIX="$(SPREFIX)"' -D'GCC_TPREFIX="$(TPREFIX)"' \
+  -D'GCC_DEBUG=true'
 cov: OBJ_FLAGS := -Wall -g -I ./$(HEAD_DIR) $(ENV_FLAGS)
 cov: COV_FLAGS := --coverage $(patsubst %.c, ${PWD}/%.c, $(SRC_FILES)) \
   -I ${PWD}/$(HEAD_DIR) $(LIB_FLAGS) $(ENV_FLAGS)
@@ -54,4 +57,5 @@ init:
 clean:
 	./$(MAKE_SCRIPTS)/clean $(OBJ_DIR) $(BIN_DIR)
 
-install: all
+install:
+	./$(MAKE_SCRIPTS)/install

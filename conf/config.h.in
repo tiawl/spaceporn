@@ -1,0 +1,6 @@
+#ifndef SPACEPORN_CONFIG_H
+#define SPACEPORN_CONFIG_H
+
+#define HAVE_OPENMP @DEFS@
+
+#endif

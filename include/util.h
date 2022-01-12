@@ -1,6 +1,8 @@
 #ifndef SPACEPORN_UTIL_H
 #define SPACEPORN_UTIL_H
 
+#include "config.h"
+
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -11,7 +13,11 @@
 #include <GL/glew.h>
 #include <GL/glx.h>
 
-#define DEBUG true
+#if HAVE_OPENMP
+#include <omp.h>
+#endif
+
+#define DEBUG GCC_DEBUG
 
 enum RoadmapID
 {

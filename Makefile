@@ -40,10 +40,10 @@ $(OBJ_DIR)/%.o: init
 	$(CC) $(OBJ_FLAGS) -c -o $@ $(patsubst $(OBJ_DIR)/%.o,$(SRC_DIR)/%.c,$@)
 
 init:
-	./$(MAKE_SCRIPTS)/init.sh $(PREFIX) $(LPREFIX) $(SPREFIX) $(TPREFIX) \
+	./$(MAKE_SCRIPTS)/init $(PREFIX) $(LPREFIX) $(SPREFIX) $(TPREFIX) \
 $(ALL_DIR) $(OBJ_DIR)
 
 clean:
-	./$(MAKE_SCRIPTS)/clean.sh $(OBJ_DIR) $(BIN_DIR) $(LOG_DIR)/$(BIN)
+	./$(MAKE_SCRIPTS)/clean $(OBJ_DIR) $(BIN_DIR) $(LOG_DIR)/$(BIN)
 
 install: all

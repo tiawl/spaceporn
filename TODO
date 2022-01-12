@@ -1,6 +1,8 @@
 - memchecks
 - covchecks
 - detectmissingconf strict/nostrict
+- update or remove travis
+- add a flag to disable some planets/galaxy/darkhole/asteroids/bigstars
 - if find texture/atlas.png: precompted = true && use atlas in shaders
   else: precomputed = false && use hash function in shaders
 - use OpenMP for textures atlas generation

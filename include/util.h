@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/time.h>
+#include <systemd/sd-journal.h>
 #include <GL/glew.h>
 #include <GL/glx.h>
 
@@ -149,13 +150,13 @@ enum RoadmapID
   PRECOMPUTE_AND_STOP_RM,
   PRECOMPUTE_AND_CONTINUE_RM,
 // -------------------------------------------------------------------  90
-  LOGPATH_MALLOC_FAILED_RM,
-  FOPEN_LOG_FAILED_RM,
 #if DEBUG
   XCREATEDEBUGWINDOW_FAILED_RM,
 #endif
   RM_NB
 };
+
+#define MSG_LEN 8
 
 typedef struct
 {
@@ -163,15 +164,9 @@ typedef struct
   char* glsl_file;
 } Roadmap;
 
-#define DATE_LENGTH 23
-
 typedef struct
 {
   bool verbose;
-  char* path;
-  char* buffer;
-  FILE* file;
-  char date[DATE_LENGTH];
   Roadmap roadmap;
 } Log;
 

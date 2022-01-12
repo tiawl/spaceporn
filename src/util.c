@@ -3,6 +3,7 @@
 void writeLog(Log* log, FILE* stream, const char* stdoutstr,
   const char* str, ...)
 {
+  char* log_message = NULL;
   char* expanded_str = NULL;
 
   va_list args;
@@ -26,42 +27,20 @@ void writeLog(Log* log, FILE* stream, const char* stdoutstr,
 
     vsnprintf(expanded_str, expanded_len, str, args);
 
-    if (!log->file)
+    log_message =
+      malloc(sizeof(char) * (expanded_len + stdoutstr_len + MSG_LEN));
+    if (!log_message)
     {
-      if (!log->buffer)
-      {
-        log->buffer =
-          malloc(sizeof(char) * (DATE_LENGTH + expanded_len + stdoutstr_len));
-
-        if (!log->buffer)
-        {
-          fprintf(stderr,
-            "Failed to allocate memory in writeLog function to log buffer\n");
-          break;
-        }
-
-        strcpy(log->buffer, log->date);
-      } else {
-        log->buffer = realloc(log->buffer, sizeof(char) *
-          (strlen(log->buffer) + DATE_LENGTH + expanded_len + stdoutstr_len));
-
-        if (!log->buffer)
-        {
-          fprintf(stderr,
-            "Failed to reallocate memory in writeLog function to log buffer\n");
-          break;
-        }
-
-        strncat(log->buffer, log->date, DATE_LENGTH);
-      }
-
-      strncat(log->buffer, stdoutstr, stdoutstr_len);
-      strncat(log->buffer, expanded_str, expanded_len);
-    } else {
-      fputs(log->date, log->file);
-      fputs(stdoutstr, log->file);
-      fputs(expanded_str, log->file);
+      fprintf(stderr,
+        "Failed to allocate memory in writeLog function to log_message\n");
+      break;
     }
+
+    strcpy(log_message, "MESSAGE=");
+    strncat(log_message, stdoutstr, stdoutstr_len);
+    strncat(log_message, expanded_str, expanded_len);
+
+    sd_journal_send(log_message, NULL);
 
     if (log->verbose)
     {
@@ -80,78 +59,6 @@ void writeLog(Log* log, FILE* stream, const char* stdoutstr,
   }
 
   va_end(args);
-}
-
-void freeLog(Log* log)
-{
-  if (log->path)
-  {
-    writeLog(log, stdout, "", "Freeing log path ...\n");
-    writeLog(log, stdout, "", "Log path freed\n");
-  }
-
-  if (log->buffer)
-  {
-    writeLog(log, stdout, "", "Freeing log buffer ...\n");
-    writeLog(log, stdout, "", "Log buffer freed\n");
-  }
-
-  if (log->file)
-  {
-    writeLog(log, stdout, "", "Closing log file ...\n");
-    writeLog(log, stdout, "", "Log file closed\n");
-  }
-
-  if (log->path)
-  {
-    free(log->path);
-    log->path = NULL;
-  }
-
-  if (log->buffer)
-  {
-    free(log->buffer);
-    log->buffer = NULL;
-  }
-
-  if (log->file)
-  {
-    fclose(log->file);
-    log->file = NULL;
-  }
-}
-
-bool initLog(Log* log)
-{
-  bool status = true;
-  do
-  {
-    writeLog(log, stdout, "",
-      "  Opening log file \"%s\" ...\n", log->path);
-    if (log->roadmap.id != FOPEN_LOG_FAILED_RM)
-    {
-      log->file = fopen(log->path, "ab");
-    }
-
-    if (!log->file)
-    {
-      writeLog(log, (log->verbose ? stdout : stderr), "  ",
-        "Failed to open \"%s\"\n", log->path);
-
-      status = false;
-      break;
-    }
-
-    if (log->buffer)
-    {
-      fputs(log->buffer, log->file);
-      free(log->buffer);
-      log->buffer = NULL;
-    }
-    writeLog(log, stdout, "", "  Log file opened ...\n");
-  } while (false);
-
-  return status;
 }
 
 bool checkOpenGLError(const char* stmt, const char* fname, int line, Log* log)

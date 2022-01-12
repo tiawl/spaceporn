@@ -3,7 +3,6 @@
 int main(int argc, char** argv)
 {
   time_t now = time(NULL);
-  struct tm local_time = *localtime(&now);
   srand(now);
   fflush(stdin);
 
@@ -13,14 +12,7 @@ int main(int argc, char** argv)
 
   Log log;
   log.verbose = false;
-  log.path = NULL;
-  log.file = NULL;
-  log.buffer = NULL;
   log.roadmap.id = EXIT_SUCCESS_RM;
-
-  snprintf(log.date, DATE_LENGTH, "%d-%02d-%02d %02d:%02d:%02d | ",
-    local_time.tm_year + 1900, local_time.tm_mon + 1, local_time.tm_mday,
-    local_time.tm_hour, local_time.tm_min, local_time.tm_sec);
 
   UniformValues uniform_values;
   uniform_values.time = 0.0f;
@@ -109,26 +101,6 @@ int main(int argc, char** argv)
     } else {
       delay = uniform_values.slide;
     }
-
-    writeLog(&log, stdout, "", "Initializing log path ...\n");
-    if (!initLogPath(&log))
-    {
-      writeLog(&log, (log.verbose ? stdout : stderr), "",
-        "Failed to initialize log path\n");
-      status = false;
-      break;
-    }
-    writeLog(&log, stdout, "", "Log path is initialized\n");
-
-    writeLog(&log, stdout, "", "Initializing log ...\n");
-    if (!initLog(&log))
-    {
-      writeLog(&log, (log.verbose ? stdout : stderr), "",
-        "Failed to initialize log\n");
-      status = false;
-      break;
-    }
-    writeLog(&log, stdout, "", "Log is initialized\n");
 
     writeLog(&log, stdout, "", "Initializing paths ...\n");
     if (!initPaths(&shaders, &png, &png_atlas, &log))
@@ -341,7 +313,6 @@ int main(int argc, char** argv)
   freeAtlas(&atlas, &log);
   freeProgram(&shaders, &log);
   freeContext(&context, &log);
-  freeLog(&log);
 
   return (status ? EXIT_SUCCESS : EXIT_FAILURE);
 }

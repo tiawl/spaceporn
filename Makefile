@@ -15,12 +15,11 @@ SRC_FILES := $(wildcard $(SRC_DIR)/*.c)
 OBJ_FILES := $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(SRC_FILES))
 
 PREFIX := ${PWD}
-LPREFIX := ${PWD}/$(LOG_DIR)/
+# PREFIX := /usr/local/bin
 SPREFIX := ${PWD}/$(SHAD_DIR)/
 TPREFIX := ${PWD}/$(TEXT_DIR)/
-ENV_FLAGS := -D'LPREFIX="$(LPREFIX)"' -D'SPREFIX="$(SPREFIX)"' \
-  -D'TPREFIX="$(TPREFIX)"'
-LIB_FLAGS := -lX11 -lGL -lGLEW -lpng -lm
+ENV_FLAGS := -D'SPREFIX="$(SPREFIX)"' -D'TPREFIX="$(TPREFIX)"'
+LIB_FLAGS := -lX11 -lGL -lGLEW -lpng -lm -lsystemd
 OBJ_FLAGS := -Wall -g -I ./$(HEAD_DIR) $(ENV_FLAGS)
 ALL_FLAGS := $(LIB_FLAGS)
 COV_FLAGS := --coverage $(patsubst %.c, ${PWD}/%.c, $(SRC_FILES)) \
@@ -40,8 +39,7 @@ $(OBJ_DIR)/%.o: init
 	$(CC) $(OBJ_FLAGS) -c -o $@ $(patsubst $(OBJ_DIR)/%.o,$(SRC_DIR)/%.c,$@)
 
 init:
-	./$(MAKE_SCRIPTS)/init $(PREFIX) $(LPREFIX) $(SPREFIX) $(TPREFIX) \
-$(ALL_DIR) $(OBJ_DIR)
+	./$(MAKE_SCRIPTS)/init $(PREFIX) $(SPREFIX) $(TPREFIX) $(ALL_DIR) $(OBJ_DIR)
 
 clean:
 	./$(MAKE_SCRIPTS)/clean $(OBJ_DIR) $(BIN_DIR) $(LOG_DIR)/$(BIN)

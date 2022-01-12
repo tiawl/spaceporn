@@ -20,6 +20,8 @@ AC_CHECK_LIB([m], [pow], [], [AC_MSG_ERROR([lib math linking flag (-lm) is \
 missing. Install or check GLibC library.])])
 AC_CHECK_LIB([png], [png_create_read_struct], [], [AC_MSG_ERROR([libPNG \
 linking flag (-lpng) is missing. Install or check libPNG.])])
+AC_CHECK_LIB([systemd], [sd_journal_send], [], [AC_MSG_ERROR([libsystemd \
+linking flag (-lsystemd) is missing. Install or check libsystemd library.])])
 AC_CHECK_LIB([GL], [glClear], [], [AC_MSG_ERROR([GL linking flag \
 (-lGL) is missing. Install or check GL library.])])
 AC_CHECK_LIB([GLEW], [glewInit], [], [AC_MSG_ERROR([GLEW linking flag \
@@ -29,6 +31,9 @@ AC_CHECK_LIB([X11], [XOpenDisplay], [], [AC_MSG_ERROR([X11 linking flag \
 
 AC_CHECK_HEADER([png.h], [], [AC_MSG_ERROR([libPNG header is missing. \
 Install or check libPNG.])])
+AC_CHECK_HEADER([systemd/sd-journal.h], [],
+  [AC_MSG_ERROR([libsystemd-journal header is missing. Install or check \
+libsystemd.])])
 AC_CHECK_HEADER([GL/gl.h], [], [AC_MSG_ERROR([GL header is missing. \
 Install or check GL library.])])
 AC_CHECK_HEADER([GL/glx.h], [], [AC_MSG_ERROR([GLX header is missing. \

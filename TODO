@@ -6,3 +6,4 @@
 - if find texture/atlas.png: precompted = true && use atlas in shaders
   else: precomputed = false && use hash function in shaders
 - use OpenMP for textures atlas generation
+- found location for shaders and texture on host device

@@ -71,48 +71,6 @@ bool initTexturePath(PNG* png, size_t len[3], char* path, Log* log)
   return status;
 }
 
-bool initLogPath(Log* log)
-{
-  int status = true;
-
-  writeLog(log, stdout, "", "  Computing length of log directory path ...\n");
-  const size_t len1 = strlen(LOG_DIR);
-  writeLog(log, stdout, "", "  Length of \"%s\" is %lu\n", LOG_DIR, len1);
-
-  writeLog(log, stdout, "", "  Computing length of log filename ...\n");
-  const size_t len2 = strlen(NAME);
-  writeLog(log, stdout, "", "  Length of \"%s\" is %lu\n", NAME, len2);
-
-  do
-  {
-    writeLog(log, stdout, "", "  Allocating memory for log path ...\n");
-
-    if (log->roadmap.id != LOGPATH_MALLOC_FAILED_RM)
-    {
-      log->path = malloc(len1 + len2 + 1);
-    }
-
-    if (!log->path)
-    {
-      writeLog(log, (log->verbose ? stdout : stderr), "  ",
-        "log path malloc() failed\n");
-
-      status = false;
-      break;
-    }
-    writeLog(log, stdout, "", "  Successful allocated memory for log path\n");
-
-    writeLog(log, stdout, "", "  Building log path string ... 0/2\n");
-    memcpy(log->path, LOG_DIR, len1);
-    writeLog(log, stdout, "", "  Building log path string ... 1/2\n");
-    memcpy(log->path + len1, NAME, len2 + 1);
-    writeLog(log, stdout, "", "  Building log path string ... 2/2\n");
-    writeLog(log, stdout, "", "  Log path string built: %s\n", log->path);
-  } while (false);
-
-  return status;
-}
-
 bool initPaths(Shaders* shaders, PNG* png, PNG* atlas, Log* log)
 {
   int status = true;

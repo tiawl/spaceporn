@@ -7,6 +7,7 @@
 #include "path.h"
 #include "uniform.h"
 
+#define NAME "spaceporn"
 #define VERSION "0.1"
 
 #define DEFAULT_FPS 30

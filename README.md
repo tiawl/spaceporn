@@ -1,5 +1,3 @@
-[![Build Status](https://travis-ci.com/pabtomas/spaceporn.svg?branch=master)](https://travis-ci.com/pabtomas/spaceporn)
-
 # spaceporn 
 
 A PixelSpace Shader Wallpaper for X System

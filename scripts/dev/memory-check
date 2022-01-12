@@ -7,7 +7,7 @@ STATUS=0
 EQUALS=0
 
 echo -e "\nCompiling ...\n"
-make clean all > /dev/null 2>&1
+make clean dev > /dev/null 2>&1
 
 declare -r SPACEPORN="./bin/all/spaceporn"
 

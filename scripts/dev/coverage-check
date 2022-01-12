@@ -4,7 +4,7 @@ declare -r FRAGMENTS=$(find shaders/fragment -type f)
 declare -r VERTEXES=$(find shaders/vertex -type f)
 
 echo -e "\nCompiling ...\n"
-make clean coverage > /dev/null 2>&1
+make clean cov > /dev/null 2>&1
 
 declare -r SPACEPORN="./bin/cov/spaceporn"
 declare -r BIG_INT=9999999999999999999999999999

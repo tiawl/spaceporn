@@ -58,6 +58,11 @@ void writeLog(Log* log, FILE* stream, const char* stdoutstr,
     free(expanded_str);
   }
 
+  if (log_message)
+  {
+    free(log_message);
+  }
+
   va_end(args);
 }
 

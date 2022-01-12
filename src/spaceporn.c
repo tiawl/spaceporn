@@ -191,7 +191,7 @@ int main(int argc, char** argv)
     writeLog(&log, stdout, "", "Loading PNG texture ...\n");
     if (!loadPng(&png, &shaders, &log))
     {
-      writeLog(&log, (log.verbose ? stdout : stderr), ""
+      writeLog(&log, (log.verbose ? stdout : stderr), "",
         "Failed to load PNG file \"%s\"\n", png.path);
 
       status = false;

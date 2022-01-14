@@ -1,6 +1,6 @@
 #include "shader.h"
 
-bool buildFile(char** filepath, char** buffer, Log* log)
+bool buildFile(char** filepath, char** buffer, char** dirpath, Log* log)
 {
   bool status = true;
 
@@ -16,7 +16,7 @@ bool buildFile(char** filepath, char** buffer, Log* log)
     }
     writeLog(log, stdout, "", "    File read successfully\n");
 
-    if (!searchAndReplaceHeaders(filepath, buffer, log))
+    if (!searchAndReplaceHeaders(dirpath, buffer, log))
     {
       status = false;
       break;
@@ -75,7 +75,8 @@ bool buildVertexShaderFile(Shaders* shaders, Log* log)
     log->roadmap.id = SARH_REGEXEC_FAILED_RM;
   }
 
-  if (!buildFile(&(shaders->vshaderpath), &(shaders->vertex_file), log))
+  if (!buildFile(&(shaders->vshaderpath), &(shaders->vertex_file),
+    &(shaders->vshaderdir), log))
   {
     writeLog(log, (log->verbose ? stdout : stderr), "  ",
       "Failed to build vertex shader file\n");
@@ -138,7 +139,8 @@ bool buildFragmentShaderFile(Shaders* shaders, Log* log)
     log->roadmap.id = SARH_REGEXEC_FAILED_RM;
   }
 
-  if (!buildFile(&(shaders->fshaderpath), &(shaders->fragment_file), log))
+  if (!buildFile(&(shaders->fshaderpath), &(shaders->fragment_file),
+    &(shaders->fshaderdir), log))
   {
     writeLog(log, (log->verbose ? stdout : stderr), "  ",
       "Failed to build fragment shader file\n");
@@ -182,7 +184,7 @@ bool checkLogShader(GLuint* shader, GLenum shaderType, char* buffer, Log* log)
         GL_CHECK(glGetShaderInfoLog(*shader, maxLength, &maxLength, message),
           status, log);
 
-        if (!improveLogShader(&message, &buffer, maxLength, log))
+        if (!improveLogShader(&message, &buffer, log))
         {
           free(message);
           status = false;
@@ -448,12 +450,28 @@ bool freeProgram(Shaders* shaders, Log* log)
 {
   bool status = true;
 
+  if (shaders->fshaderdir)
+  {
+    writeLog(log, stdout, "", "Freeing fragment shader directory path ...\n");
+    free(shaders->fshaderdir);
+    shaders->fshaderdir = NULL;
+    writeLog(log, stdout, "", "Fragment shader directory path freed\n");
+  }
+
   if (shaders->fshaderpath)
   {
     writeLog(log, stdout, "", "Freeing fragment shader path ...\n");
     free(shaders->fshaderpath);
     shaders->fshaderpath = NULL;
-    writeLog(log, stdout, "", "fragment shader path freed\n");
+    writeLog(log, stdout, "", "Fragment shader path freed\n");
+  }
+
+  if (shaders->vshaderdir)
+  {
+    writeLog(log, stdout, "", "Freeing vertex shader directory path ...\n");
+    free(shaders->vshaderdir);
+    shaders->vshaderdir = NULL;
+    writeLog(log, stdout, "", "Vertex shader directory path freed\n");
   }
 
   if (shaders->vshaderpath)

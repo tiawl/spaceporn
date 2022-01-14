@@ -294,8 +294,7 @@ bool readFile(char** filepath, char** buffer, const char* spaces, Log* log)
   return status;
 }
 
-bool addMarkers(char** filename, char** buffer, const char* dir_path,
-  const char* spaces, Log* log)
+bool addMarkers(char** filename, char** buffer, const char* spaces, Log* log)
 {
   bool status = true;
 
@@ -427,7 +426,7 @@ bool addMarkers(char** filename, char** buffer, const char* dir_path,
   return status;
 }
 
-bool searchAndReplaceHeaders(char** filepath, char** buffer, Log* log)
+bool searchAndReplaceHeaders(char** dirpath, char** buffer, Log* log)
 {
   bool status = true;
 
@@ -437,13 +436,6 @@ bool searchAndReplaceHeaders(char** filepath, char** buffer, Log* log)
     regex.header_buffer = NULL;
     regex.headers = NULL;
     regex.headers_length = 0;
-
-    char dir_path[strlen(*filepath) - 9];
-    dir_path[0] = '\0';
-
-    writeLog(log, stdout, "", "    Copying string into dir_path ...\n");
-    strncat(dir_path, *filepath, strlen(*filepath) - 9);
-    writeLog(log, stdout, "", "    \"%s\" successfully copied\n", dir_path);
 
     writeLog(log, stdout, "", "    Compiling regex pattern: \"%s\" ...\n",
       INCLUDE_HEADER_PATTERN);
@@ -512,7 +504,7 @@ bool searchAndReplaceHeaders(char** filepath, char** buffer, Log* log)
 
       writeLog(log, stdout, "", "    Adding markers to \"%s\" ...\n",
         (regex.headers)[0]);
-      if (!addMarkers(&((regex.headers)[0]), buffer, dir_path, "", log))
+      if (!addMarkers(&((regex.headers)[0]), buffer, "", log))
       {
         writeLog(log, (log->verbose ? stdout : stderr), "    ",
           "Unable to mark the file\n");
@@ -670,11 +662,11 @@ bool searchAndReplaceHeaders(char** filepath, char** buffer, Log* log)
           writeLog(log, stdout, "", "      \"%s\" successfully copied\n",
             (regex.headers)[regex.headers_length - 1]);
 
-          char header_filepath[strlen(dir_path) + strlen(first_match) + 1];
+          char header_filepath[strlen(*dirpath) + strlen(first_match) + 1];
 
           writeLog(log, stdout, "",
             "      Copying string into header_filepath ...\n");
-          strcpy(header_filepath, dir_path);
+          strcpy(header_filepath, *dirpath);
           writeLog(log, stdout, "", "      \"%s\" successfully copied\n",
             header_filepath);
 
@@ -723,7 +715,7 @@ bool searchAndReplaceHeaders(char** filepath, char** buffer, Log* log)
           }
 
           if (!addMarkers(&((regex.headers)[regex.headers_length - 1]),
-            &(regex.header_buffer), dir_path, "  ", log))
+            &(regex.header_buffer), "  ", log))
           {
             writeLog(log, (log->verbose ? stdout : stderr), "      ",
               "Unable to mark the file\n");
@@ -849,8 +841,7 @@ bool searchAndReplaceHeaders(char** filepath, char** buffer, Log* log)
   return status;
 }
 
-bool improveLogShader(char** message, char** buffer, size_t maxLength,
-  Log* log)
+bool improveLogShader(char** message, char** buffer, Log* log)
 {
   bool status = true;
 

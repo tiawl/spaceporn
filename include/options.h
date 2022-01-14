@@ -8,7 +8,7 @@
 #include "uniform.h"
 
 #define NAME "spaceporn"
-#define VERSION "0.1"
+#define VERSION "0"
 
 #define DEFAULT_FPS 30
 #define DEFAULT_PIXELS 300
@@ -38,10 +38,11 @@
 #define MIN_ZOOM 10
 #define MAX_ZOOM 50
 
-#define UNDEFINED_SIZE -1
+#define UNDEFINED_SIZE 0
 
 void help();
-bool parsing_options(long* fps, long* generation, int* width, int* height,
-  UniformValues* uniform_values, Log* log, int* argc, char** argv);
+bool parsing_options(long* fps, long* generation, unsigned* width,
+  unsigned* height, UniformValues* uniform_values, Log* log, int* argc,
+  char** argv);
 
 #endif

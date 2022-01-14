@@ -4,9 +4,9 @@ void generatePcgTexture(Atlas* atlas, int offset)
 {
   uvec4 u;
 
-  for (int y = 0; y < atlas->height; y++)
+  for (unsigned y = 0; y < atlas->height; y++)
   {
-    for (int x = 0; x < atlas->width * 4; x += 4)
+    for (unsigned x = 0; x < atlas->width * 4; x += 4)
     {
       u.x = x / 4;
       u.y = y;
@@ -29,13 +29,30 @@ void generatePcgTexture(Atlas* atlas, int offset)
   }
 }
 
-bool readAtlas(Atlas* atlas, PNG* png, Log* log)
+void generateFakeAtlas(Atlas* atlas, int offset)
+{
+  for (unsigned y = 0; y < atlas->height; y++)
+  {
+    for (unsigned x = 0; x < atlas->width * 4; x += 4)
+    {
+      atlas->texels[(atlas->pcg_depth - 1 - offset) * atlas->height
+        + atlas->height - 1 - y][x] = (GLubyte) FAKE_ATLAS_COLOR;
+      atlas->texels[(atlas->pcg_depth - 1 - offset) * atlas->height
+        + atlas->height - 1 - y][x + 1] = (GLubyte) FAKE_ATLAS_COLOR;
+      atlas->texels[(atlas->pcg_depth - 1 - offset) * atlas->height
+        + atlas->height - 1 - y][x + 2] = (GLubyte) FAKE_ATLAS_COLOR;
+      atlas->texels[(atlas->pcg_depth - 1 - offset) * atlas->height
+        + atlas->height - 1 - y][x + 3] = (GLubyte) 255;
+    }
+  }
+}
+
+bool readAtlas(Atlas* atlas, PNG* png, GLboolean* precomputed, Log* log)
 {
   bool status = true;
 
   do
   {
-    png_uint_32 w, h;
     int bit_depth;
     int color_type;
 
@@ -44,6 +61,7 @@ bool readAtlas(Atlas* atlas, PNG* png, Log* log)
     {
       writeLog(log, (log->verbose ? stdout : stderr), "    ",
         "PNG filename is null\n");
+      atlas->height *= atlas->depth;
 
       status = false;
       break;
@@ -60,6 +78,7 @@ bool readAtlas(Atlas* atlas, PNG* png, Log* log)
     {
       writeLog(log, (log->verbose ? stdout : stderr), "    ",
         "Failed to open \"%s\"\n", png->path);
+      atlas->height *= atlas->depth;
 
       status = false;
       break;
@@ -78,6 +97,7 @@ bool readAtlas(Atlas* atlas, PNG* png, Log* log)
     {
       writeLog(log, (log->verbose ? stdout : stderr), "    ",
         "png_create_read_struct() failed\n");
+      atlas->height *= atlas->depth;
 
       status = false;
       break;
@@ -94,6 +114,7 @@ bool readAtlas(Atlas* atlas, PNG* png, Log* log)
     {
       writeLog(log, (log->verbose ? stdout : stderr), "    ",
         "png_create_info_struct() failed\n");
+      atlas->height *= atlas->depth;
 
       status = false;
       break;
@@ -106,6 +127,7 @@ bool readAtlas(Atlas* atlas, PNG* png, Log* log)
     {
       writeLog(log, (log->verbose ? stdout : stderr), "    ",
         "Routine problem: libPNG encountered an error\n");
+      atlas->height *= atlas->depth;
 
       status = false;
       break;
@@ -122,9 +144,21 @@ bool readAtlas(Atlas* atlas, PNG* png, Log* log)
 
     writeLog(log, stdout, "",
       "    Querying PNG_IHDR chunk information from PNG info structure ...\n");
-    png_get_IHDR(
-      png->ptr, png->info, &w, &h, &bit_depth, &color_type, 0, 0, 0);
+    png_get_IHDR(png->ptr, png->info, &(atlas->width), &(atlas->height),
+      &bit_depth, &color_type, 0, 0, 0);
     writeLog(log, stdout, "", "    PNG_IHDR chunk information found\n");
+
+    writeLog(log, stdout, "",
+      "    Will the fragment shader use textures atlas ?\n");
+    if (atlas->width == FAKE_ATLAS_SZ)
+    {
+      writeLog(log, stdout, "", "    Fake textures atlas detected, %s",
+        "fragment shader will not use textures atlas\n");
+    } else {
+      *precomputed = true;
+      writeLog(log, stdout, "", "    Fake textures atlas not detected, %s",
+        "fragment shader will use textures atlas\n");
+    }
 
     writeLog(log, stdout, "", "    Updating PNG info structure ...\n");
     png_read_update_info(png->ptr, png->info);
@@ -132,14 +166,14 @@ bool readAtlas(Atlas* atlas, PNG* png, Log* log)
 
     writeLog(log, stdout, "", "    Querying number of bytes for a row ...\n");
     int rowbytes = png_get_rowbytes(png->ptr, png->info);
-    rowbytes += 3 - ((rowbytes-1) % 4);
+    rowbytes += 3 - ((rowbytes - 1) % 4);
     writeLog(log, stdout, "", "    Number of bytes for a row is %d\n",
       rowbytes);
 
     writeLog(log, stdout, "", "    Allocating memory for data ...\n");
     if (log->roadmap.id != ATLASPNG_DATA_MALLOC_FAILED_RM)
     {
-      png->data = malloc(rowbytes * h * sizeof(png_byte) + 15);
+      png->data = malloc(rowbytes * atlas->height * sizeof(png_byte) + 15);
     }
 
     if (!png->data)
@@ -155,7 +189,7 @@ bool readAtlas(Atlas* atlas, PNG* png, Log* log)
     writeLog(log, stdout, "", "    Allocating memory for row_pointers ...\n");
     if (log->roadmap.id != ATLASPNG_READROWPOINTERS_MALLOC_FAILED_RM)
     {
-      png->row_pointers = malloc(h * sizeof(png_bytep));
+      png->row_pointers = malloc(atlas->height * sizeof(png_bytep));
     }
 
     if (!png->row_pointers)
@@ -168,14 +202,16 @@ bool readAtlas(Atlas* atlas, PNG* png, Log* log)
     }
     writeLog(log, stdout, "", "    Memory allocated successfully\n");
 
-    for (png_uint_32 i = 0; i < h; ++i)
+    for (png_uint_32 i = 0; i < atlas->height; ++i)
     {
       writeLog(log, stdout, "", "    Setting individual %s %d/%d\n",
-        "row_pointers to point at the correct offsets of data ...", i, h);
-      png->row_pointers[h - 1 - i] = png->data + i * rowbytes;
+        "row_pointers to point at the correct offsets of data ...",
+          i, atlas->height);
+      png->row_pointers[atlas->height - 1 - i] = png->data + i * rowbytes;
     }
     writeLog(log, stdout, "", "    Setting individual %s %d/%d\n",
-      "row_pointers to point at the correct offsets of data ...", h, h);
+      "row_pointers to point at the correct offsets of data ...",
+        atlas->height, atlas->height);
     writeLog(log, stdout, "", "    Individual row_pointers set\n");
 
     writeLog(log, stdout, "", "    Reading PNG image into memory ...\n");
@@ -187,6 +223,7 @@ bool readAtlas(Atlas* atlas, PNG* png, Log* log)
     writeLog(log, stdout, "", "    PNG reading finished\n");
   } while (false);
 
+  atlas->height /= atlas->depth;
   return status;
 }
 
@@ -347,7 +384,7 @@ bool generateAtlas(Atlas* atlas, PNG* png, Log* log)
     writeLog(log, stdout, "", "  Memory allocated successfully\n");
 
     writeLog(log, stdout, "", "  Allocating memory for each texels row ...\n");
-    for (int i = 0; i < atlas->height * atlas->depth; i++)
+    for (unsigned i = 0; i < atlas->height * atlas->depth; i++)
     {
       atlas->texels[i] = NULL;
 
@@ -382,7 +419,12 @@ bool generateAtlas(Atlas* atlas, PNG* png, Log* log)
     for (int seed = 0; seed < atlas->pcg_depth; seed++)
     {
       writeLog(log, stdout, "", "    Generating PCG texture %d ...\n", seed);
-      generatePcgTexture(atlas, seed);
+      if (atlas->width == FAKE_ATLAS_SZ)
+      {
+        generateFakeAtlas(atlas, seed);
+      } else {
+        generatePcgTexture(atlas, seed);
+      }
       writeLog(log, stdout, "", "    PCG texture %d generated successfully\n",
         seed);
     }
@@ -405,9 +447,10 @@ bool generateAtlas(Atlas* atlas, PNG* png, Log* log)
 
 void freeAtlas(Atlas* atlas, Log* log)
 {
+
   if (atlas->texels != NULL)
   {
-    for (int i = 0; i < atlas->height * atlas->depth; i++)
+    for (unsigned i = 0; i < atlas->height * atlas->depth; i++)
     {
       if (atlas->texels[i] != NULL)
       {
@@ -425,14 +468,15 @@ void freeAtlas(Atlas* atlas, Log* log)
   }
 }
 
-bool loadAtlas(Atlas* atlas, PNG* png, Shaders* shaders, Log* log)
+bool loadAtlas(Atlas* atlas, PNG* png, Shaders* shaders,
+  GLboolean* precomputed, Log* log)
 {
   bool status = true;
 
   do
   {
     writeLog(log, stdout, "", "  Reading atlas PNG texture ...\n");
-    if (!readAtlas(atlas, png, log))
+    if (!readAtlas(atlas, png, precomputed, log))
     {
       writeLog(log, (log->verbose ? stdout : stderr), "  ",
         "Reading atlas PNG texture failed\n");
@@ -461,14 +505,15 @@ bool loadAtlas(Atlas* atlas, PNG* png, Shaders* shaders, Log* log)
 
     writeLog(log, stdout, "", "  Specifying 2D textures array ...\n");
     GL_CHECK(glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGBA8, atlas->width,
-      atlas->height, atlas->depth, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0),
-        status, log);
+      atlas->height, atlas->depth, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0), status,
+        log);
     writeLog(log, stdout, "", "  2D textures array specified\n");
 
     writeLog(log, stdout, "",
       "  Specifying fallback for 2D textures array ...\n");
-    glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 0, atlas->width,
-      atlas->height, atlas->depth, GL_RGBA, GL_UNSIGNED_BYTE, png->data);
+    GL_CHECK(glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 0, atlas->width,
+      atlas->height, atlas->depth, GL_RGBA, GL_UNSIGNED_BYTE, png->data),
+        status, log);
     writeLog(log, stdout, "", "  Fallback specified\n");
 
     writeLog(log, stdout, "", "  Enabling OpenGL textures repetition ...\n");

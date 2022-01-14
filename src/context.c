@@ -63,7 +63,7 @@ bool isExtensionSupported(const char* extList, const char* extension, Log* log)
 }
 
 static bool contextErrorOccurred = false;
-int contextErrorHandler(Display* display, XErrorEvent* event)
+int contextErrorHandler()
 {
   contextErrorOccurred = true;
   return 0;
@@ -529,6 +529,16 @@ bool initContext(Context* context, Log* log)
     GL_CHECK(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA), status, log);
     writeLog(log, stdout, "",
       "  Transparency function selected for current window\n");
+
+    writeLog(log, stdout, "",
+      "  Disablings rendering of back face of drawn triangles ...\n");
+    GL_CHECK(glCullFace(GL_BACK), status, log);
+    writeLog(log, stdout, "",
+      "  Rendering back face of drawn triangles disabled ...\n");
+
+    writeLog(log, stdout, "", "  Enabling backface culling ...\n");
+    GL_CHECK(glEnable(GL_CULL_FACE), status, log);
+    writeLog(log, stdout, "", "  Backface culling enabled\n");
 
 #if DEBUG
     if (!initDebugWindow(context, log))

@@ -8,6 +8,8 @@ typedef struct
 {
   char* fshaderpath;
   char* vshaderpath;
+  char* fshaderdir;
+  char* vshaderdir;
   char* vertex_file;
   char* fragment_file;
   GLuint vertex_shader;
@@ -15,7 +17,7 @@ typedef struct
   GLuint program;
 } Shaders;
 
-bool buildFile(char** filepath, char** buffer, Log* log);
+bool buildFile(char** filepath, char** buffer, char** dirpath, Log* log);
 bool buildVertexShaderFile(Shaders* shaders, Log* log);
 bool buildFragmentShaderFile(Shaders* shaders, Log* log);
 bool checkLogShader(GLuint* shader, GLenum shaderType, char* buffer, Log* log);

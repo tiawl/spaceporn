@@ -7,11 +7,14 @@
 #include "precompute.h"
 #include "texture.h"
 
+#define FAKE_ATLAS_SZ 8
+#define FAKE_ATLAS_COLOR 150
+
 typedef struct
 {
   png_byte** texels;
-  int width;
-  int height;
+  png_uint_32 width;
+  png_uint_32 height;
   int depth;
   int pcg_depth;
   unsigned seed[2];
@@ -19,9 +22,11 @@ typedef struct
 
 bool writePng(Atlas* atlas, PNG* png, Log* log);
 void generatePcgTexture(Atlas* atlas, int offset);
+void generateFakeAtlas(Atlas* atlas, int offset);
 bool generateAtlas(Atlas* atlas, PNG* png, Log* log);
-bool readAtlas(Atlas* atlas, PNG* png, Log* log);
-bool loadAtlas(Atlas* atlas, PNG* png, Shaders* shaders, Log* log);
+bool readAtlas(Atlas* atlas, PNG* png, GLboolean* precomputed, Log* log);
+bool loadAtlas(Atlas* atlas, PNG* png, Shaders* shaders,
+  GLboolean* precomputed, Log* log);
 void freeAtlas(Atlas* atlas, Log* log);
 
 #endif

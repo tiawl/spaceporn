@@ -16,28 +16,37 @@ OBJ_FILES := $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(SRC_FILES))
 PREFIX := /usr/local/bin/
 SPREFIX := /usr/share/$(BIN)/$(SHAD_DIR)/
 TPREFIX := /usr/share/$(BIN)/$(TEXT_DIR)/
+FERROR := $(shell ./$(MAKE_SCRIPTS)/erroneous_shader \
+  $(SHAD_DIR)/fragment/main.glsl 0)
+VERROR := $(shell ./$(MAKE_SCRIPTS)/erroneous_shader \
+  $(SHAD_DIR)/vertex/main.glsl 0)
+MERROR := $(shell ./$(MAKE_SCRIPTS)/erroneous_shader \
+  $(SHAD_DIR)/vertex/main.glsl 1)
 LIB_FLAGS := -lX11 -lGL -lGLEW -lpng -lm -lsystemd -fopenmp
 ALL_FLAGS := $(LIB_FLAGS)
 
 all: ENV_FLAGS := -D'GCC_SPREFIX="$(SPREFIX)"' -D'GCC_TPREFIX="$(TPREFIX)"' \
-  -D'GCC_DEBUG=false'
-all: OBJ_FLAGS := -Wall -g -I ./$(HEAD_DIR) $(ENV_FLAGS)
+  -D'GCC_DEBUG=true' -D'GCC_ERRONEOUS_FRAGMENT=$(FERROR)' \
+  -D'GCC_ERRONEOUS_VERTEX=$(VERROR)' -D'GCC_MISSINGMAIN_VERTEX=$(MERROR)'
+all: OBJ_FLAGS := -I ./$(HEAD_DIR) $(ENV_FLAGS)
 all: $(ALL_DIR)/$(BIN)
 
 dev: PREFIX := ${PWD}
 dev: SPREFIX := ${PWD}/$(SHAD_DIR)/
 dev: TPREFIX := ${PWD}/$(TEXT_DIR)/
 dev: ENV_FLAGS := -D'GCC_SPREFIX="$(SPREFIX)"' -D'GCC_TPREFIX="$(TPREFIX)"' \
-  -D'GCC_DEBUG=true'
-dev: OBJ_FLAGS := -Wall -g -I ./$(HEAD_DIR) $(ENV_FLAGS)
+  -D'GCC_DEBUG=true' -D'GCC_ERRONEOUS_FRAGMENT=$(FERROR)' \
+  -D'GCC_ERRONEOUS_VERTEX=$(VERROR)' -D'GCC_MISSINGMAIN_VERTEX=$(MERROR)'
+dev: OBJ_FLAGS := -Wall -Wextra -g -I ./$(HEAD_DIR) $(ENV_FLAGS)
 dev: $(ALL_DIR)/$(BIN)
 
 cov: PREFIX := ${PWD}
 cov: SPREFIX := ${PWD}/$(SHAD_DIR)/
 cov: TPREFIX := ${PWD}/$(TEXT_DIR)/
-dev: ENV_FLAGS := -D'GCC_SPREFIX="$(SPREFIX)"' -D'GCC_TPREFIX="$(TPREFIX)"' \
-  -D'GCC_DEBUG=true'
-cov: OBJ_FLAGS := -Wall -g -I ./$(HEAD_DIR) $(ENV_FLAGS)
+cov: ENV_FLAGS := -D'GCC_SPREFIX="$(SPREFIX)"' -D'GCC_TPREFIX="$(TPREFIX)"' \
+  -D'GCC_DEBUG=true' -D'GCC_ERRONEOUS_FRAGMENT=$(FERROR)' \
+  -D'GCC_ERRONEOUS_VERTEX=$(VERROR)' -D'GCC_MISSINGMAIN_VERTEX=$(MERROR)'
+cov: OBJ_FLAGS := -Wall -Wextra -g -I ./$(HEAD_DIR) $(ENV_FLAGS)
 cov: COV_FLAGS := --coverage $(patsubst %.c, ${PWD}/%.c, $(SRC_FILES)) \
   -I ${PWD}/$(HEAD_DIR) $(LIB_FLAGS) $(ENV_FLAGS)
 cov: $(COV_DIR)/$(BIN)

@@ -31,7 +31,7 @@ typedef GLXContext (*glXCreateContextAttribsARBProc)(Display*, GLXFBConfig,
 
 bool isExtensionSupported(const char* extList, const char* extension,
   Log* log);
-int contextErrorHandler(Display* display, XErrorEvent* event);
+int contextErrorHandler();
 bool queryingGlxVersion(Context* context, Log* log);
 bool searchingBestFbc(Context* context, GLXFBConfig* bestFbc, Log* log);
 bool initWindow(Context* context, Log* log);

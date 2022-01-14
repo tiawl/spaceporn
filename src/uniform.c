@@ -51,7 +51,8 @@ bool updateBoolUniforms(GLint uniformId, UniformValues* values, Log* log)
   {
     GLint bflags[UNIFORM_BOOLEANS] =
     {
-      values->animations, values->motion, values->palettes, values->precomputed
+      values->animations, values->motion, values->palettes,
+        (values->slide ? 0 : values->precomputed)
     };
 
     writeLog(log, stdout, "", "    New bflags values: [%s, %s, %s, %s]\n",

@@ -40,8 +40,9 @@ void help()
       VERTEXFILEROADMAPS_FLAG, FRAGMENTFILEROADMAPS_FLAG);
 }
 
-bool parsing_options(long* fps, long* generation, int* width, int* height,
-  UniformValues* uniform_values, Log* log, int* argc, char** argv)
+bool parsing_options(long* fps, long* generation, unsigned* width,
+  unsigned* height, UniformValues* uniform_values, Log* log, int* argc,
+  char** argv)
 {
   int status = true;
   char* dir = NULL;

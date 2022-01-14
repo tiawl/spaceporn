@@ -120,7 +120,7 @@ bool loadPng(PNG* png, Shaders* shaders, Log* log)
 
     writeLog(log, stdout, "", "  Querying number of bytes for a row ...\n");
     int rowbytes = png_get_rowbytes(png->ptr, png->info);
-    rowbytes += 3 - ((rowbytes-1) % 4);
+    rowbytes += 3 - ((rowbytes - 1) % 4);
     writeLog(log, stdout, "", "  Number of bytes for a row is %d\n", rowbytes);
 
     writeLog(log, stdout, "", "  Allocating memory for data ...\n");

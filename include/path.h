@@ -13,8 +13,7 @@
 #define BIGSTARS_FILE "big_stars.png"
 #define ATLAS_FILE "atlas.png"
 
-bool initShaderPath(char** path, size_t len[3], char* dir, Log* log);
-bool initTexturePath(PNG* png, size_t len[3], char* path, Log* log);
+bool initPath(char** path, size_t len[2], char* root, char* dir, Log* log);
 bool initPaths(Shaders* shaders, PNG* png, PNG* atlas, Log* log);
 
 #endif

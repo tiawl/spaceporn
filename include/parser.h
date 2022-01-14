@@ -27,10 +27,8 @@ void freeRegex(Regex* regex, const char* spaces, Log* log);
 bool replace(char** str, const char* pattern, const char* replace,
   const char* spaces, Log* log);
 bool readFile(char** filepath, char** buffer, const char* spaces, Log* log);
-bool addMarkers(char** filename, char** buffer, const char* dir_path,
-  const char* spaces, Log* log);
-bool searchAndReplaceHeaders(char** filepath, char** buffer, Log* log);
-bool improveLogShader(char** message, char** buffer, size_t maxLength,
-  Log* log);
+bool addMarkers(char** filename, char** buffer, const char* spaces, Log* log);
+bool searchAndReplaceHeaders(char** buffer, char** dirpath, Log* log);
+bool improveLogShader(char** message, char** buffer, Log* log);
 
 #endif

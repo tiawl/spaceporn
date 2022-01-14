@@ -1,3 +1,5 @@
+# version 330 core
+
 // TODO:
 // - More parameters on different planets to add more diversity
 // - dry planet
@@ -6,6 +8,8 @@
 // - dark hole (with event horizon animation)
 // - group of asteroids
 // - palette gen
+
+precision highp float;
 
 uniform float fflags[6];
 uniform int bflags[4];

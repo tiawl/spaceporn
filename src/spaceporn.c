@@ -31,6 +31,8 @@ int main(int argc, char** argv)
   shaders.fragment_file = NULL;
   shaders.fshaderpath = NULL;
   shaders.vshaderpath = NULL;
+  shaders.fshaderdir = NULL;
+  shaders.vshaderdir = NULL;
   shaders.vertex_shader = 0;
   shaders.fragment_shader = 0;
   shaders.program = 0;
@@ -57,10 +59,8 @@ int main(int argc, char** argv)
 
   Atlas atlas;
   atlas.texels = NULL;
-// atlas.width = nextpow2(MAX_PIXELS * 5);
-// atlas.height = nextpow2(MAX_PIXELS * 5);
-  atlas.width = 16;
-  atlas.height = 8;
+  atlas.width = nextpow2(MAX_PIXELS * 5);
+  atlas.height = nextpow2(MAX_PIXELS * 5);
   atlas.depth = 4;
   atlas.pcg_depth = 4;
   atlas.seed[0] = rand();
@@ -125,25 +125,26 @@ int main(int argc, char** argv)
     uniform_values.width = context.window_attribs.width;
     uniform_values.height = context.window_attribs.height;
 
-    if (generation > -1)
+    if ((generation > -1) || (access(png_atlas.path, F_OK) != 0))
     {
       writeLog(&log, stdout, "", "Computing textures atlas dimensions ...\n");
 
-      if ((atlas.width == UNDEFINED_SIZE) || (atlas.height == UNDEFINED_SIZE))
+      if ((atlas.width == UNDEFINED_SIZE) || (atlas.height == UNDEFINED_SIZE)
+        || (generation == -1))
       {
-        atlas.width = nextpow2(15);
+        atlas.width = nextpow2(7);
         atlas.height = nextpow2(7);
-//     } else {
-//       if (context.window_attribs.width >= context.window_attribs.height)
-//       {
-//         atlas.width = nextpow2(MAX_PIXELS * 5 *
-//         ((int) round(((double) context.window_attribs.width) /
-//           ((double) context.window_attribs.height))));
-//       } else {
-//         atlas.height = nextpow2(MAX_PIXELS * 5 *
-//         ((int) round(((double) context.window_attribs.height) /
-//           ((double) context.window_attribs.width))));
-//       }
+      } else {
+        if (context.window_attribs.width >= context.window_attribs.height)
+        {
+          atlas.width = nextpow2(MAX_PIXELS * 5 *
+          ((int) round(((double) context.window_attribs.width) /
+            ((double) context.window_attribs.height))));
+        } else {
+          atlas.height = nextpow2(MAX_PIXELS * 5 *
+          ((int) round(((double) context.window_attribs.height) /
+            ((double) context.window_attribs.width))));
+        }
       }
       writeLog(&log, stdout, "", "Textures atlas dimensions are: %dx%d\n",
         atlas.width, atlas.height);
@@ -199,27 +200,16 @@ int main(int argc, char** argv)
     }
     writeLog(&log, stdout, "", "PNG texture loaded\n");
 
-    if (uniform_values.slide == 0)
+    writeLog(&log, stdout, "", "Loading textures atlas ...\n");
+    if (!loadAtlas(&atlas, &png_atlas, &shaders,
+      &(uniform_values.precomputed), &log))
     {
-      writeLog(&log, stdout, "", "Checking if atlas PNG texture exists ...\n");
-      if (access(png_atlas.path, F_OK) == 0)
-      {
-        uniform_values.precomputed = true;
-        writeLog(&log, stdout, "", "Atlas PNG texture exists\n");
-
-        writeLog(&log, stdout, "", "Loading textures atlas ...\n");
-        if (!loadAtlas(&atlas, &png_atlas, &shaders, &log))
-        {
-          writeLog(&log, (log.verbose ? stdout : stderr), "",
-            "Failed to load textures atlas\n");
-          status = false;
-          break;
-        }
-        writeLog(&log, stdout, "", "Textures atlas loaded\n");
-      } else {
-        writeLog(&log, stdout, "", "Atlas PNG texture does not exist\n");
-      }
+      writeLog(&log, (log.verbose ? stdout : stderr), "",
+        "Failed to load textures atlas\n");
+      status = false;
+      break;
     }
+    writeLog(&log, stdout, "", "Textures atlas loaded\n");
 
     writeLog(&log, stdout, "", "Searching uniforms location ...\n");
     getUniforms(uniforms, uniformIds, &shaders.program, &log);

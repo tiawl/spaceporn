@@ -1,4 +1,4 @@
-/* ../../include/config.h.  Generated from config.h.in by configure.  */
+// ../../include/config.h.  Generated from config.h.in by configure.
 #ifndef SPACEPORN_CONFIG_H
 #define SPACEPORN_CONFIG_H
 

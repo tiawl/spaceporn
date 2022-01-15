@@ -61,7 +61,8 @@ bool draw(Log* log)
   {
     writeLog(log, stdout, "", "  Clearing depth buffer of the window and %s",
       "indicating buffers enabled for color writing ...\n");
-    GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT), status, log);
+    GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT
+      | GL_STENCIL_BUFFER_BIT), status, log);
     writeLog(log, stdout, "", "  Depth buffer cleared and buffer enabled\n");
 
     writeLog(log, stdout, "",

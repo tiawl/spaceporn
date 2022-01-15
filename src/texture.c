@@ -198,6 +198,13 @@ bool loadPng(PNG* png, Shaders* shaders, Log* log)
       0, texture_format, GL_UNSIGNED_BYTE, png->data), status, log);
     writeLog(log, stdout, "", "  2D OpenGL texture specified\n");
 
+    writeLog(log, stdout, "", "  Disabling OpenGL texture mipmaps level ...\n");
+    GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0),
+      status, log);
+    GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0),
+      status, log);
+    writeLog(log, stdout, "", "  OpenGL texture mipmaps disabled\n");
+
     writeLog(log, stdout, "", "  Disabling OpenGL Texture repetition ...\n");
     GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
       GL_CLAMP_TO_BORDER), status, log);

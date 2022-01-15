@@ -4,6 +4,8 @@
 // - More parameters on different planets to add more diversity
 // - dry planet
 // - lava planet
+// - dark planet
+// - add 2 more stars types
 // - galaxy
 // - dark hole (with event horizon animation)
 // - group of asteroids
@@ -15,8 +17,6 @@ uniform float fflags[6];
 uniform int bflags[4];
 uniform sampler2D bigstars_texture;
 uniform sampler2DArray atlas;
-
-out vec4 fragColor;
 
 const float planets_density = 1.; // WARNING: must be greater than 3 to avoid some artifacts
 const float bigstars_density = 3.;

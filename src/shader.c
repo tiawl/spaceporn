@@ -191,9 +191,11 @@ bool checkLogShader(GLuint* shader, GLenum shaderType, char* buffer, Log* log)
           break;
         }
 
-        writeLog(log, stdout, "", "    Log info of %s shader found:\n",
+        writeLog(log, (log->verbose ? stdout : stderr), "    ",
+          "Log info of %s shader found:\n",
           shaderType == GL_FRAGMENT_SHADER ? "fragment" : "vertex");
-        writeLog(log, stdout, "", "%s\n%s%s\n", BAR, message, BAR);
+        writeLog(log, (log->verbose ? stdout : stderr), "", "%s\n%s%s\n",
+          BAR, message, BAR);
 
         free(message);
       }
@@ -337,9 +339,11 @@ bool checkLogProgram(Shaders* shaders, Log* log)
           "  Querying log info of OpenGL program ...\n");
         GL_CHECK(glGetProgramInfoLog(shaders->program, maxLength, &maxLength,
           message), status, log);
-        writeLog(log, stdout, "", "  Log info of OpenGL program found:\n");
+        writeLog(log, (log->verbose ? stdout : stderr), "  ",
+          "Log info of OpenGL program found:\n");
 
-        writeLog(log, stdout, "", "%s\n%s%s\n", BAR, &(message[0]), BAR);
+        writeLog(log, (log->verbose ? stdout : stderr), "  ", "%s\n%s%s\n",
+          BAR, &(message[0]), BAR);
       }
 
       status = false;

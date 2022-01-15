@@ -540,6 +540,11 @@ bool initContext(Context* context, Log* log)
     GL_CHECK(glEnable(GL_CULL_FACE), status, log);
     writeLog(log, stdout, "", "  Backface culling enabled\n");
 
+    writeLog(log, stdout, "", "  Enabling Depth buffer ...\n");
+    GL_CHECK(glDepthFunc(GL_LESS), status, log);
+    GL_CHECK(glEnable(GL_DEPTH_TEST), status, log);
+    writeLog(log, stdout, "", "  Depth buffer enabled\n");
+
 #if DEBUG
     if (!initDebugWindow(context, log))
     {

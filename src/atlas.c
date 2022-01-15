@@ -516,6 +516,13 @@ bool loadAtlas(Atlas* atlas, PNG* png, Shaders* shaders,
         status, log);
     writeLog(log, stdout, "", "  Fallback specified\n");
 
+    writeLog(log, stdout, "", "  Disabling OpenGL textures mipmaps level ...\n");
+    GL_CHECK(glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_BASE_LEVEL, 0),
+      status, log);
+    GL_CHECK(glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAX_LEVEL, 0),
+      status, log);
+    writeLog(log, stdout, "", "  OpenGL textures mipmaps disabled\n");
+
     writeLog(log, stdout, "", "  Enabling OpenGL textures repetition ...\n");
     GL_CHECK(glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S,
       GL_REPEAT), status, log);

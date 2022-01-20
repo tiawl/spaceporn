@@ -10,8 +10,7 @@ vec3 nrand3(vec2 co)
 
 vec4 stars(vec2 uv)
 {
-  vec2 stars_seed = floor(uv);
-  vec3 rnd = nrand3(stars_seed);
+  vec3 rnd = nrand3(uv);
   vec4 starcolor = vec4(pow(rnd.y, stars_density));
 
   if (starcolor.x > 0.3)

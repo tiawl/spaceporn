@@ -1,6 +1,8 @@
 # version 330 core
 
 // TODO:
+// - check each resolution usage to take the biggest axe between X & Y
+// - Bigstars rewrite
 // - More parameters on different planets to add more diversity
 // - dry planet
 // - lava planet

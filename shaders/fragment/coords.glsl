@@ -67,7 +67,7 @@ vec4 hash_coords(vec2 UV)
   vec2 uv = ((px / px_ratio) / zoom) / pixels;
   bool dith = dither(1., uv, unzoomed_UV);
 
-  vec4 col = bigstars(unzoomed_UV);
+  vec4 col = bigstars(unzoomed_px);
 //   vec4 col = planets(px, dith);
 //   if (col.x <= -1.)
 //   {

@@ -1,4 +1,4 @@
-# include "pixelspace.glsl"
+# include "hash.glsl"
 # include "planet/land.glsl"
 # include "planet/moon.glsl"
 # include "planet/gaz.glsl"
@@ -11,17 +11,6 @@
 # define DRY  0.8
 # define LAND 1.
 # define PLANET_TYPES 5.
-
-float floor_multiple(float numToRound, float base)
-{
-  float modulo = mod(numToRound, base);
-  if (modulo == 0.)
-  {
-    return numToRound;
-  } else {
-    return numToRound - modulo;
-  }
-}
 
 Planet calc_circle(vec2 ixy, vec2 xy, vec2 offset)
 {

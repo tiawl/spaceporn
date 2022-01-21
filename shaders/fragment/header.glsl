@@ -28,7 +28,7 @@ const float stars_density = 20.0;
 vec2 resolution = vec2(fflags[0], fflags[1]);
 uint seed = uint(floor(fflags[2]));
 float time = fflags[3] / 50.;
-float pixels = fflags[4];
+float pixels = 1000.;// fflags[4];
 float zoom = fflags[5];
 
 bool animation = (bflags[0] > 0 ? true : false);
@@ -61,4 +61,15 @@ struct Planet
 bool dither(float dither_size, vec2 uv1, vec2 uv2)
 {
   return mod(uv1.x + uv2.y, 2.0 / pixels) * dither_size <= 1.0 / pixels;
+}
+
+float floor_multiple(float numToRound, float base)
+{
+  float modulo = mod(numToRound, base);
+  if (modulo == 0.)
+  {
+    return numToRound;
+  } else {
+    return numToRound - modulo;
+  }
 }

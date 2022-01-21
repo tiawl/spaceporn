@@ -1,6 +1,7 @@
 # version 330 core
 
 // TODO:
+// - avoid pow() usage
 // - check each resolution usage to take the biggest axe between X & Y
 // - Bigstars rewrite
 // - More parameters on different planets to add more diversity

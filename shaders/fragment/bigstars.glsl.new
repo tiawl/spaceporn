@@ -1,4 +1,4 @@
-float pixels = 100.;
+float pixels = 60.;
 
 float rand(vec2 co)
 {
@@ -67,7 +67,7 @@ float sdBezier(vec2 uv, vec2 A, vec2 B, vec2 C, float strength, float coeff)
     return sign(textureCoord.x * textureCoord.x * coeff - textureCoord.y*textureCoord.z);
 }
 
-float star1(vec2 uv, vec2 center, float size, float brightness)
+float star1(vec2 uv, vec2 center, float size, float brightness, float shape)
 {
     brightness = 1./brightness;
     vec2 A = center + vec2(size, 0.);
@@ -78,20 +78,20 @@ float star1(vec2 uv, vec2 center, float size, float brightness)
     uv.x = abs(uv.x - B.x) + B.x;
     uv.y = abs(uv.y - B.y) + B.y;
  
-    float insideOutside = sdBezier(uv, A, B, C, size * 3., 1.) < 0.0 ? 1. : 0.;
+    float insideOutside = sdBezier(uv, A, B, C, shape * size * 3., 1.) < 0.0 ? 1. : 0.;
     float d = sdRhombus(buv - B, vec2(size));
      
-    float color = insideOutside > 0. ? 0. : (sign(d) == 0. ? 2. : 1.-sign(d));
-    float ratio = 3. / (20. + brightness * brightness);
-    color *= 1.-pow((rand(buv) * ratio - ratio / 2.)
-      - ((uv.x - B.x) + (uv.y - B.y)) * (log(brightness) + 1.5), sqrt(size) * 0.45);
+    float color = insideOutside > 0. ? 0. : (sign(d) == 0. ? 2. : 1.-sign(d)) / 2.;
+    float ratio = 2. / (20. + brightness * brightness);
+    color *= 1.0 - ((rand(buv) * ratio - ratio / 2.)
+      + ((uv.x - B.x) + (uv.y - B.y)) * (brightness/sqrt(size)));
     
-    color = max(color * 1.5, (1. - sign(opRing(buv - B,
-      0.7* size * sqrt(1./brightness), 0.5 / pixels))) * 0.15);
+    color = max(color * 1.4, (1. - sign(opRing(buv - B,
+      size * sqrt(1./brightness), 0.5 / pixels))) * 0.15);
     return color;
 }
 
-float star2(vec2 uv, vec2 center, float size, float brightness)
+float star2(vec2 uv, vec2 center, float size, float brightness, float shape)
 {
     brightness = 1./brightness;
     vec2 A = center + vec2(size, 0.);
@@ -108,16 +108,16 @@ float star2(vec2 uv, vec2 center, float size, float brightness)
         uv.y = tmp;
     }
  
-    float insideOutside = sdBezier(uv, A, B, C, size * 2.5, 1.) < 0.0 ? 1. : 0.;
+    float insideOutside = sdBezier(uv, A, B, C, shape * size * 2.5, 1.) < 0.0 ? 1. : 0.;
     float d = sdRhombus(buv - B, vec2(size));
      
-    float color = insideOutside > 0. ? 0. : (sign(d) == 0. ? 2. : 1.-sign(d));
-    float ratio = 3. / (20. + brightness * brightness);
-    color *= 1. - pow((rand(buv) * ratio - ratio / 2.)
-      - ((uv.x - B.x) + (uv.y - B.y)) * (log(brightness) + 1.5), sqrt(size) * 0.45);
-    
-    color = max(color * 1.5, (1. - sign(opRing(buv - B,
-      0.7* size * sqrt(1./brightness), 0.5 / pixels))) * 0.15);
+    float color = insideOutside > 0. ? 0. : (sign(d) == 0. ? 2. : 1.-sign(d)) / 2.;
+    float ratio = 2. / (20. + brightness * brightness);
+    color *= 1.0 - ((rand(buv) * ratio - ratio / 2.)
+      + ((uv.x - B.x) + (uv.y - B.y)) * (brightness/sqrt(size)));
+      
+    color = max(color * 1.4, (1. - sign(opRing(buv - B,
+      size * sqrt(1./brightness), 0.5 / pixels))) * 0.15);
     return color;
 }
 
@@ -135,9 +135,9 @@ float star3(vec2 uv, vec2 center, float size, float brightness)
     color < 1. ? color = 1. - sign(sdBox(uv - B, vec2(0.001, size/4.5))) : 0.;
     color < 1. ? color = 1. - sign(sdSegment(uv, C, D) - 0.001) : 0.;
     color < 1. ? color = 1. - sign(sdSegment(uv, E, F) - 0.001) : 0.;
-    float ratio = 1. / (20. + brightness * brightness);
-    color *= 1. - pow((rand(uv) * ratio - ratio / 2.)
-      - (abs(uv.x - B.x) * 0.5 + abs(uv.y - B.y)) * brightness, sqrt(size) * 0.45);
+    float ratio = 2. / (20. + brightness * brightness);
+    color *= 1.0 - ((rand(uv) * ratio - ratio / 2.)
+      + (abs(uv.x - B.x) * 0.5 + abs(uv.y - B.y) * 1.) * brightness);
       
     return color;
 }
@@ -154,11 +154,14 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
 
     uv -= vec2(0.5);
 
-    vec2 center=vec2(0.2);
-    float size = 1.; 
+    vec2 center=vec2(-0.2);
+    float size = 0.25; 
     float starTime = (mod(iTime, 1.5) * 20. < 2.*3.1415 ? abs(sin(iTime * 20.)) : abs(sin(3.1415/2.)));
     float brightness = (starTime + 1.) / 3. - 0.1;
-    color = vec3(star2(uv, center, size, brightness));
+    float shape = 1.;
+    color = vec3(star1(uv, center, size, brightness, shape));
+    //color = vec3(star2(uv, center, size, brightness, shape));
+    //color = vec3(star3(uv, center, size, brightness));
 
     color = vec3(floor(color.x * 12.) / 12.);
 

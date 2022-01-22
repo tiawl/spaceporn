@@ -26,7 +26,7 @@ vec4 atlas_coords(vec2 UV)
   }
 
   vec2 tUV = UV / t;
-  tUV.x *= resolution.x / resolution.y;
+  tUV.x *= larger_res / shorter_res;
     tUV *= zoom;
     tUV += offset;
     vec2 unzoomed_tUV = tUV / zoom;
@@ -56,11 +56,11 @@ vec4 hash_coords(vec2 UV)
     time = fflags[3] / 50.;
   }
 
-  UV.x *= resolution.x / resolution.y;
+  UV.x *= larger_res / shorter_res;
   UV *= zoom;
   UV += offset;
   vec2 unzoomed_UV = UV / zoom;
-  float px_ratio = resolution.y / pixels;
+  float px_ratio = shorter_res / pixels;
 
   vec2 unzoomed_px = floor(unzoomed_UV * pixels) * px_ratio;
   vec2 px = unzoomed_px * zoom;

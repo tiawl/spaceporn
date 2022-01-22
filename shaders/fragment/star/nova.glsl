@@ -27,8 +27,8 @@ float nova(vec2 uv, vec2 center, float size, float brightness, float shape)
   color *= 1.0 - ((hash(buv, seed) * ratio - ratio / 2.)
     + ((uv.x - B.x) + (uv.y - B.y)) * (brightness / sqrt(size)));
 
-  float ring = opRing(buv - B, size * sqrt(1./brightness), 0.5 / pixels);
+  float ring = opRing(buv - B, size * 0.8, 500. / pixels);
   ring = (sign(ring) < .5 ? 1. : 0.);
-  color = max(color * 1.4, ring * 0.3);
+  color = max(color * 1.3, ring * 0.6);
   return color;
 }

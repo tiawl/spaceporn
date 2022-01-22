@@ -2,8 +2,8 @@
 
 // TODO:
 // - avoid pow() usage
-// - check each resolution usage to take the biggest axe between X & Y
-// - Bigstars rewrite
+// - no equality between floating numbers
+// - Bigstars rework
 // - More parameters on different planets to add more diversity
 // - dry planet
 // - lava planet
@@ -26,9 +26,11 @@ const float bigstars_density = 3.;
 const float stars_density = 20.0;
 
 vec2 resolution = vec2(fflags[0], fflags[1]);
+float shorter_res = min(resolution.x, resolution.y);
+float larger_res = max(resolution.x, resolution.y);
 uint seed = uint(floor(fflags[2]));
 float time = fflags[3] / 50.;
-float pixels = 1000.;// fflags[4];
+float pixels = fflags[4];
 float zoom = fflags[5];
 
 bool animation = (bflags[0] > 0 ? true : false);

@@ -5,11 +5,11 @@
 # include "planet/ring.glsl"
 # include "planet/dry.glsl"
 
-# define MOON 0.2
-# define GAZ  0.4
-# define RING 0.6
-# define DRY  0.8
-# define LAND 1.
+# define LAND 0.2
+# define MOON 0.4
+# define GAZ  0.6
+# define RING 0.8
+# define DRY  1.0
 # define PLANET_TYPES 5.
 
 Planet calc_circle(vec2 ixy, vec2 xy, vec2 offset)
@@ -23,11 +23,7 @@ Planet calc_circle(vec2 ixy, vec2 xy, vec2 offset)
   center.x += planets_density * 0.1 * sin(angle);
   center.y += planets_density * 0.1 * cos(angle);
 
-  float rd_planet = ceil(hash(ixy, seed + 2u) * PLANET_TYPES);
-  if (rd_planet < 1.)
-  {
-    rd_planet = 1.;
-  }
+  float rd_planet = max(ceil(hash(ixy, seed + 2u) * PLANET_TYPES), 1.);
   rd_planet = rd_planet / PLANET_TYPES;
 
   float radius = 0.2 + 0.4 * hash(ixy, seed + 3u);
@@ -88,17 +84,17 @@ vec4 planets(vec2 px, bool dith)
     ++index;
   }
 
-  if (planet.type == LAND)
+  if (planet.type > (DRY + RING) / 2.)
   {
-    return land(px, planet, dith);
-  } else if (planet.type == MOON) {
-    return moon(px, planet, dith);
-  } else if (planet.type == GAZ) {
-    return gaz(px, planet, dith);
-  } else if (planet.type == RING) {
-    return ring(px, planet, dith);
-  } else if (planet.type == DRY) {
     return dry(px, planet, dith);
+  } else if (planet.type > (RING + GAZ) / 2.) {
+    return ring(px, planet, dith);
+  } else if (planet.type > (GAZ + MOON) / 2.) {
+    return gaz(px, planet, dith);
+  } else if (planet.type > (MOON + LAND) / 2.) {
+    return moon(px, planet, dith);
+  } else if (planet.type > LAND / 2.) {
+    return land(px, planet, dith);
   } else {
     return vec4(-1.);// vec4(planet.type);
   }

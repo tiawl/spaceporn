@@ -3,7 +3,9 @@
 # include "star/nova.glsl"
 # include "star/polar.glsl"
 
-float calc_square(vec2 xy)
+# define STAR_TYPES 3.
+
+Star calc_star(vec2 xy)
 {
   float pixel_res = shorter_res / pixels;
   float density = 20.;
@@ -17,24 +19,31 @@ float calc_square(vec2 xy)
 //   center.x += hash(ixy, seed + 1u) * (pixels / 2.);
 //   center.y += hash(ixy, seed + 2u) * (pixels / 2.);
 
-  float rd_bigstar = min(floor(hash(ixy, seed) * 3.), 2.0);
+  float rd_bigstar = min(floor(hash(ixy, seed) * STAR_TYPES), STAR_TYPES - 1.);
 
-  float bigstar = 1.;
-  if (rd_bigstar < 0.5)
+  Star bigstar = Star(rd_bigstar, center, 0., 100., 120., 15.5, 0., 2u, 2.);
+  if (bigstar.type < 0.5)
   {
-    bigstar = diamond(xy, center, 100., 15.5, 120., 2u);
-  } else if (rd_bigstar < 1.5) {
-    bigstar = nova(xy, center, 100., 15.5, 60., 2u, 2.);
+    bigstar.shape = 120.;
+  } else if (bigstar.type < 1.5) {
+    bigstar.shape = 60.;
+    bigstar.diag = 2.;
   } else {
-    bigstar = polar(xy, center, 100., 15.5, 45., 2u, 3.);
+    bigstar.shape = 45.;
+    bigstar.diag = 3.;
   }
   return bigstar;
 }
 
 vec4 bigstars(vec2 uv)
 {
-  //uv *= 0.001 * bigstars_density;
-  //uv *= 0.2;
-  float col_value = calc_square(uv);
-  return vec4(floor(col_value * 20.) / 20.);
+  Star bigstar = calc_star(uv);
+  if (bigstar.type < 0.5)
+  {
+    return diamond(uv, bigstar);
+  } else if (bigstar.type < 1.5) {
+    return nova(uv, bigstar);
+  } else {
+    return polar(uv, bigstar);
+  }
 }

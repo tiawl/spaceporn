@@ -12,7 +12,7 @@
 # define DRY  1.0
 # define PLANET_TYPES 5.
 
-Planet calc_circle(vec2 ixy, vec2 xy, vec2 offset)
+Planet calc_planet(vec2 ixy, vec2 xy, vec2 offset)
 {
   ixy -= offset;
   vec2 center = ixy + planets_density * 0.5;
@@ -39,7 +39,7 @@ Planet calc_circle(vec2 ixy, vec2 xy, vec2 offset)
 
   Planet planet = Planet(shape, center, rotation, radius, time_speed, plan,
     light_origin, 0u, 0., 0.);
-  if (rd_planet == RING)
+  if (rd_planet == RING) // TODO: remove equality
   {
     float ring_rotation = radians(hash(ixy, seed + 10u) * 360.);
     float ring_radius =
@@ -65,10 +65,10 @@ vec4 planets(vec2 px, bool dith)
   vec2 ixy = vec2(floor_multiple(px.x, planets_density),
     floor_multiple(px.y, planets_density));
 
-  Planet calc[4] = Planet[4](calc_circle(ixy, px, vec2(0.)),
-    calc_circle(ixy, px, vec2(planets_density, 0.)),
-    calc_circle(ixy, px, vec2(0., planets_density)),
-    calc_circle(ixy, px, vec2(planets_density, planets_density))
+  Planet calc[4] = Planet[4](calc_planet(ixy, px, vec2(0.)),
+    calc_planet(ixy, px, vec2(planets_density, 0.)),
+    calc_planet(ixy, px, vec2(0., planets_density)),
+    calc_planet(ixy, px, vec2(planets_density, planets_density))
   );
 
   int index = 0;

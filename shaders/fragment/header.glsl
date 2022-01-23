@@ -52,6 +52,19 @@ struct Planet
   float ring_a;
 };
 
+struct Star
+{
+  float type;
+  vec2 center;
+  float rotation;
+  float size;
+  float time_speed;
+  float brightness;
+  float shape;
+  uint sharpness;
+  float diag;
+};
+
 # define NB_COLS 7.
 # define PLANET_COLS 12.
 

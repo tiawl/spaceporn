@@ -1,33 +1,34 @@
 # include "hash.glsl"
 # include "pixelspace.glsl"
 
-float nova(vec2 uv, vec2 center, float size, float brightness, float shape,
-  uint sharpness, float diag)
+vec4 nova(vec2 uv, Star star)
 {
-  brightness = 1. / brightness;
-  vec2 A = center + vec2(-size / diag,  size / diag);
-  vec2 B = center + vec2( size / diag, -size / diag);
-  vec2 C = center + vec2( size / diag,  size / diag);
-  vec2 D = center + vec2(-size / diag, -size / diag);
+  star.brightness = 1. / star.brightness;
+  vec2 A = star.center + vec2(-star.size / star.diag,  star.size / star.diag);
+  vec2 B = star.center + vec2( star.size / star.diag, -star.size / star.diag);
+  vec2 C = star.center + vec2( star.size / star.diag,  star.size / star.diag);
+  vec2 D = star.center + vec2(-star.size / star.diag, -star.size / star.diag);
 
   float depth = 1. / shorter_res;
-  float s1 = sdBox(uv - center, vec2(size, depth));
-  float s2 = sdBox(uv - center, vec2(depth, size));
+  float s1 = sdBox(uv - star.center, vec2(star.size, depth));
+  float s2 = sdBox(uv - star.center, vec2(depth, star.size));
   float s3 = sdSegment(uv, A, B) - depth;
   float s4 = sdSegment(uv, C, D) - depth;
-  float m = min(min(smin(s1, s3, shape, sharpness),
-      smin(s2, s3, shape, sharpness)),
-    min(smin(s1, s4, shape, sharpness), smin(s2, s4, shape, sharpness)));
+  float m = min(min(smin(s1, s3, star.shape, star.sharpness),
+    smin(s2, s3, star.shape, star.sharpness)),
+      min(smin(s1, s4, star.shape, star.sharpness),
+        smin(s2, s4, star.shape, star.sharpness)));
 
   float color = (sign(m) < .5 ? 1. : 0.);
-  vec2 mirror_uv = vec2(abs(uv.x - center.x), abs(uv.y - center.y));
+  vec2 mirror_uv = vec2(abs(uv.x - star.center.x), abs(uv.y - star.center.y));
 
-  float ratio = 2. / (20. + brightness * brightness);
+  float ratio = 2. / (20. + star.brightness * star.brightness);
   color *= 1.0 - ((hash(uv, seed) * ratio - ratio / 2.)
-    + (mirror_uv.x + mirror_uv.y) * (brightness / sqrt(size)));
+    + (mirror_uv.x + mirror_uv.y) * (star.brightness / sqrt(star.size)));
 
-  float ring = opRing(uv - center, size * 0.8, 500. / pixels);
+  float ring = opRing(uv - star.center, star.size * 0.8, 500. / pixels);
   ring = (sign(ring) < .5 ? 1. : 0.);
   color = max(color * 1.3, ring * 0.6);
-  return color;
+
+  return vec4(vec3(floor(color * PLANET_COLS) / PLANET_COLS), 1.);
 }

@@ -25,45 +25,16 @@ float sdSegment(vec2 p, vec2 a, vec2 b)
   return length(pa - ba * h);
 }
 
-float ndot(vec2 a, vec2 b)
+float smin(float a, float b, float k, uint p)
 {
-  return a.x * b.x - a.y * b.y;
-}
-
-float sdRhombus(vec2 p, vec2 b)
-{
-  p = abs(p);
-  float h = clamp(ndot(b - 2. * p, b) / dot(b, b), -1., 1.);
-  float d = length(p - .5 * b * vec2(1. - h, 1. + h));
-  return d * sign(p.x * b.y + p.y * b.x - b.x * b.y);
-}
-
-float sdBezier(vec2 uv, vec2 A, vec2 B, vec2 C, float strength, float coeff)
-{
-  // Compute vectors
-  vec2 v0 = C - A;
-  vec2 v1 = B - A;
-  vec2 v2 = uv - A;
-
-  // Compute dot products
-  float dot00 = dot(v0, v0);
-  float dot01 = dot(v0, v1);
-  float dot02 = dot(v0, v2);
-  float dot11 = dot(v1, v1);
-  float dot12 = dot(v1, v2);
-
-  // Compute barycentric coordinates
-  float invDenom = 1. / (dot00 * dot11 - dot01 * dot01);
-  float u = (dot11 * dot02 - dot01 * dot12) * invDenom;
-  float v = (dot00 * dot12 - dot01 * dot02) * invDenom;
-
-  // use the blinn and loop method
-  float w = (1. - u - v);
-  vec3 textureCoord = u * vec3(0., 0., 1.) + v * vec3(.5, 0., 1.) / strength
-    + w * vec3(1.);
-
-  return sign(textureCoord.x * textureCoord.x * coeff
-    - textureCoord.y * textureCoord.z);
+    float h = max(k - abs(a - b), 0.) / k;
+    float H = 1.;
+    while (p > 0u)
+    {
+      H *= h;
+      p -= 1u;
+    }
+    return min(a, b) - H * k * (1. /4.);
 }
 
 float psnoise(vec2 coord, uint noise_seed)

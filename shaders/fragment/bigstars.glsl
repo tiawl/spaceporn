@@ -14,19 +14,19 @@ float calc_square(vec2 xy)
 
   //center += 0.5 + 0.5 * hash(ixy, seed + 0u);
 
-  center.x += hash(ixy, seed + 1u) * (pixels / 2.);
-  center.y += hash(ixy, seed + 2u) * (pixels / 2.);
+//   center.x += hash(ixy, seed + 1u) * (pixels / 2.);
+//   center.y += hash(ixy, seed + 2u) * (pixels / 2.);
 
   float rd_bigstar = min(floor(hash(ixy, seed) * 3.), 2.0);
 
   float bigstar = 1.;
   if (rd_bigstar < 0.5)
   {
-    bigstar = diamond(xy, center, 100., 15.5, .003);
+    bigstar = diamond(xy, center, 100., 15.5, 120., 2u);
   } else if (rd_bigstar < 1.5) {
-    bigstar = nova(xy, center, 100., 15.5, .003);
+    bigstar = nova(xy, center, 100., 15.5, 60., 2u, 2.);
   } else {
-    bigstar = polar(xy, center, 100., 0.4);
+    bigstar = polar(xy, center, 100., 15.5, 45., 2u, 3.);
   }
   return bigstar;
 }

@@ -15,6 +15,18 @@ float opRing(vec2 p, float r1, float r2)
   return abs(sdCircle(p, r1)) - r2;
 }
 
+float smin(float a, float b, float k, uint p)
+{
+    float h = max(k - abs(a - b), 0.) / k;
+    float H = 1.;
+    while (p > 0u)
+    {
+      H *= h;
+      p -= 1u;
+    }
+    return min(a, b) - H * k * (1. /4.);
+}
+
 float sdBox( in vec2 p, in vec2 b )
 {
   vec2 d = abs(p)-b;
@@ -28,137 +40,82 @@ float sdSegment( in vec2 p, in vec2 a, in vec2 b )
   return length( pa - ba*h );
 }
 
-float ndot(vec2 a, vec2 b)
-{
-  return a.x*b.x - a.y*b.y;
-}
-
-float sdRhombus(vec2 p, vec2 b)
-{
-  p = abs(p);
-  float h = clamp( ndot(b-2.0*p,b)/dot(b,b), -1.0, 1.0 );
-  float d = length( p-0.5*b*vec2(1.0-h,1.0+h) );
-  return d * sign( p.x*b.y + p.y*b.x - b.x*b.y );
-}
-
-float sdBezier(vec2 uv, vec2 A, vec2 B, vec2 C, float strength, float coeff)
-{
-  // Compute vectors
-  vec2 v0 = C - A;
-  vec2 v1 = B - A;
-  vec2 v2 = uv - A;
-
-  // Compute dot products
-  float dot00 = dot(v0, v0);
-  float dot01 = dot(v0, v1);
-  float dot02 = dot(v0, v2);
-  float dot11 = dot(v1, v1);
-  float dot12 = dot(v1, v2);
-
-  // Compute barycentric coordinates
-  float invDenom = 1.0 / (dot00 * dot11 - dot01 * dot01);
-  float u = (dot11 * dot02 - dot01 * dot12) * invDenom;
-  float v = (dot00 * dot12 - dot01 * dot02) * invDenom;
-
-  // use the blinn and loop method
-  float w = (1.0 - u - v);
-  vec3 textureCoord = u * vec3(0., 0., 1.) + v * vec3(.5, 0., 1.) / strength
-    + w * vec3(1.0,1.,1.);
-
-  return sign(textureCoord.x * textureCoord.x * coeff
-    - textureCoord.y * textureCoord.z);
-}
-
-float diamond(vec2 uv, vec2 center, float size, float brightness, float shape)
+float diamond(vec2 uv, vec2 center, float size, float brightness, float shape, uint sharpness)
 {
   brightness = 1./brightness;
-  vec2 A = center + vec2(size, 0.);
-  vec2 B = center;
-  vec2 C = center + vec2(0., size);
-
-  vec2 buv = uv;
-  uv.x = abs(uv.x - B.x) + B.x;
-  uv.y = abs(uv.y - B.y) + B.y;
-
-  float insideOutside =
-    sdBezier(uv, A, B, C, shape * size * 3., 1.) < 0.0 ? 1. : 0.;
-  float d = sdRhombus(buv - B, vec2(size));
-
-  float color = insideOutside > 0. ? 0. : (sign(d) < .5 ? 1. : 0.);
-  float ratio = 2. / (20. + brightness * brightness);
-  color *= 1.0 - ((rand(buv) * ratio - ratio / 2.)
-    + ((uv.x - B.x) + (uv.y - B.y)) * (brightness/sqrt(size)));
-
-  float ring = opRing(buv - B, size * sqrt(1./brightness), 0.5 / pixels);
-  ring = (sign(ring) < .5 ? 1. : 0.);
-  color = max(color * 1.4, ring * 0.3);
-  return color;
-}
-
-float nova(vec2 uv, vec2 center, float size, float brightness, float shape)
-{
-  brightness = 1./brightness;
-  vec2 A = center + vec2(size, 0.);
-  vec2 B = center;
-  vec2 C = center + vec2(size/2.1, size/2.);
-
-  vec2 buv = uv;
-  uv.x = abs(uv.x - B.x) + B.x;
-  uv.y = abs(uv.y - B.y) + B.y;
-  if (uv.x - B.x < uv.y - B.y)
-  {
-    float tmp = uv.x - B.x + B.y;
-    uv.x = uv.y + B.x - B.y;
-    uv.y = tmp;
-  }
-
-  float insideOutside =
-    sdBezier(uv, A, B, C, shape * size * 2.5, 1.) < 0.0 ? 1. : 0.;
-  float d = sdRhombus(buv - B, vec2(size));
-
-  float color = insideOutside > 0. ? 0. : (sign(d) < .5 ? 1. : 0.);
-  float ratio = 2. / (20. + brightness * brightness);
-  color *= 1.0 - ((rand(buv) * ratio - ratio / 2.)
-    + ((uv.x - B.x) + (uv.y - B.y)) * (brightness/sqrt(size)));
-
-  float ring = opRing(buv - B, size * sqrt(1./brightness), 0.5 / pixels);
-  ring = (sign(ring) < .5 ? 1. : 0.);
-  color = max(color * 1.4, ring * 0.3);
-  return color;
-}
-
-float polar(vec2 uv, vec2 center, float size, float brightness)
-{
-  brightness = 1./(size*brightness);
-  size *= 2.;
-  vec2 B = center;
-  vec2 C = center + vec2(-size/6.,  size/6.);
-  vec2 D = center + vec2( size/6., -size/6.);
-  vec2 E = center + vec2( size/6.,  size/6.);
-  vec2 F = center + vec2(-size/6., -size/6.);
 
   float depth = 0.001;
-  float s = sdBox(uv - B, vec2(size / 2., depth));
-  float color = (sign(s) < 0.5 ? 1. : 0.);
-  if (color < 1.)
-  {
-    s = sdBox(uv - B, vec2(depth, size / 4.5));
-    color = (sign(s) < 0.5 ? 1. : 0.);
-  }
-  if (color < 1.)
-  {
-    s = sdSegment(uv, C, D) - depth;
-    color = (sign(s) < 0.5 ? 1. : 0.);
-  }
-  if (color < 1.)
-  {
-    s = sdSegment(uv, E, F) - depth;
-    color = (sign(s) < 0.5 ? 1. : 0.);
-  }
+  float s1 = sdBox(uv - center, vec2(size, depth));
+  float s2 = sdBox(uv - center, vec2(depth, size));
+  float m = smin(s1, s2, shape, sharpness);
+
+  float color = (sign(m) < .5 ? 1. : 0.);
+  float ratio = 2. / (20. + brightness * brightness);
+  vec2 mirror_uv = vec2(abs(uv.x - center.x), abs(uv.y - center.y));
+  color *= 1.0 - ((rand(uv) * ratio - ratio / 2.)
+    + (mirror_uv.x + mirror_uv.y) * (brightness/sqrt(size)));
+
+  float ring = opRing(uv - center, size * sqrt(1./brightness), 0.5 / pixels);
+  ring = (sign(ring) < .5 ? 1. : 0.);
+  color = max(color * 1.4, ring * 0.3);
+  return color;
+}
+
+float nova(vec2 uv, vec2 center, float size, float brightness, float shape, uint sharpness, float diag)
+{
+  brightness = 1./brightness;
+  vec2 A = center + vec2(-size / diag,  size / diag);
+  vec2 B = center + vec2( size / diag, -size / diag);
+  vec2 C = center + vec2( size / diag,  size / diag);
+  vec2 D = center + vec2(-size / diag, -size / diag);
+  
+  float depth = 0.001;
+  float s1 = sdBox(uv - center, vec2(size, depth));
+  float s2 = sdBox(uv - center, vec2(depth, size));
+  float s3 = sdSegment(uv, A, B) - depth;
+  float s4 = sdSegment(uv, C, D) - depth;
+  float m = min(min(smin(s1, s3, shape, sharpness), smin(s2, s3, shape, sharpness)),
+    min(smin(s1, s4, shape, sharpness), smin(s2, s4, shape, sharpness)));
+
+  float color = (sign(m) < .5 ? 1. : 0.);
+  vec2 mirror_uv = vec2(abs(uv.x - center.x), abs(uv.y - center.y));
+
   float ratio = 2. / (20. + brightness * brightness);
   color *= 1.0 - ((rand(uv) * ratio - ratio / 2.)
-    + (abs(uv.x - B.x) * 0.5 + abs(uv.y - B.y) * 1.) * brightness);
+    + (mirror_uv.x + mirror_uv.y) * (brightness/sqrt(size)));
 
+  float ring = opRing(uv - center, size * sqrt(1./brightness), 0.5 / pixels);
+  ring = (sign(ring) < .5 ? 1. : 0.);
+  color = max(color * 1.4, ring * 0.3);
+  return color;
+}
+
+float polar(vec2 uv, vec2 center, float size, float brightness, float shape, uint sharpness, float diag)
+{
+  brightness = 1./brightness;
+  vec2 A = center + vec2(-size / diag,  size / diag);
+  vec2 B = center + vec2( size / diag, -size / diag);
+  vec2 C = center + vec2( size / diag,  size / diag);
+  vec2 D = center + vec2(-size / diag, -size / diag);
+  
+  float depth = 0.001;
+  float s1 = sdBox(uv - center, vec2(size, depth));
+  float s2 = sdBox(uv - center, vec2(depth, size / (diag * 2. / 3.)));
+  float s3 = sdSegment(uv, A, B) - depth;
+  float s4 = sdSegment(uv, C, D) - depth;
+  float m = min(min(smin(s1 - 0.01, s3, shape, sharpness), smin(s2, s3, shape, sharpness)),
+    min(smin(s1 - 0.01, s4, shape, sharpness), smin(s2, s4, shape, sharpness)));
+
+  float color = (sign(m) < .5 ? 1. : 0.);
+  vec2 mirror_uv = vec2(abs(uv.x - center.x) * 0.5, abs(uv.y - center.y));
+
+  float ratio = 2. / (20. + brightness * brightness);
+  color *= 1.0 - ((rand(uv) * ratio - ratio / 2.)
+    + (mirror_uv.x + mirror_uv.y) * (brightness/sqrt(size)));
+
+  float ring = opRing(uv - center, size * sqrt(1./brightness), 0.5 / pixels);
+  ring = (sign(ring) < .5 ? 1. : 0.);
+  color = max(color * 1.4, ring * 0.3);
   return color;
 }
 
@@ -175,14 +132,16 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
   uv -= vec2(0.5);
 
   vec2 center=vec2(-0.2);
-  float size = 0.25;
+  float size = 0.5;
   float starTime = (mod(iTime, 1.5) * 20. < 2.*3.1415 ?
     abs(sin(iTime * 20.)) : abs(sin(3.1415/2.)));
   float brightness = (starTime + 1.) / 3. - 0.1;
-  float shape = 1.;
-  color = vec3(diamond(uv, center, size, brightness, shape));
-  //color = vec3(nova(uv, center, size, brightness, shape));
-  //color = vec3(polar(uv, center, size, brightness));
+  float shape = 0.2;
+  uint sharpness = 2u;
+  float diag = 3.;
+  //color = vec3(diamond(uv, center, size, brightness, shape, sharpness));
+  //color = vec3(nova(uv, center, size, brightness, shape, sharpness, diag));
+  color = vec3(polar(uv, center, size, brightness, shape, sharpness, diag));
 
   color = vec3(floor(color.x * 12.) / 12.);
 

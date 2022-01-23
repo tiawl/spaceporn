@@ -1,27 +1,23 @@
 # include "hash.glsl"
 # include "pixelspace.glsl"
 
-float diamond(vec2 uv, vec2 center, float size, float brightness, float shape)
+float diamond(vec2 uv, vec2 center, float size, float brightness, float shape,
+  uint sharpness)
 {
   brightness = 1. / brightness;
-  vec2 A = center + vec2(size, 0.);
-  vec2 B = center;
-  vec2 C = center + vec2(0., size);
 
-  vec2 buv = uv;
-  uv.x = abs(uv.x - B.x) + B.x;
-  uv.y = abs(uv.y - B.y) + B.y;
+  float depth = 1. / shorter_res;
+  float s1 = sdBox(uv - center, vec2(size, depth));
+  float s2 = sdBox(uv - center, vec2(depth, size));
+  float m = smin(s1, s2, shape, sharpness);
 
-  float insideOutside =
-    sdBezier(uv, A, B, C, shape * size * 3., 1.) < 0.0 ? 1. : 0.;
-  float d = sdRhombus(buv - B, vec2(size));
-
-  float color = insideOutside > 0. ? 0. : (sign(d) < .5 ? 1. : 0.);
+  float color = (sign(m) < .5 ? 1. : 0.);
   float ratio = 2. / (20. + brightness * brightness);
-  color *= 1.0 - ((hash(buv, seed) * ratio - ratio / 2.)
-    + ((uv.x - B.x) + (uv.y - B.y)) * (brightness/sqrt(size)));
+  vec2 mirror_uv = vec2(abs(uv.x - center.x), abs(uv.y - center.y));
+  color *= 1.0 - ((hash(uv, seed) * ratio - ratio / 2.)
+    + (mirror_uv.x + mirror_uv.y) * (brightness / sqrt(size)));
 
-  float ring = opRing(buv - B, size * 0.8, 500. / pixels);
+  float ring = opRing(uv - center, size * 0.8, 500. / pixels);
   ring = (sign(ring) < .5 ? 1. : 0.);
   color = max(color * 1.3, ring * 0.6);
   return color;

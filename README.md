@@ -1,6 +1,6 @@
 # spaceporn
 
-This project is in progress. I am working on it. This is how I will describe it: a space wallpaper engine
+This project is in progress. I am working on it. This is how I will sum it: a space wallpaper generator
 
 ## DISCLAIMERS
 
@@ -14,7 +14,7 @@ I will update this section later
 
 ## Installing
 
-I will update this section later. Do not try to install it.
+I will update this section later. Do not follow steps described here.
 
 1. Clone the repository.
 2. `cd` into the directory.

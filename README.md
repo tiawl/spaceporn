@@ -1,6 +1,6 @@
 # spaceporn
 
-This project is in progress. I am working on it. This is how I will sum it: a space wallpaper generator
+This project is in progress. I am working on it. This is how I will resume it: a space wallpaper generator
 
 ## DISCLAIMERS
 

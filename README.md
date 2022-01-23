@@ -50,7 +50,7 @@ I will update this section later
 
 ## Credit
 
-Whitout each one of the links (and their authors) placed here, this project will never be build. They helped me for scripting and/or inspired me a lot:
+Whitout each one of those links (and their authors), this project will never be build. They helped me for scripting and/or inspired me a lot:
 - [Github - Deep-Fold's PixelSpace][1] and [Github - Deep-Fold's PixelPlanets][2]
 - [Shadertoy - CBS' Simplicity Galaxy shader][3]
 - [Ek_Vitki's star tutorial][4]

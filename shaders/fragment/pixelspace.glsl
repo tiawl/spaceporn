@@ -11,12 +11,6 @@ float opRing(vec2 p, float r1, float r2)
   return abs(sdCircle(p, r1)) - r2;
 }
 
-float sdBox(vec2 p, vec2 b )
-{
-  vec2 d = abs(p) - b;
-  return length(max(d, 0.)) + min(max(d.x, d.y), 0.);
-}
-
 float sdSegment(vec2 p, vec2 a, vec2 b)
 {
   vec2 pa = p - a;

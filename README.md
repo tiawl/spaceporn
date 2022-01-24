@@ -30,15 +30,15 @@ I will update this section later. Do not follow steps described here.
 
 ## Supported environments
 
-I am actually working on a version for Ubuntu OS. For the long term I will try to provide support for other OS but I can't say which and when. Here are a list of tested OS
+I am actually working on Ubuntu OS. For the long term I will try to provide support for other OS but I can't say which and when. Here are a list of tested OS
 - Ubuntu 20.04    :heavy_check_mark:
 
-If you ran **spaceporn** on a non-listed environment, contact me, I will add it.
+If you run **spaceporn** successfully on an unlisted environment, contact me, I will add it.
 
 ## Known issues
 
-- Running app hides desktop icons &rarr; During execution, the app creates a window above the root window (or desktop window) and behind every other windows to render the shader. This is why desktop icons disappear during execution. The only way to fix this issue is to use root window and/or File-System/Window Manager window which draw icons and desktop above root window. Unfortunely using root window is not as easy as using your own window and can potentially causes unexpected side effects.
-- Running app shows a weird white and black screen &rarr; For some GPU (especially Intel), shaders are acting really weird and I do not have any explaination to help you. It is probably coming from my OpenGL context but I do not know what I forgot.
+- Running **spaceporn** hides desktop icons &rarr; During execution, the app creates a window above the root window (or desktop window) and behind every other windows to render the shader. This is why desktop icons disappear during execution. The only way to fix this issue is to use root window and/or File-System/Window Manager window which draw icons and desktop above root window. Unfortunely using root window is not as easy as using your own window and can potentially causes unexpected side effects.
+- Running **spaceporn** shows an expensive weird white and black screen &rarr; For some GPU (especially Intel), shaders are acting really weird and I do not have any explaination to help you. It is probably coming from my OpenGL context but I do not know what I forgot.
 
 ## Reporting bugs
 
@@ -50,12 +50,10 @@ I will update this section later
 
 ## Credit
 
-Whitout each one of those links (and their authors), this project will never be build. They helped me for scripting and/or inspired me a lot:
+Without each one of these links (and their authors), this project will never be build. They helped me for scripting and/or inspired me a lot:
 - [Github - Deep-Fold's PixelSpace][1] and [Github - Deep-Fold's PixelPlanets][2]
 - [Shadertoy - CBS' Simplicity Galaxy shader][3]
-- [Ek_Vitki's star tutorial][4]
-- [Ek_Vitki's nebula tutorial][5]
-- [Ek_Vitki's celestial bodies tutorial][6]
+- [Ek_Vitki's star tutorial][4], [Ek_Vitki's nebula tutorial][5] and [Ek_Vitki's celestial bodies tutorial][6]
 - [Inigo Quilez's articles][7]
 - [Shadertoy - nimitz's Noise animation - Electric shader][8]
 - [Shadertoy - chalky's Red Circles shader][9]

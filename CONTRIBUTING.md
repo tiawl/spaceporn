@@ -10,7 +10,7 @@ The dev team will update this section later.
 
 ## Roadmap
 
-This is a list of features the dev team is working on for the next release. If you want to contribute to this project, you should see this list as a direction for this project:
+This is a list of features the dev team is working on for the next release. If you want to contribute to this project, you should see this list as a dev team direction:
 
 The dev team will build this section later.
 

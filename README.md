@@ -1,6 +1,6 @@
 # spaceporn
 
-This project is not ready to be used by others. The dev team is working on it. This is how this project will be resume: a space wallpaper generator
+This project is not ready to be used by others. The dev team is working on it. This is how this project will be resumed: a space wallpaper generator
 
 ## DISCLAIMERS
 
@@ -25,15 +25,15 @@ The dev team will update this section later. Do not follow steps described here.
 
 ## Supported environments
 
-The dev team is actually working on Ubuntu OS. For the long term The dev team will try to provide support for other OS but can not say which and when. Here are a list of tested OS
+The dev team is actually working on Ubuntu OS. For the long term the dev team will try to provide support for other OS but can not say which and when. Here are a list of tested OS:
 - Ubuntu 20.04    :heavy_check_mark:
 
 If you run **spaceporn** successfully on an unlisted environment, contact me, the dev team will add it.
 
 ## Known issues
 
-- Running **spaceporn** hides desktop icons &rarr; During execution, the app creates a window above the root window (or desktop window) and behind every other windows to render the shader. This is why desktop icons disappear during execution. The only way to fix this issue is to use root window and/or File-System/Window Manager window which draw icons and desktop above root window. Unfortunely using root window is not as easy as using your own window and can potentially causes unexpected side effects.
-- Running **spaceporn** shows an expensive weird white and black screen &rarr; For some GPU (especially Intel), shaders are acting really weird and the dev team do not have any explaination to help you. It is probably coming from the OpenGL context but it is only assumption.
+- Running **spaceporn** hides desktop icons &rarr; During execution, **spaceporn** creates a window above the root window (or desktop window) and behind every other windows to render the shader. This is why desktop icons disappear during execution. The only way to fix this issue is to use root window and/or File-System/Window Manager window which draw icons and desktop above root window. Unfortunely using root window is not as easy as using your own window and can potentially causes unexpected side effects.
+- Running **spaceporn** shows an expensive weird white and black screen &rarr; For some GPU (especially Intel), shaders are acting really weird and the dev team do not have any explaination to help you. It is probably coming from the OpenGL context but it is only an assumption.
 
 ## Reporting bugs
 
@@ -55,7 +55,7 @@ This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md
 
 ## Acknowledgments
 
-Without each one of these links (and their authors), this project will never be build. They helped me for scripting and/or inspired me a lot:
+Without each one of these links (and their authors), this project will never be build:
 - [Github - Deep-Fold's PixelSpace][1] and [Github - Deep-Fold's PixelPlanets][2]
 - [Shadertoy - CBS' Simplicity Galaxy shader][3]
 - [Ek_Vitki's star tutorial][4], [Ek_Vitki's nebula tutorial][5] and [Ek_Vitki's celestial bodies tutorial][6]

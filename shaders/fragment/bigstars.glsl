@@ -22,17 +22,24 @@ Star calc_star(vec2 xy)
 
   float rd_bigstar = 0.;//min(floor(hash(ixy, seed) * STAR_TYPES), STAR_TYPES - 1.);
   float size_hash = hash(ixy, seed + 1u);
-  size_hash *= size_hash;
-  size_hash *= size_hash;
-  size_hash *= size_hash;
-  float size = (min(floor(size_hash * 14.), 13.) + 3.) * pixel_res;
+//   size_hash *= size_hash;
+//   size_hash *= size_hash;
+//   size_hash *= size_hash;
+  float size = (min(floor(size_hash * 10.), 9.) + 7.) * pixel_res;
+  float ring_size = hash(ixy, seed + 3u) * 1.5;
+  ring_size = (ring_size < 0.5 || size / pixel_res < 8. ? 0. : ring_size);
 
-  Star bigstar = Star(rd_bigstar, center, 0., size, 120., 15.5, 0., 2u, 2.);
+  Star bigstar = Star(rd_bigstar, center, 0., size, 120., 0., 0., 2u, 2.,
+    ring_size);
   if (bigstar.type < 0.5)
   {
-    //bigstar.shape = 100.;
+    bigstar.brightness = 10. * (size / (pixel_res * 24.))
+      * ((hash(ixy, seed + 4u) + 1.) / 2.);
+    bigstar.shape = 2. * (hash(ixy, seed + 3u) + 1.) * bigstar.size / pixel_res;
   } else if (bigstar.type < 1.5) {
-    //bigstar.shape = 60.;
+    bigstar.brightness = 15.5 * (size / (pixel_res * 24.))
+      * ((hash(ixy, seed + 4u) + 1.) / 2.);
+    bigstar.shape = 4. * hash(ixy, seed + 3u) * bigstar.size / pixel_res;
     bigstar.diag = 2.;
   } else {
     //bigstar.shape = 35.;

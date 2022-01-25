@@ -21,14 +21,14 @@ float sdSegment(vec2 p, vec2 a, vec2 b)
 
 float smin(float a, float b, float k, uint p)
 {
-    float h = max(k - abs(a - b), 0.) / k;
-    float H = 1.;
-    while (p > 0u)
-    {
-      H *= h;
-      p -= 1u;
-    }
-    return min(a, b) - H * k * (1. /4.);
+  float h = max(k - abs(a - b), 0.) / k;
+  float H = 1.;
+  while (p > 0u)
+  {
+    H *= h;
+    p -= 1u;
+  }
+  return min(a, b) - H * k * (1. /4.);
 }
 
 float psnoise(vec2 coord, uint noise_seed)

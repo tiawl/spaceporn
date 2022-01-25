@@ -17,14 +17,14 @@ float opRing(vec2 p, float r1, float r2)
 
 float smin(float a, float b, float k, uint p)
 {
-    float h = max(k - abs(a - b), 0.) / k;
-    float H = 1.;
-    while (p > 0u)
-    {
-      H *= h;
-      p -= 1u;
-    }
-    return min(a, b) - H * k * (1. /4.);
+  float h = max(k - abs(a - b), 0.) / k;
+  float H = 1.;
+  while (p > 0u)
+  {
+    H *= h;
+    p -= 1u;
+  }
+  return min(a, b) - H * k * (1. /4.);
 }
 
 float sdBox( in vec2 p, in vec2 b )

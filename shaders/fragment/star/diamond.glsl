@@ -20,10 +20,10 @@ vec4 diamond(vec2 uv, Star star)
   color *= 1.0 - ((hash(uv, seed) * ratio - ratio / 2.)
     + (mirror_uv.x + mirror_uv.y) * (star.brightness / sqrt(star.size)));
 
-  float ring = opRing(uv - star.center, star.size * 0.8,
+  float ring = opRing(uv - star.center, star.size * star.ring_size,
     shorter_res / (2. * pixels));
   ring = (sign(ring) < .5 ? 1. : 0.);
-  color = max(color * 1.3, ring * 0.6);
+  color = max(color * 1.3, ring * 0.3);
 
   return vec4(vec3(floor(color * PLANET_COLS) / PLANET_COLS), 1.);
 }

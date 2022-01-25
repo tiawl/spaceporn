@@ -48,6 +48,7 @@ struct Star
   float shape;
   uint sharpness;
   float diag;
+  float ring_size;
 };
 
 # define NB_COLS 7.

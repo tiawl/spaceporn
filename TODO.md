@@ -21,6 +21,7 @@ This is a list of tasks expressed by the dev team for the dev team. If you want 
 - no equality between floating numbers
 - Bigstars rework
 - More parameters on different planets to add more diversity
+- use https://iquilezles.org/www/articles/fbmsdf/fbmsdf.htm for moon craters
 - dry planet
 - lava planet
 - dark planet

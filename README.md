@@ -4,7 +4,7 @@ This project is not ready to be used by others. The dev team is working on it. T
 
 ## DISCLAIMERS
 
-**Significant parts of what you will read on this repository are not written by the dev team. Even if there are already an MIT licence here, those parts are also under the licence selected by their authors (if they choosed one). You can not use this code for a non-personal usage without to be aware of its authors' wishes.** Links in **Acknowledgments** section.
+**Significant parts of what you will read on this repository are not written by the dev team. Even if there are already an MIT license here, those parts are also under the authors' license (if they choosed one). You can not use this code for a non-personal usage without to be aware of its authors' wishes.** Links in **Acknowledgments** section.
 
 ## Usage
 
@@ -49,7 +49,7 @@ Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on the process for su
 
 See also the list of [contributors](https://github.com/pabtomas/spaceporn/contributors) who participated in this project.
 
-## Licence
+## License
 
 This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
 

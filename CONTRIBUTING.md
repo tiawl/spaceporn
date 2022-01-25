@@ -17,7 +17,7 @@ The dev team will build this section later.
 ## What could be improved ?
 
 This is a list of tasks the dev team can not improve or solve by itself. If you want to contribute to this project and have skills for one of this task, you are welcome !
-- Shaders maths can largely be improved.
-- False positives returned by Valgrind listed in amd.supp file.
-- **Know Issues** section in README.md.
+- Shaders maths can largely be improved,
+- False positives returned by Valgrind listed in [amd.supp](amd.supp),
+- **Know Issues** section in [README.md](README.md),
 - Run **spaceporn** on modern Windows OS.

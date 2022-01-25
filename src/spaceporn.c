@@ -37,16 +37,6 @@ int main(int argc, char** argv)
   shaders.fragment_shader = 0;
   shaders.program = 0;
 
-  PNG png;
-  png.file = NULL;
-  png.data = NULL;
-  png.ptr = 0;
-  png.info = 0;
-  png.row_pointers = NULL;
-  png.path = NULL;
-  png.texture = 0;
-  png.texture_unit = 0;
-
   PNG png_atlas;
   png_atlas.file = NULL;
   png_atlas.data = NULL;
@@ -55,7 +45,7 @@ int main(int argc, char** argv)
   png_atlas.row_pointers = NULL;
   png_atlas.path = NULL;
   png_atlas.texture = 0;
-  png_atlas.texture_unit = 1;
+  png_atlas.texture_unit = 0;
 
   Atlas atlas;
   atlas.texels = NULL;
@@ -103,7 +93,7 @@ int main(int argc, char** argv)
     }
 
     writeLog(&log, stdout, "", "Initializing paths ...\n");
-    if (!initPaths(&shaders, &png, &png_atlas, &log))
+    if (!initPaths(&shaders, &png_atlas, &log))
     {
       writeLog(&log, (log.verbose ? stdout : stderr), "",
         "Failed to initialize paths\n");
@@ -188,17 +178,6 @@ int main(int argc, char** argv)
     };
 
     GLuint uniformIds[UNIFORM_COUNT];
-
-    writeLog(&log, stdout, "", "Loading PNG texture ...\n");
-    if (!loadPng(&png, &shaders, &log))
-    {
-      writeLog(&log, (log.verbose ? stdout : stderr), "",
-        "Failed to load PNG file \"%s\"\n", png.path);
-
-      status = false;
-      break;
-    }
-    writeLog(&log, stdout, "", "PNG texture loaded\n");
 
     writeLog(&log, stdout, "", "Loading textures atlas ...\n");
     if (!loadAtlas(&atlas, &png_atlas, &shaders,
@@ -298,7 +277,6 @@ int main(int argc, char** argv)
   } while (false);
 
   freeVertices(&vertices, &log);
-  freePng(&png, &log);
   freePng(&png_atlas, &log);
   freeAtlas(&atlas, &log);
   freeProgram(&shaders, &log);

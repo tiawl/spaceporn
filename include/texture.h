@@ -17,7 +17,6 @@ typedef struct
   GLenum texture_unit;
 } PNG;
 
-bool loadPng(PNG* png, Shaders* shaders, Log* log);
 bool freePng(PNG* png, Log* log);
 
 #endif

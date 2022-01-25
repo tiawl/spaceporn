@@ -8,7 +8,8 @@
 Star calc_star(vec2 xy)
 {
   float pixel_res = shorter_res / pixels;
-  float density = 40.;
+  float density = 20.;
+  density *= round(pixels / 100.);
   density = pixel_res * density;
   vec2 ixy = vec2(floor_multiple(xy.x, density),
     floor_multiple(xy.y, density));
@@ -20,17 +21,21 @@ Star calc_star(vec2 xy)
 //   center.y += hash(ixy, seed + 2u) * (pixels / 2.);
 
   float rd_bigstar = 0.;//min(floor(hash(ixy, seed) * STAR_TYPES), STAR_TYPES - 1.);
-  float size = 15. * pixel_res;
+  float size_hash = hash(ixy, seed + 1u);
+  size_hash *= size_hash;
+  size_hash *= size_hash;
+  size_hash *= size_hash;
+  float size = (min(floor(size_hash * 14.), 13.) + 3.) * pixel_res;
 
   Star bigstar = Star(rd_bigstar, center, 0., size, 120., 15.5, 0., 2u, 2.);
   if (bigstar.type < 0.5)
   {
-    bigstar.shape = 100.;
+    //bigstar.shape = 100.;
   } else if (bigstar.type < 1.5) {
-    bigstar.shape = 60.;
+    //bigstar.shape = 60.;
     bigstar.diag = 2.;
   } else {
-    bigstar.shape = 35.;
+    //bigstar.shape = 35.;
     bigstar.diag = 3.;
   }
   return bigstar;

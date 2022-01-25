@@ -34,7 +34,7 @@ bool initPath(char** path, size_t len[2], char* root, char* dir, Log* log)
   return status;
 }
 
-bool initPaths(Shaders* shaders, PNG* png, PNG* atlas, Log* log)
+bool initPaths(Shaders* shaders, PNG* atlas, Log* log)
 {
   int status = true;
 
@@ -67,14 +67,9 @@ bool initPaths(Shaders* shaders, PNG* png, PNG* atlas, Log* log)
     const size_t len5 = strlen(MAIN_FILE);
     writeLog(log, stdout, "", "  Length of \"%s\" is %lu\n", MAIN_FILE, len5);
 
-    writeLog(log, stdout, "", "  Computing length of texture filename ...\n");
-    const size_t len6 = strlen(BIGSTARS_FILE);
-    writeLog(log, stdout, "", "  Length of \"%s\" is %lu\n", BIGSTARS_FILE,
-      len6);
-
     writeLog(log, stdout, "", "  Computing length of atlas filename ...\n");
-    const size_t len7 = strlen(ATLAS_FILE);
-    writeLog(log, stdout, "", "  Length of \"%s\" is %lu\n", ATLAS_FILE, len7);
+    const size_t len6 = strlen(ATLAS_FILE);
+    writeLog(log, stdout, "", "  Length of \"%s\" is %lu\n", ATLAS_FILE, len6);
 
     size_t length[2] =
     {
@@ -157,24 +152,6 @@ bool initPaths(Shaders* shaders, PNG* png, PNG* atlas, Log* log)
 
     length[0] = len2;
     length[1] = len6;
-
-    if (log->roadmap.id == BIGSTARSTEXTUREPATH_MALLOC_FAILED_RM)
-    {
-      log->roadmap.id = PATH_MALLOC_FAILED_RM;
-    }
-
-    writeLog(log, stdout, "", "  Initializing texture path ...\n");
-    if (!initPath(&(png->path), length, TEXTURES_DIR, BIGSTARS_FILE, log))
-    {
-      writeLog(log, (log->verbose ? stdout : stderr), "  ",
-        "Texture path initialization failed\n");
-
-      status = false;
-      break;
-    }
-    writeLog(log, stdout, "", "  Texture path initialized\n");
-
-    length[1] = len7;
 
     if (log->roadmap.id == ATLASTEXTUREPATH_MALLOC_FAILED_RM)
     {

@@ -18,7 +18,6 @@ precision highp float;
 
 uniform float fflags[6];
 uniform int bflags[4];
-uniform sampler2D bigstars_texture;
 uniform sampler2DArray atlas;
 
 const float planets_density = 1.; // WARNING: must be greater than 3 to avoid some artifacts

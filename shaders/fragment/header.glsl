@@ -1,19 +1,5 @@
 # version 330 core
 
-// TODO:
-// - avoid pow() usage
-// - no equality between floating numbers
-// - Bigstars rework
-// - More parameters on different planets to add more diversity
-// - dry planet
-// - lava planet
-// - dark planet
-// - add 2 more stars types
-// - galaxy
-// - dark hole (with event horizon animation)
-// - group of asteroids
-// - palette gen
-
 precision highp float;
 
 uniform float fflags[6];

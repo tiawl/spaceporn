@@ -1,9 +1,0 @@
-- memchecks
-- covchecks
-- detectmissingconf strict/nostrict
-- add a flag to disable some planets/galaxy/darkhole/asteroids/bigstars
-- if find texture/atlas.png: precompted = true && use atlas in shaders
-  else: precomputed = false && use hash function in shaders
-- use OpenMP for textures atlas generation
-- add test and dev branches
-- add hooks for memory-check, coverage-check and detect-AC_CHECK for master branch

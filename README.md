@@ -4,7 +4,7 @@ This project is not ready to be used by others. The dev team is working on it. T
 
 ## DISCLAIMERS
 
-**Parts of what you will read on this repository (and some of it are significant) is not written by the dev team. Even if there are already an MIT licence on this repository, some of those part are also under their own licence. You can not use this code for a non-personal usage without to be aware of its authors' wishes.** Links in **Credit** section.
+**Significant parts of what you will read on this repository are not written by the dev team. Even if there are already an MIT licence here, those parts are also under the licence selected by their authors (if they choosed one). You can not use this code for a non-personal usage without to be aware of its authors' wishes.** Links in **Acknowledgments** section.
 
 ## Usage
 
@@ -28,7 +28,7 @@ The dev team will update this section later. Do not follow steps described here.
 The dev team is actually working on Ubuntu OS. For the long term the dev team will try to provide support for other OS but can not say which and when. Here are a list of tested OS:
 - Ubuntu 20.04    :heavy_check_mark:
 
-If you run **spaceporn** successfully on an unlisted environment, contact me, the dev team will add it.
+If you run **spaceporn** successfully on an unlisted environment, you can open an issue to update this list.
 
 ## Known issues
 

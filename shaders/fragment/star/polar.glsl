@@ -24,8 +24,8 @@ vec4 polar(vec2 uv, Star star)
         smin(s2, s4, star.shape, star.sharpness)));
 
   float color = (sign(m) < .5 ? 1. : 0.);
-  vec2 mirror_uv =
-    vec2(abs(uv.x - star.center.x), 2. * abs(uv.y - star.center.y));
+  vec2 mirror_uv = vec2(abs(uv.x - star.center.x),
+    (star.diag - 1.) * abs(uv.y - star.center.y));
 
   float ratio = 2. / (20. + star.brightness * star.brightness);
   color *= 1.0 - ((hash(uv, seed) * ratio - ratio / 2.)

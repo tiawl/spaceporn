@@ -39,32 +39,37 @@ vec4 polar(vec2 uv, Star star)
   return vec4(vec3(floor(color * PLANET_COLS) / PLANET_COLS), 1.);
 }
 
-float polarShape(Star bigstar)
+float polarShape(Star bigstar, float pixel_res)
 {
   float shape;
   if (bigstar.sharpness > 6u)
   {
     if (bigstar.sharpness == 7u)
     {
-      shape = 4.3;
+      shape = 3.18 * pixel_res;
     } else if ((bigstar.sharpness >= 8u) && (bigstar.sharpness <= 10u)) {
-      shape = 4.5;
+      shape = 3.372 * pixel_res;
     } else {
-      float ratio = 1.;
-      ratio = (bigstar.sharpness > 13u ? ratio + 0.2 : ratio);
-      ratio = (bigstar.sharpness > 15u ? ratio + 0.3 : ratio);
-      shape = 3.5 + ratio * hash(bigstar.center, seed + 4u);
+      float ratio = 0.063;
+      ratio = (bigstar.sharpness < 12u ? ratio * 0.5 : ratio);
+      ratio = (bigstar.sharpness < 15u ? ratio * 0.75 : ratio);
+      ratio = (bigstar.sharpness > 13u ? ratio + 0.013 : ratio);
+      ratio = (bigstar.sharpness > 15u ? ratio + 0.019 : ratio);
+      shape = 0.219 + ratio * hash(bigstar.center, seed + 4u);
+      shape *= bigstar.size;
+      float diff = 16. - bigstar.size / pixel_res;
+      shape *= (bigstar.size / pixel_res <= float(bigstar.sharpness) ?
+        1.05 + ((2. * diff - 3.) / 20.) : 1.);
     }
   } else if (bigstar.sharpness == 6u) {
-    shape = 1.8 * hash(bigstar.center, seed + 4u);
+    shape = 0.012 * hash(bigstar.center, seed + 4u);
   } else if (bigstar.sharpness == 5u) {
-    shape = 1.4 * hash(bigstar.center, seed + 4u);
+    shape = 0.087 * bigstar.size * hash(bigstar.center, seed + 4u);
   } else if (bigstar.sharpness == 2u) {
     shape = hash(bigstar.center, seed + 4u);
   } else {
-    shape = 1.2 * hash(bigstar.center, seed + 4u);
+    shape = 0.075 * bigstar.size * hash(bigstar.center, seed + 4u);
   }
   shape *= 2.73;
-  //shape *= bigstar.size / 5.4;
   return shape;
 }

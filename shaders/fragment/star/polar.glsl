@@ -38,3 +38,33 @@ vec4 polar(vec2 uv, Star star)
 
   return vec4(vec3(floor(color * PLANET_COLS) / PLANET_COLS), 1.);
 }
+
+float polarShape(Star bigstar)
+{
+  float shape;
+  if (bigstar.sharpness > 6u)
+  {
+    if (bigstar.sharpness == 7u)
+    {
+      shape = 4.3;
+    } else if ((bigstar.sharpness >= 8u) && (bigstar.sharpness <= 10u)) {
+      shape = 4.5;
+    } else {
+      float ratio = 1.;
+      ratio = (bigstar.sharpness > 13u ? ratio + 0.2 : ratio);
+      ratio = (bigstar.sharpness > 15u ? ratio + 0.3 : ratio);
+      shape = 3.5 + ratio * hash(bigstar.center, seed + 4u);
+    }
+  } else if (bigstar.sharpness == 6u) {
+    shape = 1.8 * hash(bigstar.center, seed + 4u);
+  } else if (bigstar.sharpness == 5u) {
+    shape = 1.4 * hash(bigstar.center, seed + 4u);
+  } else if (bigstar.sharpness == 2u) {
+    shape = hash(bigstar.center, seed + 4u);
+  } else {
+    shape = 1.2 * hash(bigstar.center, seed + 4u);
+  }
+  shape *= 2.73;
+  //shape *= bigstar.size / 5.4;
+  return shape;
+}

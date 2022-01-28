@@ -22,11 +22,11 @@ VERROR := $(shell ./$(MAKE_SCRIPTS)/erroneous_shader \
   $(SHAD_DIR)/vertex/main.glsl 0)
 MERROR := $(shell ./$(MAKE_SCRIPTS)/erroneous_shader \
   $(SHAD_DIR)/vertex/main.glsl 1)
-LIB_FLAGS := $(shell pkg-config --static --libs gl glx glew x11 libpng \
+LIB_FLAGS := $(shell pkg-config --static --libs gl glx glfw3 glew x11 libpng \
   libsystemd) -fopenmp
 DEV_FLAGS := -Wall -Wextra -g
-CFLAGS := $(shell pkg-config --cflags gl glx glew x11 libpng libsystemd) \
-  -I./$(HEAD_DIR)
+CFLAGS := $(shell pkg-config --cflags gl glx glfw3 glew x11 libpng \
+  libsystemd) -I./$(HEAD_DIR)
 ALL_FLAGS := $(LIB_FLAGS)
 
 all: ENV_FLAGS := -D'GCC_SPREFIX="$(SPREFIX)"' -D'GCC_TPREFIX="$(TPREFIX)"' \

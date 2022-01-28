@@ -57,16 +57,11 @@ int main(int argc, char** argv)
   atlas.seed[1] = rand();
 
   Context context;
-  context.display = NULL;
-  context.glx_context = 0;
-  context.window = 0;
+  context.window = NULL;
 #if DEBUG
-  context.debug_window = 0;
   int fps_timer = -1;
   int fps_counter = -1;
 #endif
-  context.visual_info = NULL;
-  context.cmap = 0;
 
   Vertices vertices;
   vertices.array = 0;
@@ -102,18 +97,18 @@ int main(int argc, char** argv)
     }
     writeLog(&log, stdout, "", "Paths are initialized\n");
 
-    writeLog(&log, stdout, "", "Creating GLX context ...\n");
+    writeLog(&log, stdout, "", "Creating context ...\n");
     if (!initContext(&context, &log))
     {
       writeLog(&log, (log.verbose ? stdout : stderr), "",
-        "Failed to create a GLX context\n");
+        "Failed to create a context\n");
       status = false;
       break;
     }
-    writeLog(&log, stdout, "", "GLX context created\n");
+    writeLog(&log, stdout, "", "Context created\n");
 
-    uniform_values.width = context.window_attribs.width;
-    uniform_values.height = context.window_attribs.height;
+    uniform_values.width = context.width;
+    uniform_values.height = context.height;
 
     if ((generation > -1) || (access(png_atlas.path, F_OK) != 0))
     {
@@ -125,15 +120,13 @@ int main(int argc, char** argv)
         atlas.width = nextpow2(7);
         atlas.height = nextpow2(7);
       } else {
-        if (context.window_attribs.width >= context.window_attribs.height)
+        if (context.width >= context.height)
         {
           atlas.width = nextpow2(MAX_PIXELS * 5 *
-          ((int) round(((double) context.window_attribs.width) /
-            ((double) context.window_attribs.height))));
+          ((int) round(((double) context.width) / ((double) context.height))));
         } else {
           atlas.height = nextpow2(MAX_PIXELS * 5 *
-          ((int) round(((double) context.window_attribs.height) /
-            ((double) context.window_attribs.width))));
+          ((int) round(((double) context.height) / ((double) context.width))));
         }
       }
       writeLog(&log, stdout, "", "Textures atlas dimensions are: %dx%d\n",
@@ -200,7 +193,7 @@ int main(int argc, char** argv)
     writeLog(&log, stdout, "",
       "Vertex buffer object and vertex array object initialized\n");
 
-    while (true)
+    while (!glfwWindowShouldClose(context.window))
     {
       if ((fps > 0) && (uniform_values.slide == 0))
       {
@@ -228,23 +221,13 @@ int main(int argc, char** argv)
       writeLog(&log, stdout, "", "Window drawing done\n");
 
       writeLog(&log, stdout, "", "Swapping front and back buffers ...\n");
-      glXSwapBuffers(context.display, context.window);
+      glfwSwapBuffers(context.window);
       writeLog(&log, stdout, "", "Front and back buffers swapped\n");
 
 #if DEBUG
-#define ESCAPE 0x09
-      writeLog(&log, stdout, "", "Searching for key press event ...\n");
-      if (XCheckMaskEvent(context.display, KeyPressMask, &context.event))
-      {
-        if (context.event.xkey.keycode == ESCAPE)
-        {
-          writeLog(&log, stdout, "", "Escape key press event occured\n");
-          break;
-        }
-        writeLog(&log, stdout, "", "Key press event occured\n");
-      } else {
-        writeLog(&log, stdout, "", "Key press event did not occured\n");
-      }
+      writeLog(&log, stdout, "", "Processing events in the event queue ...\n");
+      glfwPollEvents();
+      writeLog(&log, stdout, "", "Events processed\n");
 #endif
 
       if ((fps > 0) && (uniform_values.slide == 0))

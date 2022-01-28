@@ -1,6 +1,9 @@
 #ifndef SPACEPORN_UTIL_H
 #define SPACEPORN_UTIL_H
 
+#define GLFW_EXPOSE_NATIVE_X11
+#define GLFW_EXPOSE_NATIVE_GLX
+
 #include "config.h"
 
 #include <stdarg.h>
@@ -10,6 +13,8 @@
 #include <sys/time.h>
 #include <systemd/sd-journal.h>
 #include <GL/glew.h>
+#include <GLFW/glfw3.h>
+#include <GLFW/glfw3native.h>
 #include <GL/glx.h>
 
 #if HAVE_OPENMP

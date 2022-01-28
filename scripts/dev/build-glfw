@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+declare -r FILE="src/x11_init.c"
+
+[[ ! -f glfw/${FILE} ]] && echo "glfw/${FILE} does not exist\n" && exit 1
+
+cd glfw && git fetch --all \
+  && git checkout tags/$(git describe --tags \
+    $(git rev-list --tags --max-count=1))
+
+[[ $? -eq 0 ]] && CAT="" && while IFS= read -r LINE; do
+  CAT="${CAT}${LINE}\n";
+done < ${FILE} && CAT="${CAT::-2}"
+
+echo -e \
+  "${CAT/\"_NET_WM_WINDOW_TYPE_NORMAL\"/\"_NET_WM_WINDOW_TYPE_DESKTOP\"}" \
+    > ${FILE}

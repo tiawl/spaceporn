@@ -430,8 +430,7 @@ bool loadProgram(Context* context, Shaders* shaders, Log* log)
     writeLog(log, stdout, "", "  OpenGL program installed\n");
 
     writeLog(log, stdout, "", "  Specifying viewport ...\n");
-    GL_CHECK(glViewport(0, 0, context->window_attribs.width,
-      context->window_attribs.height), status, log);
+    GL_CHECK(glViewport(0, 0, context->width, context->height), status, log);
     writeLog(log, stdout, "", "  Viewport specified\n");
 
     writeLog(log, stdout, "",

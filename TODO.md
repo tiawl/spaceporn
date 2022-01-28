@@ -20,6 +20,7 @@ This is a list of tasks expressed by the dev team for the dev team. If you want 
 - avoid pow() usage
 - no equality between floating numbers
 - Bigstars rework
+- use cellular automata and fbm for bigstars repartition (like Hyper Echelon)
 - More parameters on different planets to add more diversity
 - use https://iquilezles.org/www/articles/fbmsdf/fbmsdf.htm for moon craters
 - dry planet

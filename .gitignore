@@ -4,6 +4,3 @@ bin
 obj
 atlas.png
 log
-glfw
-include/GLFW
-lib

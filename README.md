@@ -14,37 +14,6 @@ The dev team will update this section later
 
 The dev team will update this section later. Do not follow steps described here.
 
-### Dependencies
-
-The dev team will update this section later. Do not follow steps described here.
-
-Before installing and building **spaceporn**, you have to install those dependencies:
-- a C compiler (GCC or clang),
-- pkg-config,
-- bash,
-- automake tools (**make**, **autoconf** and **automake** Ubuntu packages)
-- libpng (**libpng-dev** Ubuntu package),
-- Systemd (**libsystemd-dev** Ubuntu package),
-- GLEW (**libglew-dev** Ubuntu package) --> will be replaced by GLAD,
-- OpenGL (**mesa-common-dev** and **libgl1-mesa-dev** Ubuntu packages),
-- GLX and X11 (**xorg-dev** and **libgl1-mesa-glx** Ubuntu packages),
-
-In addition, **spaceporn** needs a modified version of **GLFW**. First, you have to install GLFW dependencies:
-- CMAKE (**cmake** Ubuntu package),
-- GLX and X11.
-
-Then, you have to run a scripts two times to clone GLFW, modify it and compile it:
-1. run `./scripts/dev/build-glfw 1`
-2. Before running the second script, you should check everything is correct:
-`cd glfw && git diff -U0`.
-You should see a lonely difference between the 2 colored lines:
-`_NET_WM_WINDOW_TYPE_DESKTOP` instead of `_NET_WM_WINDOW_TYPE_NORMAL`. If it does not, stop this tutorial here (and please open an issue !),
-3. run `cd .. && ./scripts/dev/build-glfw 2` to build the modified GLFW.
-
-### Steps
-
-The dev team will update this section later. Do not follow steps described here.
-
 1. Clone the repository.
 2. `cd` into the directory.
 3. Run `chmod 700 ./scripts/configure.sh`

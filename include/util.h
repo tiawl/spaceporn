@@ -16,8 +16,6 @@
 #include <omp.h>
 #endif
 
-#include "GLFW/glfw3.h"
-
 #define DEBUG GCC_DEBUG
 
 enum RoadmapID
@@ -57,88 +55,95 @@ enum RoadmapID
 // -------------------------------------------------------------------   5
   VSHADERDIR_MALLOC_FAILED_RM,
   VSHADERPATH_MALLOC_FAILED_RM,
-  GLFWINIT_FAILED_RM,
-  GLFWCREATEWINDOW_FAILED_RM,
-  GLEWINIT_FAILED_RM,
+  XOPENDISPLAY_FAILED_RM,
+  INVALID_GLX_VERSION_RM,
+  GLXCHOOSEFBCONFIG_FAILED_RM,
 // -------------------------------------------------------------------  10
+  XCREATEWINDOW_FAILED_RM,
+  GLXCREATECONTEXTATTRIBSARB_UNFOUNDABLE_RM,
+  SPACE_IN_GLX_EXT_RM,
+  UNSUPPORTED_GLX_EXT_RM,
+  CONTEXT_CREATION_FAILED_RM,
+// -------------------------------------------------------------------  15
+  GLEWINIT_FAILED_RM,
   FOPEN_VERTEX_FILE_FAILED_RM,
   BUFFER_VERTEX_FILE_MALLOC_FAILED_RM,
   FOPEN_FRAGMENT_FILE_FAILED_RM,
   BUFFER_FRAGMENT_FILE_MALLOC_FAILED_RM,
+// -------------------------------------------------------------------  20
   VERTEX_SHADER_COMPILATION_FAILED_RM,
-// -------------------------------------------------------------------  15
   FRAGMENT_SHADER_COMPILATION_FAILED_RM,
   LINKING_PROGRAM_FAILED_RM,
   OPENGL_ERROR_RM,
   VERTEX_FILE_SARH_REGCOMP_FAILED_RM,
+// -------------------------------------------------------------------  25
   VERTEX_FILE_SARH_HEADERS_MALLOC_FAILED_RM,
-// -------------------------------------------------------------------  20
   FRAGMENT_FILE_SARH_REGCOMP_FAILED_RM,
   FRAGMENT_FILE_SARH_HEADERS_MALLOC_FAILED_RM,
   VERTEX_FILE_SARH_HEADER_MALLOC_FAILED_RM,
   VERTEX_FILE_SARH_ADDMARKERS_REALLOC_FAILED_RM,
+// -------------------------------------------------------------------  30
   VERTEX_FILE_SARH_REPLACE_1_REGCOMP_FAILED_RM,
-// -------------------------------------------------------------------  25
   VERTEX_FILE_SARH_REPLACE_1_REALLOC_FAILED_RM,
   VERTEX_FILE_SARH_REPLACE_1_REGEXEC_FAILED_RM,
   VERTEX_FILE_SARH_HEADERS_REALLOC_FAILED_RM,
   VERTEX_FILE_SARH_HEADER_REALLOC_FAILED_RM,
+// -------------------------------------------------------------------  35
   VERTEX_FILE_SARH_READFILE_BUFFER_MALLOC_FAILED_RM,
-// -------------------------------------------------------------------  30
   VERTEX_FILE_SARH_READFILE_FOPEN_FAILED_RM,
   VERTEX_FILE_SARH_ADDMARKERS_IN_LOOP_REALLOC_FAILED_RM,
   VERTEX_FILE_SARH_REPLACE_2_REGCOMP_FAILED_RM,
   VERTEX_FILE_SARH_REPLACE_2_REALLOC_FAILED_RM,
+// -------------------------------------------------------------------  40
   VERTEX_FILE_SARH_REPLACE_2_REGEXEC_FAILED_RM,
-// -------------------------------------------------------------------  35
   FRAGMENT_FILE_SARH_HEADER_MALLOC_FAILED_RM,
   FRAGMENT_FILE_SARH_ADDMARKERS_REALLOC_FAILED_RM,
   FRAGMENT_FILE_SARH_REPLACE_1_REGCOMP_FAILED_RM,
   FRAGMENT_FILE_SARH_REPLACE_1_REALLOC_FAILED_RM,
+// -------------------------------------------------------------------  45
   FRAGMENT_FILE_SARH_REPLACE_1_REGEXEC_FAILED_RM,
-// -------------------------------------------------------------------  40
   FRAGMENT_FILE_SARH_HEADERS_REALLOC_FAILED_RM,
   FRAGMENT_FILE_SARH_HEADER_REALLOC_FAILED_RM,
   FRAGMENT_FILE_SARH_READFILE_BUFFER_MALLOC_FAILED_RM,
   FRAGMENT_FILE_SARH_READFILE_FOPEN_FAILED_RM,
+// -------------------------------------------------------------------  50
   FRAGMENT_FILE_SARH_ADDMARKERS_IN_LOOP_REALLOC_FAILED_RM,
-// -------------------------------------------------------------------  45
   FRAGMENT_FILE_SARH_REPLACE_2_REGCOMP_FAILED_RM,
   FRAGMENT_FILE_SARH_REPLACE_2_REALLOC_FAILED_RM,
   FRAGMENT_FILE_SARH_REPLACE_2_REGEXEC_FAILED_RM,
   VERTEX_FILE_SARH_REGEXEC_FAILED_RM,
+// -------------------------------------------------------------------  55
   VERTEX_FILE_ILS_REPLACE_REGCOMP_FAILED_RM,
-// -------------------------------------------------------------------  50
   VERTEX_FILE_ILS_REPLACE_REALLOC_FAILED_RM,
   VERTEX_FILE_ILS_REPLACE_REGEXEC_FAILED_RM,
   VERTEX_FILE_ILS_REGCOMP_FAILED_RM,
   VERTEX_FILE_ILS_REGEXEC_FAILED_RM,
+// -------------------------------------------------------------------  60
   FRAGMENT_FILE_SARH_REGEXEC_FAILED_RM,
-// -------------------------------------------------------------------  55
   FRAGMENT_FILE_ILS_REPLACE_REGCOMP_FAILED_RM,
   FRAGMENT_FILE_ILS_REPLACE_REALLOC_FAILED_RM,
   FRAGMENT_FILE_ILS_REPLACE_REGEXEC_FAILED_RM,
   FRAGMENT_FILE_ILS_REGCOMP_FAILED_RM,
+// -------------------------------------------------------------------  65
   FRAGMENT_FILE_ILS_REGEXEC_FAILED_RM,
-// -------------------------------------------------------------------  60
   ATLASTEXTUREPATH_MALLOC_FAILED_RM,
   ATLASTEXELS_MALLOC_FAILED_RM,
   ATLASTEXELROW_MALLOC_FAILED_RM,
   FOPEN_NEW_PNG_FILE_FAILED_RM,
+// -------------------------------------------------------------------  70
   PNGCREATEWRITESTRUCT_FAILED_RM,
-// -------------------------------------------------------------------  65
   PNGCREATEWRITEINFOSTRUCT_FAILED_RM,
   PNG_WRITEJMPBUF_FAILED_RM,
   NO_ATLASPNG_FILENAME_RM,
   FOPEN_ATLASPNG_FILE_FAILED_RM,
+// -------------------------------------------------------------------  75
   ATLASPNGCREATEREADSTRUCT_FAILED_RM,
-// -------------------------------------------------------------------  70
   ATLASPNGCREATEREADINFOSTRUCT_FAILED_RM,
   ATLASPNG_READJMPBUF_FAILED_RM,
   ATLASPNG_DATA_MALLOC_FAILED_RM,
   ATLASPNG_READROWPOINTERS_MALLOC_FAILED_RM,
+// -------------------------------------------------------------------  80
   BAD_ATLASPNG_DIMENSIONS_RM,
-// -------------------------------------------------------------------  75
   PRECOMPUTE_AND_STOP_RM,
   PRECOMPUTE_AND_CONTINUE_RM,
 #if DEBUG

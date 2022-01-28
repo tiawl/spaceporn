@@ -10,63 +10,6 @@
    <insert_a_suppression_name_here>
    Memcheck:Leak
    match-leak-kinds: reachable
-   fun:malloc
-   fun:strdup
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   fun:_XlcCreateLC
-   fun:_XlcUtf8Loader
-   fun:_XOpenLC
-   fun:_XrmInitParseInfo
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   fun:XrmGetStringDatabase
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   fun:XGetDefault
-}
-{
-   <insert_a_suppression_name_here>
-   Memcheck:Leak
-   match-leak-kinds: reachable
-   fun:malloc
-   fun:_XimOpenIM
-   fun:_glfwPlatformInit
-   fun:glfwInit
-   fun:initContext
-   fun:main
-}
-{
-   <insert_a_suppression_name_here>
-   Memcheck:Leak
-   match-leak-kinds: reachable
-   fun:malloc
-   fun:_XlcDefaultMapModifiers
-   fun:XSetLocaleModifiers
-   fun:_glfwPlatformInit
-   fun:glfwInit
-   fun:initContext
-   fun:main
-}
-{
-   <insert_a_suppression_name_here>
-   Memcheck:Leak
-   match-leak-kinds: reachable
-   fun:malloc
-   fun:strdup
-   fun:_XlcCreateLC
-   fun:_XlcUtf8Loader
-   fun:_XOpenLC
-   fun:_XrmInitParseInfo
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   fun:XrmGetStringDatabase
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   fun:XGetDefault
-   obj:*
-   obj:*
-}
-{
-   <insert_a_suppression_name_here>
-   Memcheck:Leak
-   match-leak-kinds: reachable
    fun:_Znwm
    fun:_ZNSt8_Rb_treeINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEESt4pairIKS5_jESt10_Select1stIS8_ESt4lessIS5_ESaIS8_EE22_M_emplace_hint_uniqueIJRKSt21piecewise_construct_tSt5tupleIJRS7_EESJ_IJEEEEESt17_Rb_tree_iteratorIS8_ESt23_Rb_tree_const_iteratorIS8_EDpOT_
    obj:/usr/lib/x86_64-linux-gnu/libLLVM-12.so.1
@@ -238,57 +181,6 @@
    obj:/usr/lib/x86_64-linux-gnu/libLLVM-12.so.1
    fun:__pthread_once_slow
    fun:_ZN4llvm31initializeSCEVAAWrapperPassPassERNS_12PassRegistryE
-}
-{
-   <insert_a_suppression_name_here>
-   Memcheck:Leak
-   match-leak-kinds: reachable
-   fun:calloc
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   fun:_XlcCreateLC
-   fun:_XlcUtf8Loader
-   fun:_XOpenLC
-   fun:_XrmInitParseInfo
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   fun:XrmGetStringDatabase
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   fun:XGetDefault
-   obj:*
-   obj:*
-}
-{
-   <insert_a_suppression_name_here>
-   Memcheck:Leak
-   match-leak-kinds: reachable
-   fun:realloc
-   fun:_XlcResolveLocaleName
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   fun:_XlcCreateLC
-   fun:_XlcUtf8Loader
-   fun:_XOpenLC
-   fun:_XrmInitParseInfo
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   fun:XrmGetStringDatabase
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   fun:XGetDefault
-}
-{
-   <insert_a_suppression_name_here>
-   Memcheck:Leak
-   match-leak-kinds: reachable
-   fun:malloc
-   fun:_XOpenLC
-   fun:_XrmInitParseInfo
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   fun:XrmGetStringDatabase
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   fun:XGetDefault
-   obj:*
-   obj:*
-   obj:*
-   fun:_glfwCreateCursorX11
-   fun:createHiddenCursor
 }
 {
    <insert_a_suppression_name_here>
@@ -1118,34 +1010,6 @@
    <insert_a_suppression_name_here>
    Memcheck:Leak
    match-leak-kinds: reachable
-   fun:malloc
-   fun:XInitThreads
-   fun:_glfwPlatformInit
-   fun:glfwInit
-   fun:initContext
-   fun:main
-}
-{
-   <insert_a_suppression_name_here>
-   Memcheck:Leak
-   match-leak-kinds: reachable
-   fun:malloc
-   fun:_XlcCreateLocaleDataBase
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   fun:_XlcCreateLC
-   fun:_XlcUtf8Loader
-   fun:_XOpenLC
-   fun:_XrmInitParseInfo
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   fun:XrmGetStringDatabase
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   fun:XGetDefault
-}
-{
-   <insert_a_suppression_name_here>
-   Memcheck:Leak
-   match-leak-kinds: reachable
    fun:_Znwm
    obj:/usr/lib/x86_64-linux-gnu/libLLVM-12.so.1
    fun:__pthread_once_slow
@@ -1269,168 +1133,6 @@
    <insert_a_suppression_name_here>
    Memcheck:Leak
    match-leak-kinds: reachable
-   fun:malloc
-   fun:_XlcAddCT
-   fun:_XlcInitCTInfo
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   fun:_XlcCreateLC
-   fun:_XlcUtf8Loader
-   fun:_XOpenLC
-   fun:_XrmInitParseInfo
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   fun:XrmGetStringDatabase
-   fun:getSystemContentScale
-}
-{
-   <insert_a_suppression_name_here>
-   Memcheck:Leak
-   match-leak-kinds: reachable
-   fun:malloc
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   fun:XrmGetStringDatabase
-   fun:getSystemContentScale
-   fun:_glfwPlatformInit
-   fun:glfwInit
-   fun:initContext
-   fun:main
-}
-{
-   <insert_a_suppression_name_here>
-   Memcheck:Leak
-   match-leak-kinds: reachable
-   fun:malloc
-   fun:_XrmInternalStringToQuark
-   fun:XrmInitialize
-   fun:_glfwPlatformInit
-   fun:glfwInit
-   fun:initContext
-   fun:main
-}
-{
-   <insert_a_suppression_name_here>
-   Memcheck:Leak
-   match-leak-kinds: reachable
-   fun:malloc
-   fun:_XlcSetConverter
-   fun:_XlcInitCTInfo
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   fun:_XlcCreateLC
-   fun:_XlcUtf8Loader
-   fun:_XOpenLC
-   fun:_XrmInitParseInfo
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   fun:XrmGetStringDatabase
-   fun:getSystemContentScale
-}
-{
-   <insert_a_suppression_name_here>
-   Memcheck:Leak
-   match-leak-kinds: reachable
-   fun:malloc
-   fun:_XlcSetConverter
-   fun:_XlcAddUtf8LocaleConverters
-   fun:_XlcUtf8Loader
-   fun:_XOpenLC
-   fun:_XrmInitParseInfo
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   fun:XrmGetStringDatabase
-   fun:getSystemContentScale
-   fun:_glfwPlatformInit
-   fun:glfwInit
-   fun:initContext
-}
-{
-   <insert_a_suppression_name_here>
-   Memcheck:Leak
-   match-leak-kinds: reachable
-   fun:malloc
-   fun:_XlcSetConverter
-   fun:_XlcUtf8Loader
-   fun:_XOpenLC
-   fun:_XrmInitParseInfo
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   fun:XrmGetStringDatabase
-   fun:getSystemContentScale
-   fun:_glfwPlatformInit
-   fun:glfwInit
-   fun:initContext
-   fun:main
-}
-{
-   <insert_a_suppression_name_here>
-   Memcheck:Leak
-   match-leak-kinds: reachable
-   fun:malloc
-   fun:_XlcSetConverter
-   fun:_XlcAddUtf8Converters
-   fun:_XlcUtf8Loader
-   fun:_XOpenLC
-   fun:_XrmInitParseInfo
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   fun:XrmGetStringDatabase
-   fun:getSystemContentScale
-   fun:_glfwPlatformInit
-   fun:glfwInit
-   fun:initContext
-}
-{
-   <insert_a_suppression_name_here>
-   Memcheck:Leak
-   match-leak-kinds: reachable
-   fun:malloc
-   fun:_XlcSetConverter
-   fun:_XlcAddUtf8LocaleConverters
-   fun:_XlcUtf8Loader
-   fun:_XOpenLC
-   fun:_XrmInitParseInfo
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   fun:XrmGetStringDatabase
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   fun:XGetDefault
-   obj:*
-   obj:*
-}
-{
-   <insert_a_suppression_name_here>
-   Memcheck:Leak
-   match-leak-kinds: reachable
-   fun:malloc
-   fun:_XlcSetConverter
-   fun:_XlcUtf8Loader
-   fun:_XOpenLC
-   fun:_XrmInitParseInfo
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   fun:XrmGetStringDatabase
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   fun:XGetDefault
-   obj:*
-   obj:*
-   obj:*
-}
-{
-   <insert_a_suppression_name_here>
-   Memcheck:Leak
-   match-leak-kinds: reachable
-   fun:malloc
-   fun:_XlcSetConverter
-   fun:_XlcAddUtf8Converters
-   fun:_XlcUtf8Loader
-   fun:_XOpenLC
-   fun:_XrmInitParseInfo
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   fun:XrmGetStringDatabase
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   fun:XGetDefault
-   obj:*
-   obj:*
-}
-{
-   <insert_a_suppression_name_here>
-   Memcheck:Leak
-   match-leak-kinds: reachable
    fun:_Znwm
    obj:/usr/lib/x86_64-linux-gnu/dri/iris_dri.so
    obj:/usr/lib/x86_64-linux-gnu/dri/iris_dri.so
@@ -1458,9 +1160,25 @@
    obj:/usr/lib/x86_64-linux-gnu/dri/iris_dri.so
    obj:/usr/lib/x86_64-linux-gnu/dri/iris_dri.so
    obj:/usr/lib/x86_64-linux-gnu/dri/iris_dri.so
-   fun:_glfwRefreshContextAttribs
-   fun:glfwCreateWindow
-   fun:initWindow
+   obj:/usr/lib/x86_64-linux-gnu/dri/iris_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/iris_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/iris_dri.so
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:malloc
+   obj:/usr/lib/x86_64-linux-gnu/dri/iris_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/iris_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/iris_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/iris_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/iris_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/iris_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/iris_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/iris_dri.so
+   fun:draw
+   fun:main
 }
 {
    <insert_a_suppression_name_here>
@@ -1476,8 +1194,8 @@
    obj:/usr/lib/x86_64-linux-gnu/dri/iris_dri.so
    obj:/usr/lib/x86_64-linux-gnu/dri/iris_dri.so
    obj:/usr/lib/x86_64-linux-gnu/dri/iris_dri.so
-   fun:_glfwRefreshContextAttribs
-   fun:glfwCreateWindow
+   fun:draw
+   fun:main
 }
 {
    <insert_a_suppression_name_here>
@@ -1494,24 +1212,7 @@
    obj:/usr/lib/x86_64-linux-gnu/dri/iris_dri.so
    obj:/usr/lib/x86_64-linux-gnu/dri/iris_dri.so
    obj:/usr/lib/x86_64-linux-gnu/dri/iris_dri.so
-   obj:/usr/lib/x86_64-linux-gnu/dri/iris_dri.so
-}
-{
-   <insert_a_suppression_name_here>
-   Memcheck:Leak
-   match-leak-kinds: reachable
-   fun:malloc
-   fun:_XlcCreateDefaultCharSet
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   fun:_XlcCreateLC
-   fun:_XlcUtf8Loader
-   fun:_XOpenLC
-   fun:_XrmInitParseInfo
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   fun:XrmGetStringDatabase
-   fun:getSystemContentScale
-   fun:_glfwPlatformInit
+   obj:*
 }
 {
    <insert_a_suppression_name_here>
@@ -2373,40 +2074,6 @@
    <insert_a_suppression_name_here>
    Memcheck:Leak
    match-leak-kinds: reachable
-   fun:realloc
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   fun:_XlcCreateLC
-   fun:_XlcUtf8Loader
-   fun:_XOpenLC
-   fun:_XrmInitParseInfo
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   fun:XrmGetStringDatabase
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   fun:XGetDefault
-   obj:*
-}
-{
-   <insert_a_suppression_name_here>
-   Memcheck:Leak
-   match-leak-kinds: reachable
-   fun:malloc
-   fun:_XlcAddCharSet
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   fun:_XlcCreateLC
-   fun:_XlcUtf8Loader
-   fun:_XOpenLC
-   fun:_XrmInitParseInfo
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   fun:XrmGetStringDatabase
-   fun:getSystemContentScale
-   fun:_glfwPlatformInit
-}
-{
-   <insert_a_suppression_name_here>
-   Memcheck:Leak
-   match-leak-kinds: reachable
    fun:malloc
    fun:_dl_close_worker.part.0
    fun:_dl_close_worker
@@ -2421,74 +2088,6 @@
    fun:__run_exit_handlers
    fun:exit
    fun:(below main)
-}
-{
-   <insert_a_suppression_name_here>
-   Memcheck:Leak
-   match-leak-kinds: reachable
-   fun:realloc
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   fun:_XlcCreateLocaleDataBase
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   fun:_XlcCreateLC
-   fun:_XlcUtf8Loader
-   fun:_XOpenLC
-   fun:_XrmInitParseInfo
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-}
-{
-   <insert_a_suppression_name_here>
-   Memcheck:Leak
-   match-leak-kinds: reachable
-   fun:malloc
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   fun:_XlcCreateLC
-   fun:_XlcUtf8Loader
-   fun:_XOpenLC
-   fun:_XrmInitParseInfo
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   fun:XrmGetStringDatabase
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   fun:XGetDefault
-   obj:*
-}
-{
-   <insert_a_suppression_name_here>
-   Memcheck:Leak
-   match-leak-kinds: reachable
-   fun:realloc
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   fun:_XlcCreateLC
-   fun:_XlcUtf8Loader
-   fun:_XOpenLC
-   fun:_XrmInitParseInfo
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   fun:XrmGetStringDatabase
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   fun:XGetDefault
-}
-{
-   <insert_a_suppression_name_here>
-   Memcheck:Leak
-   match-leak-kinds: reachable
-   fun:malloc
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   fun:_XlcCreateLC
-   fun:_XlcUtf8Loader
-   fun:_XOpenLC
-   fun:_XrmInitParseInfo
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   fun:XrmGetStringDatabase
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   fun:XGetDefault
-   obj:*
-   obj:*
 }
 {
    <insert_a_suppression_name_here>
@@ -2566,23 +2165,6 @@
    <insert_a_suppression_name_here>
    Memcheck:Leak
    match-leak-kinds: reachable
-   fun:calloc
-   fun:_XlcCreateDefaultCharSet
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   fun:_XlcCreateLC
-   fun:_XlcUtf8Loader
-   fun:_XOpenLC
-   fun:_XrmInitParseInfo
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   fun:XrmGetStringDatabase
-   fun:getSystemContentScale
-   fun:_glfwPlatformInit
-}
-{
-   <insert_a_suppression_name_here>
-   Memcheck:Leak
-   match-leak-kinds: reachable
    fun:_Znwm
    obj:/usr/lib/x86_64-linux-gnu/libLLVM-12.so.1
    fun:_ZNK4llvm17ManagedStaticBase21RegisterManagedStaticEPFPvvEPFvS1_E
@@ -2614,23 +2196,6 @@
    fun:_dl_init
    fun:_dl_catch_exception
    fun:dl_open_worker
-}
-{
-   <insert_a_suppression_name_here>
-   Memcheck:Leak
-   match-leak-kinds: reachable
-   fun:calloc
-   fun:_dl_check_map_versions
-   fun:dl_open_worker
-   fun:_dl_catch_exception
-   fun:_dl_open
-   fun:dlopen_doit
-   fun:_dl_catch_exception
-   fun:_dl_catch_error
-   fun:_dlerror_run
-   fun:dlopen@@GLIBC_2.2.5
-   obj:/usr/lib/x86_64-linux-gnu/libGLX.so.0.0.0
-   obj:/usr/lib/x86_64-linux-gnu/libGLX.so.0.0.0
 }
 {
    <insert_a_suppression_name_here>
@@ -2671,51 +2236,17 @@
    Memcheck:Leak
    match-leak-kinds: reachable
    fun:malloc
-   fun:_XlcCreateDefaultCharSet
-   fun:_XlcAddCT
-   fun:_XlcInitCTInfo
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   fun:_XlcCreateLC
-   fun:_XlcUtf8Loader
-   fun:_XOpenLC
-   fun:_XrmInitParseInfo
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   fun:XrmGetStringDatabase
-}
-{
-   <insert_a_suppression_name_here>
-   Memcheck:Leak
-   match-leak-kinds: reachable
-   fun:malloc
-   fun:_XlcAddCharSet
-   fun:_XlcAddCT
-   fun:_XlcInitCTInfo
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   fun:_XlcCreateLC
-   fun:_XlcUtf8Loader
-   fun:_XOpenLC
-   fun:_XrmInitParseInfo
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   fun:XrmGetStringDatabase
-}
-{
-   <insert_a_suppression_name_here>
-   Memcheck:Leak
-   match-leak-kinds: reachable
-   fun:malloc
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   fun:_XlcCreateLocaleDataBase
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   fun:_XlcCreateLC
-   fun:_XlcUtf8Loader
-   fun:_XOpenLC
-   fun:_XrmInitParseInfo
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
+   fun:add_to_global_resize
+   fun:dl_open_worker
+   fun:_dl_catch_exception
+   fun:_dl_open
+   fun:dlopen_doit
+   fun:_dl_catch_exception
+   fun:_dl_catch_error
+   fun:_dlerror_run
+   fun:dlopen@@GLIBC_2.2.5
+   obj:*
+   obj:*
 }
 {
    <insert_a_suppression_name_here>
@@ -2734,8 +2265,8 @@
    <insert_a_suppression_name_here>
    Memcheck:Leak
    match-leak-kinds: reachable
-   fun:malloc
-   fun:add_to_global_resize
+   fun:calloc
+   fun:_dl_check_map_versions
    fun:dl_open_worker
    fun:_dl_catch_exception
    fun:_dl_open
@@ -2744,25 +2275,8 @@
    fun:_dl_catch_error
    fun:_dlerror_run
    fun:dlopen@@GLIBC_2.2.5
-   obj:*
-   obj:*
-}
-{
-   <insert_a_suppression_name_here>
-   Memcheck:Leak
-   match-leak-kinds: reachable
-   fun:malloc
-   fun:strdup
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   fun:_XlcCreateLocaleDataBase
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   fun:_XlcCreateLC
-   fun:_XlcUtf8Loader
-   fun:_XOpenLC
-   fun:_XrmInitParseInfo
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
+   obj:/usr/lib/x86_64-linux-gnu/libGLX.so.0.0.0
+   obj:/usr/lib/x86_64-linux-gnu/libGLX.so.0.0.0
 }
 {
    <insert_a_suppression_name_here>
@@ -2786,23 +2300,6 @@
    Memcheck:Leak
    match-leak-kinds: reachable
    fun:calloc
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   fun:_XlcCreateLC
-   fun:_XlcUtf8Loader
-   fun:_XOpenLC
-   fun:_XrmInitParseInfo
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   fun:XrmGetStringDatabase
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   fun:XGetDefault
-}
-{
-   <insert_a_suppression_name_here>
-   Memcheck:Leak
-   match-leak-kinds: reachable
-   fun:calloc
    fun:_ZN4llvm13StringMapImpl11RehashTableEj
    obj:/usr/lib/x86_64-linux-gnu/libLLVM-12.so.1
    fun:_ZN4llvm12PassRegistry12registerPassERKNS_8PassInfoEb
@@ -2815,6 +2312,25 @@
    fun:call_init
    fun:_dl_init
    fun:_dl_catch_exception
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:calloc
+   fun:allocate_dtv
+   fun:_dl_allocate_tls
+   fun:allocate_stack
+   fun:pthread_create@@GLIBC_2.2.5
+   obj:/usr/lib/x86_64-linux-gnu/dri/iris_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/iris_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/iris_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/iris_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/iris_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/iris_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/iris_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/iris_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/iris_dri.so
 }
 {
    <insert_a_suppression_name_here>
@@ -2839,23 +2355,6 @@
    <insert_a_suppression_name_here>
    Memcheck:Leak
    match-leak-kinds: reachable
-   fun:malloc
-   fun:_XlcCreateLocaleDataBase
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   fun:_XlcCreateLC
-   fun:_XlcUtf8Loader
-   fun:_XOpenLC
-   fun:_XrmInitParseInfo
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   fun:XrmGetStringDatabase
-   fun:getSystemContentScale
-   fun:_glfwPlatformInit
-}
-{
-   <insert_a_suppression_name_here>
-   Memcheck:Leak
-   match-leak-kinds: reachable
    fun:_Znwm
    obj:/usr/lib/x86_64-linux-gnu/libLLVM-12.so.1
    obj:/usr/lib/x86_64-linux-gnu/libLLVM-12.so.1
@@ -2873,23 +2372,6 @@
 {
    <insert_a_suppression_name_here>
    Memcheck:Leak
-   match-leak-kinds: reachable
-   fun:calloc
-   fun:_XlcCreateLocaleDataBase
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   fun:_XlcCreateLC
-   fun:_XlcUtf8Loader
-   fun:_XOpenLC
-   fun:_XrmInitParseInfo
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   fun:XrmGetStringDatabase
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   fun:XGetDefault
-}
-{
-   <insert_a_suppression_name_here>
-   Memcheck:Leak
    match-leak-kinds: definite
    fun:malloc
    obj:/usr/lib/x86_64-linux-gnu/dri/iris_dri.so
@@ -2901,42 +2383,8 @@
    obj:/usr/lib/x86_64-linux-gnu/dri/iris_dri.so
    obj:/usr/lib/x86_64-linux-gnu/dri/iris_dri.so
    obj:/usr/lib/x86_64-linux-gnu/dri/iris_dri.so
-   fun:_glfwRefreshContextAttribs
-   fun:glfwCreateWindow
-}
-{
-   <insert_a_suppression_name_here>
-   Memcheck:Leak
-   match-leak-kinds: reachable
-   fun:calloc
-   fun:_XlcCreateDefaultCharSet
-   fun:_XlcAddCT
-   fun:_XlcInitCTInfo
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   fun:_XlcCreateLC
-   fun:_XlcUtf8Loader
-   fun:_XOpenLC
-   fun:_XrmInitParseInfo
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   fun:XrmGetStringDatabase
-}
-{
-   <insert_a_suppression_name_here>
-   Memcheck:Leak
-   match-leak-kinds: reachable
-   fun:calloc
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   fun:_XlcCreateLocaleDataBase
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   fun:_XlcCreateLC
-   fun:_XlcUtf8Loader
-   fun:_XOpenLC
-   fun:_XrmInitParseInfo
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   fun:XrmGetStringDatabase
+   fun:draw
+   fun:main
 }
 {
    <insert_a_suppression_name_here>
@@ -2971,26 +2419,8 @@
    fun:__glDispatchMakeCurrent
    obj:/usr/lib/x86_64-linux-gnu/libGLX.so.0.0.0
    obj:/usr/lib/x86_64-linux-gnu/libGLX.so.0.0.0
-   fun:makeContextCurrentGLX
-   fun:glfwMakeContextCurrent
-   fun:_glfwRefreshContextAttribs
-}
-{
-   <insert_a_suppression_name_here>
-   Memcheck:Leak
-   match-leak-kinds: reachable
-   fun:calloc
-   fun:_dl_check_map_versions
-   fun:dl_open_worker
-   fun:_dl_catch_exception
-   fun:_dl_open
-   fun:dlopen_doit
-   fun:_dl_catch_exception
-   fun:_dl_catch_error
-   fun:_dlerror_run
-   fun:dlopen@@GLIBC_2.2.5
-   obj:*
-   obj:*
+   fun:initContext
+   fun:main
 }
 {
    <insert_a_suppression_name_here>
@@ -3013,48 +2443,18 @@
    <insert_a_suppression_name_here>
    Memcheck:Leak
    match-leak-kinds: reachable
-   fun:malloc
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   fun:_XrmInternalStringToQuark
-   fun:XrmInitialize
-   fun:_glfwPlatformInit
-   fun:glfwInit
-   fun:initContext
-   fun:main
-}
-{
-   <insert_a_suppression_name_here>
-   Memcheck:Leak
-   match-leak-kinds: reachable
-   fun:malloc
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   fun:_XrmInternalStringToQuark
-   fun:_XlcGetLocaleDataBase
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   fun:_XlcCreateLC
-   fun:_XlcUtf8Loader
-   fun:_XOpenLC
-   fun:_XrmInitParseInfo
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   fun:XrmGetStringDatabase
-}
-{
-   <insert_a_suppression_name_here>
-   Memcheck:Leak
-   match-leak-kinds: reachable
    fun:calloc
-   fun:_XrmInternalStringToQuark
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   fun:_XlcOpenConverter
-   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.3.0
-   fun:_XimProtoOpenIM
-   fun:_XimOpenIM
-   fun:_glfwPlatformInit
-   fun:glfwInit
-   fun:initContext
-   fun:main
+   fun:_dl_check_map_versions
+   fun:dl_open_worker
+   fun:_dl_catch_exception
+   fun:_dl_open
+   fun:dlopen_doit
+   fun:_dl_catch_exception
+   fun:_dl_catch_error
+   fun:_dlerror_run
+   fun:dlopen@@GLIBC_2.2.5
+   obj:*
+   obj:*
 }
 {
    <insert_a_suppression_name_here>
@@ -3148,4 +2548,125 @@
    fun:buildFragmentShaderFile
    fun:loadProgram
    fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:malloc
+   obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:malloc
+   obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+   obj:*
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:calloc
+   fun:allocate_dtv
+   fun:_dl_allocate_tls
+   fun:allocate_stack
+   fun:pthread_create@@GLIBC_2.2.5
+   obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+   obj:*
+   obj:*
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: definite
+   fun:malloc
+   obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: definite
+   fun:calloc
+   obj:/usr/lib/x86_64-linux-gnu/dri/iris_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/iris_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/iris_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/iris_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/iris_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/iris_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/iris_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/iris_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/iris_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/iris_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/iris_dri.so
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+   obj:/usr/lib/x86_64-linux-gnu/dri/i965_dri.so
+   obj:*
 }

@@ -2,6 +2,8 @@
 
 declare -r FILE="src/x11_init.c"
 
+[[ ! -f glfw ]] && git clone https://github.com/glfw/glfw.git
+
 [[ ! -f glfw/${FILE} ]] && echo "glfw/${FILE} does not exist\n" && exit 1
 
 cd glfw && git fetch --all \

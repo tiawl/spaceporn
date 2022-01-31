@@ -79,14 +79,19 @@ Without each one of these links (and their authors), this project will never be 
 - [Shadertoy - CBS' Simplicity Galaxy shader][3]
 - [Ek_Vitki's star tutorial][4], [Ek_Vitki's nebula tutorial][5] and [Ek_Vitki's celestial bodies tutorial][6]
 - [Inigo Quilez's articles][7]
-- [Shadertoy - nimitz's Noise animation - Electric shader][8]
-- [Shadertoy - chalky's Red Circles shader][9]
-- [Github - lord-123's xshader][10]
-- [Github - mmhobi7's xwinwrap][11]
-- [Khronos - Tutorial: OpenGL 3.0 Context Creation (GLX)][12]
-- [Shadertoy - vegardno's Pixel planet shader][13]
-- [Shadertoy - viclw17's Jupiter shader][14]
-- [Daniel Linssen's planetarium][15]
+- [Slynyrd's blog][8]
+- A lot of shader's on Shadertoy:
+  - [nimitz's Noise animation - Electric shader][9]
+  - [chalky's Red Circles shader][10]
+  - [Shadertoy - vegardno's Pixel planet shader][11]
+  - [Shadertoy - viclw17's Jupiter shader][12]
+- A lot of wallpaper projects shared on Github:
+  - [lord-123's xshader][13]
+  - [mmhobi7's xwinwrap][14]
+  - [KEKE046's xjuliabg][15]
+  - [Theldus' anipaper][16]
+  - [zaranthus' Livepaper][17]
+- [Daniel Linssen's planetarium][18]
 
 [1]:https://github.com/Deep-Fold/PixelSpace
 [2]:https://github.com/Deep-Fold/PixelPlanets
@@ -95,11 +100,14 @@ Without each one of these links (and their authors), this project will never be 
 [5]:https://www.reddit.com/r/PixelArt/comments/s4y4nx/nebula_tutorial/
 [6]:https://www.reddit.com/r/PixelArt/comments/s3wr11/another_quick_tutorial_for_some_other_celestial/
 [7]:https://iquilezles.org/www/index.htm
-[8]:https://www.shadertoy.com/view/ldlXRS
-[9]:https://www.shadertoy.com/view/Xds3Ws
-[10]:https://github.com/mmhobi7/xwinwrap
-[11]:https://github.com/lord-123/xshader
-[12]:https://www.khronos.org/opengl/wiki/Tutorial:_OpenGL_3.0_Context_Creation_(GLX)
-[13]:https://www.shadertoy.com/view/WdSSWD
-[14]:https://www.shadertoy.com/view/MdyfWw
-[15]:https://managore.itch.io/planetarium
+[8]:https://www.slynyrd.com/blog
+[9]:https://www.shadertoy.com/view/ldlXRS
+[10]:https://www.shadertoy.com/view/Xds3Ws
+[11]:https://www.shadertoy.com/view/WdSSWD
+[12]:https://www.shadertoy.com/view/MdyfWw
+[13]:https://github.com/lord-123/xshader
+[14]:https://github.com/mmhobi7/xwinwrap
+[15]:https://github.com/KEKE046/xjuliabg
+[16]:https://github.com/Theldus/anipaper
+[17]:https://github.com/zuranthus/LivePaper
+[18]:https://managore.itch.io/planetarium

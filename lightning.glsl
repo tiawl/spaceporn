@@ -26,68 +26,10 @@ float hash(vec2 s, uint hash_seed)
   return res;
 }
 
-float voronoi( in vec2 x, float w, uint seed )
-{
-    vec2 n = floor( x );
-    vec2 f = fract( x );
-
-  float m = 8.;
-    for( int j=-2; j<=2; j++ )
-    for( int i=-2; i<=2; i++ )
-    {
-        vec2 g = vec2( float(i),float(j) );
-        vec2 o = vec2(hash( n + g , seed), hash( n + g , seed+10u));
-
-    // animate
-        o = 0.5 + 0.5*sin(6.2831*o );
-
-        // distance to cell
-    float d = length(g - f + o);
-
-    float h = smoothstep( 0.0, 1.0, 0.5 + 0.5*(m-d)/w );
-      m   = mix( m, d, h ) - h*(1.0-h)*w/(1.0+3.0*w); // distance
-    }
-
-  return m;
-}
-
-float fbm(vec2 coord, float w, uint noise_seed)
-{
-  float value = 0.0;
-  float scale = 1.;
-  uint octaves = 2u;
-
-  for (uint i = 0u; i < octaves; i++)
-  {
-    value += voronoi(coord, w, noise_seed) * scale;
-    coord *= 2.0;
-    scale *= 0.5;
-  }
-
-  return value;
-}
-
-float clouds(vec2 p)
-{
-    float v = fbm( 6.0*p, 0.3, 0u );
-
-    // gamma
-    float t = sqrt(sqrt(sqrt(sqrt(sqrt(v)))));
-
-  t *= 1.0 - 0.8*v*v*v*v;
-    return t;
-}
-
 float smin( float a, float b, float k )
 {
     float h = max(k-abs(a-b),0.0);
     return min(a, b) - h*h*0.25/k;
-}
-
-float smax( float a, float b, float k )
-{
-    float h = max(k-abs(a-b),0.0);
-    return max(a, b) - h*h*0.25/k;
 }
 
 float sph( ivec2 i, vec2 f, ivec2 c)
@@ -111,24 +53,12 @@ float sdBase( vec2 p)
                   sph(i,f,ivec2(1,1))));
 }
 
-float sdFbm( vec2 p, float d )
+float lightning( vec2 p)
 {
-   float s = 1.0;
-   int o = 1;
-   for( int i=0; i<o; i++ )
-   {
-       // evaluate new octave
-       float n = s*(sdBase(p));
+   float n = sdBase(p);
 	
-       // add
-       //n = smax(n,d,0.3*s);
-       d = smin(d, n, 2.7*s);
-	
-       // prepare next octave
-       p = mat2( -1., 1.,
-                -1., -1. )*p;
-       //s = 0.1*s;
-   }
+   float d = smin(1., n, 2.7);
+
    return d > 0. ? 1.:0.;
 }
 
@@ -141,8 +71,7 @@ void mainImage( out vec4 O, vec2 u )
 {
     vec2 R = iResolution.xy,
          U = (.5*u + iTime * 15.) / R.y;
-     //    U = floor(U*150.) / 150.;
-    float OO = (1. - sdFbm(U*20., 1.)) * 0.2;
+        U = floor(U*150.) / 150.;
 
     O-=O;
     float r = length(U), y,l=9., s =8.;      // s: swirls size
@@ -167,9 +96,7 @@ void mainImage( out vec4 O, vec2 u )
      }
 
     U = P/s;                                    // surface coordinates
-    float g = clouds(U.yx) + OO;
-    g = ceil(g * 12.) / 12.;
-    g = sdFbm(U*20., 1.);
+    float g = lightning(U*20.);
 
     O = vec4(vec3(g), 1.);
 

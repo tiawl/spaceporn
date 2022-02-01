@@ -8,12 +8,6 @@ float smin( float a, float b, float k )
     return min(a, b) - h*h*0.25/k;
 }
 
-// http://iquilezles.org/www/articles/smin/smin.htm
-float smax( float a, float b, float k )
-{
-    float h = max(k-abs(a-b),0.0);
-    return max(a, b) + h*h*0.25/k;
-}
 
 float sph( ivec2 i, vec2 f, ivec2 c)
 {

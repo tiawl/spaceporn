@@ -17,6 +17,8 @@ This is a list of tasks expressed by the dev team for the dev team. If you want 
 
 ## Shader files
 
+- use 9 cells loop for circles ?
+- floor_multiple() really useful ???
 - avoid pow() usage
 - no equality between floating numbers
 - Bigstars rework

@@ -32,34 +32,34 @@ float smin( float a, float b, float k )
     return min(a, b) - h*h*0.25/k;
 }
 
-float sph( ivec2 i, vec2 f, ivec2 c)
+float sph( vec2 i, vec2 f, vec2 p)
 {
-   // random radius at grid vertex i+c
-   float rad = hash(vec2(i+c), 2u);
-   // distance to sphere at grid vertex i+c
-   rad = (rad < 0.2 ? -0.5 : rad/4.);
-   f += vec2(hash(vec2(i+c), 89u), hash(vec2(i+c), 52u))*0.7 - 0.35;
-   return length(f-vec2(c)) - rad; 
+   float rad = hash(i+p, 2u) *0.5;
+   vec2 h = vec2(hash(i+p, 89u), hash(i+p, 52u));
+   p += h - f;
+   return length(p) - rad; 
 }
 
 float sdBase( vec2 p)
 {
-   ivec2 i = ivec2(floor(p));
-    vec2 f =       fract(p);
-   // distance to the 8 corners spheres
-   return min(min(sph(i,f,ivec2(0,0)),
-                  sph(i,f,ivec2(0,1))),
-              min(sph(i,f,ivec2(1,0)),
-                  sph(i,f,ivec2(1,1))));
+   vec2 i = vec2(floor(p));
+   vec2 f =      fract(p);
+
+   float d = 1e9;
+   for( int k=0; k<9; k++) {   
+      p = vec2(k%3,k/3)-1.;
+      d = smin(d,sph(i, f, p), 0.3);
+   }
+   return d;
 }
 
-float lightning( vec2 p)
+float swirl( vec2 p)
 {
    float n = sdBase(p);
 	
-   float d = smin(1., n, 2.7);
+   float d = smin(1., n, 2.2);
 
-   return d > 0. ? 1.:0.;
+   return sqrt(sqrt(sqrt(sqrt(d))));
 }
 
 
@@ -70,8 +70,8 @@ float lightning( vec2 p)
 void mainImage( out vec4 O, vec2 u )
 {
     vec2 R = iResolution.xy,
-         U = (.5*u + iTime * 15.) / R.y;
-        U = floor(U*150.) / 150.;
+         U = (1.*u) / R.y;
+        //U = floor(U*100.) / 100.;
 
     O-=O;
     float r = length(U), y,l=9., s =8.;      // s: swirls size
@@ -80,8 +80,7 @@ void mainImage( out vec4 O, vec2 u )
     vec2 P = s*U, I,F, H,D;
          F = abs(fract(P+.5)-.5); y = min(F.x,F.y); O += smoothstep(12./R.y,0.,y);
          I = floor(P), F = fract(P);           // coords in 2D grid
-    y = U.y * U.y;                                  // latitude ( to tune swirl direction & amplitude )
-    float d = 3.;
+    float d = 4.;
     y = d*cos(d*y);
     P-=P;
 #define dist2seed  \
@@ -96,7 +95,7 @@ void mainImage( out vec4 O, vec2 u )
      }
 
     U = P/s;                                    // surface coordinates
-    float g = lightning(U*20.);
+    float g = swirl(U*20.);
 
     O = vec4(vec3(g), 1.);
 

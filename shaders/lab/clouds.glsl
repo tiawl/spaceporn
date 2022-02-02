@@ -71,7 +71,7 @@ float swirl( vec2 p)
 {
    float n = sdBase(p + iTime *0.2, 0.5);
 	
-   float d = smin(1., n, 3.3);
+   float d = smin(1., n, 3.2);
 
    return d;
 }
@@ -79,9 +79,15 @@ float swirl( vec2 p)
 #define H(p)       fract(sin((p)*mat2(246.1, 113.5, 271.9, 124.6 ))*43758.5453123)
 #define R(p,a)   (p)*mat2( cos(a),-sin(a),sin(a),cos(a) )
 
+vec3 hsv2rgb( in vec3 c )
+{
+    vec3 rgb = clamp( abs(mod(c.x*6.0+vec3(0.0,4.0,2.0),6.0)-3.0)-1.0, 0.0, 1.0 );
+	return c.z * mix( vec3(1.0), rgb, c.y);
+}
+
 void mainImage( out vec4 O, vec2 u )
 {
-    float tt = iTime*0.05;
+    float tt = iTime*0.005;
      float sc = 1.;
     vec2 R = iResolution.xy,
          U = sc*u / R.y + 5. + 5.*vec2(sin(tt), sin(tt * 0.75));
@@ -89,7 +95,7 @@ void mainImage( out vec4 O, vec2 u )
         U = floor(U*100.) / 100.;
 
     O-=O;
-    float r = length(U), y,l=9., s =8.;      // s: swirls size
+    float r = length(U), y,l=9., s =8.*sc;      // s: swirls size
     int i,k;
 
     vec2 P = s*U, I,F, H,D;
@@ -112,6 +118,27 @@ void mainImage( out vec4 O, vec2 u )
     U = P/s;                                    // surface coordinates
     float g = -swirl(U*10.*sc);
 
-    float sm = floor(noise(U, 15u)*sqrt(sqrt(g)) * 18.) / 18.;
-    O = vec4(vec3(sm*1.5), 1.);
+    float sm = floor( noise(U*(1./sc), 15u)*sqrt(sqrt(max(g, 0.05))) * 16.)/16. *1.5;
+    //O = vec4(vec3(sm), 1.);return;
+    sm = floor( noise(U*(1./sc), 15u)*sqrt(sqrt(max(g, 0.025))) * 16.*1.5);
+    float hu = radians(3.1415926*2.*(5.5+sm*0.25)), sa, br;
+    if (sm < 4.5)
+    {
+        sa = 0.2 + 0.1 * sm;
+    } else if (sm < 6.5) {
+        sa = 0.6 + 0.05 * (sm - 4.);
+    } else if (sm < 8.5) {
+        sa = 0.7 + 0.025 * (sm - 6.);
+    } else {
+        sa = 0.75 - 0.075 * (sm - 8.);
+    }
+    if (sm < 6.5)
+    {
+        br = 0.15 + 0.075 * sm;
+    } else if (sm < 12.5) {
+        br = 0.6 + 0.05 * (sm - 6.);
+    } else {
+        br = 0.9 + 0.025 * (sm - 12.);
+    }
+    O = vec4(hsv2rgb(vec3(hu, sa, br)), 1.);
 }

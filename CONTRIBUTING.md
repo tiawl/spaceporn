@@ -10,9 +10,7 @@ The dev team will update this section later.
 
 ## Roadmap
 
-This is a list of features the dev team is working on for the next release. If you want to contribute to this project, you should see this list as a dev team direction:
-
-The dev team will build this section later.
+Here the dev team [todolist](TODO.md). You should consider this file to not submit something which go against the dev team work.
 
 ## What could be improved ?
 

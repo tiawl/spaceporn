@@ -60,7 +60,8 @@ If **spaceporn** crashed, you can open an issue with your OS config (OS and Wind
 
 ## Contributing
 
-Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on the process for submitting pull requests.
+The dev team vill be very grateful for anybody wanting to contribute anything. Here are
+the [instructions](CONTRIBUTING.md).
 
 ## Authors
 

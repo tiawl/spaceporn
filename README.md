@@ -4,21 +4,15 @@ This project is not ready to be used by others. The dev team is working on it. T
 
 ## DISCLAIMERS
 
-**Significant parts of what you will read on this repository are not written by the dev team. Even if there are already an MIT license here, those parts are also under their authors' license (if they choosed one). You can not use this code for a non-personal usage without to be aware of its authors' wishes.** Links in **Acknowledgments** section.
+**Significant parts of what you will read on this repository are not written by the dev team. Even if there are already an MIT license here, these parts are also under their authors' license (if they choosed one). You can not use this code for a non-personal usage without to be aware of its authors' wishes.** Links in **Acknowledgments** section.
 
 ## Usage
 
 The dev team will update this section later
 
-## Installing
+## Dependencies
 
-The dev team will update this section later. Do not follow steps described here.
-
-### Dependencies
-
-The dev team will update this section later. Do not follow steps described here.
-
-Before installing and building **spaceporn**, you have to install those dependencies:
+Before installing and building **spaceporn**, you have to install these dependencies:
 - a C compiler (GCC or clang),
 - pkg-config,
 - bash,
@@ -29,9 +23,9 @@ Before installing and building **spaceporn**, you have to install those dependen
 - OpenGL (**mesa-common-dev** and **libgl1-mesa-dev** Ubuntu packages),
 - GLX and X11 (**xorg-dev** and **libgl1-mesa-glx** Ubuntu packages),
 
-### Steps
+## Installing
 
-The dev team will update this section later. Do not follow steps described here.
+The dev team will update this section later. **Do not follow steps described here**.
 
 1. Clone the repository.
 2. `cd` into the directory.
@@ -60,8 +54,7 @@ If **spaceporn** crashed, you can open an issue with your OS config (OS and Wind
 
 ## Contributing
 
-The dev team vill be very grateful for anybody wanting to contribute anything. Here are
-the [instructions](CONTRIBUTING.md).
+The dev team will be very grateful for anybody wanting to contribute anything. Here are the [instructions](CONTRIBUTING.md).
 
 ## Authors
 

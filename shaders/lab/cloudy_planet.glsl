@@ -32,12 +32,20 @@ float smin( float a, float b, float k )
     return min(a, b) - h*h*0.25/k;
 }
 
+vec2 spherify(vec2 uv, vec2 center, float radius)
+{
+  vec2 centered = (uv - center) * 2.;
+  float z = sqrt(radius * radius * 4. - dot(centered.xy, centered.xy));
+  vec2 sphere = centered / (z + 1.0);
+  return sphere * 0.5 + 0.5;
+}
+
 float circles( vec2 i, vec2 f, vec2 p, float r)
 {
    float rad = hash(i+p, 2u) * r;
    vec2 h = vec2(hash(i+p, 89u), hash(i+p, 52u));
    vec2 a = vec2(hash(i+p, 25u), hash(i+p+.5, 215u));
-   a = .3*cos(5.*(a.x-.5)*iTime +6.3*a.y +vec2(0,11));
+   a = .3*cos(5.*(a.x-.5)*iTime*0.2 +6.3*a.y +vec2(0,11));
    p += .1+.8*h -f + a;
    return length(p) - rad; 
 }
@@ -89,7 +97,7 @@ float sdFbm( vec2 p, float d )
 
 float swirl( vec2 p)
 {
-   float n = sdFbm(p + vec2(iTime *0.5, 0.), 1.);
+   float n = sdFbm(p + vec2(iTime *0.2, 0.), 1.);
 	
    float d = smin(1., n, 3.2);
 
@@ -114,6 +122,10 @@ void mainImage( out vec4 O, vec2 u )
 
         U = floor(U*pix) / pix;
             bool dith = mod(U.x + U.y, 2.0 / pix) <= .5 / pix;
+            vec2 mo = iMouse.xy / R;
+            float lratio = 1. / sqrt(1.);
+            
+            U = spherify(U, sc * R / (2. * R.y), 0.425);
 
     O-=O;
     float r = length(U), y, s =8.*sc;      // s: swirls size
@@ -134,18 +146,20 @@ void mainImage( out vec4 O, vec2 u )
         dist2seed;
         F  =   R( F-D, y*smoothstep(.5,0.,r) ) + D; P = F+I;
      }
-
     U = P/s;                                    // surface coordinates
     float g = -swirl(U*10.*sc);
     //O = vec4(vec3(1.-g), 1.);return;
     //float sm = floor( noise(U*(1./sc), 15u)*sqrt(sqrt(max(g, 0.05))) * 16.)/16. *1.5;
     //O = vec4(vec3(sm), 1.);return;
-    float sm = noise(U*(1./sc), 15u)*sqrt(sqrt(max(g, 0.025))) * 8.*1.5;
-    if (dith)
-    {
-      sm *= .95;
-    }
-    sm = floor(sm);
+    
+  
+    float sm = sqrt(sqrt(max(g, 0.025))) * 12.;
+    
+    float d_light = distance(U, vec2(mo)) * lratio;
+    float light_b = sqrt(0.8 - (d_light + (noise(U*15., 15u) - 0.5) * 0.2));
+    sm = max(dith ? 0.95 * sm * light_b : sm * light_b, dith ? 0.75*(sm-8.5) : sm-8.5);
+
+    sm = floor(sm)+1.;
     float hu = radians(3.1415926*2.*(5.5+sm*0.5)), sa, br;
     if (sm < 2.5)
     {

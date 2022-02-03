@@ -39,6 +39,7 @@ LOW PRIORITY:
 - use domain warping for moon craters
 - dry planet
 - lava planet
+- cloudy planet
 - dark planet
 - galaxy
 - dark hole (with event horizon animation)

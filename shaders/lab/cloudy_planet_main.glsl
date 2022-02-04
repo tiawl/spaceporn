@@ -1,3 +1,7 @@
+// Image
+// iChannel0 = BufferA
+uint seed;
+
 uvec3 pcg3d(uvec3 v)
 {
   v = v * 1664525u + 1013904223u;
@@ -40,11 +44,11 @@ vec2 spherify(vec2 uv, vec2 center, float radius)
   return sphere * 0.5 + 0.5;
 }
 
-float circles( vec2 i, vec2 f, vec2 p, float r)
+float circles( vec2 i, vec2 f, vec2 p, float r, uint s)
 {
-   float rad = hash(i+p, 2u) * r;
-   vec2 h = vec2(hash(i+p, 89u), hash(i+p, 52u));
-   vec2 a = vec2(hash(i+p, 25u), hash(i+p+.5, 215u));
+   float rad = hash(i+p, s + 2u) * r;
+   vec2 h = vec2(hash(i+p, s + 89u), hash(i+p, s + 52u));
+   vec2 a = vec2(hash(i+p, s + 25u), hash(i+p+.5, s + 215u));
    a = .3*cos(5.*(a.x-.5)*iTime*0.2 +6.3*a.y +vec2(0,11));
    p += .1+.8*h -f + a;
    return length(p) - rad; 
@@ -64,7 +68,7 @@ float noise(vec2 coord, uint noise_seed)
   return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
 }
 
-float sdBase( vec2 p, float r)
+float sdBase( vec2 p, float r, uint s)
 {
    vec2 i = vec2(floor(p));
    vec2 f =      fract(p);
@@ -72,19 +76,19 @@ float sdBase( vec2 p, float r)
    float d = 1e9;
    for( int k=0; k<9; k++) {   
       p = vec2(k%3,k/3)-1.;
-      d = smin(d, circles(i, f, p, r), 0.3);
+      d = smin(d, circles(i, f, p, r, s), 0.3);
    }
    return d;
 }
 
-float sdFbm( vec2 p, float d )
+float sdFbm( vec2 p, float d, uint se)
 {
    float s = 1.;
    int o = 2;
    for( int i=0; i<o; i++ )
    {
        // evaluate new octave
-       float n = s*(sdBase(p, .5));
+       float n = s*(sdBase(p, .5, se));
 	
        // add
        d = smin(d, n, 0.3*s);
@@ -95,16 +99,15 @@ float sdFbm( vec2 p, float d )
    return d;
 }
 
-float swirl( vec2 p)
+float swirl( vec2 p, uint s)
 {
-   float n = sdFbm(p + vec2(iTime *0.2, 0.), 1.);
+   float n = sdFbm(p + vec2(iTime *0.2, 0.), 1., s);
 	
    float d = smin(1., n, 3.2);
 
    return d;
 }
 
-#define H(p)       fract(sin((p)*mat2(246.1, 113.5, 271.9, 124.6 ))*43758.5453123)
 #define R(p,a)   (p)*mat2( cos(a),-sin(a),sin(a),cos(a) )
 
 vec3 hsv2rgb( in vec3 c )
@@ -141,7 +144,9 @@ vec4 stars(vec2 uv)
 
 void mainImage( out vec4 O, vec2 u )
 {
-     float sc = 1.; float pix = 100.;
+    seed = uint(round(texelFetch( iChannel0, ivec2(u), 0 ).x));
+
+    float sc = 1.; float pix = 100.;
     vec2 R = iResolution.xy,
          U = sc*u / R.y;
 
@@ -173,12 +178,12 @@ void mainImage( out vec4 O, vec2 u )
     P-=P;
     for ( k = 0; k < 9; k++) {                 // visit neighbor cells to find closest seed point
         D = vec2( k%3, k/3 ) -1.;              /* cell offset         */    \
-        D += H(I+D);                        /* random seed point   */    \
+        D += hash(I+D, seed+222u);                        /* random seed point   */    \
         r = length(F-D); 
         F  =   R( F-D, y*smoothstep(.5,0.,r) ) + D; P = F+I;
      }
     U = P/s;                                    // surface coordinates
-    float g = -swirl(U*10.*sc);
+    float g = -swirl(U*10.*sc, seed + 151u);
   
     float sm = sqrt(sqrt(max(g, 0.025))) * 12.;
     

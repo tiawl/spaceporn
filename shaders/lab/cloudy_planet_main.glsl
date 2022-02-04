@@ -1,6 +1,7 @@
-// Image
 // iChannel0 = BufferA
+
 uint seed;
+uint col_seed;
 
 uvec3 pcg3d(uvec3 v)
 {
@@ -49,7 +50,7 @@ float circles( vec2 i, vec2 f, vec2 p, float r, uint s)
    float rad = hash(i+p, s + 2u) * r;
    vec2 h = vec2(hash(i+p, s + 89u), hash(i+p, s + 52u));
    vec2 a = vec2(hash(i+p, s + 25u), hash(i+p+.5, s + 215u));
-   a = .3*cos(5.*(a.x-.5)*iTime*0.2 +6.3*a.y +vec2(0,11));
+   a = .3*cos(5.*(a.x-.5)*iTime*0.5 +6.3*a.y +vec2(0,11));
    p += .1+.8*h -f + a;
    return length(p) - rad; 
 }
@@ -134,8 +135,8 @@ vec4 stars(vec2 uv)
   if (starcolor.x > 0.3)
   {
     float brighness_variance = max(0.15, hash(uv, 94u) / 2.0f);
-    return starcolor + vec4(abs(sin((/*iTime +*/ hash(uv, 94u)) *
-      (hash(uv, 95u) + 1.)/* * MAX_RATE*/)) * brighness_variance
+    return starcolor + vec4(abs(sin((iTime*10. + hash(uv, 94u)) *
+      (hash(uv, 95u) + 1.))) * brighness_variance
       - (brighness_variance / 2.));
   } else {
     return vec4(0.);
@@ -144,20 +145,15 @@ vec4 stars(vec2 uv)
 
 void mainImage( out vec4 O, vec2 u )
 {
-    seed = uint(round(texelFetch( iChannel0, ivec2(u), 0 ).x));
+    seed = uint(round(max(0., texelFetch( iChannel0, ivec2(u), 0 ).x)));
+    col_seed = uint(round(max(0., texelFetch( iChannel0, ivec2(u), 0 ).z)));
 
-    float sc = 1.; float pix = 100.;
+    float pix = 100.;
     vec2 R = iResolution.xy,
-         U = sc*u / R.y;
+         U = u / R.y;
 
-        U = floor(U*pix) / pix;
-        vec2 bU = U;
-            bool dith = mod(U.x + U.y, 2.0 / pix) <= .5 / pix;
-            vec2 mo = iMouse.xy / R;
-            float lratio = 1.;
-            
-            U = spherify(U, sc * R / (2. * R.y), 0.425);
-    if (distance(bU, sc * R / (2. * R.y)) > 0.425)
+    U = floor(U*pix) / pix;
+    if (distance(U, R / (2. * R.y)) > 0.425)
     {
         vec2 coord = pix *u/R.y;
         float sta = stars(coord).x*noise(coord * 0.1, 182u);
@@ -165,36 +161,51 @@ void mainImage( out vec4 O, vec2 u )
             sta * 1.5 * noise(coord * 0.025, 52u),
             sta*3., 1.); return;
     }
+    bool dith = mod(U.x + U.y, 2.0 / pix) <= .5 / pix;
+    vec2 mo = iMouse.xy / R;
+    float lratio = 1.;
+            
+    U = spherify(U, R / (2. * R.y), 0.425);
 
     O-=O;
-    float r = length(U), y, s =8.*sc;      // s: swirls size
+    U += vec2(iTime *0.02, 0.);
+    float r = length(U), y, s =.02;      // s: swirls size
     int k;
 
-    vec2 P = s*U, I,F, H,D,A;
+    vec2 P = U * s * R.y, I,F, H,D,A;
          F = abs(fract(P+.5)-.5); y = min(F.x,F.y); O += smoothstep(12./R.y,0.,y);
-         I = floor(P), F = fract(P);           // coords in 2D grid
+         I = floor(P), F = fract(P); 
     float d = 4.;
     y = d*cos(d*y);
     P-=P;
-    for ( k = 0; k < 9; k++) {                 // visit neighbor cells to find closest seed point
-        D = vec2( k%3, k/3 ) -1.;              /* cell offset         */    \
-        D += hash(I+D, seed+222u);                        /* random seed point   */    \
+    for ( k = 0; k < 9; k++)
+    {
+        D = vec2( k%3, k/3 ) -1.;
+        D += hash(I+D, seed+222u);
         r = length(F-D); 
         F  =   R( F-D, y*smoothstep(.5,0.,r) ) + D; P = F+I;
      }
-    U = P/s;                                    // surface coordinates
-    float g = -swirl(U*10.*sc, seed + 151u);
+    U = P/(s * R.y);
+    float g = -swirl(U*10., seed + 151u);
+    U -= vec2(iTime *0.02, 0.);
   
     float sm = sqrt(sqrt(max(g, 0.025))) * 12.;
     
     float d_light = distance(U, vec2(mo)) * lratio;
-    float light_b = 0.8 - (d_light + (noise(U*15., 15u) - 0.5) * 0.2);
+    float light_b = 0.8 - (d_light + (noise(U*15., seed + 15u) - 0.5) * 0.2);
     bool roc = light_b < 0.;
     light_b = roc ? max(0.8 - abs(light_b), 0.) : sqrt(light_b);
     sm = dith ? sqrt(sqrt(sqrt(light_b))) * sm * light_b : sm * light_b;
     
     sm = roc ? max(0., sm - mod(sm, 0.5) - 5.5): sm - mod(sm, sqrt(sqrt(light_b)))+1.;
-    float hu = radians(3.1415926*2.*(5.5+sm*0.5)), sa, br;
+    float hu, sa, br;
+    if (col_seed < 1u)
+    {
+        hu = radians(3.1415926*2.*(5.5+sm*0.5));
+    } else {
+        hu = radians(3.1415926*2.*(9.*hash(vec2(1.), col_seed)
+          + sm * (hash(vec2(10.), col_seed+5u) * 3. - 1.5)));
+    }
     if (sm < 2.5)
     {
         sa = 0.2 + 0.075 * sm;

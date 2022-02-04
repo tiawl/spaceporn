@@ -114,6 +114,31 @@ vec3 hsv2rgb( in vec3 c )
 	return c.z * mix( vec3(1.0), rgb, c.y);
 }
 
+vec3 nrand3(vec2 co)
+{
+  float a = hash(co, 98u);
+  float b = hash(co, 99u);
+  float c = mix(a, b, 0.5);
+  return vec3(c);
+}
+
+vec4 stars(vec2 uv)
+{
+  vec3 rnd = nrand3(uv);
+  float r = rnd.y;
+  vec4 starcolor = vec4(r*r*r*r*r);
+
+  if (starcolor.x > 0.3)
+  {
+    float brighness_variance = max(0.15, hash(uv, 94u) / 2.0f);
+    return starcolor + vec4(abs(sin((/*iTime +*/ hash(uv, 94u)) *
+      (hash(uv, 95u) + 1.)/* * MAX_RATE*/)) * brighness_variance
+      - (brighness_variance / 2.));
+  } else {
+    return vec4(0.);
+  }
+}
+
 void mainImage( out vec4 O, vec2 u )
 {
      float sc = 1.; float pix = 100.;
@@ -121,11 +146,20 @@ void mainImage( out vec4 O, vec2 u )
          U = sc*u / R.y;
 
         U = floor(U*pix) / pix;
+        vec2 bU = U;
             bool dith = mod(U.x + U.y, 2.0 / pix) <= .5 / pix;
             vec2 mo = iMouse.xy / R;
-            float lratio = 1. / sqrt(1.);
+            float lratio = 1.;
             
             U = spherify(U, sc * R / (2. * R.y), 0.425);
+    if (distance(bU, sc * R / (2. * R.y)) > 0.425)
+    {
+        vec2 coord = pix *u/R.y;
+        float sta = stars(coord).x*noise(coord * 0.1, 182u);
+        O = vec4(2. * sta * noise(coord * 0.025, 47u),
+            sta * 1.5 * noise(coord * 0.025, 52u),
+            sta*3., 1.); return;
+    }
 
     O-=O;
     float r = length(U), y, s =8.*sc;      // s: swirls size
@@ -137,29 +171,24 @@ void mainImage( out vec4 O, vec2 u )
     float d = 4.;
     y = d*cos(d*y);
     P-=P;
-#define dist2seed  \
+    for ( k = 0; k < 9; k++) {                 // visit neighbor cells to find closest seed point
         D = vec2( k%3, k/3 ) -1.;              /* cell offset         */    \
         D += H(I+D);                        /* random seed point   */    \
-        r = length(F-D);                       /* distance to seed    */
-
-    for ( k = 0; k < 9; k++) {                 // visit neighbor cells to find closest seed point
-        dist2seed;
+        r = length(F-D); 
         F  =   R( F-D, y*smoothstep(.5,0.,r) ) + D; P = F+I;
      }
     U = P/s;                                    // surface coordinates
     float g = -swirl(U*10.*sc);
-    //O = vec4(vec3(1.-g), 1.);return;
-    //float sm = floor( noise(U*(1./sc), 15u)*sqrt(sqrt(max(g, 0.05))) * 16.)/16. *1.5;
-    //O = vec4(vec3(sm), 1.);return;
-    
   
     float sm = sqrt(sqrt(max(g, 0.025))) * 12.;
     
     float d_light = distance(U, vec2(mo)) * lratio;
-    float light_b = sqrt(0.8 - (d_light + (noise(U*15., 15u) - 0.5) * 0.2));
-    sm = max(dith ? 0.95 * sm * light_b : sm * light_b, dith ? 0.75*(sm-8.5) : sm-8.5);
-
-    sm = floor(sm)+1.;
+    float light_b = 0.8 - (d_light + (noise(U*15., 15u) - 0.5) * 0.2);
+    bool roc = light_b < 0.;
+    light_b = roc ? max(0.8 - abs(light_b), 0.) : sqrt(light_b);
+    sm = dith ? sqrt(sqrt(sqrt(light_b))) * sm * light_b : sm * light_b;
+    
+    sm = roc ? max(0., sm - mod(sm, 0.5) - 5.5): sm - mod(sm, sqrt(sqrt(light_b)))+1.;
     float hu = radians(3.1415926*2.*(5.5+sm*0.5)), sa, br;
     if (sm < 2.5)
     {

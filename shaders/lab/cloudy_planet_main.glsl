@@ -105,9 +105,9 @@ float circles( vec2 p, float r, uint s)
 }
 
 // https://iquilezles.org/www/articles/fbmsdf/fbmsdf.htm
-float sdFbm( vec2 p, float d, uint se)
+float fbmCircles(vec2 p, uint se)
 {
-   float s = 1.;
+   float s = 1., d = 1.;
    int o = 2;
    for( int i=0; i<o; i++ )
    {
@@ -121,38 +121,51 @@ float sdFbm( vec2 p, float d, uint se)
    return d;
 }
 
-// original author warns against discontinuities that I did not correct
-// (reason -> I do not have enough mathematical knowledge):
+// original author warned against discontinuities that I did not fixed
+// (reason -> I do not have mathematical knowledge for this job):
 // https://www.shadertoy.com/view/fsKSWD
-float swirls( vec2 p, out vec4 O, uint se)
+vec2 swirls(vec2 p, out vec4 O, uint se, float sz, float ro)
 {
-    p += vec2(iTime *0.02, 0.);
-    float r = length(p);
-    float s = .02;      // swirls size
+    
+    float r;
+    float s = .012 * sz;      // swirls size
 
-    vec2 P = p * s * R.y;
-    vec2 F = abs(fract(P + .5) - .5);
+    p = p * s * R.y;
+    vec2 F = abs(fract(p + .5) - .5);
     float y = min(F.x, F.y);
     O += smoothstep(12. / R.y, 0., y);
-    vec2 I = floor(P);
-    F = fract(P);
+    vec2 I = floor(p);
+    F = fract(p);
     
-    float d = 4.;
+    float d = 3.*ro;
     y = d * cos(d * y);
-    P -= P;
+    p -= p;
     vec2 D;
     int k;
     for (k = 0; k < 9; k++)
     {
         D = vec2(k % 3, k / 3) - 1.;
-        D += hash(I + D, seed + 222u);
-        r = length(F - D); 
+        D += hash(I + D, se + 222u);
+        r = length(F - D) * (1. + hash(I + D, se + 72u)); 
         F = rotation(F - D, y * smoothstep(.5, 0., r)) + D;
-        P = F + I;
+        p = F + I;
      }
-    p = P / (s * R.y);
-   float n = sdFbm(p * 10. + vec2(iTime * 0.2, 0.), 1., se);
-   return -1. * smin(1., n, 3.2);
+    return p / (s * R.y);
+}
+
+vec2 fbmSwirls(vec2 p, out vec4 O, uint se)
+{
+   uint o = 5u;
+   O -= O;
+   p += vec2(iTime * 0.02, 0.);
+   float sz = 1., ro = 1.;
+   for( uint i=0u; i<o; i++ )
+   {
+       p = swirls(p, O, se + i, sz, ro);
+       sz *= 1.2;
+       ro *= 0.8;
+   }
+   return p;
 }
 
 vec3 hsv2rgb( in vec3 c )
@@ -188,7 +201,7 @@ vec3 planet_color(float sm)
     } else if (sm < 6.5) {
         br = 0.6 + 0.1 * (sm - 3.);
     } else {
-        br = 0.9 + 0.05 * (sm - 6.);
+        br = 1.;
     }
     return hsv2rgb(vec3(hu, sa, br));
 }
@@ -240,18 +253,18 @@ void mainImage( out vec4 O, vec2 u )
     bool dith = mod(bU.x + U.y, 2./pix) < 1./pix;
             
     U = spherify(U, R / (2. * R.y), 0.425);
-    O -= O;
-    float g = swirls(U, O, seed + 151u);
+    vec2 aU = fbmSwirls(U, O, seed + 151u);
+    float g = fbmCircles(aU * 10. + vec2(iTime * 0.2, 0.), seed + 151u);
+    g = -1. * smin(1., g, 3.2);
   
     float sm = sqrt(sqrt(max(g, 0.025))) * 12.;
     
     float d_light = distance(U, iMouse.xy / R);
-    float light_b = 0.8 - (d_light + (noise(U*15., seed + 15u) - 0.5) * 0.2);
-    bool roc = light_b < 0.;
-    light_b = roc ? max(0.8 - abs(light_b), 0.) : sqrt(light_b);
-    sm = dith ? sqrt(sqrt(sqrt(light_b))) * sm * light_b : sm * light_b;
+    float light_b = max(0.8 - d_light + (noise(U*15., seed + 15u) - 0.5) * 0.2, 0.05);
+    light_b = sqrt(light_b);
+    sm = dith ? 0.95 * sm * light_b : sm * light_b;
     
-    sm = roc ? max(0., sm - mod(sm, 0.5) - 5.5): sm - mod(sm, sqrt(sqrt(light_b)))+1.;
+    sm = sm - mod(sm, sqrt(sqrt(light_b))) + 1.;
     
     O = vec4(planet_color(sm), 1.);
 }

@@ -1,6 +1,6 @@
 # spaceporn
 
-This project is not ready to be used by others. The dev team is working on it. This is how this project will be resumed: a space wallpaper generator
+This project is not ready to be used by others. The dev team is working on it. This is how this project will be resumed: a pixelized space wallpaper generator
 
 ## DISCLAIMERS
 

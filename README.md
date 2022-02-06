@@ -2,10 +2,6 @@
 
 This project is not ready to be used by others. The dev team is working on it. This is how this project will be resumed: a pixelized space wallpaper generator
 
-## DISCLAIMERS
-
-**Significant parts of what you will read on this repository are not written by the dev team. Even if there are already an MIT license here, these parts are also under their authors' license (if they choosed one). You can not use this code for a non-personal usage without to be aware of its authors' wishes.** Links in **Acknowledgments** section.
-
 ## Usage
 
 The dev team will update this section later
@@ -14,9 +10,9 @@ The dev team will update this section later
 
 Before installing and building **spaceporn**, you have to install these dependencies:
 - a C compiler (GCC or clang),
-- pkg-config,
 - bash,
 - automake tools (**make**, **autoconf** and **automake** Ubuntu packages)
+- pkg-config (**pkg-config** Ubuntu package),
 - libpng (**libpng-dev** Ubuntu package),
 - Systemd (**libsystemd-dev** Ubuntu package),
 - GLEW (**libglew-dev** Ubuntu package) --> will be replaced by GLAD,
@@ -58,7 +54,7 @@ The dev team will be very grateful for anybody wanting to contribute anything. H
 
 ## Authors
 
-- **Pablo Tomas** - *pabtomas*
+- **Pablo Tomas** - *pabtomas* / *trapped_in_a_while_loop* / *tiawl*
 
 See also the list of [contributors](https://github.com/pabtomas/spaceporn/contributors) who participated in this project.
 
@@ -68,7 +64,7 @@ This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md
 
 ## Acknowledgments
 
-Without each one of these links (and their authors), this project will never be build:
+Without each one of these links and their authors, this project will never be build:
 - [Github - Deep-Fold's PixelSpace][1] and [Github - Deep-Fold's PixelPlanets][2]
 - [Slynyrd's blog][3]
 - [Inigo Quilez's articles][4]
@@ -86,6 +82,7 @@ Without each one of these links (and their authors), this project will never be 
   - [Theldus' anipaper][17]
   - [zaranthus' Livepaper][18]
 - [Daniel Linssen's planetarium][19]
+- Github which host this project.
 
 [1]:https://github.com/Deep-Fold/PixelSpace
 [2]:https://github.com/Deep-Fold/PixelPlanets
@@ -106,3 +103,8 @@ Without each one of these links (and their authors), this project will never be 
 [17]:https://github.com/Theldus/anipaper
 [18]:https://github.com/zuranthus/LivePaper
 [19]:https://managore.itch.io/planetarium
+
+## Related
+
+Here a list of shared shaders linked to this project if you want to play with:
+- [swirl planet](https://www.shadertoy.com/view/NdjyDV)

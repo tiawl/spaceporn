@@ -1,7 +1,7 @@
 # include "hash.glsl"
 # include "pixelspace.glsl"
 
-vec4 polar(vec2 uv, Star star)
+float polar(vec2 uv, Star star)
 {
   star.brightness = 1. / star.brightness;
   vec2 A = star.center + vec2(-star.size, 0.);
@@ -36,7 +36,7 @@ vec4 polar(vec2 uv, Star star)
   ring = (sign(ring) < .5 ? 1. : 0.);
   color = max(color * 1.3, ring * 0.3);
 
-  return vec4(vec3(floor(color * PLANET_COLS) / PLANET_COLS), 1.);
+  return floor(color * PLANET_COLS) / PLANET_COLS;
 }
 
 float polarShape(Star bigstar, float pixel_res)

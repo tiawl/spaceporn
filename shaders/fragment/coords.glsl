@@ -5,7 +5,7 @@
 # include "planets.glsl"
 # include "stars.glsl"
 
-vec4 atlas_coords(vec2 UV)
+vec4 atlas_main(vec2 UV)
 {
   vec2 t = textureSize(atlas, 0).xy;
 
@@ -38,7 +38,7 @@ vec4 atlas_coords(vec2 UV)
   return col;
 }
 
-vec4 hash_coords(vec2 UV)
+vec4 hash_main(vec2 coords)
 {
   if (!motion)
   {
@@ -56,18 +56,25 @@ vec4 hash_coords(vec2 UV)
     time = fflags[3] / 50.;
   }
 
-  UV.x *= larger_res / shorter_res;
-  UV *= zoom;
+  vec2 UV = coords / shorter_res;
   UV += offset;
-  vec2 unzoomed_UV = UV / zoom;
-  float px_ratio = shorter_res / pixels;
+  UV = floor(UV * pixels) / pixels;
+  UV *= zoom;
+  //return stars(UV * pixels / zoom); DONE
+  return bigstars(10. * UV);
 
-  vec2 unzoomed_px = floor(unzoomed_UV * pixels) * px_ratio;
-  vec2 px = unzoomed_px * zoom;
-  vec2 uv = ((px / px_ratio) / zoom) / pixels;
-  bool dith = dither(1., uv, unzoomed_UV);
+//  UV.x *= larger_res / shorter_res;
+//  UV *= zoom;
+//  UV += offset;
+//  vec2 unzoomed_UV = UV / zoom;
+//  float px_ratio = shorter_res / pixels;
+//
+//  vec2 unzoomed_px = floor(unzoomed_UV * pixels) * px_ratio;
+//  vec2 px = unzoomed_px * zoom;
+//  vec2 uv = ((px / px_ratio) / zoom) / pixels;
+//  bool dith = dither(1., uv, unzoomed_UV);
 
-  vec4 col = nebulae(px, dith);//bigstars(unzoomed_px);
+//   vec4 col = bigstars(unzoomed_px);
 //   vec4 col = planets(px, dith);
 //   if (col.x <= -1.)
 //   {
@@ -75,5 +82,5 @@ vec4 hash_coords(vec2 UV)
 //       nebulae(px, dith)) * 0.8 * (sin(time * 2500.) * 0.015 + 1.)));
 //   }
 
-  return col;
+//   return col;
 }

@@ -4,12 +4,11 @@
 void main()
 {
   vec4 col = vec4(0.);
-  vec2 UV = gl_FragCoord.xy / resolution;
   if (precomputed)
   {
-    col = atlas_coords(UV);
+    col = atlas_main(gl_FragCoord.xy);
   } else {
-    col = hash_coords(UV);
+    col = hash_main(gl_FragCoord.xy);
   }
 
   gl_FragColor = col;

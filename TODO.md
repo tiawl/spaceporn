@@ -4,6 +4,9 @@ This is a list of tasks expressed by the dev team for the dev team. It is not in
 
 ## Project management
 
+MED PRIORITY:
+- use pushd/popd in bash scripts
+
 LOW PRIORITY:
 - run memory checks
 - run coverage checks
@@ -16,6 +19,7 @@ LOW PRIORITY:
 
 MED PRIORITY:
 - avoid usage of animated shader without generating textures atlas
+- zoom default value should be 1
 
 LOW PRIORITY:
 - add a flag to disable some planets/galaxy/darkhole/asteroids/bigstars
@@ -29,6 +33,7 @@ HIGH PRIORITY:
 
 MED PRIORITY:
 - Bigstars rework -> fix diamond star
+- use atlas textures
 - no equality between floating numbers
 - use 9 cells loop for circles
 - floor_multiple() really useful ???

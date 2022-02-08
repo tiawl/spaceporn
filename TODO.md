@@ -28,15 +28,16 @@ LOW PRIORITY:
 ## Shader files
 
 HIGH PRIORITY:
-- star clouds
-- swirl lines for big star repartition
-
-MED PRIORITY:
-- Bigstars rework -> fix diamond star
+- fixing coord system
+- Bigstars rework
 - use atlas textures
-- no equality between floating numbers
 - use 9 cells loop for circles
 - floor_multiple() really useful ???
+
+MED PRIORITY:
+- star clouds
+- star streams
+- no equality between floating numbers
 - avoid pow() usage
 
 LOW PRIORITY:
@@ -44,7 +45,7 @@ LOW PRIORITY:
 - use domain warping for moon craters
 - dry planet
 - lava planet
-- cloudy planet
+- swirl planet
 - dark planet
 - galaxy
 - dark hole (with event horizon animation)

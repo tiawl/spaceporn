@@ -60,8 +60,14 @@ vec4 hash_main(vec2 coords)
   UV += offset;
   UV = floor(UV * pixels) / pixels;
   UV *= zoom;
+  bool dith = dither(1., coords / shorter_res, UV / zoom);
   //return stars(UV * pixels / zoom); DONE
-  return bigstars(10. * UV);
+  if (dith)
+  {
+    return bigstars(UV / zoom) * vec4(1., 0., 0., 1.);
+  } else {
+    return bigstars(UV / zoom);
+  }
 
 //  UV.x *= larger_res / shorter_res;
 //  UV *= zoom;

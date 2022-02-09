@@ -33,6 +33,7 @@ HIGH PRIORITY:
 - use atlas textures
 - use 9 cells loop for circles
 - floor_multiple() really useful ???
+- replace uv by cooords
 
 MED PRIORITY:
 - star clouds
@@ -41,8 +42,11 @@ MED PRIORITY:
 - avoid pow() usage
 
 LOW PRIORITY:
+- parallalax
 - More parameters on different planets to add more diversity
 - use domain warping for moon craters
+- slynyrd moon
+- land planet with swirl clouds
 - dry planet
 - lava planet
 - swirl planet

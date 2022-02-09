@@ -61,45 +61,39 @@
 //     bigstar.shape = polarShape(bigstar, pixel_res);
 //   }
 
-float startest(vec2 coords, Star star)
-{
-
-  vec2 A = star.center + vec2(-star.size,  0.);
-  vec2 B = star.center + vec2( star.size,  0.);
-  vec2 C = star.center + vec2( 0.,         star.size);
-  vec2 D = star.center + vec2( 0.,        -star.size);
-
-  float depth = 1. / shorter_res;
-  float s1 = sdSegment(coords, A, B) - depth;
-  float s2 = sdSegment(coords, C, D) - depth;
-  float m = smin(s1, s2, star.size, 2u);
-
-  return m;
-}
-
 float calc_star(vec2 coords, vec2 o)
 {
+  float pixel_res = BIGSTARS_DENSITY / pixels;
+
+  vec2 i = floor(coords);
   vec2 f = fract(coords);
-  vec2 i = floor(coords) + o;
-  //i += hash(i, 0u);
+  vec2 center = i + o;
+  vec2 h = vec2(floor_multiple(hash(center, seed), pixel_res),
+    floor_multiple(hash(center, seed + 1u), pixel_res));
+  coords = o + h - f;
 
-  vec2 center = i;
-  float pixel_res =
-    (BIGSTARS_DENSITY * larger_res) / (shorter_res * pixels * 2.);
-  float size = 10. * pixel_res;
+  float rd_bigstar = 0.2;//min(floor(hash(center, seed) * STAR_TYPES), STAR_TYPES - 1.);
+  float size_hash = hash(center, seed + 1u);
+  size_hash *= size_hash;
+  size_hash *= size_hash;
+  size_hash *= size_hash;
+  float size = (min(floor(size_hash * 10.), 9.) + 7.) * pixel_res;
+  float ring_size = hash(center, seed + 3u) * 1.5;
+  ring_size = ((ring_size < 0.5) || (size / pixel_res < 12.) ? 0. : ring_size);
 
-  Star bigstar = Star(0., center, 0., size, 120., 1., 1., 2u, 2., 12.);
-  bigstar.shape = (hash(i, seed + 3u) + 2.) * bigstar.size / 5.4;
-  return startest(coords, bigstar);
+  Star bigstar = Star(rd_bigstar, center, 0., size, 120., 1., 1., 2u, 2.,
+    ring_size);
+  if (bigstar.type < 0.5)
+  {
+    bigstar.brightness = bigstar.size * (hash(center, seed + 7u) + 1.);
+    bool branch = hash(center, seed + 3u) > 0.5;
+    bigstar.shape = (hash(center, seed + 3u) + 2.) * bigstar.size / 5.4;
+    bigstar.shape *= branch ? 5. :
+      (hash(center, seed + 3u) > .5 ? 2. : 0.2);
+    bigstar.sharpness = branch ? 32u : 2u;
+    return diamond(coords, bigstar);
+  }
 
-//   float rd_bigstar = 0.2;//min(floor(hash(i, seed) * STAR_TYPES), STAR_TYPES - 1.);
-//   float size_hash = hash(i, seed + 1u);
-//   size_hash *= size_hash;
-//   size_hash *= size_hash;
-//   size_hash *= size_hash;
-//   float size = (min(floor(size_hash * 10.), 9.) + 7.) * pixel_res;
-//   float ring_size = hash(i, seed + 3u) * 1.5;
-//   ring_size = ((ring_size < 0.5) || (size / pixel_res < 12.) ? 0. : ring_size);
 //   uint sharpness = (size > 11.5 * pixel_res ?
 //     1u + uint(max(1., ceil(hash(i, seed + 6u) * 15.))) : 2u);
 
@@ -156,5 +150,6 @@ vec4 bigstars(vec2 coords)
     c = calc_star(coords, o);
     d = min(d, c);
   }
-  return vec4(vec3(sqrt(sqrt(max(-d, 0.))) * 12.), 1.);
+  return vec4(vec3(-d), 1.);
+  //return vec4(vec3(sqrt(sqrt(max(-d, 0.))) * 12.), 1.);
 }

@@ -1,29 +1,30 @@
 # include "hash.glsl"
 # include "pixelspace.glsl"
 
-float diamond(vec2 uv, Star star)
+float diamond(vec2 coords, Star star)
 {
+  float pixel_res = BIGSTARS_DENSITY / pixels;
+
   star.brightness = 1. / star.brightness;
-  vec2 A = star.center + vec2(-star.size,  0.);
-  vec2 B = star.center + vec2( star.size,  0.);
-  vec2 C = star.center + vec2( 0.,         star.size);
-  vec2 D = star.center + vec2( 0.,        -star.size);
+  vec2 A = vec2(-star.size,         0.);
+  vec2 B = vec2( star.size,         0.);
+  vec2 C = vec2(        0.,  star.size);
+  vec2 D = vec2(        0., -star.size);
 
   float depth = 1. / shorter_res;
-  float s1 = sdSegment(uv, A, B) - depth;
-  float s2 = sdSegment(uv, C, D) - depth;
+  float s1 = sdSegment(coords, A, B) - depth;
+  float s2 = sdSegment(coords, C, D) - depth;
   float m = smin(s1, s2, star.shape, star.sharpness);
 
-  float color = (sign(m) < .5 ? 1. : 0.);
+  float color = (sign(m) < .5 ? -1. : 0.);
   float ratio = 2. / (20. + star.brightness * star.brightness);
-  vec2 mirror_uv = vec2(abs(uv.x - star.center.x), abs(uv.y - star.center.y));
-  color *= 1.0 - ((hash(uv, seed) * ratio - ratio / 2.)
-    + (mirror_uv.x + mirror_uv.y) * (star.brightness / sqrt(star.size)));
+  color *= 1.0 - ((hash(star.center, seed) * ratio - ratio / 2.)
+    + (abs(coords.x) + abs(coords.y)) * star.brightness * 1.2);
 
-  float ring = opRing(uv - star.center, star.size * star.ring_size,
-    shorter_res / (2. * pixels));
-  ring = (sign(ring) < .5 ? 1. : 0.);
-  color = max(color * 1.3, ring * 0.3);
+  float ring = opRing(coords, star.size * star.ring_size,
+    pixel_res / 2.);
+  ring = (sign(ring) < .5 ? -1. : 0.);
+  color = min(color * 1.3, ring * 0.15);
 
   return floor(color * PLANET_COLS) / PLANET_COLS;
 }

@@ -23,7 +23,7 @@ int main(int argc, char** argv)
   uniform_values.animations = DEFAULT_ANIMATIONS;
   uniform_values.motion = DEFAULT_MOTION;
   uniform_values.palettes = DEFAULT_PALETTES;
-  uniform_values.seed = -1.;
+  uniform_values.seed = 1896025344.0000;//-1.;
   uniform_values.precomputed = false;
 
   Shaders shaders;

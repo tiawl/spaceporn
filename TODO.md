@@ -23,6 +23,7 @@ MED PRIORITY:
 
 LOW PRIORITY:
 - add a flag to disable some planets/galaxy/darkhole/asteroids/bigstars
+- add a flag to only generate PNG file with screen dimensions
 - use OpenMP for textures atlas generation
 
 ## Shader files

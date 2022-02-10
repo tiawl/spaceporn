@@ -70,28 +70,42 @@ float calc_star(vec2 coords, vec2 o)
   vec2 center = i + o;
   vec2 h = vec2(floor_multiple(hash(center, seed), pixel_res),
     floor_multiple(hash(center, seed + 1u), pixel_res));
-  coords = o + h - f;
+  coords = o /* + h */ - f;
 
-  float rd_bigstar = 0.2;//min(floor(hash(center, seed) * STAR_TYPES), STAR_TYPES - 1.);
-  float size_hash = hash(center, seed + 1u);
-  size_hash *= size_hash;
-  size_hash *= size_hash;
-  size_hash *= size_hash;
+  float rd_bigstar = 1.2;//min(floor(hash(center, seed + 2u) * STAR_TYPES), STAR_TYPES - 1.);
+  float size_hash = hash(center, seed + 3u);
+//   size_hash *= size_hash;
+//   size_hash *= size_hash;
+//   size_hash *= size_hash;
   float size = (min(floor(size_hash * 10.), 9.) + 7.) * pixel_res;
-  float ring_size = hash(center, seed + 3u) * 1.5;
+  float ring_size = hash(center, seed + 4u) * 1.5;
   ring_size = ((ring_size < 0.5) || (size / pixel_res < 12.) ? 0. : ring_size);
+  uint sharpness = (size > 11.5 * pixel_res ?
+    1u + uint(max(1., ceil(hash(center, seed + 5u) * 15.))) : 2u);
 
   Star bigstar = Star(rd_bigstar, center, 0., size, 120., 1., 1., 2u, 2.,
     ring_size);
   if (bigstar.type < 0.5)
   {
-    bigstar.brightness = bigstar.size * (hash(center, seed + 7u) + 1.);
-    bool branch = hash(center, seed + 3u) > 0.5;
-    bigstar.shape = (hash(center, seed + 3u) + 2.) * bigstar.size / 5.4;
+    bigstar.brightness = bigstar.size * (hash(center, seed + 6u) + 1.);
+    bool branch = hash(center, seed + 7u) > 0.5;
+    bigstar.shape = (hash(center, seed + 7u) + 2.) * bigstar.size / 5.4;
     bigstar.shape *= branch ? 5. :
-      (hash(center, seed + 3u) > .5 ? 2. : 0.2);
+      (hash(center, seed + 7u) > .5 ? 2. : 0.2);
     bigstar.sharpness = branch ? 32u : 2u;
     return diamond(coords, bigstar);
+  } else if (bigstar.type < 1.5) {
+    bigstar.diag = 2. + hash(center, seed + 6u) * 3.;
+    bigstar.diag = ((bigstar.diag < 2.1) && (bigstar.sharpness == 2u) &&
+      (((bigstar.size < 15.5 * pixel_res) && (bigstar.size > 14.5 * pixel_res)) ||
+      ((bigstar.size < 13.5 * pixel_res) && (bigstar.size > 12.5 * pixel_res)) ||
+      ((bigstar.size < 11.5 * pixel_res) && (bigstar.size > 10.5 * pixel_res))) ?
+        1.5 : bigstar.diag);
+    bigstar.brightness = bigstar.size * (hash(center, seed + 7u) + 1.);
+    bigstar.brightness *= (bigstar.diag < 1.6 ?
+      1.8 : ((hash(center, seed + 8u) + 1.) / 2.));
+    bigstar.shape = novaShape(bigstar, pixel_res);
+    return nova(coords, bigstar);
   }
 
 //   uint sharpness = (size > 11.5 * pixel_res ?

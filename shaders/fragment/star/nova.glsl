@@ -27,51 +27,56 @@ float nova(vec2 coords, Star star)
 
   float color = (sign(m) < .5 ? -1. : 0.);
   float ratio = 2. / (20. + star.brightness * star.brightness);
-  color *= 1.0 - ((hash(star.center + coords, seed) * ratio - ratio / 2.)
-    + (abs(coords.x) + abs(coords.y)) * star.brightness);
+  color *= 1.0 - ((hash((star.center + coords) * pixels, seed) * ratio
+    - ratio / 2.) + (abs(coords.x) + abs(coords.y) +
+      (star.diag < 1.6 ? 0. : 0.2)) * star.brightness);
 
   float ring = opRing(coords, star.size * star.ring_size,
     pixel_res / 2.);
   ring = (sign(ring) < .5 ? -1. : 0.);
-  color = min(color * 1.3, ring * 0.15);
+  color = min(color * (star.diag < 1.6 ? 0.9 : 1.3), ring * 0.15);
 
   return floor(color * PLANET_COLS) / PLANET_COLS;
 }
 
-float novaShape(Star bigstar, float pixel_res)
+float novaShape(Star star, float pixel_res)
 {
   float shape;
-  if (bigstar.sharpness > 6u)
+  if (star.sharpness > 6u)
   {
-    if (bigstar.sharpness == 7u)
-    {
+    if (star.sharpness == 7u) {
+      shape = 3. * pixel_res;
+    } else if (star.sharpness == 8u) {
       shape = 3.18 * pixel_res;
-    } else if ((bigstar.sharpness >= 8u) && (bigstar.sharpness <= 10u)) {
+    } else if ((star.sharpness >= 9u) && (star.sharpness <= 10u)) {
       shape = 3.372 * pixel_res;
     } else {
-      float ratio = 0.063;
-      ratio = (bigstar.sharpness < 12u ? ratio * 0.5 : ratio);
-      ratio = (bigstar.sharpness < 15u ? ratio * 0.75 : ratio);
-      ratio = (bigstar.sharpness > 13u ? ratio + 0.013 : ratio);
-      ratio = (bigstar.sharpness > 15u ? ratio + 0.019 : ratio);
-      shape = 0.219 + ratio * hash(bigstar.center, seed + 4u);
-      shape *= bigstar.size;
-      shape *= (bigstar.size / pixel_res < float(bigstar.sharpness) ?
-        1. + ((float(bigstar.sharpness) - bigstar.size / pixel_res) / 20.) : 1.);
+      float ratio = 0.053;
+      ratio = (star.sharpness < 12u ? ratio * 0.5 : ratio);
+      ratio = (star.sharpness < 15u ? ratio * 0.75 : ratio);
+      ratio = (star.sharpness > 13u ? ratio + 0.013 : ratio);
+      ratio = (star.sharpness > 15u ? ratio + 0.019 : ratio);
+      shape = 0.219 + ratio * (hash(star.center, seed + 9u) * 0.5 + 0.5);
+      shape *= star.size;
+      shape *= (star.size / pixel_res < float(star.sharpness) ?
+        1. + ((float(star.sharpness) - star.size / pixel_res) / 20.) : 1.);
     }
-  } else if (bigstar.sharpness == 6u) {
-    shape = 0.136 * bigstar.size * hash(bigstar.center, seed + 4u);
-  } else if (bigstar.sharpness == 3u) {
-    shape = 0.094 * bigstar.size * hash(bigstar.center, seed + 4u);
-  } else if (bigstar.sharpness == 2u) {
-    if (bigstar.diag < 1.6)
+  } else if (star.sharpness == 2u) {
+    if (star.diag < 1.6)
     {
-      shape = 0.281 * bigstar.size;
+      if (star.size / pixel_res < 12.)
+      {
+        shape = 0.266 * star.size;
+      } else if (star.size / pixel_res > 14.) {
+        shape = 0.242 * star.size;
+      } else {
+        shape = 0.31 * star.size;
+      }
     } else {
-      shape = 0.063 * bigstar.size * hash(bigstar.center, seed + 4u);
+      shape = 0.0001;
     }
   } else {
-    shape = 0.125 * bigstar.size * hash(bigstar.center, seed + 4u);
+    shape = 0.0001;
   }
   shape *= 2.73;
   return shape;

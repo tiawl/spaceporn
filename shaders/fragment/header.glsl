@@ -40,7 +40,6 @@ struct Star
 {
   float type;
   vec2 center;
-  float rotation;
   float size;
   float time_speed;
   float brightness;
@@ -68,10 +67,14 @@ bool dither(float dither_size, vec2 uv1, vec2 uv2)
 float floor_multiple(float numToRound, float base)
 {
   float modulo = mod(numToRound, base);
-  if (modulo == 0.)
-  {
-    return numToRound;
-  } else {
-    return numToRound - modulo;
-  }
+  return (sign(modulo) < 0.5 ? numToRound : numToRound - modulo);
+}
+
+vec2 rotate(vec2 vec, vec2 center, float angle)
+{
+  vec -= center;
+  vec *= mat2(cos(angle), -sin(angle),
+              sin(angle),  cos(angle));
+  vec += center;
+  return vec;
 }

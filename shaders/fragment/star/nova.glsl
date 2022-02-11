@@ -6,6 +6,7 @@ float nova(vec2 coords, Star star)
   float pixel_res = BIGSTARS_DENSITY / pixels;
 
   star.brightness = 1. / star.brightness;
+
   vec2 A = vec2(            -star.size,                     0.);
   vec2 B = vec2(             star.size,                     0.);
   vec2 C = vec2(                    0.,              star.size);
@@ -29,7 +30,7 @@ float nova(vec2 coords, Star star)
   float ratio = 2. / (20. + star.brightness * star.brightness);
   color *= 1.0 - ((hash((star.center + coords) * pixels, seed) * ratio
     - ratio / 2.) + (abs(coords.x) + abs(coords.y) +
-      (star.diag < 1.6 ? 0. : 0.2)) * star.brightness);
+      (star.diag < 1.6 ? 0. : 0.)) * star.brightness);
 
   float ring = opRing(coords, star.size * star.ring_size,
     pixel_res / 2.);

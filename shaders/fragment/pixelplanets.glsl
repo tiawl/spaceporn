@@ -71,14 +71,6 @@ float ppcloud_alpha(float size, vec2 sizeModifier, float time_speed, vec2 uv,
   return fbm;
 }
 
-vec2 rotate(vec2 vec, vec2 center, float angle)
-{
-  vec -= center;
-  vec *= mat2(vec2(cos(angle), -sin(angle)), vec2(sin(angle), cos(angle)));
-  vec += center;
-  return vec;
-}
-
 vec2 spherify(vec2 uv, vec2 center, float radius)
 {
   vec2 centered = (uv - center) * 2.;

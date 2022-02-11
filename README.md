@@ -13,11 +13,12 @@ Before installing and building **spaceporn**, you have to install these dependen
 - bash,
 - automake tools (**make**, **autoconf** and **automake** Ubuntu packages)
 - pkg-config (**pkg-config** Ubuntu package),
-- libpng (**libpng-dev** Ubuntu package),
-- Systemd (**libsystemd-dev** Ubuntu package),
-- GLEW (**libglew-dev** Ubuntu package) --> will be replaced by GLAD,
-- OpenGL (**mesa-common-dev** and **libgl1-mesa-dev** Ubuntu packages),
-- GLX and X11 (**xorg-dev** and **libgl1-mesa-glx** Ubuntu packages),
+- png development library (**libpng-dev** Ubuntu package),
+- Systemd development library (**libsystemd-dev** Ubuntu package),
+- GLEW development library (**libglew-dev** Ubuntu package) --> will be replaced by GLAD,
+- OpenGL API (**mesa-common-dev** and **libgl1-mesa-dev** Ubuntu packages),
+- X11 development libraries (**xorg-dev** and **libx11-dev** Ubuntu packages),
+- GLX environment execution for OpenGL API (**libgl1-mesa-glx** Ubuntu package),
 
 ## Installing
 

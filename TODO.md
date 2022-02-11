@@ -1,6 +1,6 @@
 # TODO
 
-This is a list of tasks expressed by the dev team for the dev team. It is not intented to be read by others so the tasks are not detailed. But if you want to contribute without going against the dev team work and do not really know what a task is talking about: open an issue.
+This is a list of tasks expressed by the dev team for the dev team. It is not intented to be read by others so the tasks are not detailed. But if you want to contribute without going against the dev team work, you are in the right place. If you do not really know what a task is talking about and it might be a problem for a future contribution: open an issue to ask some details.
 
 ## Project management
 
@@ -20,11 +20,12 @@ LOW PRIORITY:
 MED PRIORITY:
 - avoid usage of animated shader without generating textures atlas
 - zoom default value should be 1
+- add a flag to generate wallpaper into a PNG file with screen dimensions
 
 LOW PRIORITY:
 - add a flag to disable some planets/galaxy/darkhole/asteroids/bigstars
-- add a flag to only generate PNG file with screen dimensions
 - use OpenMP for textures atlas generation
+- use GLAD instead of GLEW ?
 
 ## Shader files
 

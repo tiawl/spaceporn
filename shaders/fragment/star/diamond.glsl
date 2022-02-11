@@ -19,7 +19,7 @@ float diamond(vec2 coords, Star star)
   float color = (sign(m) < .5 ? -1. : 0.);
   float ratio = 2. / (20. + star.brightness * star.brightness);
   color *= 1.0 - ((hash((star.center + coords) * pixels, seed) * ratio
-    - ratio / 2.) + (abs(coords.x) + abs(coords.y) + 0.2) * star.brightness);
+    - ratio / 2.) + (abs(coords.x) + abs(coords.y) + 0.1) * star.brightness);
 
   float ring = opRing(coords, star.size * star.ring_size,
     pixel_res / 2.);

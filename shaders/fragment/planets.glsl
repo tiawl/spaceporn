@@ -5,97 +5,95 @@
 # include "planet/ring.glsl"
 # include "planet/dry.glsl"
 
-# define LAND 0.2
-# define MOON 0.4
-# define GAZ  0.6
-# define RING 0.8
-# define DRY  1.0
+# define LAND 1.
+# define MOON 2.
+# define GAZ  3.
+# define RING 4.
+# define DRY  5.
 # define PLANET_TYPES 5.
 
-Planet calc_planet(vec2 ixy, vec2 xy, vec2 offset)
+Planet calc_planet(vec2 coords, vec2 center, float pixel_res)
 {
-  ixy -= offset;
-  vec2 center = ixy + planets_density * 0.5;
+  float rd_planet = max(ceil(hash(center, seed + 2u) * PLANET_TYPES), 1.);
 
-  center += planets_density * 0.25 + planets_density * 0.5 * hash(ixy, seed);
+  float radius = 0.2 + 0.4 * hash(center, seed + 3u);
+  float light_angle = radians(hash(center, seed + 4u) * 360.);
+  float light_dist = (radius / 4.) + hash(center, seed + 5u) * (radius / 4.);
 
-  float angle = radians(hash(ixy, seed + 1u) * 360.);
-  center.x += planets_density * 0.1 * sin(angle);
-  center.y += planets_density * 0.1 * cos(angle);
-
-  float rd_planet = max(ceil(hash(ixy, seed + 2u) * PLANET_TYPES), 1.);
-  rd_planet = rd_planet / PLANET_TYPES;
-
-  float radius = 0.2 + 0.4 * hash(ixy, seed + 3u);
-  float light_angle = radians(hash(ixy, seed + 4u) * 360.);
-  float light_dist = (radius / 4.) + hash(ixy, seed + 5u) * (radius / 4.);
-
-  float shape = step(distance(xy, center), radius) * rd_planet;
-  float rotation = radians(hash(ixy, seed + 6u) * 360.);
-  float time_speed = (hash(ixy, seed + 7u) + 1.) * 2.;
-  float plan = hash(ixy, seed + 8u);
-  vec2 light_origin =
-    center + light_dist * vec2(cos(light_angle), sin(light_angle));
+  float shape = sign(length(coords) - radius) < 0.5 ? rd_planet : 0.0;
+  float rotation = radians(hash(center, seed + 6u) * 360.);
+  float time_speed = (hash(center, seed + 7u) + 1.) * 2.;
+  float plan = hash(center, seed + 8u);
+  vec2 light_origin = light_dist * vec2(cos(light_angle), sin(light_angle));
 
   Planet planet = Planet(shape, center, rotation, radius, time_speed, plan,
     light_origin, 0u, 0., 0.);
-  if (rd_planet == RING) // TODO: remove equality
+  if ((rd_planet < (DRY + RING) / 2.) && (rd_planet > (RING + GAZ) / 2.))
   {
-    float ring_rotation = radians(hash(ixy, seed + 10u) * 360.);
+    float ring_rotation = radians(hash(center, seed + 10u) * 360.);
     float ring_radius =
-      hash(ixy, seed + 11u) * (0.2 + (planet.radius - 0.2) / 4.);
-    float ring_width = hash(ixy, seed + 12u) * 0.06;
-    float ring_angle = hash(ixy, seed + 13u) * 10. * (planet.radius - 0.2);
+      hash(center, seed + 11u) * (0.2 + (planet.radius - 0.2) / 4.);
+    float ring_width = hash(center, seed + 12u) * 0.06;
+    float ring_angle = hash(center, seed + 13u) * 10. * (planet.radius - 0.2);
 
-    vec3 res = computeRingShape(xy, planet, ring_rotation, ring_width,
+    vec3 res = computeRingShape(coords, planet, ring_rotation, ring_width,
       ring_radius, ring_angle);
     planet.type = max(res.x * rd_planet, planet.type);
     planet.ring = res.y;
     planet.ring_a = res.z;
-    planet.turbulence = (uint(hash(ixy, seed + 9u) * 9.) + 1u) * 10u;
+    planet.turbulence = (uint(hash(center, seed + 9u) * 9.) + 1u) * 10u;
   }
 
   return planet;
 }
 
-vec4 planets(vec2 px, bool dith)
+vec4 planets(vec2 coords, bool dith)
 {
-  px *= PLANETS_SIZE;
+  coords *= PLANETS_DENSITY;
+  Planet planet = Planet(0., vec2(0.), 0., 0., 0., 0., vec2(0., 0.), 0u, 0., 0.);
+  Planet tmp = Planet(0., vec2(0.), 0., 0., 0., 0., vec2(0., 0.), 0u, 0., 0.);
+  vec2 o;
+  vec2 fp_coords;
 
-  vec2 ixy = vec2(floor_multiple(px.x, planets_density),
-    floor_multiple(px.y, planets_density));
+  float pixel_res = PLANETS_DENSITY / pixels;
 
-  Planet calc[4] = Planet[4](calc_planet(ixy, px, vec2(0.)),
-    calc_planet(ixy, px, vec2(planets_density, 0.)),
-    calc_planet(ixy, px, vec2(0., planets_density)),
-    calc_planet(ixy, px, vec2(planets_density, planets_density))
-  );
+  vec2 i = floor(coords);
+  vec2 f = fract(coords);
+  vec2 h;
+  vec2 center;
 
-  int index = 0;
-  Planet planet =
-    Planet(0., vec2(0.), 0., 0., 0., 0., vec2(0., 0.), 0u, 0., 0.);
-
-  while (index < 4)
+  for (int k = 0; k < 9; k++)
   {
-    if ((calc[index].type > 0.) && (planet.plan < calc[index].plan))
+    o = vec2(k % 3, k / 3) - 1.;
+
+    center = i + o;
+    h = vec2(floor_multiple(hash(center, seed), pixel_res),
+      floor_multiple(hash(center, seed + 1u), pixel_res));
+    coords = o + h - f;
+
+    tmp = calc_planet(coords, center, pixel_res);
+    if ((tmp.type > 0.) && (planet.plan < tmp.plan))
     {
-      planet = calc[index];
+      planet = tmp;
+      fp_coords = coords;
     }
-    ++index;
   }
+  coords = fp_coords;
 
-  if (planet.type > (DRY + RING) / 2.)
+  vec4 color;
+  if (planet.type < LAND / 2.)
   {
-    return dry(px, planet, dith);
-  } else if (planet.type > (RING + GAZ) / 2.) {
-    return ring(px, planet, dith);
-  } else if (planet.type > (GAZ + MOON) / 2.) {
-    return gaz(px, planet, dith);
-  } else if (planet.type > (MOON + LAND) / 2.) {
-    return moon(px, planet, dith);
-  } else if (planet.type > LAND / 2.) {
-    return land(px, planet, dith);
+    color = vec4(-1.);// vec4(planet.type / PLANET_TYPES);
+  } else if (planet.type < (MOON + LAND) / 2.) {
+    return land(coords, planet, dith);
+  } else if (planet.type < (GAZ + MOON) / 2.) {
+    return moon(coords, planet, dith);
+  } else if (planet.type < (RING + GAZ) / 2.) {
+    return gaz(coords, planet, dith);
+  } else if (planet.type < (DRY + RING) / 2.) {
+    return ring(coords, planet, dith);
   } else {
-    return vec4(-1.);// vec4(planet.type);
+    return dry(coords, planet, dith);
   }
+  return color;
 }

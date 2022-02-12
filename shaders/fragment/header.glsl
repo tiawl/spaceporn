@@ -6,7 +6,6 @@ uniform float fflags[6];
 uniform int bflags[4];
 uniform sampler2DArray atlas;
 
-const float planets_density = 1.; // WARNING: must be greater than 3 to avoid some artifacts
 const float stars_density = 20.0;
 
 vec2 resolution = vec2(fflags[0], fflags[1]);
@@ -59,6 +58,7 @@ struct Star
 # define BIGSTARS_DENSITY 5.
 # define DUST_SIZE 15.
 # define NEBULA_SIZE 30.
+# define PLANETS_DENSITY 10.
 
 bool dither(float dither_size, vec2 uv1, vec2 uv2)
 {

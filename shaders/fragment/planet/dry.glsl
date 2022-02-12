@@ -14,8 +14,8 @@ vec4 dry(vec2 uv, Planet planet, bool dith) {
   float lratio = 1. / sqrt(planet.radius);
   float d_light = distance(uv, planet.light_origin) * lratio;
 
-  uv = spherify(uv, planet.center, planet.radius);
-  uv = rotate(uv, planet.center, planet.rotation);
+  uv = spherify(uv, vec2(0.), planet.radius);
+  uv = rotate(uv, vec2(0.), planet.rotation);
 
   float f = ppfbm(size, sizeModifier,
     uv * size + vec2(time * planet.time_speed, 0.0), octaves, seed,

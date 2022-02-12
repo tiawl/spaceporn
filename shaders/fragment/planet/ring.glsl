@@ -37,11 +37,11 @@ vec4 computePlanetUnder(vec2 uv, Planet planet, bool dith)
   const vec2 sizeModifier = vec2(2., 1.);
 
   float lratio = 1. / sqrt(planet.radius);
-  float d_circle = distance(uv, planet.center);
+  float d_circle = length(uv);
   float d_light = distance(uv, planet.light_origin) * lratio;
 
-  uv = rotate(uv, planet.center, planet.rotation);
-  uv = spherify(uv, planet.center, planet.radius);
+  uv = rotate(uv, vec2(0.), planet.rotation);
+  uv = spherify(uv, vec2(0.), planet.radius);
 
   float band = ppfbm(size, sizeModifier,
     vec2(0.0, uv.y * size), octaves, seed, planet.center);
@@ -91,12 +91,10 @@ vec3 computeRingShape(vec2 uv, Planet planet, float rotation, float w,
   const uint octaves = 5u;
   const vec2 sizeModifier = vec2(2., 1.);
 
-  uv = rotate(uv, planet.center, rotation);
-  uv -= planet.center;
+  uv = rotate(uv, vec2(0.), rotation);
 
-  vec2 uv_center = uv;
-  uv_center *= vec2(0.5 - radius, 5.7 - angle);
-  float center_d = distance(uv_center, vec2(0.));
+  vec2 uv2 = uv * vec2(0.5 - radius, 5.7 - angle);
+  float center_d = distance(uv2, vec2(0.));
 
   float ring = smoothstep(0.5 - width * 2.0, 0.5 - width, center_d);
   ring *= smoothstep(center_d - width, center_d, 0.4);
@@ -106,10 +104,8 @@ vec3 computeRingShape(vec2 uv, Planet planet, float rotation, float w,
     ring *= step(planet.radius, distance(uv, vec2(0.)));
   }
 
-  uv_center =
-    rotate(uv_center + vec2(0, 0.5), vec2(0.5), time * planet.time_speed);
-  ring *=
-    ppfbm(size, sizeModifier, uv_center * size, octaves, seed, planet.center);
+  uv2 = rotate(uv2 + vec2(0, 0.5), vec2(0.5), time * planet.time_speed);
+  ring *= ppfbm(size, sizeModifier, uv2 * size, octaves, seed, planet.center);
 
   float ring_a = step(0.28, ring);
   if (ring_a > 0.)

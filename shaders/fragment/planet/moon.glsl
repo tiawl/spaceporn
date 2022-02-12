@@ -36,16 +36,16 @@ vec4 computeCraters(vec2 uv, Planet planet, bool dith)
   const vec2 sizeModifier = vec2(2., 1.);
 
   float lratio = 1. / sqrt(planet.radius);
-  float d_to_center = distance(uv, planet.center);
+  float d_to_center = length(uv);
   float d_light = distance(uv, planet.light_origin) * lratio;
 
-  uv = rotate(uv, planet.center, planet.rotation);
-  uv = spherify(uv, planet.center, planet.radius);
+  uv = rotate(uv, vec2(0.), planet.rotation);
+  uv = spherify(uv, vec2(0.), planet.radius);
 
   float c1 =
     crater(sizeCraters, sizeModifier, planet.time_speed, uv, planet.center);
   float c2 = crater(sizeCraters, sizeModifier, planet.time_speed,
-    uv + (planet.light_origin - planet.center + vec2(0.5, 0.)) * 0.03,
+    uv + (planet.light_origin + vec2(0.5, 0.)) * 0.03,
     planet.center);
 
   float s = step(d_to_center, planet.radius);
@@ -81,10 +81,10 @@ vec4 computeMoon(vec2 uv, Planet planet, bool dith)
   const vec2 sizeModifier = vec2(2., 1.);
 
   float lratio = 1. / sqrt(planet.radius);
-  float d_circle = distance(uv, planet.center);
+  float d_circle = length(uv);
   float d_light = distance(uv, planet.light_origin) * lratio;
 
-  uv = rotate(uv, planet.center, planet.rotation);
+  uv = rotate(uv, vec2(0.), planet.rotation);
 
   float a = step(d_circle, 1.);
 

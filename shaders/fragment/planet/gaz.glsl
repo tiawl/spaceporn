@@ -11,8 +11,8 @@ vec4 computeInnerCloud(vec2 uv, Planet planet, bool dith)
   float lratio = 1. / sqrt(planet.radius);
   float d_light = distance(uv, planet.light_origin) * lratio;
 
-  uv = rotate(uv, planet.center, planet.rotation);
-  uv = spherify(uv, planet.center, planet.radius);
+  uv = rotate(uv, vec2(0.), planet.rotation);
+  uv = spherify(uv, vec2(0.), planet.radius);
 
   uv.y += smoothstep(0.0, cloud_curve, abs(uv.x - 0.4));
 
@@ -42,8 +42,8 @@ vec4 computeOuterClouds(vec2 uv, Planet planet, bool dith)
   float lratio = 1. / sqrt(planet.radius);
   float d_light = distance(uv, planet.light_origin) * lratio;
 
-  uv = rotate(uv, planet.center, planet.rotation);
-  uv = spherify(uv, planet.center, planet.radius);
+  uv = rotate(uv, vec2(0.), planet.rotation);
+  uv = spherify(uv, vec2(0.), planet.radius);
 
   uv.y += smoothstep(0.0, cloud_curve, abs(uv.x - 0.4));
 

@@ -1,6 +1,6 @@
 # spaceporn
 
-This project is not ready to be used. The dev team is working on it. This is how this project will be resumed: a pixelized space wallpaper generator
+This project is not in a stable state and therefore it is not ready to be used. The dev team is working on it. This is how this project will be resumed: a pixelized space wallpaper generator
 
 ## Usage
 

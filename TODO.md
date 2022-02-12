@@ -30,16 +30,17 @@ LOW PRIORITY:
 ## Shader files
 
 HIGH PRIORITY:
-- fixing coord system --> pcg-hash must use frag coords
 - use atlas textures
-- use 9 cells loop for circles
 - replace uv by cooords
+- animation for bigstars
+- no equality between floating numbers
+- noisy light for planets (ring)
+- fix planets density
 
 MED PRIORITY:
 - star clouds
 - star streams
 - swirl planet
-- no equality between floating numbers
 - avoid pow() usage
 
 LOW PRIORITY:

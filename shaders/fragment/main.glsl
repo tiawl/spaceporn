@@ -38,56 +38,25 @@ vec4 atlas_main(vec2 UV)
   return col;
 }
 
-vec4 hash_main(vec2 coords)
+vec4 slide_main(vec2 fragment)
 {
-  if (!motion)
-  {
-    time = 0.0;
-  }
+  time = 0.;
 
-  float motion_radius = 2. * zoom;
-  vec2 offset = 2 * motion_radius + motion_radius
-    * vec2(sin(MOTION_SPEED * time), sin(MOTION_SPEED * time * 0.75));
-
-  if (!animation)
-  {
-    time = 0.0;
-  } else {
-    time = fflags[3] / 50.;
-  }
-
-  vec2 UV = coords / shorter_res;
-  UV += offset;
+  vec2 UV = fragment / shorter_res;
+  UV += 5.;
   UV = floor(UV * pixels) / pixels;
   UV *= zoom;
-  bool dith = dither(1., coords / shorter_res, UV / zoom);
-  //return stars(UV * pixels / zoom); DONE
-  //return bigstars(UV / zoom); DONE
-  //return dust(UV, dith); DONE
-  //return nebula(UV, dith); DONE
-  //return max(nebula(UV, dith), dust(UV, dith)) * 0.8 * (sin(time * 2500.) * 0.015 + 1.); DONE
-  //TODO: planets
+  bool dith = dither(1., fragment / shorter_res, UV / zoom);
 
-//  UV.x *= larger_res / shorter_res;
-//  UV *= zoom;
-//  UV += offset;
-//  vec2 unzoomed_UV = UV / zoom;
-//  float px_ratio = shorter_res / pixels;
-//
-//  vec2 unzoomed_px = floor(unzoomed_UV * pixels) * px_ratio;
-//  vec2 px = unzoomed_px * zoom;
-//  vec2 uv = ((px / px_ratio) / zoom) / pixels;
-//  bool dith = dither(1., uv, unzoomed_UV);
+  vec4 col = planets(UV, dith);
+  if (col.x <= -1.)
+  {
+    col = max(bigstars(UV / zoom), max(stars(UV * pixels / zoom),
+      max(dust(UV, dith), nebula(UV, dith))
+        * 0.8 * (sin(time * 2500.) * 0.015 + 1.)));
+  }
 
-//   vec4 col = bigstars(unzoomed_px);
-//   vec4 col = planets(px, dith);
-//   if (col.x <= -1.)
-//   {
-//     col = max(bigstars(unzoomed_UV), max(stars(unzoomed_px), max(dust(px, dith),
-//       nebula(px, dith)) * 0.8 * (sin(time * 2500.) * 0.015 + 1.)));
-//   }
-
-//   return col;
+  return col;
 }
 
 void main()
@@ -97,7 +66,7 @@ void main()
   {
     col = atlas_main(gl_FragCoord.xy);
   } else {
-    col = hash_main(gl_FragCoord.xy);
+    col = slide_main(gl_FragCoord.xy);
   }
 
   gl_FragColor = col;

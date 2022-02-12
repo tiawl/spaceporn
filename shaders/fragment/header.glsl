@@ -52,12 +52,13 @@ struct Star
 # define NB_COLS 7.
 # define PLANET_COLS 12.
 
-# define DUST_SIZE 0.015
 # define PLANETS_SIZE 0.01
 # define MAX_RATE 300.
 # define MOTION_SPEED 1.
 
-# define BIGSTARS_DENSITY 10.
+# define BIGSTARS_DENSITY 5.
+# define DUST_SIZE 15.
+# define NEBULA_SIZE 30.
 
 bool dither(float dither_size, vec2 uv1, vec2 uv2)
 {

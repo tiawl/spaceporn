@@ -1,15 +1,17 @@
 # include "noiseanimation.glsl"
 
-vec4 dust(vec2 uv, bool dith)
+vec4 dust(vec2 coords, bool dith)
 {
-  uint octaves = 8u;
-  uv = dualfbm(uv, octaves, seed);
+  coords *= DUST_SIZE;
 
-  float n_alpha = psfbm(uv * ceil(DUST_SIZE * 0.5) + uv * 2., octaves, seed);
-  float n_dust = pscloud_alpha(uv * DUST_SIZE, octaves, seed);
-  float n_alpha2 = psfbm(uv * ceil(DUST_SIZE * 0.2) + uv * 2., octaves,
+  uint octaves = 8u;
+  coords = dualfbm(coords, octaves, seed);
+
+  float n_alpha = psfbm(coords * ceil(0.5) + coords * 2., octaves, seed);
+  float n_dust = pscloud_alpha(coords, octaves, seed);
+  float n_alpha2 = psfbm(coords * ceil(0.2) + coords * 2., octaves,
     seed + 2u);
-  float n_dust2 = pscloud_alpha(uv * DUST_SIZE, octaves, seed + 2u);
+  float n_dust2 = pscloud_alpha(coords, octaves, seed + 2u);
   float n_dust_lerp = n_dust2 * n_dust;
 
   if (dith)

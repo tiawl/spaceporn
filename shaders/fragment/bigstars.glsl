@@ -24,7 +24,7 @@ float calc_star(vec2 coords, vec2 o)
   size_hash *= size_hash;
   float size = (min(floor(size_hash * 10.), 9.) + 7.) * pixel_res;
   float brightness = hash(center, seed + 4u) + 1.;
-  float ring_size = hash(center, seed + 5u) * 1.5;
+  float ring_size = hash(center, seed + 5u) * (pixels / 200.);
   ring_size = ((ring_size < 0.5) || (size / pixel_res < 11.5) ? 0. : ring_size);
   ring_size = (brightness < 1.5) ? 0. : ring_size;
 

@@ -1,7 +1,7 @@
 # include "header.glsl"
 # include "bigstars.glsl"
 # include "dust.glsl"
-# include "nebulae.glsl"
+# include "nebula.glsl"
 # include "planets.glsl"
 # include "stars.glsl"
 
@@ -62,7 +62,11 @@ vec4 hash_main(vec2 coords)
   UV *= zoom;
   bool dith = dither(1., coords / shorter_res, UV / zoom);
   //return stars(UV * pixels / zoom); DONE
-    return bigstars(UV / zoom);
+  //return bigstars(UV / zoom); DONE
+  //return dust(UV, dith); DONE
+  //return nebula(UV, dith); DONE
+  //return max(nebula(UV, dith), dust(UV, dith)) * 0.8 * (sin(time * 2500.) * 0.015 + 1.); DONE
+  //TODO: planets
 
 //  UV.x *= larger_res / shorter_res;
 //  UV *= zoom;
@@ -80,7 +84,7 @@ vec4 hash_main(vec2 coords)
 //   if (col.x <= -1.)
 //   {
 //     col = max(bigstars(unzoomed_UV), max(stars(unzoomed_px), max(dust(px, dith),
-//       nebulae(px, dith)) * 0.8 * (sin(time * 2500.) * 0.015 + 1.)));
+//       nebula(px, dith)) * 0.8 * (sin(time * 2500.) * 0.015 + 1.)));
 //   }
 
 //   return col;

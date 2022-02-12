@@ -1,6 +1,6 @@
 # spaceporn
 
-This project is not ready to be used by others. The dev team is working on it. This is how this project will be resumed: a pixelized space wallpaper generator
+This project is not ready to be used. The dev team is working on it. This is how this project will be resumed: a pixelized space wallpaper generator
 
 ## Usage
 
@@ -35,14 +35,14 @@ The dev team will update this section later. **Do not follow steps described her
 
 ## Supported environments
 
-The dev team is actually working on Ubuntu OS. For the long term the dev team will try to provide support for other OS but can not say which and when. Here are a list of tested OS:
+The dev team is actually working on Ubuntu OS. For the long term the dev team will try to provide support for other OS but can not say which and when. Here are a list of supported OS:
 - Ubuntu 20.04    :heavy_check_mark:
 
 If you run **spaceporn** successfully on an unlisted environment, you can open an issue to update this list.
 
 ## Known issues
 
-- Running **spaceporn** hides desktop icons &rarr; During execution, **spaceporn** creates a window above the root window (or desktop window) and behind every other windows to render the shader. This is why desktop icons disappear during execution. The only way to fix this issue is to use root window and/or File-System/Window Manager window which draw icons and desktop above root window. Unfortunely using root window is not as easy as using your own window and can potentially causes unexpected side effects.
+- Running **spaceporn** hides desktop icons &rarr; This is an Ubuntu issue. For this OS, the desktop icons are part of desktop window. This is the same entity. During execution, **spaceporn** creates a window above the desktop window and behind every other windows to render the shader. This is why desktop icons disappear during execution. Unfortunely using root window is not as easy as using your own window and can potentially causes unexpected side effects so it is not planned to fix this issue. 
 - Running **spaceporn** shows an expensive weird white and black screen &rarr; For some GPU (especially Intel), shaders are acting really weird and the dev team do not have any explaination to help you. It is probably coming from the OpenGL context but it is only an assumption.
 
 ## Reporting bugs

@@ -25,7 +25,7 @@ MED PRIORITY:
 LOW PRIORITY:
 - add a flag to disable some planets/galaxy/darkhole/asteroids/bigstars
 - use OpenMP for textures atlas generation
-- use GLAD instead of GLEW ?
+- use GLAD instead of GLEW
 
 ## Shader files
 
@@ -33,12 +33,12 @@ HIGH PRIORITY:
 - fixing coord system --> pcg-hash must use frag coords
 - use atlas textures
 - use 9 cells loop for circles
-- floor_multiple() really useful ???
 - replace uv by cooords
 
 MED PRIORITY:
 - star clouds
 - star streams
+- swirl planet
 - no equality between floating numbers
 - avoid pow() usage
 
@@ -50,7 +50,6 @@ LOW PRIORITY:
 - land planet with swirl clouds
 - dry planet
 - lava planet
-- swirl planet
 - dark planet
 - galaxy
 - dark hole (with event horizon animation)

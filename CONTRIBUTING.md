@@ -2,7 +2,7 @@
 
 First off, thank you for considering contributing to **spaceporn**.
 
-Secondly, the dev team will update this file later but actually this project is not ready to be used by others so the dev team does not accept Pull Request
+Secondly, while this project is not in a stable state, the dev team will not accept Pull Request
 
 ## Workflow
 
@@ -19,3 +19,4 @@ This is a list of tasks the dev team can not improve or solve by itself. If you 
 - False positives returned by Valgrind listed in [amd.supp](amd.supp),
 - **Know Issues** section in [README.md](README.md),
 - Run **spaceporn** on modern Windows OS.
+- Build an online version (with limited features).

@@ -83,7 +83,7 @@ Without each one of these links and their authors, this project will never be bu
   - [Theldus' anipaper][17]
   - [zaranthus' Livepaper][18]
 - [Daniel Linssen's planetarium][19]
-- Github which host this project.
+- Github, the hoster of this project.
 
 [1]:https://github.com/Deep-Fold/PixelSpace
 [2]:https://github.com/Deep-Fold/PixelPlanets

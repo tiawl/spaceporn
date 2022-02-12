@@ -42,18 +42,18 @@ vec4 computeCraters(vec2 uv, Planet planet, bool dith)
   uv = rotate(uv, vec2(0.), planet.rotation);
   uv = spherify(uv, vec2(0.), planet.radius);
 
-  float c1 =
-    crater(sizeCraters, sizeModifier, planet.time_speed, uv, planet.center);
+  float c1 = crater(sizeCraters, sizeModifier, planet.time_speed,
+    uv + planet.center, planet.center);
   float c2 = crater(sizeCraters, sizeModifier, planet.time_speed,
-    uv + (planet.light_origin + vec2(0.5, 0.)) * 0.03,
+    uv + planet.center + (planet.light_origin + vec2(0.5, 0.)) * 0.03,
     planet.center);
 
   float s = step(d_to_center, planet.radius);
   float a = step(0.5, c1) * s * s;
 
   d_light += ppfbm(sizePlanet, sizeModifier,
-    uv * sizePlanet + vec2(time * planet.time_speed, 0.0), octaves, seed,
-    planet.center) * 0.3;
+    (uv + planet.center) * sizePlanet + vec2(time * planet.time_speed, 0.0),
+    octaves, seed, planet.center) * 0.3;
 
   float light_b = 1. - d_light;
   vec3 col = vec3(light_b);
@@ -89,8 +89,8 @@ vec4 computeMoon(vec2 uv, Planet planet, bool dith)
   float a = step(d_circle, 1.);
 
   d_light += ppfbm(size, sizeModifier,
-    uv * size + vec2(time * planet.time_speed, 0.0), octaves, seed,
-    planet.center) * 0.3;
+    (uv + planet.center) * size + vec2(time * planet.time_speed, 0.0),
+    octaves, seed, planet.center) * 0.3;
 
   float light_b = 1. - d_light;
   vec3 col = vec3(light_b);

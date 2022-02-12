@@ -32,7 +32,7 @@ vec4 computeClouds(vec2 uv, Planet planet, bool dith)
   uv.y += smoothstep(0.0, cloud_curve, abs(uv.x - 0.4));
 
   float c = ppcloud_alpha(size, vec2(1.0), planet.time_speed,
-    uv * vec2(1.0, stretch), octaves, seed, planet.center);
+    (uv + planet.center) * vec2(1.0, stretch), octaves, seed, planet.center);
 
   vec3 col = vec3(0.956);
   if (c < cloud_cover + 0.03)
@@ -41,8 +41,8 @@ vec4 computeClouds(vec2 uv, Planet planet, bool dith)
   }
 
   d_light *= d_light * 0.4;
-  float light_b = light_borders(d_light, planet.radius);
-  col = col * light_b;
+  float light_b = light_borders(d_light, planet.radius) + c - 0.5;
+  col *= light_b;
   if (dith && (light_b < 1.))
   {
     col *= 0.9;
@@ -64,7 +64,8 @@ vec4 computeLand(vec2 uv, Planet planet, bool dith)
   uv = rotate(uv, vec2(0.), planet.rotation);
   uv = spherify(uv, vec2(0.), planet.radius);
 
-  vec2 base_fbm_uv = uv * size + vec2(time * planet.time_speed, 0.0);
+  vec2 base_fbm_uv =
+    (uv + planet.center) * size + vec2(time * planet.time_speed, 0.0);
 
   float fbm1 =
     ppfbm(size, sizeModifier, base_fbm_uv, octaves, seed, planet.center);
@@ -104,8 +105,8 @@ vec4 computeLand(vec2 uv, Planet planet, bool dith)
     }
   }
 
-  float light_b = light_borders(d_light, planet.radius);
-  col = col * light_b;
+  float light_b = light_borders(d_light, planet.radius) + fbm1 - 0.2;
+  col *= light_b;
   if (dith && (light_b < 1.))
   {
     col *= 0.9;

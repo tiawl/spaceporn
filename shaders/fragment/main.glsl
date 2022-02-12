@@ -49,12 +49,12 @@ vec4 slide_main(vec2 fragment)
   bool dith = dither(1., fragment / shorter_res, UV / zoom);
 
   vec4 col = planets(UV, dith);
-  if (col.x <= -1.)
-  {
-    col = max(bigstars(UV / zoom), max(stars(UV * pixels / zoom),
-      max(dust(UV, dith), nebula(UV, dith))
-        * 0.8 * (sin(time * 2500.) * 0.015 + 1.)));
-  }
+//   if (col.x <= -1.)
+//   {
+//     col = max(bigstars(UV / zoom), max(stars(UV * pixels / zoom),
+//       max(dust(UV, dith), nebula(UV, dith))
+//         * 0.8 * (sin(time * 2500.) * 0.015 + 1.)));
+//   }
 
   return col;
 }

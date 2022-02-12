@@ -18,8 +18,8 @@ vec4 dry(vec2 uv, Planet planet, bool dith) {
   uv = rotate(uv, vec2(0.), planet.rotation);
 
   float f = ppfbm(size, sizeModifier,
-    uv * size + vec2(time * planet.time_speed, 0.0), octaves, seed,
-    planet.center);
+    (uv + planet.center) * size + vec2(time * planet.time_speed, 0.0),
+    octaves, seed, planet.center);
 
   d_light = smoothstep(-0.3, 1.2, d_light);
 

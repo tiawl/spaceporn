@@ -44,13 +44,14 @@ vec4 computePlanetUnder(vec2 uv, Planet planet, bool dith)
   uv = spherify(uv, vec2(0.), planet.radius);
 
   float band = ppfbm(size, sizeModifier,
-    vec2(0.0, uv.y * size), octaves, seed, planet.center);
+    vec2(0.0, (uv.y + planet.center.y) * size), octaves, seed, planet.center);
   float turb = turbulence(size, sizeModifier, planet.time_speed,
-    uv, seed, planet.turbulence, planet.center);
+    uv + planet.center, seed, planet.turbulence, planet.center);
 
-  float fbm1 =
-    ppfbm(size, sizeModifier, uv * size, octaves, seed, planet.center);
-  float fbm2 = ppfbm(size, sizeModifier, uv * vec2(1.0, 2.0) * size
+  float fbm1 = ppfbm(size, sizeModifier, (uv + planet.center) * size, octaves,
+    seed, planet.center);
+  float fbm2 = ppfbm(size, sizeModifier,
+    (uv + planet.center) * vec2(1.0, 2.0) * size
     + fbm1 + vec2(time * planet.time_speed, 0.0) + turb, octaves, seed,
     planet.center);
 

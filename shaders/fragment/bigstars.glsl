@@ -16,11 +16,12 @@ float calc_star(vec2 coords, vec2 o)
     floor_multiple(hash(center, seed + 1u), pixel_res));
   coords = o + h - f;
 
-  float rd_bigstar = 0.2;//min(floor(hash(center, seed + 2u) * STAR_TYPES), STAR_TYPES - 1.);
+  float rd_bigstar =
+    min(floor(hash(center, seed + 2u) * STAR_TYPES), STAR_TYPES - 1.);
   float size_hash = hash(center, seed + 3u);
-//   size_hash *= size_hash;
-//   size_hash *= size_hash;
-//   size_hash *= size_hash;
+  size_hash *= size_hash;
+  size_hash *= size_hash;
+  size_hash *= size_hash;
   float size = (min(floor(size_hash * 10.), 9.) + 7.) * pixel_res;
   float brightness = hash(center, seed + 4u) + 1.;
   float ring_size = hash(center, seed + 5u) * 1.5;
@@ -32,11 +33,10 @@ float calc_star(vec2 coords, vec2 o)
     Star(rd_bigstar, center, size, 120., 1., 1., 2u, 2., ring_size);
   if (bigstar.type < 0.5)
   {
-    bool rotation = hash(center, seed + 8u) > 0.5;
+    bool rotation = hash(center, seed + 6u) > 0.5;
     bigstar.brightness = bigstar.size * brightness;
     coords = rotate(coords, vec2(0.), radians(rotation ? 45. : 0.));
-    bigstar.shape = ((bigstar.size / pixel_res < 10.) &&
-      rotation ? 2. * distance(vec2(0.), coords) : 0.0001);
+    bigstar.shape = 0.0001;
     bigstar.sharpness = 2u;
     star = diamond(coords, bigstar);
   } else if (bigstar.type < 1.5) {

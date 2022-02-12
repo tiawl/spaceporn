@@ -14,7 +14,7 @@ float diamond(vec2 coords, Star star)
   float depth = 1. / shorter_res;
   float s1 = sdSegment(coords, A, B) - depth;
   float s2 = sdSegment(coords, C, D) - depth;
-  float m = smin(s1, s2, star.shape, star.sharpness);
+  float m = min(s1, s2);
 
   float color = (sign(m) < .5 ? -1. : 0.);
   float ratio = 2. / (20. + star.brightness * star.brightness);

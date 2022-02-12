@@ -30,8 +30,7 @@ LOW PRIORITY:
 ## Shader files
 
 HIGH PRIORITY:
-- fixing coord system
-- Bigstars rework
+- fixing coord system --> pcg-hash must use frag coords
 - use atlas textures
 - use 9 cells loop for circles
 - floor_multiple() really useful ???

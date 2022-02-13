@@ -26,14 +26,14 @@ float polar(vec2 coords, Star star)
       min(smin(s1 - depth, s4, star.shape, star.sharpness),
         smin(s2, s4, star.shape, star.sharpness)));
 
-  float color = (sign(m) < .5 ? -1. : 0.);
+  float color = (sign(m) < 0.5 ? -1. : 0.);
   float ratio = 2. / (20. + star.brightness * star.brightness);
-  color *= 1.0 - ((hash((star.center + coords) * pixels, seed) * ratio
+  color *= 1. - ((hash((star.center + coords) * pixels, seed) * ratio
     - ratio / 2.) + (abs(coords.x) + abs(coords.y) + 0.1) * star.brightness);
 
   float ring = opRing(coords, star.size * star.ring_size,
     pixel_res / 2.);
-  ring = (sign(ring) < .5 ? -1. : 0.);
+  ring = (sign(ring) < 0.5 ? -1. : 0.);
   color = min(color * 1.3, ring * 0.15);
 
   return floor(color * PLANET_COLS) / PLANET_COLS;

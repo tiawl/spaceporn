@@ -20,7 +20,7 @@ Planet calc_planet(vec2 coords, vec2 center, float pixel_res)
   float light_angle = radians(hash(center, seed + 4u) * 360.);
   float light_dist = (radius / 4.) + hash(center, seed + 5u) * (radius / 4.);
 
-  float shape = sign(length(coords) - radius) < 0.5 ? rd_planet : 0.0;
+  float shape = sign(length(coords) - radius) < 0.5 ? rd_planet : 0.;
   float rotation = radians(hash(center, seed + 6u) * 360.);
   float time_speed = (hash(center, seed + 7u) + 1.) * 2.;
   float plan = hash(center, seed + 8u);
@@ -50,8 +50,8 @@ Planet calc_planet(vec2 coords, vec2 center, float pixel_res)
 vec4 planets(vec2 coords, bool dith)
 {
   coords *= PLANETS_DENSITY;
-  Planet planet = Planet(0., vec2(0.), 0., 0., 0., 0., vec2(0., 0.), 0u, 0., 0.);
-  Planet tmp = Planet(0., vec2(0.), 0., 0., 0., 0., vec2(0., 0.), 0u, 0., 0.);
+  Planet planet = Planet(0., vec2(0.), 0., 0., 0., 0., vec2(0.), 0u, 0., 0.);
+  Planet tmp = Planet(0., vec2(0.), 0., 0., 0., 0., vec2(0.), 0u, 0., 0.);
   vec2 o;
   vec2 fp_coords;
 
@@ -85,15 +85,15 @@ vec4 planets(vec2 coords, bool dith)
   {
     color = vec4(-1.);// vec4(planet.type / PLANET_TYPES);
   } else if (planet.type < (MOON + LAND) / 2.) {
-    return land(coords, planet, dith);
+    color = land(coords, planet, dith);
   } else if (planet.type < (GAZ + MOON) / 2.) {
-    return moon(coords, planet, dith);
+    color = moon(coords, planet, dith);
   } else if (planet.type < (RING + GAZ) / 2.) {
-    return gaz(coords, planet, dith);
+    color = gaz(coords, planet, dith);
   } else if (planet.type < (DRY + RING) / 2.) {
-    return ring(coords, planet, dith);
+    color = ring(coords, planet, dith);
   } else {
-    return dry(coords, planet, dith);
+    color = dry(coords, planet, dith);
   }
   return color;
 }

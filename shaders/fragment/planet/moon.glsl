@@ -1,118 +1,101 @@
 # include "pixelplanets.glsl"
 
-float circleNoiseCrater(float size, vec2 sizeModifier, vec2 uv, vec2 center)
+float circleNoiseCrater(float size, vec2 sizeModifier, vec2 coords, vec2 center)
 {
-  float uv_y = floor(uv.y);
-  uv.x += uv_y * .31;
-  vec2 f = fract(uv);
-  float h =
-    pprand(size, sizeModifier, vec2(floor(uv.x), floor(uv_y)), seed, center);
+  float coords_y = floor(coords.y);
+  coords.x += coords_y * 0.31;
+  vec2 f = fract(coords);
+  float h = pprand(size, sizeModifier, vec2(floor(coords.x), floor(coords_y)),
+    seed, center);
   float m = (length(f - 0.25 - (h * 0.5)));
   float r = h * 0.25;
-  return smoothstep(r - 0.10 * r, r, m);
+  return smoothstep(r - 0.1 * r, r, m);
 }
 
-float crater(float size, vec2 sizeModifier, float time_speed, vec2 uv,
+float crater(float size, vec2 sizeModifier, float time_speed, vec2 coords,
   vec2 center)
 {
-  float c = 1.0;
+  float c = 1.;
 
-  for (int i = 0; i < 2; i++)
+  int i;
+  for (i = 0; i < 2; i++)
   {
     c *= circleNoiseCrater(size, sizeModifier,
-      (uv * size) + (float(i + 1) + 10.0) + vec2(time * time_speed, 0.0),
+      (coords * size) + (float(i + 1) + 10.) + vec2(time * time_speed, 0.),
       center);
   }
 
-  return 1.0 - c;
+  return 1. - c;
 }
 
-vec4 computeCraters(vec2 uv, Planet planet, bool dith)
+vec4 computeCraters(vec2 coords, Planet planet, bool dith)
 {
-  const float sizeCraters = 5.0;
-  const float sizePlanet = 8.0;
+  const float sizeCraters = 5.;
+  const float sizePlanet = 8.;
   const vec3 color1 = vec3(0.608);
   const uint octaves = 4u;
   const vec2 sizeModifier = vec2(2., 1.);
 
-  float lratio = 1. / sqrt(planet.radius);
-  float d_to_center = length(uv);
-  float d_light = distance(uv, planet.light_origin) * lratio;
+  float d_to_center = length(coords);
+  float d_light = distance(coords, planet.light_origin) / sqrt(planet.radius);
 
-  uv = rotate(uv, vec2(0.), planet.rotation);
-  uv = spherify(uv, vec2(0.), planet.radius);
+  coords = rotate(coords, vec2(0.), planet.rotation);
+  coords = spherify(coords, vec2(0.), planet.radius);
 
   float c1 = crater(sizeCraters, sizeModifier, planet.time_speed,
-    uv + planet.center, planet.center);
+    coords + planet.center, planet.center);
   float c2 = crater(sizeCraters, sizeModifier, planet.time_speed,
-    uv + planet.center + (planet.light_origin + vec2(0.5, 0.)) * 0.03,
+    coords + planet.center + (planet.light_origin + vec2(0.5, 0.)) * 0.03,
     planet.center);
 
   float s = step(d_to_center, planet.radius);
   float a = step(0.5, c1) * s * s;
 
   d_light += ppfbm(sizePlanet, sizeModifier,
-    (uv + planet.center) * sizePlanet + vec2(time * planet.time_speed, 0.0),
+    (coords + planet.center) * sizePlanet + vec2(time * planet.time_speed, 0.),
     octaves, seed, planet.center) * 0.3;
 
   float light_b = 1. - d_light;
   vec3 col = vec3(light_b);
 
-  if (dith && (light_b < 1.))
-  {
-    col *= 0.9;
-  }
+  col *= (dith && (light_b < 1.) ? 0.9 : 1.);
 
-  float diff_col = 0.;
-  if ((c1 > 0.) && (c2 == 0.))
-  {
-    diff_col = (PLANET_COLS / 5.);
-  }
+  float diff_col = ((c1 > 0.) && (c2 == 0.) ? PLANET_COLS / 5. : 0.);
   col = (floor(col * PLANET_COLS) - diff_col) / PLANET_COLS;
   col = min(col, color1);
   return vec4(col, a);
 }
 
-vec4 computeMoon(vec2 uv, Planet planet, bool dith)
+vec4 computeMoon(vec2 coords, Planet planet, bool dith)
 {
-  const float size = 8.0;
+  const float size = 8.;
   const vec3 color1 = vec3(0.608);
   const uint octaves = 4u;
   const vec2 sizeModifier = vec2(2., 1.);
 
-  float lratio = 1. / sqrt(planet.radius);
-  float d_circle = length(uv);
-  float d_light = distance(uv, planet.light_origin) * lratio;
+  float d_circle = length(coords);
+  float d_light = distance(coords, planet.light_origin) / sqrt(planet.radius);
 
-  uv = rotate(uv, vec2(0.), planet.rotation);
+  coords = rotate(coords, vec2(0.), planet.rotation);
 
   float a = step(d_circle, 1.);
 
   d_light += ppfbm(size, sizeModifier,
-    (uv + planet.center) * size + vec2(time * planet.time_speed, 0.0),
+    (coords + planet.center) * size + vec2(time * planet.time_speed, 0.),
     octaves, seed, planet.center) * 0.3;
 
   float light_b = 1. - d_light;
   vec3 col = vec3(light_b);
 
-  if (dith && (light_b < 1.))
-  {
-    col *= 0.9;
-  }
-
+  col *= (dith && (light_b < 1.) ? 0.9 : 1.);
   col = floor(col * PLANET_COLS) / PLANET_COLS;
   col = min(col, color1);
   return vec4(col, a);
 }
 
-vec4 moon(vec2 uv, Planet planet, bool dith)
+vec4 moon(vec2 coords, Planet planet, bool dith)
 {
   planet.time_speed *= 3.;
-  vec4 craters = computeCraters(uv, planet, dith);
-  if (craters.a == 0.)
-  {
-    return computeMoon(uv, planet, dith);
-  } else {
-    return craters;
-  }
+  vec4 craters = computeCraters(coords, planet, dith);
+  return (craters.a == 0. ? computeMoon(coords, planet, dith) : craters);
 }

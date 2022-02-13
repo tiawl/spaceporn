@@ -11,7 +11,7 @@ vec4 atlas_main(vec2 UV)
 
   if (!motion)
   {
-    time = 0.0;
+    time = 0.;
   }
 
   float motion_radius = 2. * zoom;
@@ -20,7 +20,7 @@ vec4 atlas_main(vec2 UV)
 
   if (!animation)
   {
-    time = 0.0;
+    time = 0.;
   } else {
     time = fflags[3] / 50.;
   }
@@ -31,7 +31,7 @@ vec4 atlas_main(vec2 UV)
     tUV += offset;
     vec2 unzoomed_tUV = tUV / zoom;
     vec2 unzoomed_px = pixels * unzoomed_tUV;
-//     bool dith = dither(1., uv, unzoomed_UV);
+//     bool dith = dither(uv, unzoomed_UV);
 
     // STARS DONE -> TODO: bigstars
     vec4 col = stars(unzoomed_px);
@@ -40,13 +40,13 @@ vec4 atlas_main(vec2 UV)
 
 vec4 slide_main(vec2 fragment)
 {
-  time = 0.;
+  //time = 0.;
 
   vec2 UV = fragment / shorter_res;
   UV += 5.;
   UV = floor(UV * pixels) / pixels;
   UV *= zoom;
-  bool dith = dither(1., fragment / shorter_res, UV / zoom);
+  bool dith = dither(fragment / shorter_res, UV / zoom);
 
   vec4 col = planets(UV, dith);
 //   if (col.x <= -1.)

@@ -4,7 +4,7 @@ This is a list of tasks expressed by the dev team for the dev team. It is not in
 
 ## Project management
 
-MED PRIORITY:
+MEDIUM PRIORITY:
 - use pushd/popd in bash scripts
 
 LOW PRIORITY:
@@ -17,7 +17,7 @@ LOW PRIORITY:
 
 ## C files
 
-MED PRIORITY:
+MEDIUM PRIORITY:
 - avoid usage of animated shader without generating textures atlas
 - zoom default value should be 1
 - add a flag to generate wallpaper into a PNG file with screen dimensions
@@ -31,25 +31,24 @@ LOW PRIORITY:
 
 HIGH PRIORITY:
 - use atlas textures
-- replace uv by cooords
 - animation for bigstars
-- no equality between floating numbers
+- no == and != operators between floating numbers
 - noisy light for planets (ring)
 - fix planets density
 
-MED PRIORITY:
+MEDIUM PRIORITY:
 - star clouds
 - star streams
+- dry planet
 - swirl planet
 - avoid pow() usage
 
 LOW PRIORITY:
 - parallalax
-- More parameters on different planets to add more diversity
+- More parameters on different planets to add more diversity --> light colors for land ??
 - use domain warping for moon craters
 - slynyrd moon
 - land planet with swirl clouds
-- dry planet
 - lava planet
 - dark planet
 - galaxy

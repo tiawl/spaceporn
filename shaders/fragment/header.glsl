@@ -6,8 +6,6 @@ uniform float fflags[6];
 uniform int bflags[4];
 uniform sampler2DArray atlas;
 
-const float stars_density = 20.0;
-
 vec2 resolution = vec2(fflags[0], fflags[1]);
 float shorter_res = min(resolution.x, resolution.y);
 float larger_res = max(resolution.x, resolution.y);
@@ -51,18 +49,18 @@ struct Star
 # define NB_COLS 7.
 # define PLANET_COLS 12.
 
-# define PLANETS_SIZE 0.01
 # define MAX_RATE 300.
 # define MOTION_SPEED 1.
 
+# define STARS_DENSITY 20.
 # define BIGSTARS_DENSITY 5.
 # define DUST_SIZE 15.
 # define NEBULA_SIZE 30.
 # define PLANETS_DENSITY 10.
 
-bool dither(float dither_size, vec2 uv1, vec2 uv2)
+bool dither(vec2 coords1, vec2 coords2)
 {
-  return mod(uv1.x + uv2.y, 2.0 / pixels) * dither_size <= 1.0 / pixels;
+  return mod(coords1.x + coords2.y, 2. / pixels) <= 1. / pixels;
 }
 
 float floor_multiple(float numToRound, float base)
@@ -71,11 +69,11 @@ float floor_multiple(float numToRound, float base)
   return (sign(modulo) < 0.5 ? numToRound : numToRound - modulo);
 }
 
-vec2 rotate(vec2 vec, vec2 center, float angle)
+vec2 rotate(vec2 coords, vec2 center, float angle)
 {
-  vec -= center;
-  vec *= mat2(cos(angle), -sin(angle),
-              sin(angle),  cos(angle));
-  vec += center;
-  return vec;
+  coords -= center;
+  coords *= mat2(cos(angle), -sin(angle),
+                 sin(angle),  cos(angle));
+  coords += center;
+  return coords;
 }

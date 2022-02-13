@@ -1,23 +1,23 @@
 # include "pixelspace.glsl"
 
-vec3 nrand3(vec2 co)
+vec3 nrand3(vec2 coords)
 {
-  float a = hash(co, seed + 1u);
-  float b = hash(co, seed + 2u);
+  float a = hash(coords, seed + 1u);
+  float b = hash(coords, seed + 2u);
   float c = mix(a, b, 0.5);
   return vec3(c);
 }
 
-vec4 stars(vec2 uv)
+vec4 stars(vec2 coords)
 {
-  vec3 rnd = nrand3(uv);
-  vec4 starcolor = vec4(pow(rnd.y, stars_density));
+  vec3 rnd = nrand3(coords);
+  vec4 starcolor = vec4(pow(rnd.y, STARS_DENSITY));
 
   if (starcolor.x > 0.3)
   {
-    float brighness_variance = max(0.15, hash(uv, seed) / 2.0f);
-    return starcolor + vec4(abs(sin((time + hash(uv, seed)) *
-      (hash(uv, seed + 1u) + 1.) * MAX_RATE)) * brighness_variance
+    float brighness_variance = max(0.15, hash(coords, seed) / 2.);
+    return starcolor + vec4(abs(sin((time + hash(coords, seed)) *
+      (hash(coords, seed + 1u) + 1.) * MAX_RATE)) * brighness_variance
       - (brighness_variance / 2.));
   } else {
     return vec4(0.);

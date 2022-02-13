@@ -1,4 +1,4 @@
-# include "noiseanimation.glsl"
+# include "pixelspace.glsl"
 
 vec4 dust(vec2 coords, bool dith)
 {
@@ -20,7 +20,7 @@ vec4 dust(vec2 coords, bool dith)
   }
 
   float a_dust = step(n_alpha , n_dust_lerp * 2.8);
-  n_dust_lerp = pow(n_dust_lerp, 3.2) * 56.0;
+  n_dust_lerp = pow(n_dust_lerp, 3.2) * 56.;
   if (dith)
   {
     n_dust_lerp *= 1.1;

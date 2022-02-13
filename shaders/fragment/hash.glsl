@@ -65,7 +65,7 @@ float hash(vec2 s, uint hash_seed)
   } else {
     uvec4 u = uvec4(s, uint(s.x) ^ uint(s.y), uint(s.x) + uint(s.y));
     uvec3 p = pcg3d(uvec3(u.x, u.y, hash_seed));
-    res = float(p) * (1.0 / float(0xffffffffu));
+    res = float(p) * (1. / float(0xffffffffu));
   }
   return res;
 }

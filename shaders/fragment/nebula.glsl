@@ -1,4 +1,4 @@
-# include "noiseanimation.glsl"
+# include "pixelspace.glsl"
 
 vec4 nebula(vec2 coords, bool dith)
 {
@@ -29,11 +29,11 @@ vec4 nebula(vec2 coords, bool dith)
   float a = step(n2, 0.1 + d);
   float a2 = step(n2, 0.115 + d);
 
-  float col_value = 0.0;
+  float col_value = 0.;
   if (a2 > a) {
-    col_value = floor(n_dust_lerp * 35.0) / NB_COLS;
+    col_value = floor(n_dust_lerp * 35.) / NB_COLS;
   } else {
-    col_value = floor(n_dust_lerp * 14.0) / NB_COLS;
+    col_value = floor(n_dust_lerp * 14.) / NB_COLS;
   }
 
   return vec4(vec3(col_value), a2);

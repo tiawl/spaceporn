@@ -1,9 +1,9 @@
 # include "hash.glsl"
-# include "planet/land.glsl"
-# include "planet/moon.glsl"
-# include "planet/gaz.glsl"
-# include "planet/ring.glsl"
-# include "planet/dry.glsl"
+# include "planets/land.glsl"
+# include "planets/moon.glsl"
+# include "planets/gaz.glsl"
+# include "planets/ring.glsl"
+# include "planets/dry.glsl"
 
 # define LAND 1.
 # define MOON 2.

@@ -1,4 +1,4 @@
-# include "pixelspace.glsl"
+# include "space/common.glsl"
 
 vec4 dust(vec2 coords, bool dith)
 {

@@ -1,4 +1,4 @@
-# include "pixelplanets.glsl"
+# include "planets/common.glsl"
 
 const vec3[10] lightColors = vec3[](
   vec3(0.766), vec3(0.731), vec3(0.697), vec3(0.66), vec3(0.625), vec3(0.574),

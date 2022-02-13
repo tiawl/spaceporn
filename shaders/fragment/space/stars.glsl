@@ -1,4 +1,5 @@
-# include "pixelspace.glsl"
+# include "hash.glsl"
+# include "space/common.glsl"
 
 vec3 nrand3(vec2 coords)
 {

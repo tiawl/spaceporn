@@ -1,4 +1,4 @@
-# include "pixelplanets.glsl"
+# include "planets/common.glsl"
 
 vec4 computeInnerCloud(vec2 coords, Planet planet, bool dith)
 {

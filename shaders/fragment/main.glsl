@@ -1,9 +1,6 @@
-# include "header.glsl"
-# include "bigstars.glsl"
-# include "dust.glsl"
-# include "nebula.glsl"
-# include "planets.glsl"
-# include "stars.glsl"
+# include "common.glsl"
+# include "space/main.glsl"
+# include "planets/main.glsl"
 
 vec4 atlas_main(vec2 UV)
 {
@@ -34,7 +31,7 @@ vec4 atlas_main(vec2 UV)
 //     bool dith = dither(uv, unzoomed_UV);
 
     // STARS DONE -> TODO: bigstars
-    vec4 col = stars(unzoomed_px);
+     vec4 col = vec4(0.);//space(unzoomed_px);
   return col;
 }
 
@@ -51,9 +48,7 @@ vec4 slide_main(vec2 fragment)
   vec4 col = planets(UV, dith);
 //   if (col.x <= -1.)
 //   {
-//     col = max(bigstars(UV / zoom), max(stars(UV * pixels / zoom),
-//       max(dust(UV, dith), nebula(UV, dith))
-//         * 0.8 * (sin(time * 2500.) * 0.015 + 1.)));
+//     col = space(UV, dith);
 //   }
 
   return col;

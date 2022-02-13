@@ -1,7 +1,7 @@
 # include "hash.glsl"
-# include "star/diamond.glsl"
-# include "star/nova.glsl"
-# include "star/polar.glsl"
+# include "space/bigstars/diamond.glsl"
+# include "space/bigstars/nova.glsl"
+# include "space/bigstars/polar.glsl"
 
 # define DIAMOND 0.
 # define NOVA    1.

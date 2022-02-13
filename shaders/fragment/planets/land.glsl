@@ -1,4 +1,4 @@
-# include "pixelplanets.glsl"
+# include "planets/common.glsl"
 
 float light_borders(float d_light, float radius)
 {

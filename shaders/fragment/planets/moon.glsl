@@ -1,4 +1,4 @@
-# include "pixelplanets.glsl"
+# include "planets/common.glsl"
 
 float circleNoiseCrater(float size, vec2 sizeModifier, vec2 coords, vec2 center)
 {

@@ -1,6 +1,7 @@
 # version 330 core
 
 precision highp float;
+precision highp int;
 
 uniform float fflags[6];
 uniform int bflags[4];

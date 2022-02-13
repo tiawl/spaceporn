@@ -1,4 +1,4 @@
-# include "pixelplanets.glsl"
+# include "planets/common.glsl"
 
 vec4 dry(vec2 coords, Planet planet, bool dith) {
   const float size = 8.;

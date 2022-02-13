@@ -1,4 +1,5 @@
-# include "header.glsl"
+# include "common.glsl"
+# include "hash.glsl"
 
 float pprand(float size, vec2 sizeModifier, vec2 coords, uint noise_seed,
   vec2 center)

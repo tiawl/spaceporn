@@ -26,6 +26,8 @@ LOW PRIORITY:
 - add a flag to disable some planets/galaxy/darkhole/asteroids/bigstars
 - use OpenMP for textures atlas generation
 - use GLAD instead of GLEW
+- add a flag to generate wallpaper into a MP4 file with screen dimensions
+- Windows OS portability
 
 ## Shader files
 

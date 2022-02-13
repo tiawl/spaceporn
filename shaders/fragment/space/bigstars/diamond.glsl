@@ -1,5 +1,5 @@
 # include "hash.glsl"
-# include "pixelspace.glsl"
+# include "space/bigstars/common.glsl"
 
 float diamond(vec2 coords, Star star)
 {

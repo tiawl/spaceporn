@@ -1,3 +1,16 @@
+struct Star
+{
+  float type;
+  vec2 center;
+  float size;
+  float time_speed;
+  float brightness;
+  float shape;
+  uint sharpness;
+  float diag;
+  float ring_size;
+};
+
 float sdCircle(vec2 p, float r)
 {
   return length(p) - r;

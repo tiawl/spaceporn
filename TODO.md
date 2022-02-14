@@ -52,6 +52,7 @@ LOW PRIORITY:
 - slynyrd moon
 - land planet with swirl clouds
 - lava planet
+- abueloretrowave ring planet
 - dark planet
 - galaxy
 - dark hole (with event horizon animation)

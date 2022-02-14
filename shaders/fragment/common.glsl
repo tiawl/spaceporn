@@ -20,33 +20,6 @@ bool motion = (bflags[1] > 0 ? true : false);
 bool palettes = (bflags[2] > 0 ? true : false);
 bool precomputed = (bflags[3] > 0 ? true : false);
 
-struct Planet
-{
-  float type;
-  vec2 center;
-  float rotation;
-  float radius;
-  float time_speed;
-  float plan;
-  vec2 light_origin;
-  uint turbulence;
-  float ring;
-  float ring_a;
-};
-
-struct Star
-{
-  float type;
-  vec2 center;
-  float size;
-  float time_speed;
-  float brightness;
-  float shape;
-  uint sharpness;
-  float diag;
-  float ring_size;
-};
-
 # define NB_COLS 7.
 # define PLANET_COLS 12.
 

@@ -27,7 +27,7 @@ Planet calc_planet(vec2 coords, vec2 center, float pixel_res)
   vec2 light_origin = light_dist * vec2(cos(light_angle), sin(light_angle));
 
   Planet planet = Planet(shape, center, rotation, radius, time_speed, plan,
-    light_origin, 0u, 0., 0.);
+    light_origin, 0u, 0., 0., 0., 0.);
   if ((rd_planet < (DRY + RING) / 2.) && (rd_planet > (RING + GAZ) / 2.))
   {
     float ring_rotation = radians(hash(center, seed + 10u) * 360.);
@@ -42,6 +42,9 @@ Planet calc_planet(vec2 coords, vec2 center, float pixel_res)
     planet.ring = res.y;
     planet.ring_a = res.z;
     planet.turbulence = (uint(hash(center, seed + 9u) * 9.) + 1u) * 10u;
+  } else if ((rd_planet < (MOON + LAND) / 2.) && (rd_planet > LAND / 2.)) {
+    planet.cloud_cover = 0.27 + hash(center, seed + 10u) * 0.4;
+    planet.cloud_stretch = 2. + hash(center, seed + 10u) * 2.;
   }
 
   return planet;
@@ -50,8 +53,10 @@ Planet calc_planet(vec2 coords, vec2 center, float pixel_res)
 vec4 planets(vec2 coords, bool dith)
 {
   coords *= PLANETS_DENSITY;
-  Planet planet = Planet(0., vec2(0.), 0., 0., 0., 0., vec2(0.), 0u, 0., 0.);
-  Planet tmp = Planet(0., vec2(0.), 0., 0., 0., 0., vec2(0.), 0u, 0., 0.);
+  Planet planet =
+    Planet(0., vec2(0.), 0., 0., 0., 0., vec2(0.), 0u, 0., 0., 0., 0.);
+  Planet tmp =
+    Planet(0., vec2(0.), 0., 0., 0., 0., vec2(0.), 0u, 0., 0., 0., 0.);
   vec2 o;
   vec2 fp_coords;
 

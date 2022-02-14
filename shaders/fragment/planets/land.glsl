@@ -18,8 +18,6 @@ vec4 computeClouds(vec2 coords, Planet planet, bool dith)
 {
   const float cloud_curve = 1.3;
   const float size = 7.315;
-  const float stretch = 3.;
-  const float cloud_cover = 0.47;
   const uint octaves = 2u;
 
   float d_light = distance(coords, planet.light_origin) / sqrt(planet.radius);
@@ -31,16 +29,17 @@ vec4 computeClouds(vec2 coords, Planet planet, bool dith)
   coords.y += smoothstep(0., cloud_curve, abs(coords.x - 0.4));
 
   float c = ppcloud_alpha(size, vec2(1.), planet.time_speed,
-    (coords + planet.center) * vec2(1., stretch), octaves, seed, planet.center);
+    (coords + planet.center) * vec2(1., planet.cloud_stretch), octaves, seed,
+    planet.center);
 
-  vec3 col = (c < cloud_cover + 0.03 ? vec3(0.887) : vec3(0.956));
+  vec3 col = (c < planet.cloud_cover + 0.03 ? vec3(0.887) : vec3(0.956));
 
   d_light *= d_light * 0.4;
-  float light_b = light_borders(d_light, planet.radius) + c - 0.5;
+  float light_b = light_borders(d_light, planet.radius) + (c - 0.5) * 0.5;
   col *= light_b;
   col *= (dith && (light_b < 1.) ? 0.9 : 1.);
   col = (floor(col * NB_COLS)) / NB_COLS;
-  return vec4(col, step(cloud_cover, c));
+  return vec4(col, step(planet.cloud_cover, c));
 }
 
 vec4 computeLand(vec2 coords, Planet planet, bool dith)
@@ -73,14 +72,16 @@ vec4 computeLand(vec2 coords, Planet planet, bool dith)
     base_fbm_coords + fbm1 * 6., octaves, seed, planet.center);
   river_fbm = step(river_cutoff, river_fbm);
 
-  d_light *= d_light * 0.4;
-  vec3 col = (fbm4 + d_light < fbm1 * 1.5 ? vec3(0.283) : vec3(0.204));
-  col =      (fbm3 + d_light < fbm1 ?       vec3(0.343) : col);
-  col =      (fbm2 + d_light < fbm1 ?       vec3(0.435) : col);
+  d_light *= d_light * 0.1;
+  vec3 col = (fbm4 + d_light < fbm1 ? vec3(0.283) : vec3(0.204));
+  col =      (fbm3 + d_light < fbm1 ? vec3(0.343) : col);
+  col =      (fbm2 + d_light < fbm1 ? vec3(0.435) : col);
   col = (river_fbm < fbm1 * 0.5 ? (fbm4 + d_light < fbm1 * 1.5 ?
-    vec3(0.558) : vec3(0.558)) : col);
+    vec3(0.558) : vec3(0.329)) : col);
 
-  float light_b = light_borders(d_light, planet.radius) + fbm1 - 0.2;
+  d_light *= 4.;
+  d_light += (fbm4 - 0.5) * 0.2;
+  float light_b = light_borders(d_light, planet.radius) * 1.5;
   col *= light_b;
   col *= (dith && (light_b < 1.) ? 0.9 : 1.);
   col = (floor(col * NB_COLS)) / NB_COLS;
@@ -90,5 +91,5 @@ vec4 computeLand(vec2 coords, Planet planet, bool dith)
 vec4 land(vec2 coords, Planet planet, bool dith)
 {
   vec4 clouds = computeClouds(coords, planet, dith);
-  return (clouds.a == 0. ? computeLand(coords, planet, dith) : clouds);
+  return (clouds.a <= 0. ? computeLand(coords, planet, dith) : clouds);
 }

@@ -1,6 +1,22 @@
 # include "common.glsl"
 # include "hash.glsl"
 
+struct Planet
+{
+  float type;
+  vec2 center;
+  float rotation;
+  float radius;
+  float time_speed;
+  float plan;
+  vec2 light_origin;
+  uint turbulence;
+  float ring;
+  float ring_a;
+  float cloud_cover;
+  float cloud_stretch;
+};
+
 float pprand(float size, vec2 sizeModifier, vec2 coords, uint noise_seed,
   vec2 center)
 {

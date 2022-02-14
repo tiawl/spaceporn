@@ -19,12 +19,12 @@ float diamond(vec2 coords, Star star)
   float color = (sign(m) < 0.5 ? -1. : 0.);
   float ratio = 2. / (20. + star.brightness * star.brightness);
   color *= 1. - ((hash((star.center + coords) * pixels, seed) * ratio
-    - ratio / 2.) + (abs(coords.x) + abs(coords.y) + 0.1) * star.brightness);
+    - ratio / 2.) + (abs(coords.x) + abs(coords.y)) * star.brightness);
 
   float ring = opRing(coords, star.size * star.ring_size,
-    pixel_res / 2.);
+    pixel_res / (4.5 - star.ring_size));
   ring = (sign(ring) < 0.5 ? -1. : 0.);
-  color = min(color * 1.3, ring * 0.15);
+  color = min(color * 1.3, ring * sqrt(1.0 - star.ring_size / 2.));
 
   return floor(color * PLANET_COLS) / PLANET_COLS;
 }

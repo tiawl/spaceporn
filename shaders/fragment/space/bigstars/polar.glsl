@@ -21,10 +21,7 @@ float polar(vec2 coords, Star star)
   float s2 = sdSegment(coords, C, D) - depth;
   float s3 = sdSegment(coords, E, F) - depth;
   float s4 = sdSegment(coords, G, H) - depth;
-  float m = min(min(smin(s1 - depth, s3, star.shape, star.sharpness),
-    smin(s2, s3, star.shape, star.sharpness)),
-      min(smin(s1 - depth, s4, star.shape, star.sharpness),
-        smin(s2, s4, star.shape, star.sharpness)));
+  float m = min(min(s1, s2), min(s3, s4));
 
   float color = (sign(m) < 0.5 ? -1. : 0.);
   float ratio = 2. / (20. + star.brightness * star.brightness);
@@ -37,34 +34,4 @@ float polar(vec2 coords, Star star)
   color = min(color * 1.3, ring * 0.15);
 
   return floor(color * PLANET_COLS) / PLANET_COLS;
-}
-
-float polarShape(Star star, float pixel_res)
-{
-  float shape;
-  if (star.sharpness > 6u)
-  {
-    if (star.sharpness == 7u)
-    {
-      shape = 3. * pixel_res;
-    } else if (star.sharpness == 8u) {
-      shape = 3.18 * pixel_res;
-    } else if ((star.sharpness >= 9u) && (star.sharpness <= 10u)) {
-      shape = 3.372 * pixel_res;
-    } else {
-      float ratio = 0.053;
-      ratio = (star.sharpness < 12u ? ratio * 0.5 : ratio);
-      ratio = (star.sharpness < 15u ? ratio * 0.75 : ratio);
-      ratio = (star.sharpness > 13u ? ratio + 0.013 : ratio);
-      ratio = (star.sharpness > 15u ? ratio + 0.019 : ratio);
-      shape = 0.219 + ratio * (hash(star.center, seed + 9u) * 0.5 + 0.5);
-      shape *= star.size;
-      shape *= (star.size / pixel_res < float(star.sharpness) ?
-        1. + ((float(star.sharpness) - star.size / pixel_res) / 20.) : 1.);
-    }
-  } else {
-    shape = 0.0001;
-  }
-  shape *= 2.73;
-  return shape;
 }

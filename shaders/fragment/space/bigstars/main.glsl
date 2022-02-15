@@ -31,11 +31,17 @@ float calc_star(vec2 coords, vec2 center, float pixel_res)
       0. : bigstar.ring_size;
     star = diamond(coords, bigstar);
   } else if (bigstar.type < (NOVA + POLAR) / 2.) {
-    bigstar.diag = 2. + hash(bigstar.center, seed + 6u) * 3.;
-    bigstar.brightness = bigstar.size * bigstar.brightness;
+    bigstar.shape = 8u;
+    bigstar.diag = (bigstar.shape >= 5u ? 0. :
+      5. + hash(bigstar.center, seed + 6u) * 3.);
+    bigstar.brightness = (bigstar.shape == 5u ?
+      0.4 : (bigstar.shape == 6u ? 0.25 : (bigstar.shape >= 7u ?
+        0.5 : bigstar.size * bigstar.brightness)));
     bigstar.ring_size = (bigstar.ring_size * bigstar.size < pixel_res * 7.) ?
       0. : bigstar.ring_size;
-    bigstar.shape = 1u;
+    bigstar.size *= (bigstar.shape >= 5u ?
+      (bigstar.shape == 7u ? 17. * pixel_res / bigstar.size :
+       (bigstar.shape == 8u ? 11. * pixel_res / bigstar.size : 0.)) : 1.);
     star = nova(coords, bigstar);
   } else {
     bigstar.brightness = bigstar.size * bigstar.brightness;

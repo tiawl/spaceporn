@@ -7,14 +7,17 @@ float nova(vec2 coords, Star star)
 
   star.brightness = 1. / star.brightness;
 
-  vec2 A = vec2(            -star.size,                     0.);
-  vec2 B = vec2(             star.size,                     0.);
-  vec2 C = vec2(                    0.,              star.size);
-  vec2 D = vec2(                    0.,             -star.size);
-  vec2 E = vec2(-star.size / star.diag,  star.size / star.diag);
-  vec2 F = vec2( star.size / star.diag, -star.size / star.diag);
-  vec2 G = vec2( star.size / star.diag,  star.size / star.diag);
-  vec2 H = vec2(-star.size / star.diag, -star.size / star.diag);
+  float size = (star.shape >= 17u ?
+    (star.shape == 19u ? 17. * pixel_res / star.size :
+      (star.shape == 20u ? 11. * pixel_res / star.size : 0.)) : star.size);
+  vec2 A = vec2(            -size,                0.);
+  vec2 B = vec2(             size,                0.);
+  vec2 C = vec2(               0.,              size);
+  vec2 D = vec2(               0.,             -size);
+  vec2 E = vec2(-size / star.diag,  size / star.diag);
+  vec2 F = vec2( size / star.diag, -size / star.diag);
+  vec2 G = vec2( size / star.diag,  size / star.diag);
+  vec2 H = vec2(-size / star.diag, -size / star.diag);
 
   float depth = 1. / shorter_res;
   float s1 = sdSegment(coords, A, B) - depth;
@@ -28,8 +31,13 @@ float nova(vec2 coords, Star star)
   color *= 1. - ((hash((star.center + coords) * pixels, seed) * ratio
     - ratio / 2.) + (abs(coords.x) + abs(coords.y)) * star.brightness);
 
-  float ring = opRing(coords, star.size * star.ring_size,
-    pixel_res / (4.0 - star.ring_size * 0.75));
+  size = (star.shape == 18u ? star.size * 0.1 + 50. / pixels  :
+    (star.shape >= 19u ? star.size * 0.35 + 70. / pixels: star.size));
+  float ring = opRing(coords +
+    (star.shape == 18u ? vec2(-pixel_res * 0.5, pixel_res * 0.5) :
+      (star.shape == 17u ? vec2(pixel_res * 0.5, -pixel_res * 0.5) :
+        vec2(0.))), size * star.ring_size,
+          pixel_res / (4.0 - star.ring_size * 0.75));
   ring = (sign(ring) < 0.5 ? -1. : 0.);
   color = min(color * 1.3, ring * sqrt(1.0 - star.ring_size / 2.));
 

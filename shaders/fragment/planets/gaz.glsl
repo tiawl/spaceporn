@@ -20,7 +20,7 @@ vec4 computeInnerCloud(vec2 coords, Planet planet, bool dith)
 
   vec3 col = vec3(0.169);
 
-  float light_b = sqrt(0.8 - (d_light + c * 0.2));
+  float light_b = sqrt(1. - d_light) + (c - 0.5);
   col *= light_b;
   col *= (dith && (light_b < 1.) ? 0.9 : 1.);
   col = (floor(col * PLANET_COLS)) / PLANET_COLS;
@@ -47,7 +47,7 @@ vec4 computeOuterClouds(vec2 coords, Planet planet, bool dith)
 
   vec3 col = (c < cloud_cover + 0.03 ? vec3(0.479) : vec3(0.634));
 
-  float light_b = sqrt(0.8 - (d_light + c * 0.2));
+  float light_b = sqrt(1. - d_light) + (c - 0.5);
   col *= light_b;
   col *= (dith && (light_b < 1.) ? 0.9 : 1.);
   col = (floor(col * PLANET_COLS)) / PLANET_COLS;

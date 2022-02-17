@@ -34,7 +34,6 @@ LOW PRIORITY:
 HIGH PRIORITY:
 - use atlas textures
 - no == and != operators between floating numbers
-- noisy light for planets (ring)
 - fix planets density
 
 MEDIUM PRIORITY:

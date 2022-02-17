@@ -45,7 +45,7 @@ vec4 slide_main(vec2 fragment)
   UV *= zoom;
   bool dith = dither(fragment / shorter_res, UV / zoom);
 
-  vec4 col = space(UV,dith);//planets(UV, dith);
+  vec4 col = planets(UV, dith);
 //   if (col.x <= -1.)
 //   {
 //     col = space(UV, dith);

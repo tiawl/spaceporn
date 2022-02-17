@@ -43,7 +43,7 @@ Planet calc_planet(vec2 coords, vec2 center, float pixel_res)
     planet.ring_a = res.z;
     planet.turbulence = (uint(hash(center, seed + 9u) * 9.) + 1u) * 10u;
   } else if ((rd_planet < (MOON + LAND) / 2.) && (rd_planet > LAND / 2.)) {
-    planet.cloud_cover = 0.27 + hash(center, seed + 10u) * 0.4;
+    planet.cloud_cover = 0.37 + hash(center, seed + 10u) * 0.3;
     planet.cloud_stretch = 2. + hash(center, seed + 10u) * 2.;
   }
 

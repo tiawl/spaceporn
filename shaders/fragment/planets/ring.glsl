@@ -51,7 +51,7 @@ vec4 computePlanetUnder(vec2 coords, Planet planet, bool dith)
   float fbm1 = ppfbm(size, sizeModifier, (coords + planet.center) * size,
     octaves, seed, planet.center);
   float fbm2 = ppfbm(size, sizeModifier,
-    (coords + planet.center) * vec2(1., 2.) * size
+    (coords * 2. + planet.center) * vec2(1., 2.) * size
     + fbm1 + vec2(time * planet.time_speed, 0.) + turb, octaves, seed,
     planet.center);
 
@@ -65,8 +65,9 @@ vec4 computePlanetUnder(vec2 coords, Planet planet, bool dith)
   vec3 col = (fbm2 < 0.625 ? colorSelection(lightColors, posterized) :
     colorSelection(darkColors, posterized - 1.));
 
-  float light_b = 1. - d_light;
-  col *= min(0.7, light_b);
+  float light_b = max(1. - d_light - (fbm1 - 0.5) * 0.35, 0.);
+  col = sqrt(col.x > 0. ? col : vec3(0.));
+  col *= min(0.8, light_b);
   col *= (dith && (light_b < 0.8) ? 0.95 : 1.);
   col = (floor(col * PLANET_COLS)) / PLANET_COLS;
   return vec4(col, 1.);

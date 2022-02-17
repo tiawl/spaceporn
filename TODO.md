@@ -28,7 +28,6 @@ LOW PRIORITY:
 - add a flag to disable some planets/galaxy/darkhole/asteroids/bigstars
 - use OpenMP for textures atlas generation
 - use GLAD instead of GLEW
-- add a flag to generate wallpaper into a MP4 file with screen dimensions
 - Windows OS portability
 
 ## Shader files
@@ -40,9 +39,10 @@ HIGH PRIORITY:
 MEDIUM PRIORITY:
 - star clouds
 - star streams
-- dry planet
 - swirl planet
+- dry planet
 - fix ring overflow
+- dark planet
 
 LOW PRIORITY:
 - parallalax
@@ -54,7 +54,6 @@ LOW PRIORITY:
 - abueloretrowave ring planet
 - abueloretrowave metal planet
 - death star ??
-- dark planet
 - galaxy
 - dark hole (with event horizon animation)
 - group of asteroids

@@ -8,12 +8,14 @@ MEDIUM PRIORITY:
 - use pushd/popd in bash scripts
 
 LOW PRIORITY:
-- run memory checks
-- run coverage checks
-- run detectmissingconf with strict and nostrict
 - add test and dev branches
 - add hooks for memory-check, coverage-check and detect-AC_CHECK for master branch
 - run test on graphic containers ???
+
+REMINDER:
+- run memory checks
+- run coverage checks
+- run detectmissingconf with strict and nostrict
 
 ## C files
 
@@ -33,15 +35,14 @@ LOW PRIORITY:
 
 HIGH PRIORITY:
 - use atlas textures
-- no == and != operators between floating numbers
-- fix planets density
+- fix planets density -> planets/main: lines 79 & 86 + see dist params in calc_planet function
 
 MEDIUM PRIORITY:
 - star clouds
 - star streams
 - dry planet
 - swirl planet
-- avoid pow() usage
+- fix ring overflow
 
 LOW PRIORITY:
 - parallalax
@@ -58,3 +59,8 @@ LOW PRIORITY:
 - dark hole (with event horizon animation)
 - group of asteroids
 - palette gen
+
+REMINDER:
+- no == and != operators between floats
+- check float format: 5. and 0.5
+- avoid pow() usage

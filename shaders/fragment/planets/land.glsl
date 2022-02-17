@@ -48,6 +48,7 @@ vec4 computeLand(vec2 coords, Planet planet, bool dith)
   const float river_cutoff = 0.368;
   const uint octaves = 5u;
   const vec2 sizeModifier = vec2(2., 1.);
+  const float light_incr = 1.2;
 
   float d_light = distance(coords, planet.light_origin) / sqrt(planet.radius);
 
@@ -80,11 +81,11 @@ vec4 computeLand(vec2 coords, Planet planet, bool dith)
     vec3(0.558) : vec3(0.329)) : col);
 
   d_light *= 4.;
-  d_light += (fbm4 - 0.5) * 0.2;
-  float light_b = light_borders(d_light, planet.radius) * 1.5;
+  d_light += (fbm4 - 0.5) * 0.25;
+  float light_b = light_borders(d_light, planet.radius) * light_incr;
   col *= light_b;
-  col *= (dith && (light_b < 1.) ? 0.9 : 1.);
-  col = (floor(col * NB_COLS)) / NB_COLS;
+  col *= (dith && (light_b < light_incr) ? 0.85 : 1.);
+  col = (floor(col * PLANET_COLS)) / PLANET_COLS;
   return vec4(col, 1.);
 }
 

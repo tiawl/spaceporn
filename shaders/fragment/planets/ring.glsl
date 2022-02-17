@@ -97,7 +97,7 @@ vec3 computeRingShape(vec2 coords, Planet planet, float rotation, float w,
     ppfbm(size, sizeModifier, coords2 * size, octaves, seed, planet.center);
 
   float ring_a = step(0.28, ring);
-  return (ring_a > 0. ? vec3(1., ring, ring_a) : vec3(0.));
+  return (ring_a > 0. ? vec3(1., ring, abs(ring_a)) : vec3(0.));
 }
 
 vec4 computeRingColor(vec2 coords, Planet planet, bool dith)
@@ -116,6 +116,6 @@ vec4 computeRingColor(vec2 coords, Planet planet, bool dith)
 
 vec4 ring(vec2 coords, Planet planet, bool dith)
 {
-  return (planet.ring_a != 0. ? computeRingColor(coords, planet, dith) :
+  return (planet.ring_a > 0. ? computeRingColor(coords, planet, dith) :
     computePlanetUnder(coords, planet, dith));
 }

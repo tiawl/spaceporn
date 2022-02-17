@@ -60,7 +60,7 @@ vec4 computeCraters(vec2 coords, Planet planet, bool dith)
 
   col *= (dith && (light_b < 1.) ? 0.9 : 1.);
 
-  float diff_col = ((c1 > 0.) && (c2 == 0.) ? PLANET_COLS / 5. : 0.);
+  float diff_col = ((c1 > 0.) && (c2 <= 0.) ? PLANET_COLS / 5. : 0.);
   col = (floor(col * PLANET_COLS) - diff_col) / PLANET_COLS;
   col = min(col, color1);
   return vec4(col, a);
@@ -97,5 +97,5 @@ vec4 moon(vec2 coords, Planet planet, bool dith)
 {
   planet.time_speed *= 3.;
   vec4 craters = computeCraters(coords, planet, dith);
-  return (craters.a == 0. ? computeMoon(coords, planet, dith) : craters);
+  return (craters.a <= 0. ? computeMoon(coords, planet, dith) : craters);
 }

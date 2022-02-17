@@ -33,9 +33,6 @@ LOW PRIORITY:
 
 HIGH PRIORITY:
 - use atlas textures
-- animation for bigstars
-- patterns for bigstars
-- if 2 bigstars collide, increase brightness
 - no == and != operators between floating numbers
 - noisy light for planets (ring)
 - fix planets density

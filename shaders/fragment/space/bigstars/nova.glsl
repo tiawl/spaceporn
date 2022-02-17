@@ -37,9 +37,9 @@ float nova(vec2 coords, Star star)
     (star.shape == 18u ? vec2(-pixel_res * 0.5, pixel_res * 0.5) :
       (star.shape == 17u ? vec2(pixel_res * 0.5, -pixel_res * 0.5) :
         vec2(0.))), size * star.ring_size,
-          pixel_res / (4.0 - star.ring_size * 0.75));
+          pixel_res / (4. - star.ring_size * 0.75));
   ring = (sign(ring) < 0.5 ? -1. : 0.);
-  color = min(color * 1.3, ring * sqrt(1.0 - star.ring_size / 2.));
+  color = min(color * 1.3, ring * 0.5 * star.power);
 
   return floor(color * PLANET_COLS) / PLANET_COLS;
 }

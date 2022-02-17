@@ -3,7 +3,7 @@ struct Star
   float type;
   vec2 center;
   float size;
-  float time_speed;
+  float power;
   float brightness;
   float shape;
   float diag;

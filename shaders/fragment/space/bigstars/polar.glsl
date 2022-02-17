@@ -29,9 +29,9 @@ float polar(vec2 coords, Star star)
     - ratio / 2.) + (abs(coords.x) + abs(coords.y)) * star.brightness);
 
   float ring = opRing(coords, star.size * star.ring_size,
-    pixel_res / (4.0 - star.ring_size * 0.75));
+    pixel_res / (4. - star.ring_size * 0.75));
   ring = (sign(ring) < 0.5 ? -1. : 0.);
-  color = min(color * 1.3, ring * sqrt(1.0 - star.ring_size / 2.));
+  color = min(color * 1.3, ring * 0.5 * star.power);
 
   return floor(color * PLANET_COLS) / PLANET_COLS;
 }

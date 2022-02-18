@@ -2,17 +2,17 @@
 # include "space/main.glsl"
 # include "planets/main.glsl"
 
-vec4 atlas_main(vec2 UV)
+vec4 atlas_main(vec2 fragCoords)
 {
-  vec2 t = textureSize(atlas, 0).xy;
+  vec2 texture_sz = textureSize(atlas, 0).xy;
 
   if (!motion)
   {
     time = 0.;
   }
 
-  float motion_radius = 2. * zoom;
-  vec2 offset = (motion_radius / t.x)
+  float motion_radius = 2. * zoom; //TODO: rework this distance
+  vec2 offset = (motion_radius / texture_sz.x)
     * vec2(sin(MOTION_SPEED * time), sin(MOTION_SPEED * time * 0.75));
 
   if (!animation)
@@ -22,34 +22,34 @@ vec4 atlas_main(vec2 UV)
     time = fflags[3] / 50.;
   }
 
-  vec2 tUV = UV / t;
-  tUV.x *= larger_res / shorter_res;
-    tUV *= zoom;
-    tUV += offset;
-    vec2 unzoomed_tUV = tUV / zoom;
-    vec2 unzoomed_px = pixels * unzoomed_tUV;
-//     bool dith = dither(uv, unzoomed_UV);
+  vec2 UV = fragCoords / shorter_res;
+  hcoords = (UV / texture_sz + offset) * pixels;
+  UV += offset;
+  UV = floor(UV * pixels) / pixels;
+  UV *= zoom;
+  bool dith = false;//dither(fragCoords / (texture_sz * shorter_res), UV / zoom);
 
-    // STARS DONE -> TODO: bigstars
-     vec4 col = vec4(0.);//space(unzoomed_px);
+  vec4 col = space(UV, dith);
   return col;
 }
 
-vec4 slide_main(vec2 fragment)
+vec4 slide_main(vec2 fragCoords)
 {
   //time = 0.;
+  const float offset = 5.;
 
-  vec2 UV = fragment / shorter_res;
-  UV += 5.;
+  vec2 UV = fragCoords / shorter_res;
+  UV += offset;
+  hcoords = (UV + offset) * pixels;
   UV = floor(UV * pixels) / pixels;
   UV *= zoom;
-  bool dith = dither(fragment / shorter_res, UV / zoom);
+  bool dith = dither(fragCoords / shorter_res, UV / zoom);
 
   vec4 col = planets(UV, dith);
-//   if (col.x <= -1.)
-//   {
-//     col = space(UV, dith);
-//   }
+  if (col.x <= -1.)
+  {
+    col = space(UV, dith);
+  }
 
   return col;
 }

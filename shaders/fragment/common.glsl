@@ -20,6 +20,8 @@ bool motion = (bflags[1] > 0 ? true : false);
 bool palettes = (bflags[2] > 0 ? true : false);
 bool precomputed = (bflags[3] > 0 ? true : false);
 
+vec2 hcoords = vec2(0.);
+
 # define NB_COLS 7.
 # define PLANET_COLS 12.
 
@@ -30,7 +32,7 @@ bool precomputed = (bflags[3] > 0 ? true : false);
 # define BIGSTARS_DENSITY 5.
 # define DUST_SIZE 15.
 # define NEBULA_SIZE 30.
-# define PLANETS_DENSITY 5.
+# define PLANETS_DENSITY 10.
 
 bool dither(vec2 coords1, vec2 coords2)
 {

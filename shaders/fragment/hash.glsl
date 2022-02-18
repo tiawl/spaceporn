@@ -2,15 +2,15 @@ uvec3 pcg3d(uvec3 v)
 {
   v = v * 1664525u + 1013904223u;
 
-  v.x += v.y*v.z;
-  v.y += v.z*v.x;
-  v.z += v.x*v.y;
+  v.x += v.y * v.z;
+  v.y += v.z * v.x;
+  v.z += v.x * v.y;
 
   v ^= v >> 16u;
 
-  v.x += v.y*v.z;
-  v.y += v.z*v.x;
-  v.z += v.x*v.y;
+  v.x += v.y * v.z;
+  v.y += v.z * v.x;
+  v.z += v.x * v.y;
 
   return v;
 }
@@ -56,14 +56,15 @@ float precomputed_hash(vec2 coords, uint hash_seed)
   return res;
 }
 
-float hash(vec2 s, uint hash_seed)
+float hash(vec2 coords, uint hash_seed)
 {
   float res;
   if (precomputed)
   {
-    res = precomputed_hash(s, hash_seed);
+    res = precomputed_hash(hcoords, hash_seed);
   } else {
-    uvec4 u = uvec4(s, uint(s.x) ^ uint(s.y), uint(s.x) + uint(s.y));
+    uvec4 u = uvec4(coords, uint(coords.x) ^ uint(coords.y),
+      uint(coords.x) + uint(coords.y));
     uvec3 p = pcg3d(uvec3(u.x, u.y, hash_seed));
     res = float(p) * (1. / float(0xffffffffu));
   }

@@ -379,4 +379,3 @@ float starPattern(vec2 coords, Star star)
   }
   return res;
 }
-

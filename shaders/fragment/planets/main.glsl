@@ -52,6 +52,7 @@ Planet calc_planet(vec2 coords, vec2 center, float pixel_res)
 
 vec4 planets(vec2 coords, bool dith)
 {
+  float scale = PLANETS_DENSITY / 10.;
   coords *= PLANETS_DENSITY;
   Planet planet =
     Planet(0., vec2(0.), 0., 0., 0., 0., vec2(0.), 0u, 0., 0., 0., 0.);
@@ -76,14 +77,14 @@ vec4 planets(vec2 coords, bool dith)
       floor_multiple(hash(center, seed + 1u), pixel_res));
     coords = o + h - f;
 
-    tmp = calc_planet(coords, center, pixel_res);
+    tmp = calc_planet(coords / scale, center, pixel_res);
     if ((tmp.type > 0.) && (planet.plan < tmp.plan))
     {
       planet = tmp;
       fp_coords = coords;
     }
   }
-  coords = fp_coords;
+  coords = fp_coords / scale;
 
   vec4 color;
   if (planet.type < LAND / 2.)

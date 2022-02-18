@@ -30,7 +30,7 @@ bool precomputed = (bflags[3] > 0 ? true : false);
 # define BIGSTARS_DENSITY 5.
 # define DUST_SIZE 15.
 # define NEBULA_SIZE 30.
-# define PLANETS_DENSITY 10.
+# define PLANETS_DENSITY 5.
 
 bool dither(vec2 coords1, vec2 coords2)
 {

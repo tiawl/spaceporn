@@ -55,7 +55,7 @@ vec4 computeCraters(vec2 coords, Planet planet, bool dith)
     (coords + planet.center) * sizePlanet + vec2(time * planet.time_speed, 0.),
     octaves, seed, planet.center) * 0.3;
 
-  float light_b = 1. - d_light;
+  float light_b = max(0., 1. - d_light);
   vec3 col = vec3(light_b);
 
   col *= (dith && (light_b < 1.) ? 0.9 : 1.);

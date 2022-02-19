@@ -42,6 +42,7 @@ LOW PRIORITY:
 
 HIGH PRIORITY:
 - use atlas textures
+- avoid floor_multiple()
 
 MEDIUM PRIORITY:
 - star clouds

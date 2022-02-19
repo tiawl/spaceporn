@@ -20,7 +20,7 @@ bool motion = (bflags[1] > 0 ? true : false);
 bool palettes = (bflags[2] > 0 ? true : false);
 bool precomputed = (bflags[3] > 0 ? true : false);
 
-vec2 hcoords = vec2(0.);
+bool stars_computed = false;
 
 # define NB_COLS 7.
 # define PLANET_COLS 12.

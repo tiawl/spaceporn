@@ -61,7 +61,8 @@ float hash(vec2 coords, uint hash_seed)
   float res;
   if (precomputed)
   {
-    res = precomputed_hash(hcoords, hash_seed);
+    res = precomputed_hash(coords * (stars_computed ? pixels : 1.)
+      / textureSize(atlas, 0).xy, hash_seed);
   } else {
     uvec4 u = uvec4(coords, uint(coords.x) ^ uint(coords.y),
       uint(coords.x) + uint(coords.y));

@@ -42,7 +42,7 @@ LOW PRIORITY:
 
 HIGH PRIORITY:
 - use atlas textures
-- avoid floor_multiple()
+- mirroring UV in nova patterns
 
 MEDIUM PRIORITY:
 - star clouds

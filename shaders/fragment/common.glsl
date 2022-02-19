@@ -18,9 +18,7 @@ float zoom = fflags[5];
 bool animation = (bflags[0] > 0 ? true : false);
 bool motion = (bflags[1] > 0 ? true : false);
 bool palettes = (bflags[2] > 0 ? true : false);
-bool precomputed = (bflags[3] > 0 ? true : false);
-
-bool stars_computed = false;
+int precomputed = bflags[3];
 
 # define NB_COLS 7.
 # define PLANET_COLS 12.
@@ -30,19 +28,21 @@ bool stars_computed = false;
 
 # define STARS_DENSITY 20.
 # define BIGSTARS_DENSITY 5.
-# define DUST_SIZE 15.
-# define NEBULA_SIZE 30.
+# define HFNEBULA_SIZE 15.
+# define LFNEBULA_SIZE 30.
 # define PLANETS_DENSITY 10.
+
+# define NO_ATLAS 0
+# define STARS_DONE 2
 
 bool dither(vec2 coords1, vec2 coords2)
 {
   return mod(coords1.x + coords2.y, 2. / pixels) <= 1. / pixels;
 }
 
-float floor_multiple(float numToRound, float base)
+float floor2(float x, float base)
 {
-  float modulo = mod(numToRound, base);
-  return (sign(modulo) < 0.5 ? numToRound : numToRound - modulo);
+  return floor(x / base) * base;
 }
 
 vec2 rotate(vec2 coords, vec2 center, float angle)

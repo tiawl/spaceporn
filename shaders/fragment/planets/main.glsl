@@ -73,8 +73,8 @@ vec4 planets(vec2 coords, bool dith)
     o = vec2(k % 3, k / 3) - 1.;
 
     center = i + o;
-    h = vec2(floor_multiple(hash(center, seed), pixel_res),
-      floor_multiple(hash(center, seed + 1u), pixel_res));
+    h = vec2(floor2(hash(center, seed), pixel_res),
+      floor2(hash(center, seed + 1u), pixel_res));
     coords = o + h - f;
 
     tmp = calc_planet(coords / scale, center, pixel_res);

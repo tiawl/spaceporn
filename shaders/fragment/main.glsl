@@ -33,7 +33,7 @@ vec4 atlas_main(vec2 fragCoords)
 
 vec4 slide_main(vec2 fragCoords)
 {
-  //time = 0.;
+  time = 0.;
   const float offset = 5.;
 
   vec2 UV = fragCoords / shorter_res;
@@ -55,11 +55,11 @@ vec4 slide_main(vec2 fragCoords)
 void main()
 {
   vec4 col = vec4(0.);
-  if (precomputed)
+  if (precomputed == NO_ATLAS)
   {
-    col = atlas_main(gl_FragCoord.xy);
-  } else {
     col = slide_main(gl_FragCoord.xy);
+  } else {
+    col = atlas_main(gl_FragCoord.xy);
   }
 
   gl_FragColor = col;

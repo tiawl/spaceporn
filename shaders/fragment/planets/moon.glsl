@@ -37,7 +37,7 @@ vec4 computeCraters(vec2 coords, Planet planet, bool dith)
   const vec2 sizeModifier = vec2(2., 1.);
 
   float d_to_center = length(coords);
-  float d_light = distance(coords, planet.light_origin) / sqrt(planet.radius);
+  float d_light = distance(coords, planet.light_origin) / planet.radius;
 
   coords = rotate(coords, vec2(0.), planet.rotation);
   coords = spherify(coords, vec2(0.), planet.radius);
@@ -59,7 +59,6 @@ vec4 computeCraters(vec2 coords, Planet planet, bool dith)
   vec3 col = vec3(light_b);
 
   col *= (dith && (light_b < 1.) ? 0.9 : 1.);
-
   float diff_col = ((c1 > 0.) && (c2 <= 0.) ? PLANET_COLS / 5. : 0.);
   col = (floor(col * PLANET_COLS) - diff_col) / PLANET_COLS;
   col = min(col, color1);
@@ -73,24 +72,22 @@ vec4 computeMoon(vec2 coords, Planet planet, bool dith)
   const uint octaves = 4u;
   const vec2 sizeModifier = vec2(2., 1.);
 
-  float d_circle = length(coords);
-  float d_light = distance(coords, planet.light_origin) / sqrt(planet.radius);
-
   coords = rotate(coords, vec2(0.), planet.rotation);
+  coords = spherify(coords, vec2(0.), planet.radius);
 
-  float a = step(d_circle, 1.);
+  float d_light = distance(coords, planet.light_origin) / planet.radius;
 
   d_light += ppfbm(size, sizeModifier,
     (coords + planet.center) * size + vec2(time * planet.time_speed, 0.),
     octaves, seed, planet.center) * 0.3;
 
-  float light_b = 1. - d_light;
+  float light_b = max(1. - d_light, 0.);
   vec3 col = vec3(light_b);
 
-  col *= (dith && (light_b < 1.) ? 0.9 : 1.);
+  col *= (dith && (light_b < 1.) ? 0.95 : 1.);
   col = floor(col * PLANET_COLS) / PLANET_COLS;
   col = min(col, color1);
-  return vec4(col, a);
+  return vec4(col, 1.);
 }
 
 vec4 moon(vec2 coords, Planet planet, bool dith)

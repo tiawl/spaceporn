@@ -1,6 +1,6 @@
 # spaceporn
 
-This project is at early stage development. So it is not in a stable state and therefore it is not ready to be used. The maintainers are working on it. This is how this project will be resumed: a pixelized space animated wallpaper and background generator
+This project is in early stage development. So it is not in a stable state and therefore it is not ready to be used. The maintainers are working on it. This is how this project will be resumed: a pixelized space animated wallpaper and background generator.
 
 ## Usage
 

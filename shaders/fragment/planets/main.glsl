@@ -14,17 +14,17 @@
 
 Planet calc_planet(vec2 coords, vec2 center, float pixel_res)
 {
-  float rd_planet = max(ceil(hash(center, seed + 2u) * PLANET_TYPES), 1.);
+  float rd_planet = LAND;//max(ceil(hash(center, seed + 2u) * PLANET_TYPES), 1.);
 
   float radius = 0.2 + 0.4 * hash(center, seed + 3u);
   float light_angle = radians(hash(center, seed + 4u) * 360.);
-  float light_dist = (radius / 4.) + hash(center, seed + 5u) * (radius / 4.);
+  float light_dist = radius * 1.5 * hash(center, seed + 5u);
 
   float shape = sign(length(coords) - radius) < 0.5 ? rd_planet : 0.;
   float rotation = radians(hash(center, seed + 6u) * 360.);
   float time_speed = (hash(center, seed + 7u) + 1.) * 2.;
   float plan = hash(center, seed + 8u);
-  vec2 light_origin = light_dist * vec2(cos(light_angle), sin(light_angle));
+  vec2 light_origin = vec2(0.5) + light_dist * vec2(cos(time * 10.), sin(time * 10.));
 
   Planet planet = Planet(shape, center, rotation, radius, time_speed, plan,
     light_origin, 0u, 0., 0., 0., 0.);

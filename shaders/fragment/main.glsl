@@ -33,7 +33,7 @@ vec4 atlas_main(vec2 fragCoords)
 
 vec4 slide_main(vec2 fragCoords)
 {
-  time = 0.;
+//  time = 0.;
   const float offset = 5.;
 
   vec2 UV = fragCoords / shorter_res;
@@ -44,10 +44,10 @@ vec4 slide_main(vec2 fragCoords)
   bool dith = dither(fragCoords / shorter_res, UV / zoom);
 
   vec4 col = planets(UV, dith);
-  if (col.x <= -1.)
-  {
-    col = space(UV, stars_UV, dith);
-  }
+//   if (col.x <= -1.)
+//   {
+//     col = space(UV, stars_UV, dith);
+//   }
 
   return col;
 }

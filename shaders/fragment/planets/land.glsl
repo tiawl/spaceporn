@@ -1,30 +1,15 @@
 # include "planets/common.glsl"
 
-float light_borders(float d_light, float radius)
-{
-  float light = 1.;
-  if (d_light > radius / 4.)
-  {
-    float p = (1. - d_light) / (1. - radius / 4.);
-    p *= p;
-    p *= p;
-    p *= p;
-    light = p;
-  }
-  return light;
-}
-
 vec4 computeClouds(vec2 coords, Planet planet, bool dith)
 {
   const float cloud_curve = 1.3;
   const float size = 7.315;
   const uint octaves = 2u;
 
-  float d_light = distance(coords, planet.light_origin) / sqrt(planet.radius);
-  float d_to_center = length(coords);
-
   coords = rotate(coords, vec2(0.), planet.rotation);
   coords = spherify(coords, vec2(0.), planet.radius);
+
+  float d_light = distance(coords, planet.light_origin) / planet.radius;
 
   coords.y += smoothstep(0., cloud_curve, abs(coords.x - 0.4));
 
@@ -34,8 +19,8 @@ vec4 computeClouds(vec2 coords, Planet planet, bool dith)
 
   vec3 col = (c < planet.cloud_cover + 0.03 ? vec3(0.887) : vec3(0.956));
 
-  d_light *= d_light * 0.4;
-  float light_b = light_borders(d_light, planet.radius) + (c - 0.5) * 0.5;
+  d_light *= d_light * 0.8;
+  float light_b = (1. - d_light) + (c - 0.5) * 0.5;
   col *= light_b;
   col *= (dith && (light_b < 1.) ? 0.9 : 1.);
   col = (floor(col * NB_COLS)) / NB_COLS;
@@ -48,12 +33,13 @@ vec4 computeLand(vec2 coords, Planet planet, bool dith)
   const float river_cutoff = 0.368;
   const uint octaves = 5u;
   const vec2 sizeModifier = vec2(2., 1.);
-  const float light_incr = 1.2;
-
-  float d_light = distance(coords, planet.light_origin) / sqrt(planet.radius);
+  const float light_incr = 1.5;
 
   coords = rotate(coords, vec2(0.), planet.rotation);
   coords = spherify(coords, vec2(0.), planet.radius);
+
+  float d_light = distance(coords, planet.light_origin) / planet.radius;
+  d_light *= d_light * 0.1;
 
   vec2 base_fbm_coords =
     (coords + planet.center) * size + vec2(time * planet.time_speed, 0.);
@@ -73,18 +59,16 @@ vec4 computeLand(vec2 coords, Planet planet, bool dith)
     base_fbm_coords + fbm1 * 6., octaves, seed, planet.center);
   river_fbm = step(river_cutoff, river_fbm);
 
-  d_light *= d_light * 0.1;
   vec3 col = (fbm4 + d_light < fbm1 ? vec3(0.283) : vec3(0.204));
   col =      (fbm3 + d_light < fbm1 ? vec3(0.343) : col);
   col =      (fbm2 + d_light < fbm1 ? vec3(0.435) : col);
   col = (river_fbm < fbm1 * 0.5 ? (fbm4 + d_light < fbm1 * 1.5 ?
     vec3(0.558) : vec3(0.329)) : col);
 
-  d_light *= 4.;
-  d_light += (fbm4 - 0.5) * 0.25;
-  float light_b = light_borders(d_light, planet.radius) * light_incr;
-  col *= light_b;
-  col *= (dith && (light_b < light_incr) ? 0.85 : 1.);
+  d_light *= 8.;
+  d_light += (fbm4 - 0.5) * 0.35;
+  col *= (1. - d_light) * light_incr;
+  col *= (dith ? 0.95 : 1.);
   col = (floor(col * PLANET_COLS)) / PLANET_COLS;
   return vec4(col, 1.);
 }

@@ -18,7 +18,7 @@ Planet calc_planet(vec2 coords, vec2 center, float pixel_res)
 
   float radius = 0.2 + 0.4 * hash(center, seed + 3u);
   float light_angle = radians(hash(center, seed + 4u) * 360.);
-  float light_dist = radius * 1.5 * hash(center, seed + 5u);
+  float light_dist = radius * 1.2 * hash(center, seed + 5u);
 
   float shape = sign(length(coords) - radius) < 0.5 ? rd_planet : 0.;
   float rotation = radians(hash(center, seed + 6u) * 360.);
@@ -75,7 +75,7 @@ vec4 planets(vec2 coords, bool dith)
     center = i + o;
     h = vec2(floor2(hash(center, seed), pixel_res),
       floor2(hash(center, seed + 1u), pixel_res));
-    coords = o /*+ h*/ - f;
+    coords = o + h - f;
 
     tmp = calc_planet(coords / scale, center, pixel_res);
     if ((tmp.type > 0.) && (planet.plan < tmp.plan))

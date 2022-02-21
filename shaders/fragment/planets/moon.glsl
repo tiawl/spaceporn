@@ -32,43 +32,39 @@ vec4 computeCraters(vec2 coords, Planet planet, bool dith)
 {
   const float sizeCraters = 5.;
   const float sizePlanet = 8.;
-  const vec3 color1 = vec3(0.608);
+  const float color1 = 0.608;
   const uint octaves = 4u;
   const vec2 sizeModifier = vec2(2., 1.);
-
-  float d_to_center = length(coords);
-  float d_light = distance(coords, planet.light_origin) / planet.radius;
 
   coords = rotate(coords, vec2(0.), planet.rotation);
   coords = spherify(coords, vec2(0.), planet.radius);
 
+  float d_light = distance(coords, planet.light_origin) / planet.radius;
+
   float c1 = crater(sizeCraters, sizeModifier, planet.time_speed,
     coords + planet.center, planet.center);
   float c2 = crater(sizeCraters, sizeModifier, planet.time_speed,
-    coords + planet.center + (planet.light_origin + vec2(0.5, 0.)) * 0.03,
+    coords + planet.center + (planet.light_origin - coords) * 0.06,
     planet.center);
-
-  float s = step(d_to_center, planet.radius);
-  float a = step(0.5, c1) * s * s;
 
   d_light += ppfbm(sizePlanet, sizeModifier,
     (coords + planet.center) * sizePlanet + vec2(time * planet.time_speed, 0.),
     octaves, seed, planet.center) * 0.3;
 
-  float light_b = max(0., 1. - d_light);
-  vec3 col = vec3(light_b);
+  d_light = max(1. - d_light, 0.0);
+  float col = d_light;
 
-  col *= (dith && (light_b < 1.) ? 0.9 : 1.);
-  float diff_col = ((c1 > 0.) && (c2 <= 0.) ? PLANET_COLS / 5. : 0.);
-  col = (floor(col * PLANET_COLS) - diff_col) / PLANET_COLS;
-  col = min(col, color1);
-  return vec4(col, a);
+  col *= (dith && (d_light < 1.) ? 0.95 : 1.);
+  col = (floor(col * PLANET_COLS) - ((c1 > 0.) && (c2 <= 0.) ? 3. : 1.))
+    / PLANET_COLS;
+  col = min(col, color1 - 1 / PLANET_COLS);
+  return vec4(vec3(col), step(0.5, c1));
 }
 
 vec4 computeMoon(vec2 coords, Planet planet, bool dith)
 {
   const float size = 8.;
-  const vec3 color1 = vec3(0.608);
+  const float color1 = 0.608;
   const uint octaves = 4u;
   const vec2 sizeModifier = vec2(2., 1.);
 
@@ -81,13 +77,13 @@ vec4 computeMoon(vec2 coords, Planet planet, bool dith)
     (coords + planet.center) * size + vec2(time * planet.time_speed, 0.),
     octaves, seed, planet.center) * 0.3;
 
-  float light_b = max(1. - d_light, 0.);
-  vec3 col = vec3(light_b);
+  d_light = max(1. - d_light, 0.);
+  float col = d_light;
 
-  col *= (dith && (light_b < 1.) ? 0.95 : 1.);
+  col *= (dith && (d_light < 1.) ? 0.95 : 1.);
   col = floor(col * PLANET_COLS) / PLANET_COLS;
   col = min(col, color1);
-  return vec4(col, 1.);
+  return vec4(vec3(col), 1.);
 }
 
 vec4 moon(vec2 coords, Planet planet, bool dith)

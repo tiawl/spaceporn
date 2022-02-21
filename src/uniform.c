@@ -10,7 +10,7 @@ bool updateFloatUniforms(GLint uniformId, UniformValues* values, Log* log)
     {
       writeLog(log, stdout, "",
         "    Generating random number to seed GPU hash function ...\n");
-      values->seed = 1186509824.0000;//rand();
+      values->seed = rand();
       writeLog(log, stdout, "", "    Seed is %f\n", values->seed);
 
 #if DEBUG

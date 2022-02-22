@@ -66,6 +66,7 @@ LOW PRIORITY:
 - dark hole (with event horizon animation)
 - group of asteroids
 - palette gen
+- lab : https://www.shadertoy.com/view/3slXDf, https://www.shadertoy.com/view/7dffzn
 
 REMINDER:
 - no == and != operators between floats

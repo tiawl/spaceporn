@@ -1,6 +1,7 @@
 # include "planets/common.glsl"
 
-vec4 dry(vec2 coords, Planet planet, bool dith) {
+vec4 dry(vec2 coords, Planet planet, bool dith)
+{
   const float size = 8.;
   const uint octaves = 3u;
   const vec2 sizeModifier = vec2(2., 1.);
@@ -11,10 +12,10 @@ vec4 dry(vec2 coords, Planet planet, bool dith) {
   const vec3 color4 = vec3(0.317, 0.196, 0.243);
   const vec3 color5 = vec3(0.239, 0.156, 0.211);
 
-  float d_light = distance(coords, planet.light_origin) / sqrt(planet.radius);
-
-  coords = spherify(coords, vec2(0.), planet.radius);
   coords = rotate(coords, vec2(0.), planet.rotation);
+  coords = spherify(coords, vec2(0.), planet.radius);
+
+  float d_light = distance(coords, planet.light_origin) / planet.radius;
 
   float f = ppfbm(size, sizeModifier,
     (coords + planet.center) * size + vec2(time * planet.time_speed, 0.),

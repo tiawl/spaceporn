@@ -4,10 +4,10 @@
 
 vec4 space(vec2 coords, vec2 stars_coords, bool dith)
 {
-  vec4 stars = stars(stars_coords);
+  //vec4 stars = stars(stars_coords);
   precomputed = (precomputed != NO_ATLAS ? STARS_DONE : NO_ATLAS);
   vec4 bigstars = bigstars(coords / zoom);
-  vec4 nebula = vec4(0.);//nebula(coords, dith);
-  vec4 col = max(bigstars, max(stars, nebula));
+  //vec4 nebula = nebula(coords, dith);
+  vec4 col = bigstars;//max(bigstars, max(stars, nebula));
   return col;
 }

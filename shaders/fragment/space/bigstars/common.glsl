@@ -1,6 +1,6 @@
 struct Star
 {
-  float type;
+  uint type;
   vec2 center;
   float size;
   float power;

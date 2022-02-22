@@ -43,7 +43,8 @@ vec4 slide_main(vec2 fragCoords)
   UV *= zoom;
   bool dith = dither(fragCoords / shorter_res, UV / zoom);
 
-  vec4 col = planets(UV, dith);
+//   vec4 col = planets(UV, dith);
+  vec4 col = space(UV, stars_UV, dith);
 //   if (col.x <= -1.)
 //   {
 //     col = space(UV, stars_UV, dith);

@@ -3,7 +3,7 @@
 
 struct Planet
 {
-  float type;
+  uint type;
   vec2 center;
   float rotation;
   float radius;

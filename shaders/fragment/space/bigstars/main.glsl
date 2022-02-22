@@ -3,23 +3,29 @@
 # include "space/bigstars/nova.glsl"
 # include "space/bigstars/polar.glsl"
 
-# define DIAMOND 0.
-# define NOVA    1.
-# define POLAR   2.
+# define MAX_BIGSTAR_SZ 16.
+
+# define DIAMOND 0u
+# define NOVA    1u
+# define POLAR   2u
 # define STAR_TYPES 3.
 
 float calc_star(vec2 coords, vec2 center, float pixel_res)
 {
-  float rd_bigstar =
-    min(floor(hash(center, seed + 2u) * STAR_TYPES), STAR_TYPES - 1.);
-  float size_hash = hash(center, seed + 3u);
+  float type = hash(center, seed + 2u);
+  uint rd_bigstar = (type < 0.15 ? NOVA : (type < 0.3 ? POLAR : DIAMOND));
+  float size_hash = hash(center, seed + 3u) * 0.5 + 0.5;
   size_hash *= size_hash;
   size_hash *= size_hash;
   size_hash *= size_hash;
-  float size = (min(floor(size_hash * 10.), 9.) + 7.) * pixel_res;
+  size_hash *= size_hash;
+  float min_size = (rd_bigstar == DIAMOND ? 3. : 7.);
+  float max_size = MAX_BIGSTAR_SZ - min_size;
+  float size =
+    (min(floor(size_hash * (max_size + 1.)), max_size) + min_size) * pixel_res;
   float brightness = hash(center, seed + 4u) + 1.;
-  float ring_size = hash(center, seed + 5u) * 2.;
-  ring_size = (ring_size * size < pixel_res * 7. ? 0. : ring_size);
+  float ring_size = hash(center, seed + 5u) * 0.8;
+  ring_size = (ring_size * size < pixel_res * 4. ? 0. : ring_size);
   float t = time * MAX_RATE * 2.;
   float power =
     abs(sin(mod(t * (1. + hash(center, seed + 6u)), 20.))) * 0.2 + 0.9;
@@ -27,24 +33,22 @@ float calc_star(vec2 coords, vec2 center, float pixel_res)
   float star = 0.;
   Star bigstar =
     Star(rd_bigstar, center, size, power, 1., 1., 0u, ring_size);
-  if (bigstar.type < (DIAMOND + NOVA) / 2.)
+  if (bigstar.type == DIAMOND)
   {
     bool rotation = hash(bigstar.center, seed + 7u) > 0.5;
     bigstar.brightness *= bigstar.size;
     bigstar.brightness *= bigstar.power;
     coords = rotate(coords, vec2(0.), radians(rotation ? 45. : 0.));
     star = diamond(coords, bigstar);
-  } else if (bigstar.type < (NOVA + POLAR) / 2.) {
-    bigstar.shape = uint(ceil(hash(bigstar.center, seed + 7u) * 20.));
-    bigstar.diag = (bigstar.shape >= 17u ? 0. :
-      (bigstar.shape < 8u || bigstar.shape > 16u ?
+  } else if (bigstar.type == NOVA) {
+    bigstar.shape = uint(ceil(hash(bigstar.center, seed + 7u) * 40.));
+    bigstar.diag = (bigstar.shape > 38u ? 0. :
+      (bigstar.shape < 25u ?
         1. + hash(bigstar.center, seed + 8u) * 3.5 :
         hash(bigstar.center, seed + 8u) > 0.5 ? bigstar.size / pixel_res :
-        2. + hash(bigstar.center, seed + 9u) * 3. ));
-    bigstar.brightness = (bigstar.shape == 17u ?
-      80. / pixels : (bigstar.shape == 18u ?
-        50. / pixels : (bigstar.shape >= 19u ?
-          100. / pixels : bigstar.size * bigstar.brightness)));
+        2. + hash(bigstar.center, seed + 9u) * 3.));
+    bigstar.brightness = (bigstar.shape > 38u ?
+      100. / pixels : bigstar.size * bigstar.brightness);
     bigstar.brightness *= bigstar.power;
     star = nova(coords, bigstar);
   } else {

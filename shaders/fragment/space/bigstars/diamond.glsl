@@ -22,7 +22,7 @@ float diamond(vec2 coords, Star star)
     - ratio / 2.) + (abs(coords.x) + abs(coords.y)) * star.brightness);
 
   float ring = opRing(coords, star.size * star.ring_size,
-    pixel_res / (4.5 - star.ring_size));
+    depth * BIGSTARS_DENSITY * (300. / pixels) * 1.5);
   ring = (sign(ring) < 0.5 ? -1. : 0.);
   color = min(color * 1.3, ring * 0.5 * star.power);
 

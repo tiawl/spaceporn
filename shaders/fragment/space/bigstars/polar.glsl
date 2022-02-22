@@ -29,7 +29,7 @@ float polar(vec2 coords, Star star)
     - ratio / 2.) + (abs(coords.x) + abs(coords.y)) * star.brightness);
 
   float ring = opRing(coords, star.size * star.ring_size,
-    pixel_res / (4. - star.ring_size * 0.75));
+    depth * BIGSTARS_DENSITY * (300. / pixels) * (star.size / pixel_res > 7. ? 1. : 1.5));
   ring = (sign(ring) < 0.5 ? -1. : 0.);
   color = min(color * 1.3, ring * 0.5 * star.power);
 

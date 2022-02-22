@@ -5,30 +5,32 @@
 # include "planets/ring.glsl"
 # include "planets/dry.glsl"
 
-# define LAND 1.
-# define MOON 2.
-# define GAZ  3.
-# define RING 4.
-# define DRY  5.
+# define LAND 1u
+# define MOON 2u
+# define GAZ  3u
+# define RING 4u
+# define DRY  5u
 # define PLANET_TYPES 5.
 
 Planet calc_planet(vec2 coords, vec2 center, float pixel_res)
 {
-  float rd_planet = max(ceil(hash(center, seed + 2u) * PLANET_TYPES), 1.);
+  uint rd_planet = uint(max(ceil(hash(center, seed + 2u) * PLANET_TYPES), 1.));
 
   float radius = 0.2 + 0.4 * hash(center, seed + 3u);
   float light_angle = radians(hash(center, seed + 4u) * 360.);
   float light_dist = radius * 1.2 * hash(center, seed + 5u);
 
-  float shape = sign(length(coords) - radius) < 0.5 ? rd_planet : 0.;
+  uint shape = sign(length(coords) - radius) < 0.5 ? rd_planet : 0u;
   float rotation = radians(hash(center, seed + 6u) * 360.);
   float time_speed = (hash(center, seed + 7u) + 1.) * 2.;
   float plan = hash(center, seed + 8u);
-  vec2 light_origin = vec2(0.5) + light_dist * vec2(cos(time * 10.), sin(time * 10.));
+  vec2 light_origin =
+    vec2(0.5) + light_dist * vec2(cos(light_angle), sin(light_angle));
 
   Planet planet = Planet(shape, center, rotation, radius, time_speed, plan,
     light_origin, 0u, 0., 0., 0., 0.);
-  if ((rd_planet < (DRY + RING) / 2.) && (rd_planet > (RING + GAZ) / 2.))
+
+  if (rd_planet == RING)
   {
     float ring_rotation = radians(hash(center, seed + 10u) * 360.);
     float ring_radius =
@@ -38,11 +40,11 @@ Planet calc_planet(vec2 coords, vec2 center, float pixel_res)
 
     vec3 res = computeRingShape(coords, planet, ring_rotation, ring_width,
       ring_radius, ring_angle);
-    planet.type = max(res.x * rd_planet, planet.type);
+    planet.type = max(uint(res.x) * rd_planet, planet.type);
     planet.ring = res.y;
     planet.ring_a = res.z;
     planet.turbulence = (uint(hash(center, seed + 9u) * 9.) + 1u) * 10u;
-  } else if ((rd_planet < (MOON + LAND) / 2.) && (rd_planet > LAND / 2.)) {
+  } else if (rd_planet == LAND) {
     planet.cloud_cover = 0.37 + hash(center, seed + 10u) * 0.3;
     planet.cloud_stretch = 2. + hash(center, seed + 10u) * 2.;
   }
@@ -55,9 +57,9 @@ vec4 planets(vec2 coords, bool dith)
   float scale = PLANETS_DENSITY / 10.;
   coords *= PLANETS_DENSITY;
   Planet planet =
-    Planet(0., vec2(0.), 0., 0., 0., 0., vec2(0.), 0u, 0., 0., 0., 0.);
+    Planet(0u, vec2(0.), 0., 0., 0., 0., vec2(0.), 0u, 0., 0., 0., 0.);
   Planet tmp =
-    Planet(0., vec2(0.), 0., 0., 0., 0., vec2(0.), 0u, 0., 0., 0., 0.);
+    Planet(0u, vec2(0.), 0., 0., 0., 0., vec2(0.), 0u, 0., 0., 0., 0.);
   vec2 o;
   vec2 fp_coords;
 
@@ -87,19 +89,26 @@ vec4 planets(vec2 coords, bool dith)
   coords = fp_coords / scale;
 
   vec4 color;
-  if (planet.type < LAND / 2.)
+  switch (planet.type)
   {
-    color = vec4(-1.);// vec4(planet.type / PLANET_TYPES);
-  } else if (planet.type < (MOON + LAND) / 2.) {
-    color = land(coords, planet, dith);
-  } else if (planet.type < (GAZ + MOON) / 2.) {
-    color = moon(coords, planet, dith);
-  } else if (planet.type < (RING + GAZ) / 2.) {
-    color = gaz(coords, planet, dith);
-  } else if (planet.type < (DRY + RING) / 2.) {
-    color = ring(coords, planet, dith);
-  } else {
-    color = dry(coords, planet, dith);
+    case LAND:
+      color = land(coords, planet, dith);
+      break;
+    case MOON:
+      color = moon(coords, planet, dith);
+      break;
+    case GAZ:
+      color = gaz(coords, planet, dith);
+      break;
+    case RING:
+      color = ring(coords, planet, dith);
+      break;
+    case DRY:
+      color = dry(coords, planet, dith);
+      break;
+    default:
+      color = vec4(-1.);// vec4(planet.type / PLANET_TYPES);
+      break;
   }
   return color;
 }

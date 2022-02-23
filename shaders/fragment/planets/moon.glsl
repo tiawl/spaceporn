@@ -28,7 +28,7 @@ float crater(float size, vec2 sizeModifier, float time_speed, vec2 coords,
   return 1. - c;
 }
 
-vec4 computeCraters(vec2 coords, Planet planet, bool dith)
+vec4 computeCraters(vec2 coords, Planet planet)
 {
   const float sizeCraters = 5.;
   const float sizePlanet = 8.;
@@ -54,14 +54,17 @@ vec4 computeCraters(vec2 coords, Planet planet, bool dith)
   d_light = max(1. - d_light, 0.0);
   float col = d_light;
 
-  col *= (dith && (d_light < 1.) ? 0.95 : 1.);
+  float n =
+    hash(coords * pixels, seed) + hash(coords * pixels, seed + 1u) - 1.0;
+  col = (col < 0.0031308) ? col * 12.92 : 1.055 * pow(col, (1. / 2.4)) - 0.055;
+  col = col + n / PLANET_COLS;
   col = (floor(col * PLANET_COLS) - ((c1 > 0.) && (c2 <= 0.) ? 3. : 1.))
     / PLANET_COLS;
   col = min(col, color1 - 1 / PLANET_COLS);
   return vec4(vec3(col), step(0.5, c1));
 }
 
-vec4 computeMoon(vec2 coords, Planet planet, bool dith)
+vec4 computeMoon(vec2 coords, Planet planet)
 {
   const float size = 8.;
   const float color1 = 0.608;
@@ -80,15 +83,18 @@ vec4 computeMoon(vec2 coords, Planet planet, bool dith)
   d_light = max(1. - d_light, 0.);
   float col = d_light;
 
-  col *= (dith && (d_light < 1.) ? 0.95 : 1.);
+  float n =
+    hash(coords * pixels, seed) + hash(coords * pixels, seed + 1u) - 1.0;
+  col = (col < 0.0031308) ? col * 12.92 : 1.055 * pow(col, (1. / 2.4)) - 0.055;
+  col = col + n / PLANET_COLS;
   col = floor(col * PLANET_COLS) / PLANET_COLS;
   col = min(col, color1);
   return vec4(vec3(col), 1.);
 }
 
-vec4 moon(vec2 coords, Planet planet, bool dith)
+vec4 moon(vec2 coords, Planet planet)
 {
   planet.time_speed *= 3.;
-  vec4 craters = computeCraters(coords, planet, dith);
-  return (craters.a <= 0. ? computeMoon(coords, planet, dith) : craters);
+  vec4 craters = computeCraters(coords, planet);
+  return (craters.a <= 0. ? computeMoon(coords, planet) : craters);
 }

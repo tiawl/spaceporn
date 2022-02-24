@@ -42,6 +42,7 @@ LOW PRIORITY:
 
 HIGH PRIORITY:
 - use atlas textures
+- radiant light ??
 
 MEDIUM PRIORITY:
 - star clouds

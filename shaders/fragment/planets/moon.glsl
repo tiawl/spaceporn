@@ -49,7 +49,7 @@ vec4 computeCraters(vec2 coords, Planet planet)
 
   d_light += ppfbm(sizePlanet, sizeModifier,
     (coords + planet.center) * sizePlanet + vec2(time * planet.time_speed, 0.),
-    octaves, seed, planet.center) * 0.3;
+    octaves, seed, planet.center) * 0.5;
 
   d_light = max(1. - d_light, 0.0);
   float col = d_light;
@@ -78,7 +78,7 @@ vec4 computeMoon(vec2 coords, Planet planet)
 
   d_light += ppfbm(size, sizeModifier,
     (coords + planet.center) * size + vec2(time * planet.time_speed, 0.),
-    octaves, seed, planet.center) * 0.3;
+    octaves, seed, planet.center) * 0.5;
 
   d_light = max(1. - d_light, 0.);
   float col = d_light;

@@ -13,7 +13,7 @@
 float calc_star(vec2 coords, vec2 center, float pixel_res)
 {
   float type = hash(center, seed + 2u);
-  uint rd_bigstar = (type < 0.15 ? NOVA : (type < 0.3 ? POLAR : DIAMOND));
+  uint rd_bigstar = NOVA;//(type < 0.15 ? NOVA : (type < 0.3 ? POLAR : DIAMOND));
   float size_hash = hash(center, seed + 3u) * 0.5 + 0.5;
   size_hash *= size_hash;
   size_hash *= size_hash;
@@ -21,14 +21,13 @@ float calc_star(vec2 coords, vec2 center, float pixel_res)
   size_hash *= size_hash;
   float min_size = (rd_bigstar == DIAMOND ? 3. : 7.);
   float max_size = MAX_BIGSTAR_SZ - min_size;
-  float size =
-    (min(floor(size_hash * (max_size + 1.)), max_size) + min_size) * pixel_res;
+  float size = 16. * pixel_res;
+    //(min(floor(size_hash * (max_size + 1.)), max_size) + min_size) * pixel_res;
   float brightness = hash(center, seed + 4u) + 1.;
   float ring_size = hash(center, seed + 5u) * 0.8;
   ring_size = (ring_size * size < pixel_res * 4. ? 0. : ring_size);
-  float t = time * MAX_RATE * 2.;
-  float power =
-    abs(sin(mod(t * (1. + hash(center, seed + 6u)), 20.))) * 0.2 + 0.9;
+  float power = abs(sin(mod(time * 200.,
+    10. + (10. *  hash(center, seed + 6u))))) * 0.2 + 0.9;
 
   float star = 0.;
   Star bigstar =
@@ -41,7 +40,7 @@ float calc_star(vec2 coords, vec2 center, float pixel_res)
     coords = rotate(coords, vec2(0.), radians(rotation ? 45. : 0.));
     star = diamond(coords, bigstar);
   } else if (bigstar.type == NOVA) {
-    bigstar.shape = uint(ceil(hash(bigstar.center, seed + 7u) * 40.));
+    bigstar.shape = 40u;//uint(ceil(hash(bigstar.center, seed + 7u) * 40.));
     bigstar.diag = (bigstar.shape > 38u ? 0. :
       (bigstar.shape < 25u ?
         1. + hash(bigstar.center, seed + 8u) * 3.5 :

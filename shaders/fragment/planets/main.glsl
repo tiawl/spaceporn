@@ -14,7 +14,7 @@
 
 Planet calc_planet(vec2 coords, vec2 center, float pixel_res)
 {
-  uint rd_planet = MOON;//uint(max(ceil(hash(center, seed + 2u) * PLANET_TYPES), 1.));
+  uint rd_planet = uint(max(ceil(hash(center, seed + 2u) * PLANET_TYPES), 1.));
 
   float radius = 0.2 + 0.4 * hash(center, seed + 3u);
   float light_angle = radians(hash(center, seed + 4u) * 360.);

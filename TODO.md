@@ -42,7 +42,6 @@ LOW PRIORITY:
 
 HIGH PRIORITY:
 - use atlas textures
-- mirroring UV in nova patterns
 
 MEDIUM PRIORITY:
 - star clouds

@@ -545,6 +545,30 @@ bool initContext(Context* context, Log* log)
     GL_CHECK(glEnable(GL_DEPTH_TEST), status, log);
     writeLog(log, stdout, "", "  Depth buffer enabled\n");
 
+    writeLog(log, stdout, "", "  Querying maximum array textures layers ...\n");
+    int max_arraytextures_layers;
+    glGetIntegerv(GL_MAX_ARRAY_TEXTURE_LAYERS, &max_arraytextures_layers);
+    writeLog(log, stdout, "", "  Maximum array textures layers is %d\n",
+      max_arraytextures_layers);
+
+    writeLog(log, stdout, "", "  Querying maximum renderbuffer size ...\n");
+    int max_rb_size;
+    glGetIntegerv(GL_MAX_RENDERBUFFER_SIZE, &max_rb_size);
+    writeLog(log, stdout, "", "  Maximum renderbuffer size is %d\n",
+      max_rb_size);
+
+    writeLog(log, stdout, "", "  Querying maximum viewport dimensions ...\n");
+    int max_viewport_dims[2];
+    glGetIntegerv(GL_MAX_VIEWPORT_DIMS, &(*max_viewport_dims));
+    writeLog(log, stdout, "", "  Maximum viewport dimensions are %dx%d\n",
+      max_viewport_dims[0], max_viewport_dims[1]);
+
+    writeLog(log, stdout, "", "  Querying maximum texture size ...\n");
+    int max_texture_size;
+    glGetIntegerv(GL_MAX_TEXTURE_SIZE, &max_texture_size);
+    writeLog(log, stdout, "", "  Maximum texture size is %d\n",
+      max_texture_size);
+
 #if DEBUG
     if (!initDebugWindow(context, log))
     {

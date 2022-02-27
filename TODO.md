@@ -22,21 +22,16 @@ REMINDER:
 HIGH PRIORITY:
 - use FrameBuffer with RenderBuffer and tilling (1024x1024 max size for opengl 3.3) to generate textures atlas:
 https://stackoverflow.com/questions/59433403/how-to-save-fragment-shader-image-changes-to-image-output-file
-- query for debugging purposes:
-glGetIntegerv (GL_MAX_ARRAY_TEXTURE_LAYERS, &max_arraytextures_layers);
-glGetIntegerv (GL_MAX_RENDERBUFFER_SIZE, &max_rb_size);
-glGetInteger2v (GL_MAX_VIEWPORT_DIMS, &max_viewport_dims);
-glGetIntegerv (GL_MAX_TEXTURE_SIZE, &max_texture_size);
-
-MEDIUM PRIORITY:
 - avoid usage of animated shader without generating textures atlas
 - zoom default value should be 1
 - add a flag to generate wallpaper into a PNG file with screen dimensions
 - default values for parameters should be random
 
+MEDIUM PRIORITY:
+- use GLAD instead of GLEW
+
 LOW PRIORITY:
 - add a flag to disable some planets/galaxy/darkhole/asteroids/bigstars
-- use GLAD instead of GLEW
 - Windows OS portability
 
 ## Shader files

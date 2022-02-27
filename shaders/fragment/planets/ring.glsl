@@ -61,11 +61,10 @@ vec4 computePlanetUnder(vec2 coords, Planet planet, bool dith)
   float col = (fbm2 < 0.625 ? colorSelection(lightColors, posterized) :
     colorSelection(darkColors, posterized - 1.));
 
-  d_light = max(1. - d_light - (fbm1 - 0.5) * 0.35, 0.);
-  col = sqrt(max(col, 0.));
-  col *= min(0.8, d_light);
-  col *= (dith && (d_light < 0.8) ? 0.95 : 1.);
-  col = (floor(col * PLANET_COLS)) / PLANET_COLS;
+  d_light = sqrt(max(0., 1. - d_light)) + fbm2;
+  col *= min(0.9, d_light);
+  col *= (dith && (d_light < 0.9) ? 0.95 : 1.);
+  col = floor(col * PLANET_COLS) / PLANET_COLS;
   return vec4(vec3(col), 1.);
 }
 
@@ -107,7 +106,7 @@ vec4 computeRingColor(vec2 coords, Planet planet, bool dith)
   d_light = max(sqrt(1. - d_light) * 1.5, 0.7);
   col *= d_light;
   col *= (dith && (d_light < 1.35) ? 0.95 : 1.);
-  col = (floor(col * PLANET_COLS)) / PLANET_COLS;
+  col = floor(col * PLANET_COLS) / PLANET_COLS;
   return vec4(vec3(col), 1.);
 }
 

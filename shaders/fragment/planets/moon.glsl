@@ -51,11 +51,11 @@ vec4 computeCraters(vec2 coords, Planet planet)
     (coords + planet.center) * sizePlanet + vec2(time * planet.time_speed, 0.),
     octaves, seed, planet.center) * 0.5;
 
-  d_light = max(1. - d_light, 0.0);
+  d_light = max(1. - d_light, 0.);
   float col = d_light;
 
   float n =
-    hash(coords * pixels, seed) + hash(coords * pixels, seed + 1u) - 1.0;
+    hash(coords * pixels, seed) + hash(coords * pixels, seed + 1u) - 1.;
   col = (col < 0.0031308) ? col * 12.92 : 1.055 * pow(col, (1. / 2.4)) - 0.055;
   col = col + n / PLANET_COLS;
   col = (floor(col * PLANET_COLS) - ((c1 > 0.) && (c2 <= 0.) ? 3. : 1.))

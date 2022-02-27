@@ -32,6 +32,7 @@ MEDIUM PRIORITY:
 - avoid usage of animated shader without generating textures atlas
 - zoom default value should be 1
 - add a flag to generate wallpaper into a PNG file with screen dimensions
+- default values for parameters should be random
 
 LOW PRIORITY:
 - add a flag to disable some planets/galaxy/darkhole/asteroids/bigstars
@@ -39,10 +40,6 @@ LOW PRIORITY:
 - Windows OS portability
 
 ## Shader files
-
-HIGH PRIORITY:
-- use atlas textures
-- radiant light ??
 
 MEDIUM PRIORITY:
 - star clouds

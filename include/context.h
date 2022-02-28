@@ -17,7 +17,7 @@ typedef struct
   Display* display;
   GLXContext glx_context;
   Window window;
-#if DEBUG
+#if DEV
   Window debug_window;
   XEvent event;
 #endif

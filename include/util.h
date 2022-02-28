@@ -16,7 +16,7 @@
 #include <omp.h>
 #endif
 
-#define DEBUG GCC_DEBUG
+#define DEV GCC_DEV
 
 enum RoadmapID
 {
@@ -146,13 +146,26 @@ enum RoadmapID
   BAD_ATLASPNG_DIMENSIONS_RM,
   PRECOMPUTE_AND_STOP_RM,
   PRECOMPUTE_AND_CONTINUE_RM,
-#if DEBUG
-  XCREATEDEBUGWINDOW_FAILED_RM,
+#if DEV
+  XCREATEKBWINDOW_FAILED_RM,
 #endif
   RM_NB
 };
 
 #define MSG_LEN 8
+
+enum LogLevel
+{
+  DEBUG,
+  INFO,
+  WARNING,
+  ERROR
+};
+
+const static char* loglevels[] =
+{
+  "DEBUG", "INFO", "WARNING", "ERROR"
+};
 
 typedef struct
 {
@@ -167,7 +180,7 @@ typedef struct
 } Log;
 
 bool initLog(Log* log);
-void writeLog(Log* log, FILE* stream, const char* stdoutstr,
+void writeLog(Log* log, FILE* stream, const char* stdoutstr, LogLevel level,
   const char* str, ...);
 void freeLog(Log* log);
 

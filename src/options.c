@@ -52,6 +52,14 @@ bool parsing_options(long* fps, long* generation, unsigned* width,
     errno = 0;
     char* end;
     log->roadmap.glsl_file = "";
+
+    if (*argc <= 1)
+    {
+      help();
+      status = false;
+      break;
+    }
+
     for (int i = 1; i < *argc; i++)
     {
       if (strcmp(argv[i], PIXEL_FLAG) == 0)
@@ -281,7 +289,7 @@ bool parsing_options(long* fps, long* generation, unsigned* width,
           }
         }
       } else if (strcmp(argv[i], MAXROADMAP_FLAG) == 0) {
-#if DEBUG
+#if DEV
         printf("%d\n", RM_NB - 2);
 #else
         printf("%d\n", RM_NB - 1);

@@ -60,7 +60,7 @@ int main(int argc, char** argv)
   context.display = NULL;
   context.glx_context = 0;
   context.window = 0;
-#if DEBUG
+#if DEV
   context.debug_window = 0;
   int fps_timer = -1;
   int fps_counter = -1;
@@ -92,32 +92,33 @@ int main(int argc, char** argv)
       delay = uniform_values.slide;
     }
 
-    writeLog(&log, stdout, "", "Initializing paths ...\n");
+    writeLog(&log, stdout, DEBUG, "", "Initializing paths ...\n");
     if (!initPaths(&shaders, &png_atlas, &log))
     {
-      writeLog(&log, (log.verbose ? stdout : stderr), "",
-        "Failed to initialize paths\n");
+      writeLog(&log, (log.verbose ? stdout : stderr), ERROR, "",
+        "Failed to initialize paths\n", ERROR);
       status = false;
       break;
     }
-    writeLog(&log, stdout, "", "Paths are initialized\n");
+    writeLog(&log, stdout, DEBUG, "", "Paths are initialized\n");
 
-    writeLog(&log, stdout, "", "Creating GLX context ...\n");
+    writeLog(&log, stdout, DEBUG, "", "Creating GLX context ...\n");
     if (!initContext(&context, &log))
     {
-      writeLog(&log, (log.verbose ? stdout : stderr), "",
+      writeLog(&log, (log.verbose ? stdout : stderr), ERROR, "",
         "Failed to create a GLX context\n");
       status = false;
       break;
     }
-    writeLog(&log, stdout, "", "GLX context created\n");
+    writeLog(&log, stdout, DEBUG, "", "GLX context created\n");
 
     uniform_values.width = context.window_attribs.width;
     uniform_values.height = context.window_attribs.height;
 
     if ((generation > -1) || (access(png_atlas.path, F_OK) != 0))
     {
-      writeLog(&log, stdout, "", "Computing textures atlas dimensions ...\n");
+      writeLog(&log, stdout, INFO, "",
+        "Computing textures atlas dimensions ...\n");
 
       if ((atlas.width == UNDEFINED_SIZE) || (atlas.height == UNDEFINED_SIZE)
         || (generation == -1))
@@ -136,18 +137,18 @@ int main(int argc, char** argv)
             ((double) context.window_attribs.width))));
         }
       }
-      writeLog(&log, stdout, "", "Textures atlas dimensions are: %dx%d\n",
-        atlas.width, atlas.height);
+      writeLog(&log, stdout, INFO, "",
+        "Textures atlas dimensions are: %dx%d\n", atlas.width, atlas.height);
 
-      writeLog(&log, stdout, "", "Generating textures atlas ...\n");
+      writeLog(&log, stdout, DEBUG, "", "Generating textures atlas ...\n");
       if (!generateAtlas(&atlas, &png_atlas, &log))
       {
-        writeLog(&log, (log.verbose ? stdout : stderr), "",
+        writeLog(&log, (log.verbose ? stdout : stderr), ERROR, "",
           "Failed to generate textures atlas\n");
         status = false;
         break;
       }
-      writeLog(&log, stdout, "", "Textures atlas generated\n");
+      writeLog(&log, stdout, DEBUG, "", "Textures atlas generated\n");
 
       if (generation == 1)
       {
@@ -155,15 +156,15 @@ int main(int argc, char** argv)
       }
     }
 
-    writeLog(&log, stdout, "", "Loading OpenGL program ...\n");
+    writeLog(&log, stdout, DEBUG, "", "Loading OpenGL program ...\n");
     if (!loadProgram(&context, &shaders, &log))
     {
-      writeLog(&log, (log.verbose ? stdout : stderr), "",
+      writeLog(&log, (log.verbose ? stdout : stderr), ERROR, "",
         "OpenGL program failed to load\n");
       status = false;
       break;
     }
-    writeLog(&log, stdout, "", "OpenGL program loaded\n");
+    writeLog(&log, stdout, DEBUG, "", "OpenGL program loaded\n");
 
     if (log.roadmap.id == OPENGL_ERROR_RM)
     {
@@ -179,25 +180,25 @@ int main(int argc, char** argv)
 
     GLuint uniformIds[UNIFORM_COUNT];
 
-    writeLog(&log, stdout, "", "Loading textures atlas ...\n");
+    writeLog(&log, stdout, DEBUG, "", "Loading textures atlas ...\n");
     if (!loadAtlas(&atlas, &png_atlas, &shaders,
       &(uniform_values.precomputed), &log))
     {
-      writeLog(&log, (log.verbose ? stdout : stderr), "",
+      writeLog(&log, (log.verbose ? stdout : stderr), ERROR, "",
         "Failed to load textures atlas\n");
       status = false;
       break;
     }
-    writeLog(&log, stdout, "", "Textures atlas loaded\n");
+    writeLog(&log, stdout, DEBUG, "", "Textures atlas loaded\n");
 
-    writeLog(&log, stdout, "", "Searching uniforms location ...\n");
+    writeLog(&log, stdout, DEBUG, "", "Searching uniforms location ...\n");
     getUniforms(uniforms, uniformIds, &shaders.program, &log);
-    writeLog(&log, stdout, "", "Uniforms location found\n");
+    writeLog(&log, stdout, DEBUG, "", "Uniforms location found\n");
 
-    writeLog(&log, stdout, "",
+    writeLog(&log, stdout, DEBUG, "",
       "Initializing vertex buffer object and vertex array object ...\n");
     initVertices(&vertices, &log);
-    writeLog(&log, stdout, "",
+    writeLog(&log, stdout, DEBUG, "",
       "Vertex buffer object and vertex array object initialized\n");
 
     while (true)
@@ -206,7 +207,7 @@ int main(int argc, char** argv)
       {
         gettimeofday(&start_loop, NULL);
 
-#if DEBUG
+#if DEV
         if (fps_timer <= 0)
         {
           if (fps_counter >= 0)
@@ -219,31 +220,32 @@ int main(int argc, char** argv)
 #endif
       }
 
-      writeLog(&log, stdout, "", "Updating uniforms ...\n");
+      writeLog(&log, stdout, DEBUG, "", "Updating uniforms ...\n");
       updateUniforms(uniforms, uniformIds, &uniform_values, &log);
-      writeLog(&log, stdout, "", "Uniforms updated\n");
+      writeLog(&log, stdout, DEBUG, "", "Uniforms updated\n");
 
-      writeLog(&log, stdout, "", "Drawing on window ...\n");
+      writeLog(&log, stdout, DEBUG, "", "Drawing on window ...\n");
       draw(&log);
-      writeLog(&log, stdout, "", "Window drawing done\n");
+      writeLog(&log, stdout, DEBUG, "", "Window drawing done\n");
 
-      writeLog(&log, stdout, "", "Swapping front and back buffers ...\n");
+      writeLog(&log, stdout, DEBUG, "",
+        "Swapping front and back buffers ...\n");
       glXSwapBuffers(context.display, context.window);
-      writeLog(&log, stdout, "", "Front and back buffers swapped\n");
+      writeLog(&log, stdout, DEBUG, "", "Front and back buffers swapped\n");
 
-#if DEBUG
+#if DEV
 #define ESCAPE 0x09
-      writeLog(&log, stdout, "", "Searching for key press event ...\n");
+      writeLog(&log, stdout, DEBUG, "", "Searching for key press event ...\n");
       if (XCheckMaskEvent(context.display, KeyPressMask, &context.event))
       {
         if (context.event.xkey.keycode == ESCAPE)
         {
-          writeLog(&log, stdout, "", "Escape key press event occured\n");
+          writeLog(&log, stdout, DEBUG, "", "Escape key press event occured\n");
           break;
         }
-        writeLog(&log, stdout, "", "Key press event occured\n");
+        writeLog(&log, stdout, DEBUG, "", "Key press event occured\n");
       } else {
-        writeLog(&log, stdout, "", "Key press event did not occured\n");
+        writeLog(&log, stdout, DEBUG, "", "Key press event did not occured\n");
       }
 #endif
 
@@ -251,15 +253,15 @@ int main(int argc, char** argv)
       {
         gettimeofday(&end_loop, NULL);
         gpu_time = timediff(&start_loop, &end_loop) * 1000000.0f;
-        writeLog(&log, stdout, "", "Sleeping for %d ms ...\n",
+        writeLog(&log, stdout, INFO, "", "Sleeping for %d ms ...\n",
           gpu_time >= delay ? 0 : delay - gpu_time);
         usleep(gpu_time >= delay ? 0 : delay - gpu_time);
-#if DEBUG
+#if DEV
         fps_timer -= (gpu_time > delay ? gpu_time : delay);
         fps_counter++;
 #endif
       } else {
-        writeLog(&log, stdout, "", "Sleeping for %d min ...\n", delay);
+        writeLog(&log, stdout, INFO, "", "Sleeping for %d min ...\n", delay);
         if (log.roadmap.id == SLIDEMODE_SUCCESS_RM)
         {
           delay = 0;
@@ -267,7 +269,7 @@ int main(int argc, char** argv)
         }
         sleep(delay * 60);
       }
-      writeLog(&log, stdout, "", "Ready to loop again\n");
+      writeLog(&log, stdout, DEBUG, "", "Ready to loop again\n");
 
       if (log.roadmap.id == BREAK_SUCCESS_RM)
       {

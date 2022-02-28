@@ -1,22 +1,52 @@
 #include "util.h"
 
-void writeLog(Log* log, FILE* stream, const char* stdoutstr,
+void writeLog(Log* log, FILE* stream, LogLevel loglevel, const char* stdoutstr,
   const char* str, ...)
 {
   char* log_message = NULL;
   char* expanded_str = NULL;
+  char* loglevel_str = NULL;
 
   va_list args;
   va_start(args, str);
 
+  size_t loglevel_len = 3;
   size_t expanded_len = vsnprintf(NULL, 0, str, args) + 1;
   size_t stdoutstr_len = strlen(stdoutstr);
+
+  switch (loglevel)
+  {
+    case DEBUG:
+      loglevel_len += 5;
+      break;
+    case INFO:
+      loglevel_len += 4;
+      break;
+    case WARNING:
+      loglevel_len += 7;
+      break;
+    case ERROR:
+      loglevel_len += 5;
+      break;
+    default:
+      break;
+  }
 
   va_end(args);
   va_start(args, str);
 
   do
   {
+    loglevel_str = malloc(sizeof(char) * loglevel_len);
+    if (!loglevel_str)
+    {
+      fprintf(stderr,
+        "Failed to allocate memory in writeLog function to loglevel_str\n");
+      break;
+    }
+
+    snprintf(loglevel_len, loglevel_len, "[%s] ", loglevels[loglevel]);
+
     expanded_str = malloc(sizeof(char) * expanded_len);
     if (!expanded_str)
     {
@@ -27,20 +57,24 @@ void writeLog(Log* log, FILE* stream, const char* stdoutstr,
 
     vsnprintf(expanded_str, expanded_len, str, args);
 
-    log_message =
-      malloc(sizeof(char) * (expanded_len + stdoutstr_len + MSG_LEN));
-    if (!log_message)
+    if (loglevel > DEBUG)
     {
-      fprintf(stderr,
-        "Failed to allocate memory in writeLog function to log_message\n");
-      break;
+      log_message =
+        malloc(sizeof(char) * (expanded_len + stdoutstr_len + MSG_LEN));
+      if (!log_message)
+      {
+        fprintf(stderr,
+          "Failed to allocate memory in writeLog function to log_message\n");
+        break;
+      }
+
+      strcpy(log_message, "MESSAGE=");
+      strncat(log_message, stdoutstr, stdoutstr_len);
+      strncat(log_message, loglevel_str, loglevel_len);
+      strncat(log_message, expanded_str, expanded_len);
+
+      sd_journal_send(log_message, NULL);
     }
-
-    strcpy(log_message, "MESSAGE=");
-    strncat(log_message, stdoutstr, stdoutstr_len);
-    strncat(log_message, expanded_str, expanded_len);
-
-    sd_journal_send(log_message, NULL);
 
     if (log->verbose)
     {
@@ -49,9 +83,15 @@ void writeLog(Log* log, FILE* stream, const char* stdoutstr,
 
     if (log->verbose || (stream == stderr))
     {
+      fputs(loglevel_str, stream);
       fputs(expanded_str, stream);
     }
   } while (false);
+
+  if (loglevel_str)
+  {
+    free(loglevel_str);
+  }
 
   if (expanded_str)
   {

@@ -13,7 +13,7 @@ bool updateFloatUniforms(GLint uniformId, UniformValues* values, Log* log)
       values->seed = rand();
       writeLog(log, stdout, "", "    Seed is %f\n", values->seed);
 
-#if DEBUG
+#if DEV
       printf("Seed is %f\n", values->seed);
 #endif
     }

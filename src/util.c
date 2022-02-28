@@ -1,7 +1,12 @@
 #include "util.h"
 
-void writeLog(Log* log, FILE* stream, LogLevel loglevel, const char* stdoutstr,
-  const char* str, ...)
+static const char* loglevels[] =
+{
+  "DEBUG", "INFO", "INFO", "WARNING", "ERROR"
+};
+
+void writeLog(Log* log, FILE* stream, enum LogLevel loglevel,
+  const char* stdoutstr, const char* str, ...)
 {
   char* log_message = NULL;
   char* expanded_str = NULL;
@@ -16,17 +21,16 @@ void writeLog(Log* log, FILE* stream, LogLevel loglevel, const char* stdoutstr,
 
   switch (loglevel)
   {
-    case DEBUG:
-      loglevel_len += 5;
-      break;
     case INFO:
+    case USER:
       loglevel_len += 4;
+      break;
+    case DEBUG:
+    case ERROR:
+      loglevel_len += 5;
       break;
     case WARNING:
       loglevel_len += 7;
-      break;
-    case ERROR:
-      loglevel_len += 5;
       break;
     default:
       break;
@@ -45,7 +49,7 @@ void writeLog(Log* log, FILE* stream, LogLevel loglevel, const char* stdoutstr,
       break;
     }
 
-    snprintf(loglevel_len, loglevel_len, "[%s] ", loglevels[loglevel]);
+    snprintf(loglevel_str, loglevel_len, "[%s]", loglevels[loglevel]);
 
     expanded_str = malloc(sizeof(char) * expanded_len);
     if (!expanded_str)
@@ -57,10 +61,10 @@ void writeLog(Log* log, FILE* stream, LogLevel loglevel, const char* stdoutstr,
 
     vsnprintf(expanded_str, expanded_len, str, args);
 
-    if (loglevel > DEBUG)
+    if ((loglevel >= LOGLEVEL) && (loglevel != USER))
     {
-      log_message =
-        malloc(sizeof(char) * (expanded_len + stdoutstr_len + MSG_LEN));
+      log_message = malloc(sizeof(char)
+        * (expanded_len + stdoutstr_len + loglevel_len + MSG_LEN));
       if (!log_message)
       {
         fprintf(stderr,
@@ -69,11 +73,16 @@ void writeLog(Log* log, FILE* stream, LogLevel loglevel, const char* stdoutstr,
       }
 
       strcpy(log_message, "MESSAGE=");
-      strncat(log_message, stdoutstr, stdoutstr_len);
       strncat(log_message, loglevel_str, loglevel_len);
+      strncat(log_message, stdoutstr, stdoutstr_len);
       strncat(log_message, expanded_str, expanded_len);
 
       sd_journal_send(log_message, NULL);
+    }
+
+    if (log->verbose || (stream == stderr))
+    {
+      fputs(loglevel_str, stream);
     }
 
     if (log->verbose)
@@ -83,7 +92,6 @@ void writeLog(Log* log, FILE* stream, LogLevel loglevel, const char* stdoutstr,
 
     if (log->verbose || (stream == stderr))
     {
-      fputs(loglevel_str, stream);
       fputs(expanded_str, stream);
     }
   } while (false);
@@ -112,7 +120,7 @@ bool checkOpenGLError(const char* stmt, const char* fname, int line, Log* log)
   GLenum error = glGetError();
   if (error != GL_NO_ERROR)
   {
-    writeLog(log, (log->verbose ? stdout : stderr), "",
+    writeLog(log, (log->verbose ? stdout : stderr), ERROR, "",
       "OpenGL error %08x, at %s:%i - for %s\n", error, fname, line, stmt);
     status = false;
   }

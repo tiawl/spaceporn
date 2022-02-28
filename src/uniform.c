@@ -8,10 +8,10 @@ bool updateFloatUniforms(GLint uniformId, UniformValues* values, Log* log)
   {
     if ((values->slide > 0) || (values-> seed < 0.))
     {
-      writeLog(log, stdout, "",
+      writeLog(log, stdout, INFO, "",
         "    Generating random number to seed GPU hash function ...\n");
       values->seed = rand();
-      writeLog(log, stdout, "", "    Seed is %f\n", values->seed);
+      writeLog(log, stdout, INFO, "", "    Seed is %f\n", values->seed);
 
 #if DEV
       printf("Seed is %f\n", values->seed);
@@ -28,15 +28,15 @@ bool updateFloatUniforms(GLint uniformId, UniformValues* values, Log* log)
       values->zoom
     };
 
-    writeLog(log, stdout, "",
+    writeLog(log, stdout, INFO, "",
       "    New fflags values: [%d, %d, %f, %f, %d, %f]\n",
       values->width, values->height, fflags[2], fflags[3], values->pixels,
       values->zoom);
 
-    writeLog(log, stdout, "",
+    writeLog(log, stdout, DEBUG, "",
       "    Specifying value of fflags in current program ...\n");
     GL_CHECK(glUniform1fv(uniformId, UNIFORM_FLOATS, fflags), status, log);
-    writeLog(log, stdout, "",
+    writeLog(log, stdout, DEBUG, "",
       "    Value of fflags specified in current program\n");
   } while (false);
 
@@ -55,15 +55,15 @@ bool updateBoolUniforms(GLint uniformId, UniformValues* values, Log* log)
         (values->slide ? 0 : values->precomputed)
     };
 
-    writeLog(log, stdout, "", "    New bflags values: [%s, %s, %s, %s]\n",
+    writeLog(log, stdout, INFO, "", "    New bflags values: [%s, %s, %s, %s]\n",
       values->animations ? "true" : "false", values->motion ? "true" : "false",
       values->palettes ? "true" : "false",
       values->precomputed ? "true" : "false");
 
-    writeLog(log, stdout, "",
+    writeLog(log, stdout, DEBUG, "",
       "    Specifying value of bflags in current program ...\n");
     GL_CHECK(glUniform1iv(uniformId, UNIFORM_BOOLEANS, bflags), status, log);
-    writeLog(log, stdout, "",
+    writeLog(log, stdout, DEBUG, "",
       "    Value of bflags specified in current program\n");
   } while (false);
 
@@ -79,11 +79,12 @@ bool getUniforms(const Uniform uniforms[UNIFORM_COUNT],
   {
     for (int i = 0; i < UNIFORM_COUNT; i++)
     {
-      writeLog(log, stdout, "", "  Querying uniform location of %s\n",
+      writeLog(log, stdout, DEBUG, "", "  Querying uniform location of %s\n",
         uniforms[i].name);
       GL_CHECK(uniformIds[i] =
         glGetUniformLocation(*program, uniforms[i].name), status, log);
-      writeLog(log, stdout, "", "  %s uniform located\n", uniforms[i].name);
+      writeLog(log, stdout, DEBUG, "", "  %s uniform located\n",
+        uniforms[i].name);
     }
   } while (false);
 
@@ -95,8 +96,8 @@ void updateUniforms(const Uniform uniforms[UNIFORM_COUNT],
 {
   for (int i = 0; i < UNIFORM_COUNT; i++)
   {
-    writeLog(log, stdout, "", "  Updating %s...\n", uniforms[i].name);
+    writeLog(log, stdout, DEBUG, "", "  Updating %s...\n", uniforms[i].name);
     uniforms[i].update(uniformIds[i], values, log);
-    writeLog(log, stdout, "", "  %s updated\n", uniforms[i].name);
+    writeLog(log, stdout, DEBUG, "", "  %s updated\n", uniforms[i].name);
   }
 }

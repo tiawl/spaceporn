@@ -26,7 +26,6 @@ https://stackoverflow.com/questions/59433403/how-to-save-fragment-shader-image-c
 - zoom default value should be 1
 - add a flag to generate wallpaper into a PNG file with screen dimensions
 - default values for parameters should be random
-- adding log level -> paramatrable with makefile
 
 MEDIUM PRIORITY:
 - use GLAD instead of GLEW

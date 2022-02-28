@@ -158,14 +158,12 @@ enum LogLevel
 {
   DEBUG,
   INFO,
+  USER,
   WARNING,
   ERROR
 };
 
-const static char* loglevels[] =
-{
-  "DEBUG", "INFO", "WARNING", "ERROR"
-};
+#define LOGLEVEL GCC_LOGLEVEL
 
 typedef struct
 {
@@ -180,8 +178,8 @@ typedef struct
 } Log;
 
 bool initLog(Log* log);
-void writeLog(Log* log, FILE* stream, const char* stdoutstr, LogLevel level,
-  const char* str, ...);
+void writeLog(Log* log, FILE* stream, enum LogLevel level,
+  const char* stdoutstr, const char* str, ...);
 void freeLog(Log* log);
 
 bool checkOpenGLError(const char* stmt, const char* fname, int line, Log* log);

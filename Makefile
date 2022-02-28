@@ -16,6 +16,7 @@ OBJ_FILES := $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(SRC_FILES))
 PREFIX := /usr/local/bin/
 SPREFIX := /usr/share/$(BIN)/$(SHAD_DIR)/
 TPREFIX := /usr/share/$(BIN)/$(TEXT_DIR)/
+LOGLEVEL := INFO
 FERROR := $(shell ./$(MAKE_SCRIPTS)/erroneous_shader \
   $(SHAD_DIR)/fragment/main.glsl 0)
 VERROR := $(shell ./$(MAKE_SCRIPTS)/erroneous_shader \
@@ -29,27 +30,41 @@ CFLAGS := $(shell pkg-config --cflags gl glx glew x11 libpng libsystemd) \
   -I./$(HEAD_DIR)
 ALL_FLAGS := $(LIB_FLAGS)
 
+eq = $(and $(findstring x$(1),x$(2)),$(findstring x$(2),x$(1)))
+check_loglevel = $(if $(call eq,$(1),USER),$(error USER value not allowed),)
+
+all: loglevel_checker
 all: ENV_FLAGS := -D'GCC_SPREFIX="$(SPREFIX)"' -D'GCC_TPREFIX="$(TPREFIX)"' \
   -D'GCC_DEV=false' -D'GCC_ERRONEOUS_FRAGMENT=$(FERROR)' \
-  -D'GCC_ERRONEOUS_VERTEX=$(VERROR)' -D'GCC_MISSINGMAIN_VERTEX=$(MERROR)'
+  -D'GCC_ERRONEOUS_VERTEX=$(VERROR)' -D'GCC_MISSINGMAIN_VERTEX=$(MERROR)' \
+  -D'GCC_LOGLEVEL=$(LOGLEVEL)'
 all: OBJ_FLAGS := $(CFLAGS) $(ENV_FLAGS)
 all: $(ALL_DIR)/$(BIN)
+
+loglevel_checker:
+	$(call check_loglevel,$(LOGLEVEL))
 
 dev: PREFIX := ${PWD}
 dev: SPREFIX := ${PWD}/$(SHAD_DIR)/
 dev: TPREFIX := ${PWD}/$(TEXT_DIR)/
+dev: LOGLEVEL := ERROR
 dev: ENV_FLAGS := -D'GCC_SPREFIX="$(SPREFIX)"' -D'GCC_TPREFIX="$(TPREFIX)"' \
   -D'GCC_DEV=true' -D'GCC_ERRONEOUS_FRAGMENT=$(FERROR)' \
-  -D'GCC_ERRONEOUS_VERTEX=$(VERROR)' -D'GCC_MISSINGMAIN_VERTEX=$(MERROR)'
+  -D'GCC_ERRONEOUS_VERTEX=$(VERROR)' -D'GCC_MISSINGMAIN_VERTEX=$(MERROR)' \
+  -D'GCC_LOGLEVEL=$(LOGLEVEL)'
 dev: OBJ_FLAGS := $(DEV_FLAGS) $(CFLAGS) $(ENV_FLAGS)
 dev: $(ALL_DIR)/$(BIN)
 
 cov: PREFIX := ${PWD}
 cov: SPREFIX := ${PWD}/$(SHAD_DIR)/
 cov: TPREFIX := ${PWD}/$(TEXT_DIR)/
+cov: LOGLEVEL := ERROR
+cov:
+	./$(MAKE_SCRIPTS)/loglevel $(LOGLEVEL)
 cov: ENV_FLAGS := -D'GCC_SPREFIX="$(SPREFIX)"' -D'GCC_TPREFIX="$(TPREFIX)"' \
   -D'GCC_DEV=true' -D'GCC_ERRONEOUS_FRAGMENT=$(FERROR)' \
-  -D'GCC_ERRONEOUS_VERTEX=$(VERROR)' -D'GCC_MISSINGMAIN_VERTEX=$(MERROR)'
+  -D'GCC_ERRONEOUS_VERTEX=$(VERROR)' -D'GCC_MISSINGMAIN_VERTEX=$(MERROR)' \
+  -D'GCC_LOGLEVEL=$(LOGLEVEL)'
 cov: OBJ_FLAGS := $(DEV_FLAGS) $(CFLAGS) $(ENV_FLAGS)
 cov: COV_FLAGS := --coverage $(patsubst %.c, ${PWD}/%.c, $(SRC_FILES)) \
   -I ${PWD}/$(HEAD_DIR) $(LIB_FLAGS) $(ENV_FLAGS)

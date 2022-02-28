@@ -410,7 +410,7 @@ bool initContext(Context* context, Log* log)
     char* token = strtok((char*) glxExts, " ");
     while (token != NULL)
     {
-      writeLog(log, stdout, ERROR, "", "  - %s\n", token);
+      writeLog(log, stdout, INFO, "", "  - %s\n", token);
       token = strtok(NULL, " ");
     };
 

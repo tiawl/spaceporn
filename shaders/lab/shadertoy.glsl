@@ -41,6 +41,7 @@ float noise(vec2 coord, uint noise_seed)
   return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
 }
 
+// https://iquilezles.org/www/articles/smoothvoronoi/smoothvoronoi.htm
 float voronoi( in vec2 x, float w, uint seed)
 {
     vec2 n = floor( x );
@@ -64,14 +65,14 @@ float voronoi( in vec2 x, float w, uint seed)
 	    m = mix( m,     d, h ) - h*(1.0-h)*w/(1.0+3.0*w); // distance
     }
 	
-	return m;
+	return 1. - m;
 }
 
 float fbmVoronoi( in vec2 U, uint seed)
 {
-  float r = (1.0 - voronoi(6.*U, 0.3, seed)) * 0.625
-    + (1.0 - voronoi(12.*U, 0.3, seed + 314u)) * 0.25 +
-    + (1.0 - voronoi(24.*U, 0.3, seed + 92u)) * 0.125;
+  float r = (voronoi(6. * U, 0.3, seed)) * 0.625
+    + (voronoi(12. * U, 0.3, seed + 314u)) * 0.25 +
+    + (voronoi(24. * U, 0.3, seed + 92u)) * 0.125;
   return r * r;
 }
 

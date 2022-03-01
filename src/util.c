@@ -17,7 +17,6 @@ void writeLog(Log* log, FILE* stream, enum LogLevel loglevel,
 
   size_t loglevel_len = 3;
   size_t expanded_len = vsnprintf(NULL, 0, str, args) + 1;
-  size_t stdoutstr_len = strlen(stdoutstr);
 
   switch (loglevel)
   {
@@ -64,7 +63,7 @@ void writeLog(Log* log, FILE* stream, enum LogLevel loglevel,
     if ((loglevel >= LOGLEVEL) && (loglevel != USER))
     {
       log_message = malloc(sizeof(char)
-        * (expanded_len + stdoutstr_len + loglevel_len + MSG_LEN));
+        * (expanded_len + loglevel_len + MSG_LEN));
       if (!log_message)
       {
         fprintf(stderr,
@@ -74,7 +73,6 @@ void writeLog(Log* log, FILE* stream, enum LogLevel loglevel,
 
       strcpy(log_message, "MESSAGE=");
       strncat(log_message, loglevel_str, loglevel_len);
-      strncat(log_message, stdoutstr, stdoutstr_len);
       strncat(log_message, expanded_str, expanded_len);
 
       sd_journal_send(log_message, NULL);

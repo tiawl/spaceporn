@@ -4,9 +4,9 @@
 [[ ! -d ${1} ]] && echo "${1} is not a directory" && exit 1
 [[ ! -d ${2} ]] && echo "${2} is not a directory" && exit 1
 [[ ! -d ${3} ]] && echo "${3} is not a directory" && exit 1
-PREFIX=$(cd ${1} && echo ${PWD})
-SPREFIX=$(cd ${2} && echo ${PWD})
-TPREFIX=$(cd ${3} && echo ${PWD})
+PREFIX=$(pushd ${1} &> /dev/null && echo ${PWD} && popd &> /dev/null)
+SPREFIX=$(pushd ${2} &> /dev/null && echo ${PWD} && popd &> /dev/null)
+TPREFIX=$(pushd ${3} &> /dev/null && echo ${PWD} && popd &> /dev/null)
 BIN="${4}"
 OBJ="${5}"
 

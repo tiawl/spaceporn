@@ -73,5 +73,6 @@ done
 
 echo -e "$(printf %80s | tr ' ' '=')\n"
 
-SOURCES=$(find src/ -type f -not -path '*/\.*') && cd bin/cov \
-  && gcov -f ${SOURCES} -o .
+SOURCES=$(find src/ -type f -not -path '*/\.*') \
+  && pushd bin/cov &> /dev/null && gcov -f ${SOURCES} -o . \
+  && popd &> /dev/null

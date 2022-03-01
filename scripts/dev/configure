@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
 
-mkdir -p bin/conf && cp conf/configure bin/conf && cd bin/conf \
-  && ./configure && rm configure
+mkdir -p bin/conf && cp conf/configure bin/conf \
+  && pushd bin/conf &> /dev/null && ./configure && rm configure \
+  && popd &> /dev/null

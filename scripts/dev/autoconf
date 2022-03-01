@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 
-PWD_DIR=$PWD
-
-mkdir -p bin/conf && cp conf/configure.ac bin/conf && cd bin/conf \
-  && autoconf && rm configure.ac && cd $PWD_DIR && mv bin/conf/configure conf/
+mkdir -p bin/conf && cp conf/configure.ac bin/conf \
+  && pushd bin/conf &> /dev/null && autoconf && rm configure.ac \
+  && popd &> /dev/null && mv bin/conf/configure conf/

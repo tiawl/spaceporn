@@ -4,9 +4,6 @@ This is a list of tasks expressed by the maintainers for the maintainers. It is 
 
 ## Project management
 
-MEDIUM PRIORITY:
-- use pushd/popd in bash scripts
-
 LOW PRIORITY:
 - add test and dev branches
 - add hooks for memory-check, coverage-check and detect-AC_CHECK for master branch

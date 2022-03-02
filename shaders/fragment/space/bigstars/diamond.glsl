@@ -3,9 +3,8 @@
 
 float diamond(vec2 coords, Star star)
 {
-  float pixel_res = BIGSTARS_DENSITY / pixels;
-
   star.brightness = 1. / star.brightness;
+
   vec2 A = vec2(-star.size,         0.);
   vec2 B = vec2( star.size,         0.);
   vec2 C = vec2(        0.,  star.size);

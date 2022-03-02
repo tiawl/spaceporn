@@ -5,7 +5,7 @@ struct Star
   float size;
   float power;
   float brightness;
-  float shape;
+  uint shape;
   float diag;
   float ring_size;
 };

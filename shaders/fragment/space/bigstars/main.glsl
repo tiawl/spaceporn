@@ -31,7 +31,7 @@ float calc_star(vec2 coords, vec2 center, float pixel_res)
 
   float star = 0.;
   Star bigstar =
-    Star(rd_bigstar, center, size, power, 1., 1., 0u, ring_size);
+    Star(rd_bigstar, center, size, power, 1., 0u, 1., ring_size);
   if (bigstar.type == DIAMOND)
   {
     bool rotation = hash(bigstar.center, seed + 7u) > 0.5;
@@ -78,9 +78,9 @@ vec4 bigstars(vec2 coords)
     o = vec2(k % 3, k / 3) - 1.;
 
     center = i + o;
-    h = vec2(floor2(hash(center, seed), pixel_res),
-      floor2(hash(center, seed + 1u), pixel_res));
-    coords = o + h - f;
+    h = vec2(hash(center, seed), hash(center, seed + 1u));
+    coords = vec2(floor2(o.x + h.x - f.x, pixel_res),
+      floor2(o.y + h.y - f.y, pixel_res));
 
     c = calc_star(coords, center, pixel_res);
     d = min(d, c);

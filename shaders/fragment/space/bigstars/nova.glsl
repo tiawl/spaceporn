@@ -160,7 +160,8 @@ float nova(vec2 coords, Star star)
 
   size = (star.shape > 38u ? star.size * 0.35 + 70. / pixels : star.size);
   float ring = opRing(coords, size * star.ring_size,
-    depth * BIGSTARS_DENSITY * (300. / pixels) * (star.size / pixel_res > 7. ? 1. : 1.5));
+    depth * BIGSTARS_DENSITY * (300. / pixels)
+      * (star.size / pixel_res > 7. ? 1. : 1.5));
   ring = (sign(ring) < 0.5 ? -1. : 0.);
   color = min(color * 1.3, ring * 0.5 * star.power);
 

@@ -1,3 +1,27 @@
+float pix;
+float pixel_res;
+uint seed;
+
+# define MAX_BIGSTAR_SZ 8.
+# define BIGSTARS_DENSITY 6.
+
+# define DIAMOND 0u
+# define NOVA    1u
+# define POLAR   2u
+# define STAR_TYPES 3.
+
+struct Star
+{
+  uint type;
+  vec2 center;
+  float size;
+  float power;
+  float brightness;
+  uint shape;
+  float diag;
+  float ring_size;
+};
+
 // 3D hash function to simulate seeding:
 // https://www.shadertoy.com/view/XlGcRh
 uvec3 pcg3d(uvec3 v)
@@ -101,10 +125,7 @@ float circles( vec2 p, float r, uint s)
     rad = 0.2 + hash(i + p, s + 2u) * r;
     h = vec2(hash(i + p, s + 89u), hash(i + p, s + 52u));
 
-    // movement
-    a = vec2(hash(i + p, s + 25u), hash(i + p, s + 215u));
-    a = 0.3 * cos(5. * (a.x - 0.5) * iTime * 0.5 + 6.3 * a.y + vec2(0., 11.));
-    p += 0.1 + 0.8 * h - f + a;
+    p += h - f;
 
     c = length(p) - rad;
     d = smin(d, c, 0.3);
@@ -162,7 +183,6 @@ vec2 fbmSwirls(vec2 p, out vec4 O, uint se)
 {
   uint o = 3u;
   O -= O;
-  p += vec2(iTime * 0.02, 0.);
   float sz = 2., ro = 0.5;
   for(uint i = 0u; i < o; i++)
   {
@@ -172,18 +192,301 @@ vec2 fbmSwirls(vec2 p, out vec4 O, uint se)
   return p;
 }
 
+float floor2(float x, float base)
+{
+  return floor(x / base) * base;
+}
+
+vec2 rotate(vec2 coords, vec2 center, float angle)
+{
+  coords -= center;
+  coords *= mat2(cos(angle), -sin(angle),
+                 sin(angle),  cos(angle));
+  coords += center;
+  return coords;
+}
+
+// https://iquilezles.org/www/articles/distfunctions2d/distfunctions2d.htm
+float sdCircle(vec2 p, float r)
+{
+  return length(p) - r;
+}
+
+// https://iquilezles.org/www/articles/distfunctions2d/distfunctions2d.htm
+float opRing(vec2 p, float r1, float r2)
+{
+  return abs(sdCircle(p, r1)) - r2;
+}
+
+// https://iquilezles.org/www/articles/distfunctions2d/distfunctions2d.htm
+float sdSegment(vec2 p, vec2 a, vec2 b)
+{
+  vec2 pa = p - a;
+  vec2 ba = b - a;
+  float h = clamp(dot(pa, ba) / dot(ba, ba), 0., 1.);
+  return length(pa - ba * h);
+}
+
+float diamond(vec2 coords, Star star)
+{
+  star.brightness = 1. / star.brightness;
+  vec2 A = vec2(-star.size,         0.);
+  vec2 B = vec2( star.size,         0.);
+  vec2 C = vec2(        0.,  star.size);
+  vec2 D = vec2(        0., -star.size);
+
+  float depth = 1. / 360.;
+  float s1 = sdSegment(coords, A, B) - depth;
+  float s2 = sdSegment(coords, C, D) - depth;
+  float m = min(s1, s2);
+
+  float color = (sign(m) < 0.5 ? -1. : 0.);
+  float ratio = 2. / (20. + star.brightness * star.brightness);
+  color *= 1. - ((hash((star.center + coords) * pix, seed) * ratio
+    - ratio / 2.) + (abs(coords.x) + abs(coords.y)) * star.brightness);
+
+  float ring = opRing(coords, star.size * star.ring_size,
+    depth * BIGSTARS_DENSITY * (100. / pix) * 1.5);
+  ring = (sign(ring) < 0.5 ? -1. : 0.);
+  color = min(color * 1.3, ring * 0.5 * star.power);
+
+  return color;
+}
+
+float novapattern(vec2 coords, Star star)
+{
+  float depth = 1. / iResolution.y;
+  float res = 1e9;
+  coords = abs(coords);
+  if ((star.size / star.diag >= 1.5 * pixel_res) && (star.shape > 24u))
+  {
+    vec2 A = vec2(3. * pixel_res,      pixel_res);
+    vec2 B = vec2(     pixel_res, 3. * pixel_res);
+    vec2 C = vec2(2. * pixel_res,      pixel_res);
+    vec2 D = vec2(     pixel_res, 2. * pixel_res);
+    float s1 = sdSegment(coords, A, B) - depth;
+    float s2 = sdSegment(coords, C, D) - depth;
+    res = min(res, min(s1, s2));
+  } else if (star.shape > 24u) {
+    vec2 A = vec2(2. * pixel_res,      pixel_res);
+    vec2 B = vec2(     pixel_res, 2. * pixel_res);
+    res = min(res, sdSegment(coords, A, B) - depth);
+  }
+  if ((star.shape >= 30u) && (star.shape <= 32u))
+  {
+    if (star.size / star.diag >= 1.5 * pixel_res)
+    {
+      vec2 A = vec2(5. * pixel_res, 2. * pixel_res);
+      vec2 B = vec2(4. * pixel_res, 2. * pixel_res);
+      vec2 C = vec2(2. * pixel_res, 4. * pixel_res);
+      vec2 D = vec2(2. * pixel_res, 5. * pixel_res);
+      float s1 = sdSegment(coords, A, B) - depth;
+      float s2 = sdSegment(coords, C, D) - depth;
+      res = min(res, min(s1, s2));
+    } else {
+      vec2 A = vec2(3. * pixel_res, 3. * pixel_res);
+      vec2 B = vec2(5. * pixel_res, 5. * pixel_res);
+      res = min(res, sdSegment(coords, A, B) - depth);
+    }
+  } else if ((star.shape >= 33u) && (star.shape <= 35u)) {
+    if (star.size / star.diag >= 1.5 * pixel_res)
+    {
+      vec2 A = vec2(5.  * pixel_res, 2.  * pixel_res);
+      vec2 B = vec2(4.5 * pixel_res, 2.  * pixel_res);
+      vec2 C = vec2(2.  * pixel_res, 4.5 * pixel_res);
+      vec2 D = vec2(2.  * pixel_res, 5.  * pixel_res);
+      float s1 = sdSegment(coords, A, B) - depth;
+      float s2 = sdSegment(coords, C, D) - depth;
+      res = min(res, min(s1, s2));
+    } else {
+      vec2 A = vec2(3. * pixel_res, 3. * pixel_res);
+      vec2 B = vec2(5. * pixel_res, 5. * pixel_res);
+      res = min(res, sdSegment(coords, A, B) - depth);
+    }
+  } else if ((star.shape >= 36u) && (star.shape <= 38u)) {
+    if (star.size / star.diag >= 1.5 * pixel_res)
+    {
+      vec2 A = vec2(4.  * pixel_res, 2.  * pixel_res);
+      vec2 B = vec2(3.5 * pixel_res, 2.  * pixel_res);
+      vec2 C = vec2(2.  * pixel_res, 3.5 * pixel_res);
+      vec2 D = vec2(2.  * pixel_res, 4.  * pixel_res);
+      float s1 = sdSegment(coords, A, B) - depth;
+      float s2 = sdSegment(coords, C, D) - depth;
+      res = min(res, min(s1, s2));
+    } else {
+      vec2 A = vec2(3. * pixel_res, 3. * pixel_res);
+      vec2 B = vec2(5. * pixel_res, 5. * pixel_res);
+      res = min(res, sdSegment(coords, A, B) - depth);
+    }
+  }
+  return res;
+}
+
+float nova(vec2 coords, Star star)
+{
+  star.brightness = 1. / star.brightness;
+
+  float size = (star.shape == 39u ? 17. * pixel_res / star.size :
+    (star.shape == 40u ? 11. * pixel_res / star.size : star.size));
+  vec2 A = vec2(            -size,                0.);
+  vec2 B = vec2(             size,                0.);
+  vec2 C = vec2(               0.,              size);
+  vec2 D = vec2(               0.,             -size);
+  vec2 E = vec2(-size / star.diag,  size / star.diag);
+  vec2 F = vec2( size / star.diag, -size / star.diag);
+  vec2 G = vec2( size / star.diag,  size / star.diag);
+  vec2 H = vec2(-size / star.diag, -size / star.diag);
+
+  float depth = 1. / 360.;
+  float s1 = sdSegment(coords, A, B) - depth;
+  float s2 = sdSegment(coords, C, D) - depth;
+  float s3 = sdSegment(coords, E, F) - depth;
+  float s4 = sdSegment(coords, G, H) - depth;
+  float m = min(min(min(s1, s2), min(s3, s4)), novapattern(coords, star));
+
+  float color = (sign(m) < 0.5 ? -1. : 0.);
+  float ratio = 2. / (20. + star.brightness * star.brightness);
+  color *= 1. - ((hash((star.center + coords) * pix, seed) * ratio
+    - ratio / 2.) + (abs(coords.x) + abs(coords.y)) * star.brightness);
+
+  size = (star.shape > 38u ? star.size * 0.35 + 70. / pix : star.size);
+  float ring = opRing(coords, size * star.ring_size,
+    depth * BIGSTARS_DENSITY * (100. / pix) * (star.size / pixel_res > 7. ? 1. : 1.5));
+  ring = (sign(ring) < 0.5 ? -1. : 0.);
+  color = min(color * 1.3, ring * 0.5 * star.power);
+
+  return color;
+}
+
+float polar(vec2 coords, Star star)
+{
+  star.brightness = 1. / star.brightness;
+
+  vec2 A = vec2(            -star.size,                                 0.);
+  vec2 B = vec2(             star.size,                                 0.);
+  vec2 C = vec2(                    0.,  star.size / (star.diag * 2. / 3.));
+  vec2 D = vec2(                    0., -star.size / (star.diag * 2. / 3.));
+  vec2 E = vec2(-star.size / star.diag,              star.size / star.diag);
+  vec2 F = vec2( star.size / star.diag,             -star.size / star.diag);
+  vec2 G = vec2( star.size / star.diag,              star.size / star.diag);
+  vec2 H = vec2(-star.size / star.diag,             -star.size / star.diag);
+
+  float depth = 1. / 360.;
+  float s1 = sdSegment(coords, A, B) - depth;
+  float s2 = sdSegment(coords, C, D) - depth;
+  float s3 = sdSegment(coords, E, F) - depth;
+  float s4 = sdSegment(coords, G, H) - depth;
+  float m = min(min(s1, s2), min(s3, s4));
+
+  float color = (sign(m) < 0.5 ? -1. : 0.);
+  float ratio = 2. / (20. + star.brightness * star.brightness);
+  color *= 1. - ((hash((star.center + coords) * pix, seed) * ratio
+    - ratio / 2.) + (abs(coords.x) + abs(coords.y)) * star.brightness);
+
+  float ring = opRing(coords, star.size * star.ring_size,
+    depth * BIGSTARS_DENSITY * (100. / pix) * (star.size / pixel_res > 7. ? 1. : 1.5));
+  ring = (sign(ring) < 0.5 ? -1. : 0.);
+  color = min(color * 1.3, ring * 0.5 * star.power);
+
+  return color;
+}
+
+float calc_star(vec2 coords, vec2 center)
+{
+  float type = hash(center, seed + 2u);
+  uint rd_bigstar = (type < 0.15 ? NOVA : (type < 0.3 ? POLAR : DIAMOND));
+  float size_hash = hash(center, seed + 3u) * 0.5 + 0.5;
+  size_hash *= size_hash;
+  size_hash *= size_hash;
+  size_hash *= size_hash;
+  size_hash *= size_hash;
+  size_hash *= size_hash;
+  float min_size = (rd_bigstar == DIAMOND ? 3. : 7.);
+  float max_size = MAX_BIGSTAR_SZ - min_size;
+  float size =
+    (min(floor(size_hash * (max_size + 1.)), max_size) + min_size) * pixel_res;
+  float brightness = hash(center, seed + 4u) + 1.;
+  float ring_size = hash(center, seed + 5u) * 0.8;
+  ring_size = (ring_size * size < pixel_res * 4. ? 0. : ring_size);
+  float power = abs(sin(mod(iTime * (16. + 8. * hash(center, seed + 6u)),
+    10. + (10. *  hash(center, seed + 7u))))) * 0.2 + 0.9;
+
+  float star = 0.;
+  Star bigstar =
+    Star(rd_bigstar, center, size, power, 1., 0u, 1., ring_size);
+  if (bigstar.type == DIAMOND)
+  {
+    bool rotation = hash(bigstar.center, seed + 8u) > 0.5;
+    bigstar.brightness *= bigstar.size;
+    bigstar.brightness *= bigstar.power;
+    coords = rotate(coords, vec2(0.), radians(rotation ? 45. : 0.));
+    star = diamond(coords, bigstar);
+  } else if (bigstar.type == NOVA) {
+    bigstar.shape = uint(ceil(hash(bigstar.center, seed + 8u) * 38.));
+    bigstar.diag = (bigstar.shape > 38u ? 0. :
+      (bigstar.shape < 25u ?
+        1. + hash(bigstar.center, seed + 9u) * 3.5 :
+        hash(bigstar.center, seed + 9u) > 0.5 ? bigstar.size / pixel_res :
+        2. + hash(bigstar.center, seed + 10u) * 3.));
+    bigstar.brightness = (bigstar.shape > 38u ?
+      100. / pix : bigstar.size * bigstar.brightness);
+    bigstar.brightness *= bigstar.power;
+    star = nova(coords, bigstar);
+  } else {
+    bigstar.brightness *= bigstar.size;
+    bigstar.brightness *= bigstar.power;
+    bigstar.diag = 2.5 + hash(bigstar.center, seed + 8u) * 0.5;
+    star = polar(coords, bigstar);
+  }
+  return star;
+}
+
+float bigstars(vec2 coords)
+{
+  coords *= BIGSTARS_DENSITY;
+  float d = 1e9,
+        c;
+  vec2 o;
+
+  pixel_res = BIGSTARS_DENSITY / pix;
+
+  vec2 i = floor(coords);
+  vec2 f = fract(coords);
+  vec2 h;
+  vec2 center;
+
+  for (int k = 0; k < 9; k++)
+  {
+    o = vec2(k % 3, k / 3) - 1.;
+
+    center = i + o;
+    h = vec2(hash(center, seed), hash(center, seed + 1u));
+    coords = vec2(floor2(o.x + h.x - f.x, pixel_res),
+      floor2(o.y + h.y - f.y, pixel_res));
+
+    c = calc_star(coords, center);
+    d = min(d, c);
+  }
+  return -d;
+}
+
 void mainImage(out vec4 O, vec2 u)
 {
-  float pix = 500.;
+  pix = 100.;
   float cols = 18.;
-  uint seed = 1u;
-  vec2 bU = u / iResolution.y;
+  seed = 1u;
+  vec2 bU = 2. + (u / iResolution.y);
   vec2 U = floor(bU * pix) / pix;
+  
   bool dith = mod(bU.x + U.y, 2. / pix) < 1. / pix;
-  vec2 aU = fbmSwirls(U, O, seed);
-  float g = min(fbmCircles(aU * 10. + vec2(iTime * 0.2, 0.), seed + 10u),
-    fbmCircles(aU * 10. + vec2(iTime * 0.2, 0.), seed + 20u));
-  g = -smin(1., g, 3.3) * fbmVoronoi(0.25*U, seed);
+  vec4 bO = O;
+  float fv = fbmVoronoi(0.25 * U, seed);
+  
+  vec2 aU = fbmSwirls(U, O, seed) * 10.;
+  float g = min(fbmCircles(aU, seed + 10u),
+    fbmCircles(aU, seed + 20u));
+  g = -smin(1., g, 3.3) * fv;
   g = floor(g * cols) / cols;
-  O = vec4(vec3(1.5 * g), 1.);
+
+  O = vec4(vec3(max(bigstars(U) * g * 5., 1.5 * g)), 1.);
 }

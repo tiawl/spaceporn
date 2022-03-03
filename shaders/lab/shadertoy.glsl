@@ -1,9 +1,11 @@
-float pix;
+# define PIX 150.
+
 float pixel_res;
 uint seed;
+uint col_seed;
 
 # define MAX_BIGSTAR_SZ 8.
-# define BIGSTARS_DENSITY 6.
+# define BIGSTARS_DENSITY 4.
 
 # define DIAMOND 0u
 # define NOVA    1u
@@ -240,12 +242,10 @@ float diamond(vec2 coords, Star star)
   float m = min(s1, s2);
 
   float color = (sign(m) < 0.5 ? -1. : 0.);
-  float ratio = 2. / (20. + star.brightness * star.brightness);
-  color *= 1. - ((hash((star.center + coords) * pix, seed) * ratio
-    - ratio / 2.) + (abs(coords.x) + abs(coords.y)) * star.brightness);
+  color *= 1. - (abs(coords.x) + abs(coords.y)) * star.brightness;
 
   float ring = opRing(coords, star.size * star.ring_size,
-    depth * BIGSTARS_DENSITY * (100. / pix) * 1.5);
+    depth * BIGSTARS_DENSITY * (100. / PIX) * 1.5);
   ring = (sign(ring) < 0.5 ? -1. : 0.);
   color = min(color * 1.3, ring * 0.5 * star.power);
 
@@ -344,13 +344,11 @@ float nova(vec2 coords, Star star)
   float m = min(min(min(s1, s2), min(s3, s4)), novapattern(coords, star));
 
   float color = (sign(m) < 0.5 ? -1. : 0.);
-  float ratio = 2. / (20. + star.brightness * star.brightness);
-  color *= 1. - ((hash((star.center + coords) * pix, seed) * ratio
-    - ratio / 2.) + (abs(coords.x) + abs(coords.y)) * star.brightness);
+  color *= 1. - (abs(coords.x) + abs(coords.y)) * star.brightness;
 
-  size = (star.shape > 38u ? star.size * 0.35 + 70. / pix : star.size);
+  size = (star.shape > 38u ? star.size * 0.35 + 70. / PIX : star.size);
   float ring = opRing(coords, size * star.ring_size,
-    depth * BIGSTARS_DENSITY * (100. / pix) * (star.size / pixel_res > 7. ? 1. : 1.5));
+    depth * BIGSTARS_DENSITY * (100. / PIX) * (star.size / pixel_res > 7. ? 1. : 1.5));
   ring = (sign(ring) < 0.5 ? -1. : 0.);
   color = min(color * 1.3, ring * 0.5 * star.power);
 
@@ -378,12 +376,10 @@ float polar(vec2 coords, Star star)
   float m = min(min(s1, s2), min(s3, s4));
 
   float color = (sign(m) < 0.5 ? -1. : 0.);
-  float ratio = 2. / (20. + star.brightness * star.brightness);
-  color *= 1. - ((hash((star.center + coords) * pix, seed) * ratio
-    - ratio / 2.) + (abs(coords.x) + abs(coords.y)) * star.brightness);
+  color *= 1. - (abs(coords.x) + abs(coords.y)) * star.brightness;
 
   float ring = opRing(coords, star.size * star.ring_size,
-    depth * BIGSTARS_DENSITY * (100. / pix) * (star.size / pixel_res > 7. ? 1. : 1.5));
+    depth * BIGSTARS_DENSITY * (100. / PIX) * (star.size / pixel_res > 7. ? 1. : 1.5));
   ring = (sign(ring) < 0.5 ? -1. : 0.);
   color = min(color * 1.3, ring * 0.5 * star.power);
 
@@ -394,12 +390,7 @@ float calc_star(vec2 coords, vec2 center)
 {
   float type = hash(center, seed + 2u);
   uint rd_bigstar = (type < 0.15 ? NOVA : (type < 0.3 ? POLAR : DIAMOND));
-  float size_hash = hash(center, seed + 3u) * 0.5 + 0.5;
-  size_hash *= size_hash;
-  size_hash *= size_hash;
-  size_hash *= size_hash;
-  size_hash *= size_hash;
-  size_hash *= size_hash;
+  float size_hash = hash(center, seed + 3u) * 0.05;
   float min_size = (rd_bigstar == DIAMOND ? 3. : 7.);
   float max_size = MAX_BIGSTAR_SZ - min_size;
   float size =
@@ -427,7 +418,7 @@ float calc_star(vec2 coords, vec2 center)
         hash(bigstar.center, seed + 8u) > 0.5 ? bigstar.size / pixel_res :
         2. + hash(bigstar.center, seed + 9u) * 3.));
     bigstar.brightness = (bigstar.shape > 38u ?
-      100. / pix : bigstar.size * bigstar.brightness);
+      100. / PIX : bigstar.size * bigstar.brightness);
     bigstar.brightness *= bigstar.power;
     star = nova(coords, bigstar);
   } else {
@@ -446,7 +437,7 @@ float bigstars(vec2 coords)
         c;
   vec2 o, p;
 
-  pixel_res = BIGSTARS_DENSITY / pix;
+  pixel_res = BIGSTARS_DENSITY / PIX;
 
   vec2 i = floor(coords);
   vec2 f = fract(coords);
@@ -474,29 +465,62 @@ float bigstars(vec2 coords)
   float fv = fbmVoronoi(0.25 * U, seed);
   
   vec2 aU = fbmSwirls(U, seed) * 10.;
-  float g = min(fbmCircles(aU, seed + 10u),
-    fbmCircles(aU, seed + 20u));
+  float g = min(fbmCircles(aU, seed + 10u), fbmCircles(aU, seed + 20u));
   g = -smin(1., g, 3.3) * fv * fv;
   
   return -d * g;
 }
 
+vec3 hsv2rgb(in vec3 c)
+{
+  vec3 rgb = clamp(abs(mod(c.x * 6.
+    + vec3(0., 4., 2.), 6.) - 3.) - 1., 0., 1.);
+  return c.z * mix( vec3(1.), rgb, c.y);
+}
+
+// https://www.slynyrd.com/blog/2018/1/10/pixelblog-1-color-palettes
+vec3 color(float sm)
+{
+  float hu, sa, br;
+  hu = radians(3.1415926 * 2. * (9. * hash(vec2(1.), col_seed)
+    + sm * (hash(vec2(10.), col_seed) * 0.5)));
+  if (sm < 2.5)
+  {
+    sa = 0.2 + 0.15 * sm;
+  } else if (sm < 3.5) {
+    sa = 0.4;
+  } else if (sm < 4.5) {
+    sa = 0.5;
+  } else {
+    sa = 0.55 - 0.07 * (sm - 4.);
+  }
+  if (sm < 3.5)
+  {
+    br = 0.15 + 0.1 * sm;
+  } else if (sm < 6.5) {
+    br = 0.5 + 0.075 * (sm - 3.);
+  } else {
+    br = 0.7 + 0.1 * (sm - 6.);
+  }
+  return hsv2rgb(vec3(hu, sa, br));
+}
+
 void mainImage(out vec4 O, vec2 u)
 {
-  pix = 100.;
-  float cols = 18.;
-  seed = 1u;
-  vec2 bU = 2. + (u / iResolution.y);
-  vec2 U = floor(bU * pix) / pix;
-  
-  bool dith = mod(bU.x + U.y, 2. / pix) < 1. / pix;
-  float fv = fbmVoronoi(0.25 * U, seed);
   O -= O;
+  float cols = 18.;
+  seed = 1u + uint(floor(iTime * 0.5));
+  col_seed = uint(floor(iTime * 0.5));
+  vec2 bU = 2. + (u / iResolution.y);
+  vec2 U = floor(bU * PIX) / PIX;
+  
+  bool dith = mod(bU.x + U.y, 2. / PIX) < 1. / PIX;
+  float fv = fbmVoronoi(0.25 * U, seed);
   vec2 aU = fbmSwirls(U, seed) * 10.;
-  float g = min(fbmCircles(aU, seed + 10u),
-    fbmCircles(aU, seed + 20u));
+  float g = min(fbmCircles(aU, seed + 10u), fbmCircles(aU, seed + 20u));
   g = -smin(1., g, 3.3) * fv * fv;
+  g *= (dith ? 0.85 : 1.);
   g = floor(g * cols) / cols;
 
-  O = vec4(vec3(max(bigstars(U) * 4., 1.5 * g)), 1.);
+  O = vec4(vec3(color(10. * max(bigstars(U) * 4., 1.5 * g))), 1.);
 }

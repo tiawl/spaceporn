@@ -26,26 +26,26 @@ float calc_star(vec2 coords, vec2 center, float pixel_res)
   float brightness = hash(center, seed + 4u) + 1.;
   float ring_size = hash(center, seed + 5u) * 0.8;
   ring_size = (ring_size * size < pixel_res * 4. ? 0. : ring_size);
-  float power = abs(sin(mod(time * (160. + 80. * hash(center, seed + 6u)),
-    10. + (10. *  hash(center, seed + 7u))))) * 0.2 + 0.9;
+  float power =
+    round(sin(time * (100. + 40. * hash(center, seed + 6u)))) * 0.2 + 1.;
 
   float star = 0.;
   Star bigstar =
     Star(rd_bigstar, center, size, power, 1., 0u, 1., ring_size);
   if (bigstar.type == DIAMOND)
   {
-    bool rotation = hash(bigstar.center, seed + 8u) > 0.5;
+    bool rotation = hash(bigstar.center, seed + 7u) > 0.5;
     bigstar.brightness *= bigstar.size;
     bigstar.brightness *= bigstar.power;
     coords = rotate(coords, vec2(0.), radians(rotation ? 45. : 0.));
     star = diamond(coords, bigstar);
   } else if (bigstar.type == NOVA) {
-    bigstar.shape = uint(ceil(hash(bigstar.center, seed + 8u) * 40.));
+    bigstar.shape = uint(ceil(hash(bigstar.center, seed + 7u) * 40.));
     bigstar.diag = (bigstar.shape > 38u ? 0. :
       (bigstar.shape < 25u ?
-        1. + hash(bigstar.center, seed + 9u) * 3.5 :
-        hash(bigstar.center, seed + 9u) > 0.5 ? bigstar.size / pixel_res :
-        2. + hash(bigstar.center, seed + 10u) * 3.));
+        1. + hash(bigstar.center, seed + 8u) * 3.5 :
+        hash(bigstar.center, seed + 8u) > 0.5 ? bigstar.size / pixel_res :
+        2. + hash(bigstar.center, seed + 9u) * 3.));
     bigstar.brightness = (bigstar.shape > 38u ?
       100. / pixels : bigstar.size * bigstar.brightness);
     bigstar.brightness *= bigstar.power;
@@ -53,7 +53,7 @@ float calc_star(vec2 coords, vec2 center, float pixel_res)
   } else {
     bigstar.brightness *= bigstar.size;
     bigstar.brightness *= bigstar.power;
-    bigstar.diag = 2.5 + hash(bigstar.center, seed + 8u) * 0.5;
+    bigstar.diag = 2.5 + hash(bigstar.center, seed + 7u) * 0.5;
     star = polar(coords, bigstar);
   }
   return star;

@@ -4,8 +4,9 @@ float pixel_res;
 uint seed;
 uint col_seed;
 
-# define MAX_BIGSTAR_SZ 8.
 # define BIGSTARS_DENSITY 4.
+# define MAX_BIGSTAR_SZ 8.
+# define COLS 18.
 
 # define DIAMOND 0u
 # define NOVA    1u
@@ -23,6 +24,46 @@ struct Star
   float diag;
   float ring_size;
 };
+
+
+float floor2(float x, float base)
+{
+  return floor(x / base) * base;
+}
+
+// https://iquilezles.org/www/articles/distfunctions2d/distfunctions2d.htm
+float sdCircle(vec2 p, float r)
+{
+  return length(p) - r;
+}
+
+// https://iquilezles.org/www/articles/distfunctions2d/distfunctions2d.htm
+float opRing(vec2 p, float r1, float r2)
+{
+  return abs(sdCircle(p, r1)) - r2;
+}
+
+// https://iquilezles.org/www/articles/distfunctions2d/distfunctions2d.htm
+float sdSegment(vec2 p, vec2 a, vec2 b)
+{
+  vec2 pa = p - a;
+  vec2 ba = b - a;
+  float h = clamp(dot(pa, ba) / dot(ba, ba), 0., 1.);
+  return length(pa - ba * h);
+}
+
+// https://iquilezles.org/www/articles/smin/smin.htm
+float smin(float a, float b, float k)
+{
+  float h = max(k - abs(a - b), 0.);
+  return min(a, b) - h * h * 0.25 / k;
+}
+
+vec2 rotation(vec2 p, float a)
+{
+  return p * mat2(cos(a), -sin(a),
+                  sin(a),  cos(a));
+}
 
 // 3D hash function to simulate seeding:
 // https://www.shadertoy.com/view/XlGcRh
@@ -53,66 +94,34 @@ float hash(vec2 s, uint hash_seed)
   return res;
 }
 
-float noise(vec2 coord, uint noise_seed)
-{
-  vec2 i = floor(coord);
-  vec2 f = fract(coord);
-  f = f * f * (3. - 2. * f);
-
-  float a = hash(i, noise_seed);
-  float b = hash(i + vec2(1., 0.), noise_seed);
-  float c = hash(i + vec2(0., 1.), noise_seed);
-  float d = hash(i + vec2(1., 1.), noise_seed);
-
-  return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
-}
-
 // https://iquilezles.org/www/articles/smoothvoronoi/smoothvoronoi.htm
-float voronoi( in vec2 x, float w, uint seed)
+float voronoi(vec2 x, float w, uint seed)
 {
-    vec2 n = floor( x );
-    vec2 f = fract( x );
+  vec2 n = floor(x);
+  vec2 f = fract(x);
 
-	float m = 8.;
-    for( int j=-2; j<=2; j++ )
-    for( int i=-2; i<=2; i++ )
-    {
-        vec2 g = vec2( float(i),float(j) );
-        vec2 o = vec2(hash( n + g , seed), hash( n + g , seed + 84u));
-
-        // distance to cell		
-		float d = length(g - f + o);
-		
-        // cell color
-		vec3 col = 0.5 + 0.5*sin( hash(n+g, seed + 32u)*2.5 + 3.5 + vec3(2.));
-        
-        // do the smooth min for colors and distances		
-		float h = smoothstep( 0.0, 1.0, 0.5 + 0.5*(m-d)/w );
-	    m = mix( m,     d, h ) - h*(1.0-h)*w/(1.0+3.0*w); // distance
-    }
+  float m = 8.;
+  for (int j = -2; j <= 2; j++)
+  for (int i = -2; i <= 2; i++)
+  {
+    vec2 g = vec2(i, j);
+    vec2 o = vec2(hash(n + g, seed), hash(n + g, seed + 84u));
+	float d = length(g - f + o);
+    vec3 col = 0.5 + 0.5 * sin(hash(n + g, seed + 32u) * 2.5 + 3.5 + vec3(2.));
+        		
+    float h = smoothstep(0., 1., 0.5 + 0.5 * (m - d) / w);
+	m = mix(m, d, h) - h * (1. - h) * w / (1. + 3. * w);
+  }
 	
-	return 1. - m;
+  return 1. - m;
 }
 
 float fbmVoronoi( in vec2 U, uint seed)
 {
   float r = (voronoi(6. * U, 0.3, seed)) * 0.625
-    + (voronoi(12. * U, 0.3, seed + 314u)) * 0.25 +
+    + (voronoi(12. * U, 0.3, seed + 314u)) * 0.25
     + (voronoi(24. * U, 0.3, seed + 92u)) * 0.125;
   return r;
-}
-
-// https://iquilezles.org/www/articles/smin/smin.htm
-float smin(float a, float b, float k)
-{
-  float h = max(k - abs(a - b), 0.);
-  return min(a, b) - h * h * 0.25 / k;
-}
-
-vec2 rotation(vec2 p, float a)
-{
-  return p * mat2(cos(a), -sin(a),
-                  sin(a),  cos(a));
 }
 
 // https://www.shadertoy.com/view/NsfyDs
@@ -191,41 +200,6 @@ vec2 fbmSwirls(vec2 p, uint se)
     sz *= 1.;
   }
   return p;
-}
-
-float floor2(float x, float base)
-{
-  return floor(x / base) * base;
-}
-
-vec2 rotate(vec2 coords, vec2 center, float angle)
-{
-  coords -= center;
-  coords *= mat2(cos(angle), -sin(angle),
-                 sin(angle),  cos(angle));
-  coords += center;
-  return coords;
-}
-
-// https://iquilezles.org/www/articles/distfunctions2d/distfunctions2d.htm
-float sdCircle(vec2 p, float r)
-{
-  return length(p) - r;
-}
-
-// https://iquilezles.org/www/articles/distfunctions2d/distfunctions2d.htm
-float opRing(vec2 p, float r1, float r2)
-{
-  return abs(sdCircle(p, r1)) - r2;
-}
-
-// https://iquilezles.org/www/articles/distfunctions2d/distfunctions2d.htm
-float sdSegment(vec2 p, vec2 a, vec2 b)
-{
-  vec2 pa = p - a;
-  vec2 ba = b - a;
-  float h = clamp(dot(pa, ba) / dot(ba, ba), 0., 1.);
-  return length(pa - ba * h);
 }
 
 float diamond(vec2 coords, Star star)
@@ -405,10 +379,10 @@ float calc_star(vec2 coords, vec2 center)
     Star(rd_bigstar, center, size, power, 1., 0u, 1., ring_size);
   if (bigstar.type == DIAMOND)
   {
-    bool rotation = hash(bigstar.center, seed + 7u) > 0.5;
+    bool rotated = hash(bigstar.center, seed + 7u) > 0.5;
     bigstar.brightness *= bigstar.size;
     bigstar.brightness *= bigstar.power;
-    coords = rotate(coords, vec2(0.), radians(rotation ? 45. : 0.));
+    coords = rotation(coords, radians(rotated ? 45. : 0.));
     star = diamond(coords, bigstar);
   } else if (bigstar.type == NOVA) {
     bigstar.shape = uint(ceil(hash(bigstar.center, seed + 7u) * 38.));
@@ -482,7 +456,7 @@ vec3 hsv2rgb(in vec3 c)
 vec3 color(float sm)
 {
   float hu, sa, br;
-  hu = radians(3.1415926 * 2. * (9. * hash(vec2(1.), col_seed)
+  hu = radians(6.2832 * (9. * hash(vec2(1.), col_seed)
     + sm * (hash(vec2(10.), col_seed) * 0.5)));
   if (sm < 2.5)
   {
@@ -507,20 +481,19 @@ vec3 color(float sm)
 
 void mainImage(out vec4 O, vec2 u)
 {
-  O -= O;
-  float cols = 18.;
   seed = 1u + uint(floor(iTime * 0.5));
   col_seed = uint(floor(iTime * 0.5));
+  
   vec2 bU = 2. + (u / iResolution.y);
   vec2 U = floor(bU * PIX) / PIX;
-  
   bool dith = mod(bU.x + U.y, 2. / PIX) < 1. / PIX;
+  
   float fv = fbmVoronoi(0.25 * U, seed);
   vec2 aU = fbmSwirls(U, seed) * 10.;
   float g = min(fbmCircles(aU, seed + 10u), fbmCircles(aU, seed + 20u));
   g = -smin(1., g, 3.3) * fv * fv;
   g *= (dith ? 0.85 : 1.);
-  g = floor(g * cols) / cols;
+  g = floor(g * COLS) / COLS;
 
   O = vec4(vec3(color(10. * max(bigstars(U) * 4., 1.5 * g))), 1.);
 }

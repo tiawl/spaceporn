@@ -438,11 +438,7 @@ float bigstars(vec2 coords)
   vec2 U = (coords + tmp) / BIGSTARS_DENSITY;
   float fv = fbmVoronoi(0.25 * U, seed);
   
-  vec2 aU = fbmSwirls(U, seed) * 10.;
-  float g = min(fbmCircles(aU, seed + 10u), fbmCircles(aU, seed + 20u));
-  g = -smin(1., g, 3.3) * fv * fv;
-  
-  return -d * g;
+  return -d * fv * fv * fv;
 }
 
 vec3 hsv2rgb(in vec3 c)

@@ -2,11 +2,10 @@
 
 float pixel_res;
 uint seed;
-uint col_seed;
+bool multicolor = true;
 
 # define BIGSTARS_DENSITY 4.
 # define MAX_BIGSTAR_SZ 8.
-# define COLS 18.
 
 # define DIAMOND 0u
 # define NOVA    1u
@@ -404,19 +403,16 @@ float calc_star(vec2 coords, vec2 center)
   return star;
 }
 
-float bigstars(vec2 coords)
+vec3 bigstars(vec2 coords)
 {
   coords *= BIGSTARS_DENSITY;
-  float d = 1e9,
-        c;
-  vec2 o, p;
+  float d = 1e9, c;
 
   pixel_res = BIGSTARS_DENSITY / PIX;
 
   vec2 i = floor(coords);
   vec2 f = fract(coords);
-  vec2 h;
-  vec2 center, tmp;
+  vec2 h, o, p, center, tmp;
 
   for (int k = 0; k < 9; k++)
   {
@@ -438,35 +434,33 @@ float bigstars(vec2 coords)
   vec2 U = (coords + tmp) / BIGSTARS_DENSITY;
   float fv = fbmVoronoi(0.25 * U, seed);
   
-  return -d * fv * fv * fv;
+  return vec3(-d * fv * fv * 0.5, U * PIX);
 }
 
-vec3 hsv2rgb(in vec3 c)
+vec3 hsv2rgb(vec3 c)
 {
   vec3 rgb = clamp(abs(mod(c.x * 6.
     + vec3(0., 4., 2.), 6.) - 3.) - 1., 0., 1.);
-  return c.z * mix( vec3(1.), rgb, c.y);
+  return c.z * mix(vec3(1.), rgb, c.y);
 }
 
 // https://www.slynyrd.com/blog/2018/1/10/pixelblog-1-color-palettes
-vec3 color(float sm)
+vec3 color(float sm, vec2 colcoords, uint cseed)
 {
   float hu, sa, br;
-  hu = radians(6.2832 * (9. * hash(vec2(1.), col_seed)
-    + sm * (hash(vec2(10.), col_seed) * 0.5)));
+  hu = radians(6.2832 * (9. * hash(colcoords, cseed)
+    + sm * (hash(colcoords + 9., cseed) * 0.25)));
   if (sm < 2.5)
   {
     sa = 0.2 + 0.15 * sm;
-  } else if (sm < 3.5) {
-    sa = 0.4;
   } else if (sm < 4.5) {
-    sa = 0.5;
+    sa = 0.35 + 0.1 * (sm - 2.);
   } else {
     sa = 0.55 - 0.07 * (sm - 4.);
   }
   if (sm < 3.5)
   {
-    br = 0.15 + 0.1 * sm;
+    br = 0.1 + 0.1 * sm;
   } else if (sm < 6.5) {
     br = 0.5 + 0.075 * (sm - 3.);
   } else {
@@ -478,18 +472,27 @@ vec3 color(float sm)
 void mainImage(out vec4 O, vec2 u)
 {
   seed = 1u + uint(floor(iTime * 0.5));
-  col_seed = uint(floor(iTime * 0.5));
+  uint col_seed = uint(floor(iTime * 0.5));
   
-  vec2 bU = 2. + (u / iResolution.y);
+  vec2 bU = 2. + (u / iResolution.y) + iTime * 0.05;
   vec2 U = floor(bU * PIX) / PIX;
   bool dith = mod(bU.x + U.y, 2. / PIX) < 1. / PIX;
   
   float fv = fbmVoronoi(0.25 * U, seed);
   vec2 aU = fbmSwirls(U, seed) * 10.;
   float g = min(fbmCircles(aU, seed + 10u), fbmCircles(aU, seed + 20u));
-  g = -smin(1., g, 3.3) * fv * fv;
+  g = -smin(1., g, 3.3) * fv * fv * (multicolor ? 0.2 : 1.);
   g *= (dith ? 0.85 : 1.);
-  g = floor(g * COLS) / COLS;
+  float cols = multicolor ? 36. : 18.;
+  g = 1.5 * floor(g * cols) / cols;
+  vec3 b = bigstars(U) * vec3(4., 1., 1.);
+  vec2 colcoords = vec2(1.);
+  
+  if (b.x > g)
+  {
+    g = b.x * (multicolor ? 0.75: 1.);
+    colcoords = multicolor ? b.yz : colcoords;
+  }
 
-  O = vec4(vec3(color(10. * max(bigstars(U) * 4., 1.5 * g))), 1.);
+  O = vec4((multicolor && b.x < g ? vec3(3.5 * g) : color(10. * g, colcoords, col_seed)), 1.);
 }

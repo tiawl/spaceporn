@@ -516,14 +516,14 @@ void mainImage(out vec4 O, vec2 u)
   bool multicolor = (abs(texelFetch(iChannel0, ivec2(u), 0).x) > 0.5);
   float cols = multicolor ? 8. : 18.;
   
-  vec2 bU = 2. + (u / iResolution.y) + iTime * 0.05;
+  vec2 bU = 2. + (u / iResolution.y) + iTime * 3. / PIX;
   vec2 U = floor(bU * PIX) / PIX;
   bool dith = mod(bU.x + U.y, 2. / PIX) < 1. / PIX;
   
   float fv = fbmVoronoi(0.25 * U, seed);
   vec2 aU = fbmSwirls(U, seed) * 10.;
   float g = min(fbmCircles(aU, seed + 10u), fbmCircles(aU, seed + 20u));
-  g = -smin(1., g, 3.3) * fv * fv * (multicolor ? 0.2 : 1.);
+  g = -smin(1., g, 3.3) * fv * fv * (multicolor ? 0.7 : 1.);
   g *= (dith ? 1.275 : 1.5);
   
   vec3 b = bigstars(U) * vec3(4., 1., 1.);
@@ -532,18 +532,17 @@ void mainImage(out vec4 O, vec2 u)
   {
     U *= 360.;
     float sta = stars(U);
-    g *= 3.5;
-    if ((b.x > sta) && (b.x > g))
+    if ((b.x > 0.) && (b.x > g))
     {
       U = b.yz;
       g = b.x;
-    } else if ((sta > b.x) && (sta > g)) {
+    } else if (sta > g) {
       g = sta;
       fv = fv * fv;
     }
     g = floor(g * cols) / cols;
     vec3 col = vec3(2. * noise(U * 0.025, 47u), 2.5 * noise(U * 0.025, 52u), 3.);
-    O = vec4(g * col, 1.) * fv;
+    O = vec4(g * col * fv, 1.);
   } else {
     g = max(b.x, g);
     g = floor(g * cols) / cols;

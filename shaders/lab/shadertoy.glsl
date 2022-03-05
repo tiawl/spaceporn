@@ -1,8 +1,9 @@
 float pixel_res;
 uint seed;
+float time;
 
-# define PIX 150.
-# define BIGSTARS_DENSITY 4.
+# define PIX 300.
+# define BIGSTARS_DENSITY 4.5
 # define MAX_BIGSTAR_SZ 8.
 
 # define DIAMOND 0u
@@ -123,7 +124,7 @@ float stars(vec2 uv)
   if (starcolor > 0.3)
   {
     float brighness_variance = max(0.15, hash(uv, 94u) / 2.);
-    return starcolor + abs(sin((iTime * 10. + hash(uv, 94u)) *
+    return starcolor + abs(sin((time * 10. + hash(uv, 94u)) *
       hash(uv, 95u))) * brighness_variance
       - (brighness_variance / 2.);
   } else {
@@ -205,7 +206,7 @@ vec2 swirls(vec2 p, uint se, float sz, float ro)
   float r;
   float s = 0.012 * sz;
 
-  p = p * s * iResolution.y;
+  p = p * s * 360.;
   vec2 F = abs(fract(p + 0.5) - 0.5);
   float y = min(F.x, F.y);
   vec2 I = floor(p);
@@ -224,7 +225,7 @@ vec2 swirls(vec2 p, uint se, float sz, float ro)
     F = rotation(F - D, y * smoothstep(0.5, 0., r)) + D;
     p = F + I;
   }
-  return p / (s * iResolution.y);
+  return p / (s * 360.);
 }
 
 vec2 fbmSwirls(vec2 p, uint se)
@@ -405,11 +406,11 @@ float calc_star(vec2 coords, vec2 center)
   float min_size = (rd_bigstar == DIAMOND ? 3. : 7.);
   float max_size = MAX_BIGSTAR_SZ - min_size;
   float size =
-    (min(floor(size_hash * (max_size + 1.)), max_size) + min_size) * pixel_res;
+    (min(floor(size_hash * (max_size + 1.)), max_size) + min_size) * pixel_res * 2.;
   float brightness = hash(center, seed + 4u) + 1.;
   float ring_size = hash(center, seed + 5u) * 0.8;
   ring_size = (ring_size * size < pixel_res * 4. ? 0. : ring_size);
-  float power = round(sin(iTime * (3. + 4. * hash(center, seed + 6u)))) * 0.2 + 1.;
+  float power = round(sin(time * (3. + 4. * hash(center, seed + 6u)))) * 0.2 + 1.;
 
   float star = 0.;
   Star bigstar =
@@ -485,7 +486,7 @@ vec3 hsv2rgb(vec3 c)
 // https://www.slynyrd.com/blog/2018/1/10/pixelblog-1-color-palettes
 vec3 color(float sm, uint cseed)
 {
-  float var = 0.01 * sin(iTime * 50.);
+  float var = 0.01 * sin(time * 50.);
   float hu, sa = 0., br = 0.;
   sa += var * 2.;
   hu = radians(6.2832 * (9. * hash(vec2(1.), cseed)
@@ -511,12 +512,13 @@ vec3 color(float sm, uint cseed)
 
 void mainImage(out vec4 O, vec2 u)
 {
-  seed = 1u + uint(floor(iTime * 0.5));
-  uint col_seed = uint(floor(iTime * 0.5));
-  bool multicolor = (abs(texelFetch(iChannel0, ivec2(u), 0).x) > 0.5);
+  time = iTime / 1.;
+  seed = 1u + uint(floor(time * 0.25));
+  uint col_seed = uint(floor(time * 0.25));
+  bool multicolor = mod(time * 0.5, 2.) > 1.;//(abs(texelFetch(iChannel0, ivec2(u), 0).x) > 0.5);
   float cols = multicolor ? 8. : 18.;
   
-  vec2 bU = 2. + (u / iResolution.y) + iTime * 3. / PIX;
+  vec2 bU = 2. + (u / iResolution.y) + time * 0.05;
   vec2 U = floor(bU * PIX) / PIX;
   bool dith = mod(bU.x + U.y, 2. / PIX) < 1. / PIX;
   
@@ -524,7 +526,7 @@ void mainImage(out vec4 O, vec2 u)
   vec2 aU = fbmSwirls(U, seed) * 10.;
   float g = min(fbmCircles(aU, seed + 10u), fbmCircles(aU, seed + 20u));
   g = -smin(1., g, 3.3) * fv * fv * (multicolor ? 0.7 : 1.);
-  g *= (dith ? 1.275 : 1.5);
+  g *= (dith ? 1.35 : 1.5);
   
   vec3 b = bigstars(U) * vec3(4., 1., 1.);
 

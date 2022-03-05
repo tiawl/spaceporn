@@ -1,9 +1,7 @@
-# define PIX 150.
-
 float pixel_res;
 uint seed;
-bool multicolor = true;
 
+# define PIX 150.
 # define BIGSTARS_DENSITY 4.
 # define MAX_BIGSTAR_SZ 8.
 
@@ -23,7 +21,6 @@ struct Star
   float diag;
   float ring_size;
 };
-
 
 float floor2(float x, float base)
 {
@@ -91,6 +88,47 @@ float hash(vec2 s, uint hash_seed)
   uvec3 p = pcg3d(uvec3(u.x, u.y, hash_seed));
   res = float(p) * (1. / float(0xffffffffu));
   return res;
+}
+
+float noise(vec2 coord, uint noise_seed)
+{
+  vec2 i = floor(coord);
+  vec2 f = fract(coord);
+  f = f * f * (3. - 2. * f);
+
+  float a = hash(i, noise_seed);
+  float b = hash(i + vec2(1., 0.), noise_seed);
+  float c = hash(i + vec2(0., 1.), noise_seed);
+  float d = hash(i + vec2(1., 1.), noise_seed);
+
+  return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
+}
+
+// https://www.shadertoy.com/view/MslGWN
+vec3 nrand3(vec2 co)
+{
+  float a = hash(co, 98u);
+  float b = hash(co, 99u);
+  float c = mix(a, b, 0.5);
+  return vec3(c);
+}
+
+// https://www.shadertoy.com/view/MslGWN
+float stars(vec2 uv)
+{
+  vec3 rnd = nrand3(uv);
+  float r = rnd.y;
+  float starcolor = r * r * r * r * r;
+
+  if (starcolor > 0.3)
+  {
+    float brighness_variance = max(0.15, hash(uv, 94u) / 2.);
+    return starcolor + abs(sin((iTime * 10. + hash(uv, 94u)) *
+      hash(uv, 95u))) * brighness_variance
+      - (brighness_variance / 2.);
+  } else {
+    return 0.;
+  }
 }
 
 // https://iquilezles.org/www/articles/smoothvoronoi/smoothvoronoi.htm
@@ -445,26 +483,28 @@ vec3 hsv2rgb(vec3 c)
 }
 
 // https://www.slynyrd.com/blog/2018/1/10/pixelblog-1-color-palettes
-vec3 color(float sm, vec2 colcoords, uint cseed)
+vec3 color(float sm, uint cseed)
 {
-  float hu, sa, br;
-  hu = radians(6.2832 * (9. * hash(colcoords, cseed)
-    + sm * (hash(colcoords + 9., cseed) * 0.25)));
+  float var = 0.01 * sin(iTime * 50.);
+  float hu, sa = 0., br = 0.;
+  sa += var * 2.;
+  hu = radians(6.2832 * (9. * hash(vec2(1.), cseed)
+    + sm * (hash(vec2(10.), cseed) * 0.25)));
   if (sm < 2.5)
   {
-    sa = 0.2 + 0.15 * sm;
+    sa += 0.2 + 0.15 * sm;
   } else if (sm < 4.5) {
-    sa = 0.35 + 0.1 * (sm - 2.);
+    sa += 0.35 + 0.1 * (sm - 2.);
   } else {
-    sa = 0.55 - 0.07 * (sm - 4.);
+    sa += 0.55 - 0.07 * (sm - 4.);
   }
   if (sm < 3.5)
   {
-    br = 0.1 + 0.1 * sm;
+    br += 0.1 + 0.1 * sm;
   } else if (sm < 6.5) {
-    br = 0.5 + 0.075 * (sm - 3.);
+    br += 0.5 + 0.075 * (sm - 3.);
   } else {
-    br = 0.7 + 0.1 * (sm - 6.);
+    br += 0.7 + 0.1 * (sm - 6.);
   }
   return hsv2rgb(vec3(hu, sa, br));
 }
@@ -473,6 +513,8 @@ void mainImage(out vec4 O, vec2 u)
 {
   seed = 1u + uint(floor(iTime * 0.5));
   uint col_seed = uint(floor(iTime * 0.5));
+  bool multicolor = (abs(texelFetch(iChannel0, ivec2(u), 0).x) > 0.5);
+  float cols = multicolor ? 8. : 18.;
   
   vec2 bU = 2. + (u / iResolution.y) + iTime * 0.05;
   vec2 U = floor(bU * PIX) / PIX;
@@ -482,17 +524,29 @@ void mainImage(out vec4 O, vec2 u)
   vec2 aU = fbmSwirls(U, seed) * 10.;
   float g = min(fbmCircles(aU, seed + 10u), fbmCircles(aU, seed + 20u));
   g = -smin(1., g, 3.3) * fv * fv * (multicolor ? 0.2 : 1.);
-  g *= (dith ? 0.85 : 1.);
-  float cols = multicolor ? 36. : 18.;
-  g = 1.5 * floor(g * cols) / cols;
-  vec3 b = bigstars(U) * vec3(4., 1., 1.);
-  vec2 colcoords = vec2(1.);
+  g *= (dith ? 1.275 : 1.5);
   
-  if (b.x > g)
-  {
-    g = b.x * (multicolor ? 0.75: 1.);
-    colcoords = multicolor ? b.yz : colcoords;
-  }
+  vec3 b = bigstars(U) * vec3(4., 1., 1.);
 
-  O = vec4((multicolor && b.x < g ? vec3(3.5 * g) : color(10. * g, colcoords, col_seed)), 1.);
+  if (multicolor)
+  {
+    U *= 360.;
+    float sta = stars(U);
+    g *= 3.5;
+    if ((b.x > sta) && (b.x > g))
+    {
+      U = b.yz;
+      g = b.x;
+    } else if ((sta > b.x) && (sta > g)) {
+      g = sta;
+      fv = fv * fv;
+    }
+    g = floor(g * cols) / cols;
+    vec3 col = vec3(2. * noise(U * 0.025, 47u), 2.5 * noise(U * 0.025, 52u), 3.);
+    O = vec4(g * col, 1.) * fv;
+  } else {
+    g = max(b.x, g);
+    g = floor(g * cols) / cols;
+    O = vec4(color(10. * g, col_seed), 1.);
+  }
 }

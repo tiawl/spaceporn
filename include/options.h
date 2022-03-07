@@ -8,7 +8,7 @@
 #include "uniform.h"
 
 #define NAME "spaceporn"
-#define VERSION "0"
+#define VERSION "0.0.0"
 
 #define DEFAULT_FPS 30
 #define DEFAULT_PIXELS 300
@@ -18,11 +18,13 @@
 #define DEFAULT_PALETTES false
 
 #define ANIMATION_FLAG "-a"
-#define FPS_FLAG "-f"
-#define PRECOMPUTE_FLAG "-g"
+#define ATLASFORCED_FLAG "-f"
+#define PICGEN_FLAG "-g"
 #define CAMERAMOTION_FLAG "-m"
 #define PALETTES_FLAG "-p"
+#define FPS_FLAG "-r"
 #define SLIDE_FLAG "-s"
+#define STOP_FLAG "-t"
 #define PIXEL_FLAG "-x"
 #define ZOOM_FLAG "-z"
 #define ROADMAP_FLAG "-R"
@@ -41,7 +43,7 @@
 #define UNDEFINED_SIZE 0
 
 void help();
-bool parsing_options(long* fps, long* generation, unsigned* width,
+bool parsing_options(long* fps, bool* generation, unsigned* width,
   unsigned* height, UniformValues* uniform_values, Log* log, int* argc,
   char** argv);
 

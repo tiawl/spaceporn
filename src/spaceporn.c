@@ -8,7 +8,7 @@ int main(int argc, char** argv)
 
   bool status = true;
   long fps = DEFAULT_FPS;
-  long generation = -1;
+  bool generation = false;
 
   Log log;
   log.verbose = false;
@@ -115,13 +115,15 @@ int main(int argc, char** argv)
     uniform_values.width = context.window_attribs.width;
     uniform_values.height = context.window_attribs.height;
 
-    if ((generation > -1) || (access(png_atlas.path, F_OK) != 0))
+    // GENERATE TEXTURES ATLAS: TODO
+    // GENERATE BACKGROUND: TODO
+    if (generation || (access(png_atlas.path, F_OK) != 0))
     {
       writeLog(&log, stdout, INFO, "",
         "Computing textures atlas dimensions ...\n");
 
       if ((atlas.width == UNDEFINED_SIZE) || (atlas.height == UNDEFINED_SIZE)
-        || (generation == -1))
+        || !generation)
       {
         atlas.width = nextpow2(7);
         atlas.height = nextpow2(7);
@@ -149,11 +151,6 @@ int main(int argc, char** argv)
         break;
       }
       writeLog(&log, stdout, DEBUG, "", "Textures atlas generated\n");
-
-      if (generation == 1)
-      {
-        break;
-      }
     }
 
     writeLog(&log, stdout, DEBUG, "", "Loading OpenGL program ...\n");

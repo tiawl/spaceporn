@@ -11,27 +11,24 @@
 #define VERSION "0.0.0"
 
 #define DEFAULT_FPS 30
-#define DEFAULT_PIXELS 300
-#define DEFAULT_ZOOM 25
 #define DEFAULT_ANIMATIONS false
 #define DEFAULT_MOTION false
 #define DEFAULT_PALETTES false
 
 #define ANIMATION_FLAG "-a"
+#define BGGEN_FLAG "-b"
 #define ATLASFORCED_FLAG "-f"
-#define PICGEN_FLAG "-g"
-#define CAMERAMOTION_FLAG "-m"
 #define PALETTES_FLAG "-p"
 #define FPS_FLAG "-r"
 #define SLIDE_FLAG "-s"
 #define STOP_FLAG "-t"
 #define PIXEL_FLAG "-x"
 #define ZOOM_FLAG "-z"
-#define ROADMAP_FLAG "-R"
-#define VERBOSE_FLAG "-V"
-#define MAXROADMAP_FLAG "-M"
-#define VERTEXFILEROADMAPS_FLAG "-T"
 #define FRAGMENTFILEROADMAPS_FLAG "-F"
+#define MAXROADMAP_FLAG "-M"
+#define ROADMAP_FLAG "-R"
+#define VERTEXFILEROADMAPS_FLAG "-T"
+#define VERBOSE_FLAG "-V"
 
 #define MIN_PIXELS 200
 #define MAX_PIXELS 600

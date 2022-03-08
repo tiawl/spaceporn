@@ -4,36 +4,34 @@ void help()
 {
   fprintf(stderr, "\n%s %s\n", NAME, VERSION);
   fprintf(stderr,
-    "\nUsage: %s [%s] [%s] [%s [WIDTHxHEIGHT]] [%s] [%s] [%s FPS] [%s MINS]\n\
-    [%s] [%s PIXELS] [%s ZOOM] [%s] [%s ROADMAP] [%s] [%s] [%s]\n\n", NAME,
-  ANIMATION_FLAG, ATLASFORCED_FLAG, PICGEN_FLAG, CAMERAMOTION_FLAG,
-  PALETTES_FLAG, FPS_FLAG, STOP_FLAG, SLIDE_FLAG, PIXEL_FLAG, ZOOM_FLAG,
-  VERBOSE_FLAG, ROADMAP_FLAG, MAXROADMAP_FLAG, VERTEXFILEROADMAPS_FLAG,
-  FRAGMENTFILEROADMAPS_FLAG);
+    "\nUsage: %s %s LEVEL|%s [WIDTHxHEIGHT]|%s MINS [%s] [%s] [%s FPS] \n\
+    [%s] [%s PIXELS] [%s ZOOM] [%s] [%s] [%s ROADMAP] [%s] [%s]\n\n", NAME,
+  ANIMATION_FLAG, BGGEN_FLAG, SLIDE_FLAG, ATLASFORCED_FLAG, PALETTES_FLAG,
+  FPS_FLAG, STOP_FLAG, PIXEL_FLAG, ZOOM_FLAG, FRAGMENTFILEROADMAPS_FLAG,
+  MAXROADMAP_FLAG, ROADMAP_FLAG, VERTEXFILEROADMAPS_FLAG, VERBOSE_FLAG);
   fprintf(stderr, "User options:\n\n\
-  %s  Enable shader animations. Enable Video mode.\n\n\
-  %s  Force precomputed texture generation.\n\n\
-  %s  Generate background in PNG format and exit. WIDTH and HEIGHT can be\n\
-      specified in this format: WIDTHxHEIGHT. If WIDTH and HEIGHT are not\n\
-      specified, screen dimensions are used. It disables %s, %s, %s and %s\n\
-      flags.\n\n\
-  %s  Enable camera motion. Enable Video mode.\n\n\
+  %s  Enable Animation mode: display animated wallpaper. If LEVEL is 0,\n\
+      camera motion and animations are enabled, 1 disables camera motion, 2\n\
+      disables animations. Exit in error if called with %s or %s flags.\n\n\
+  %s  Enable Generation mode: generate background in PNG format and exit.\n\
+      WIDTH and HEIGHT can be specified in this format: WIDTHxHEIGHT. If\n\
+      WIDTH and HEIGHT are not specified, screen dimensions are used. Exit\n\
+      in error if called with %s or %s flags.\n\n\
+  %s  Enable Slide mode: display new static wallpaper every MINS minutes.\n\
+      Exit in error if called with %s or %s flags.\n\n\
+  %s  Force new seed generation.\n\n\
   %s  Enable usage of unique palette for each object.\n\n\
-  %s  Frames per second between %d to %d. Enable Video mode.\n\
+  %s  Frames per second between %d to %d. Animation mode option.\n\
       [default: %d]\n\n\
-  %s  Enable Slide mode: generate new static wallpaper every MINS\n\
-      minutes. It disables %s, %s and %s flags.\n\n\
-  %s  Generate precomputed texture and exit. It disables %s, %s, %s and \n\
-      %s flags.\n\n\
+  %s  Run without using a mode and exit. Useful with %s flag.\n\n\
   %s  Pixelization value between %d to %d.\n\
       [default: random]\n\n\
   %s  Zoom value between %d to %d.\n\
-      [default: random]\n\n", ANIMATION_FLAG, ATLASFORCED_FLAG, PICGEN_FLAG,
-      ANIMATION_FLAG, CAMERAMOTION_FLAG, FPS_FLAG, SLIDE_FLAG,
-      CAMERAMOTION_FLAG, PALETTES_FLAG, FPS_FLAG, MIN_FPS, MAX_FPS,
-      DEFAULT_FPS, SLIDE_FLAG, ANIMATION_FLAG, CAMERAMOTION_FLAG, FPS_FLAG,
-      STOP_FLAG, ANIMATION_FLAG, CAMERAMOTION_FLAG, FPS_FLAG, SLIDE_FLAG,
-      PIXEL_FLAG, MIN_PIXELS, MAX_PIXELS, ZOOM_FLAG, MIN_ZOOM, MAX_ZOOM);
+      [default: random]\n\n", ANIMATION_FLAG, BGGEN_FLAG, SLIDE_FLAG,
+      BGGEN_FLAG, ANIMATION_FLAG, SLIDE_FLAG, SLIDE_FLAG, ANIMATION_FLAG,
+      BGGEN_FLAG, ATLASFORCED_FLAG, PALETTES_FLAG, FPS_FLAG, MIN_FPS, MAX_FPS,
+      DEFAULT_FPS, STOP_FLAG, ATLASFORCED_FLAG, PIXEL_FLAG, MIN_PIXELS,
+      MAX_PIXELS, ZOOM_FLAG, MIN_ZOOM, MAX_ZOOM);
   fprintf(stderr, "Debug options:\n\n\
   %s  Verbose mode.\n\n\
   %s  Run the corresponding execution roadmap.\n\
@@ -61,23 +59,48 @@ bool parsing_options(long* fps, bool* generation, unsigned* width,
 
     if (*argc <= 1)
     {
-      help();
       status = false;
       break;
     }
 
     for (int i = 1; i < *argc; i++)
     {
-      if ((strcmp(argv[i], ANIMATION_FLAG) == 0) &&
-        (uniform_values->slide == 0))
+      if (strcmp(argv[i], ANIMATION_FLAG) == 0)
+        if (*mode < ANIM_MOTION_MODE)
+        {
+          if (++i < *argc)
+          {
+            *mode = strtol(argv[i], &end, 10);
+            if (argv[i] == end)
+            {
+              fprintf(stderr,
+                "Unrecognized character in %s option parameter.\n",
+                FPS_FLAG);
+              status = false;
+              break;
+            }
+            if (errno == ERANGE)
+            {
+              fprintf(stderr,
+                "Range error occurred during %s option parsing.\n",
+                FPS_FLAG);
+              status = false;
+              break;
+            }
+            if ((*mode < ANIM_MOTION_MODE) || (*mode > MOTION_MODE))
+            {
+              status = false;
+              break;
+            }
+          }
+        } else {
+          status = false;
+          break;
+        }
       {
-        uniform_values->animations = true;
+      } else if (strcmp(argv[i], BGGEN_FLAG) == 0) {
       } else if (strcmp(argv[i], ATLASFORCED_FLAG) == 0) {
-        generation = true;
-      } else if (strcmp(argv[i], PICGEN_FLAG) == 0) {
-      } else if ((strcmp(argv[i], CAMERAMOTION_FLAG) == 0) &&
-        (uniform_values->slide == 0)) {
-          uniform_values->motion = true;
+        *generation = true;
       } else if (strcmp(argv[i], PALETTES_FLAG) == 0) {
         uniform_values->palettes = true;
       } else if ((strcmp(argv[i], FPS_FLAG) == 0) &&
@@ -294,6 +317,11 @@ bool parsing_options(long* fps, bool* generation, unsigned* width,
       }
     }
   } while (false);
+
+  if (!status)
+  {
+    help();
+  }
 
   if (dir != NULL)
   {

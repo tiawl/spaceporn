@@ -18,6 +18,16 @@
 
 #define DEV GCC_DEV
 
+enum Mode
+{
+  NO_MODE,
+  ANIM_MOTION_MODE,
+  ANIM_MODE,
+  MOTION_MODE,
+  BGGEN_MODE,
+  SLIDE_MODE
+};
+
 enum RoadmapID
 {
   IMPROVELOGSHADER_REGCOMP_FAILED_RM = -26,

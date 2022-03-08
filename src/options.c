@@ -92,6 +92,9 @@ bool parsing_options(long* fps, bool* generation, unsigned* width,
               status = false;
               break;
             }
+          } else {
+            status = false;
+            break;
           }
         } else {
           status = false;
@@ -126,7 +129,6 @@ bool parsing_options(long* fps, bool* generation, unsigned* width,
             }
             if ((*fps < MIN_FPS) || (*fps > MAX_FPS))
             {
-              help();
               status = false;
               break;
             }
@@ -153,7 +155,6 @@ bool parsing_options(long* fps, bool* generation, unsigned* width,
           }
           if (uniform_values->slide <= 0)
           {
-            help();
             status = false;
             break;
           }
@@ -185,7 +186,6 @@ bool parsing_options(long* fps, bool* generation, unsigned* width,
           if ((uniform_values->pixels > MAX_PIXELS) ||
             (uniform_values->pixels < MIN_PIXELS))
           {
-            help();
             status = false;
             break;
           }
@@ -213,7 +213,6 @@ bool parsing_options(long* fps, bool* generation, unsigned* width,
           if ((uniform_values->zoom < MIN_ZOOM) ||
             (uniform_values->zoom > MAX_ZOOM))
           {
-            help();
             status = false;
             break;
           }
@@ -242,7 +241,6 @@ bool parsing_options(long* fps, bool* generation, unsigned* width,
           }
           if ((log->roadmap.id < EXIT_SUCCESS_RM) || (log->roadmap.id >= RM_NB))
           {
-            help();
             status = false;
             break;
           } else {
@@ -311,7 +309,6 @@ bool parsing_options(long* fps, bool* generation, unsigned* width,
         status = false;
         break;
       } else {
-        help();
         status = false;
         break;
       }

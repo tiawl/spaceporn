@@ -11,8 +11,7 @@ typedef struct
   GLint width;
   GLint height;
   GLint pixels;
-  GLboolean animations;
-  GLboolean motion;
+  GLint mode;
   GLboolean palettes;
   GLboolean precomputed;
   GLfloat zoom;

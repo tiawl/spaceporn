@@ -73,17 +73,15 @@ bool parsing_options(long* fps, bool* generation, unsigned* width,
             *mode = strtol(argv[i], &end, 10);
             if (argv[i] == end)
             {
-              fprintf(stderr,
-                "Unrecognized character in %s option parameter.\n",
-                FPS_FLAG);
+              fprintf(stderr, "Unrecognized character in %s option"
+                " parameter.\n", ANIMATION_FLAG);
               status = false;
               break;
             }
             if (errno == ERANGE)
             {
-              fprintf(stderr,
-                "Range error occurred during %s option parsing.\n",
-                FPS_FLAG);
+              fprintf(stderr, "Range error occurred during %s option"
+                " parsing.\n", ANIMATION_FLAG);
               status = false;
               break;
             }
@@ -114,16 +112,14 @@ bool parsing_options(long* fps, bool* generation, unsigned* width,
             if (argv[i] == end)
             {
               fprintf(stderr,
-                "Unrecognized character in %s option parameter.\n",
-                FPS_FLAG);
+                "Unrecognized character in %s option parameter.\n", FPS_FLAG);
               status = false;
               break;
             }
             if (errno == ERANGE)
             {
               fprintf(stderr,
-                "Range error occurred during %s option parsing.\n",
-                FPS_FLAG);
+                "Range error occurred during %s option parsing.\n", FPS_FLAG);
               status = false;
               break;
             }
@@ -140,16 +136,14 @@ bool parsing_options(long* fps, bool* generation, unsigned* width,
           if (argv[i] == end)
           {
             fprintf(stderr,
-              "Unrecognized character in %s option parameter.\n",
-              SLIDE_FLAG);
+              "Unrecognized character in %s option parameter.\n", SLIDE_FLAG);
             status = false;
             break;
           }
           if (errno == ERANGE)
           {
             fprintf(stderr,
-              "Range error occurred during %s option parsing.\n",
-              SLIDE_FLAG);
+              "Range error occurred during %s option parsing.\n", SLIDE_FLAG);
             status = false;
             break;
           }
@@ -170,16 +164,14 @@ bool parsing_options(long* fps, bool* generation, unsigned* width,
           if (argv[i] == end)
           {
             fprintf(stderr,
-              "Unrecognized character in %s option parameter.\n",
-              PIXEL_FLAG);
+              "Unrecognized character in %s option parameter.\n", PIXEL_FLAG);
             status = false;
             break;
           }
           if (errno == ERANGE)
           {
             fprintf(stderr,
-              "Range error occurred during %s option parsing.\n",
-              PIXEL_FLAG);
+              "Range error occurred during %s option parsing.\n", PIXEL_FLAG);
             status = false;
             break;
           }
@@ -197,16 +189,14 @@ bool parsing_options(long* fps, bool* generation, unsigned* width,
           if (argv[i] == end)
           {
             fprintf(stderr,
-              "Unrecognized character in %s option parameter.\n",
-              ZOOM_FLAG);
+              "Unrecognized character in %s option parameter.\n", ZOOM_FLAG);
             status = false;
             break;
           }
           if (errno == ERANGE)
           {
             fprintf(stderr,
-              "Range error occurred during %s option parsing.\n",
-              ZOOM_FLAG);
+              "Range error occurred during %s option parsing.\n", ZOOM_FLAG);
             status = false;
             break;
           }

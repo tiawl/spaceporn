@@ -25,8 +25,8 @@ typedef struct
 } Uniform;
 
 #define UNIFORM_COUNT 2
-#define UNIFORM_FLOATS 6
-#define UNIFORM_BOOLEANS 4
+#define UNIFORM_FLOATS 7
+#define UNIFORM_BOOLEANS 2
 
 // custom functions used to set uniform values
 bool updateFloatUniforms(GLint uniformId, UniformValues* values, Log* log);

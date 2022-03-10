@@ -25,13 +25,13 @@ bool updateFloatUniforms(GLint uniformId, UniformValues* values, Log* log)
     GLfloat fflags[UNIFORM_FLOATS] =
     {
       values->width, values->height, values->seed, values->time, values->pixels,
-      values->zoom
+      values->zoom, values->mode
     };
 
     writeLog(log, stdout, INFO, "",
-      "    New fflags values: [%d, %d, %f, %f, %d, %f]\n",
+      "    New fflags values: [%d, %d, %f, %f, %d, %f, %s]\n",
       values->width, values->height, fflags[2], fflags[3], values->pixels,
-      values->zoom);
+      values->zoom, modes[values->mode]);
 
     writeLog(log, stdout, DEBUG, "",
       "    Specifying value of fflags in current program ...\n");
@@ -51,12 +51,10 @@ bool updateBoolUniforms(GLint uniformId, UniformValues* values, Log* log)
   {
     GLint bflags[UNIFORM_BOOLEANS] =
     {
-      values->animations, values->motion, values->palettes,
-        (values->slide ? 0 : values->precomputed)
+      values->palettes, (values->slide ? 0 : values->precomputed)
     };
 
-    writeLog(log, stdout, INFO, "", "    New bflags values: [%s, %s, %s, %s]\n",
-      values->animations ? "true" : "false", values->motion ? "true" : "false",
+    writeLog(log, stdout, INFO, "", "    New bflags values: [%s, %s]\n",
       values->palettes ? "true" : "false",
       values->precomputed ? "true" : "false");
 

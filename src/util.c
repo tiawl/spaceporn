@@ -1,5 +1,11 @@
 #include "util.h"
 
+static const char* modes[] =
+{
+  "NO_MODE", "ANIM_MOTION_MODE", "ANIM_MODE", "MOTION_MODE", "BGGEN_MODE",
+  "SLIDE_MODE"
+};
+
 static const char* loglevels[] =
 {
   "DEBUG", "INFO", "INFO", "WARNING", "ERROR"

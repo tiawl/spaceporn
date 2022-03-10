@@ -66,11 +66,11 @@ bool parsing_options(long* fps, bool* generation, unsigned* width,
     for (int i = 1; i < *argc; i++)
     {
       if (strcmp(argv[i], ANIMATION_FLAG) == 0)
-        if (*mode < ANIM_MOTION_MODE)
+        if (uniform_values->mode < ANIM_MOTION_MODE)
         {
           if (++i < *argc)
           {
-            *mode = strtol(argv[i], &end, 10);
+            uniform_values->mode = strtol(argv[i], &end, 10);
             if (argv[i] == end)
             {
               fprintf(stderr, "Unrecognized character in %s option"
@@ -85,7 +85,8 @@ bool parsing_options(long* fps, bool* generation, unsigned* width,
               status = false;
               break;
             }
-            if ((*mode < ANIM_MOTION_MODE) || (*mode > MOTION_MODE))
+            if ((uniform_values->mode < ANIM_MOTION_MODE) ||
+              (uniform_values->mode > MOTION_MODE))
             {
               status = false;
               break;
@@ -152,8 +153,6 @@ bool parsing_options(long* fps, bool* generation, unsigned* width,
             status = false;
             break;
           }
-          uniform_values->animations = false;
-          uniform_values->motion = false;
           *fps = 0;
         }
       } else if (strcmp(argv[i], STOP_FLAG) == 0) {
@@ -318,8 +317,6 @@ bool parsing_options(long* fps, bool* generation, unsigned* width,
 //   if (log->roadmap.id == SLIDEMODE_SUCCESS_RM)
 //   {
 //     uniform_values->slide = 1;
-//     uniform_values->animations = false;
-//     uniform_values->motion = false;
 //     *fps = 0;
 //     *generation = false;
 //   } else if ((log->roadmap.id >= ATLASTEXTUREPATH_MALLOC_FAILED_RM) &&

@@ -3,8 +3,8 @@
 precision highp float;
 precision highp int;
 
-uniform float fflags[6];
-uniform int bflags[4];
+uniform float fflags[7];
+uniform int bflags[1];
 uniform sampler2DArray atlas;
 
 vec2 resolution = vec2(fflags[0], fflags[1]);
@@ -14,26 +14,28 @@ uint seed = uint(floor(fflags[2]));
 float time = fflags[3] / 50.;
 float pixels = fflags[4];
 float zoom = fflags[5];
+float mode = fflags[6];
 
-bool animation = (bflags[0] > 0 ? true : false);
-bool motion = (bflags[1] > 0 ? true : false);
-bool palettes = (bflags[2] > 0 ? true : false);
-int precomputed = bflags[3];
+bool palettes = (bflags[0] > 0 ? true : false);
+bool stars_done = false;
 
-# define NB_COLS 7.
-# define PLANET_COLS 12.
+# define NB_COLS              7.
+# define PLANET_COLS         12.
 
-# define MAX_RATE 300.
-# define MOTION_SPEED 1.
+# define MAX_RATE           300.
+# define MOTION_SPEED         1.
 
-# define STARS_DENSITY 20.
-# define BIGSTARS_DENSITY 5.
-# define HFNEBULA_SIZE 15.
-# define LFNEBULA_SIZE 30.
-# define PLANETS_DENSITY 10.
+# define STARS_DENSITY       20.
+# define BIGSTARS_DENSITY     5.
+# define HFNEBULA_SIZE       15.
+# define LFNEBULA_SIZE       30.
+# define PLANETS_DENSITY     10.
 
-# define NO_ATLAS 0
-# define STARS_DONE 2
+# define ANIM_MOTION_MODE     1.
+# define ANIM_MODE            2.
+# define MOTION_MODE          3.
+# define BGGEN_MODE           4.
+# define SLIDE_MODE           5.
 
 bool dither(vec2 coords1, vec2 coords2)
 {

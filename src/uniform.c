@@ -6,7 +6,7 @@ bool updateFloatUniforms(GLint uniformId, UniformValues* values, Log* log)
 
   do
   {
-    if ((values->slide > 0) || (values-> seed < 0.))
+    if ((values->mode == SLIDE_MODE) || (values-> seed < 0.))
     {
       writeLog(log, stdout, INFO, "",
         "    Generating random number to seed GPU hash function ...\n");
@@ -51,12 +51,11 @@ bool updateBoolUniforms(GLint uniformId, UniformValues* values, Log* log)
   {
     GLint bflags[UNIFORM_BOOLEANS] =
     {
-      values->palettes, (values->slide ? 0 : values->precomputed)
+      values->palettes
     };
 
-    writeLog(log, stdout, INFO, "", "    New bflags values: [%s, %s]\n",
-      values->palettes ? "true" : "false",
-      values->precomputed ? "true" : "false");
+    writeLog(log, stdout, INFO, "", "    New bflags values: [%s]\n",
+      values->palettes ? "true" : "false");
 
     writeLog(log, stdout, DEBUG, "",
       "    Specifying value of bflags in current program ...\n");

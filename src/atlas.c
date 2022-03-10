@@ -47,7 +47,7 @@ void generateFakeAtlas(Atlas* atlas, int offset)
   }
 }
 
-bool readAtlas(Atlas* atlas, PNG* png, GLboolean* precomputed, Log* log)
+bool readAtlas(Atlas* atlas, PNG* png, Log* log)
 {
   bool status = true;
 
@@ -157,7 +157,6 @@ bool readAtlas(Atlas* atlas, PNG* png, GLboolean* precomputed, Log* log)
       writeLog(log, stdout, INFO, "", "    Fake textures atlas detected, %s",
         "fragment shader will not use textures atlas\n");
     } else {
-      *precomputed = true;
       writeLog(log, stdout, INFO, "", "    Fake textures atlas not %s",
         "detected, fragment shader will use textures atlas\n");
     }
@@ -478,15 +477,14 @@ void freeAtlas(Atlas* atlas, Log* log)
   }
 }
 
-bool loadAtlas(Atlas* atlas, PNG* png, Shaders* shaders,
-  GLboolean* precomputed, Log* log)
+bool loadAtlas(Atlas* atlas, PNG* png, Shaders* shaders, Log* log)
 {
   bool status = true;
 
   do
   {
     writeLog(log, stdout, DEBUG, "", "  Reading atlas PNG texture ...\n");
-    if (!readAtlas(atlas, png, precomputed, log))
+    if (!readAtlas(atlas, png, log))
     {
       writeLog(log, (log->verbose ? stdout : stderr), ERROR, "  ",
         "Reading atlas PNG texture failed\n");

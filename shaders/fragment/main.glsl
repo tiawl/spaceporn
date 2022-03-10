@@ -4,7 +4,10 @@
 
 vec4 atlas_main(vec2 fragCoords)
 {
-  if (!motion)
+  if (((mode > ANIM_MOTION_MODE / 2.) &&
+    (mode < (ANIM_MOTION_MODE + ANIM_MODE) / 2.)) ||
+      ((mode > (ANIM_MODE + MOTION_MODE) / 2.) &&
+        (mode < (MOTION_MODE + BGGEN_MODE) / 2.)))
   {
     time = 0.;
   }
@@ -13,11 +16,12 @@ vec4 atlas_main(vec2 fragCoords)
   vec2 offset = (motion_radius / textureSize(atlas, 0).x)
     * vec2(sin(MOTION_SPEED * time), sin(MOTION_SPEED * time * 0.75));
 
-  if (!animation)
+  if ((mode > ANIM_MOTION_MODE / 2.) &&
+    (mode < (ANIM_MODE + MOTION_MODE) / 2.))
   {
-    time = 0.;
-  } else {
     time = fflags[3] / 50.;
+  } else {
+    time = 0.;
   }
 
   vec2 UV = fragCoords / shorter_res;
@@ -59,7 +63,7 @@ vec4 slide_main(vec2 fragCoords)
 void main()
 {
   vec4 col = vec4(0.);
-  if (precomputed == NO_ATLAS)
+  if (mode < (SLIDE_MODE + BGGEN_MODE) / 2.)
   {
     col = slide_main(gl_FragCoord.xy);
   } else {

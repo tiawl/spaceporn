@@ -6,14 +6,12 @@
 typedef struct
 {
   GLfloat time;
-  GLint slide;
   struct timeval start;
   GLint width;
   GLint height;
   GLint pixels;
   GLint mode;
   GLboolean palettes;
-  GLboolean precomputed;
   GLfloat zoom;
   GLfloat seed;
 } UniformValues;
@@ -26,7 +24,7 @@ typedef struct
 
 #define UNIFORM_COUNT 2
 #define UNIFORM_FLOATS 7
-#define UNIFORM_BOOLEANS 2
+#define UNIFORM_BOOLEANS 1
 
 // custom functions used to set uniform values
 bool updateFloatUniforms(GLint uniformId, UniformValues* values, Log* log);

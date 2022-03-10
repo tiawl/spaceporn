@@ -25,7 +25,8 @@ enum Mode
   ANIM_MODE,
   MOTION_MODE,
   BGGEN_MODE,
-  SLIDE_MODE
+  SLIDE_MODE,
+  LOCKED
 };
 
 enum RoadmapID

@@ -8,7 +8,7 @@ int main(int argc, char** argv)
 
   bool status = true;
   long fps = DEFAULT_FPS;
-  bool generation = false;
+  bool new_atlas = false;
 
   Log log;
   log.verbose = false;
@@ -16,13 +16,12 @@ int main(int argc, char** argv)
 
   UniformValues uniform_values;
   uniform_values.time = 0.0f;
-  uniform_values.slide = 0;
   gettimeofday(&(uniform_values.start), NULL);
   uniform_values.pixels = DEFAULT_PIXELS;
   uniform_values.zoom = DEFAULT_ZOOM;
   uniform_values.palettes = DEFAULT_PALETTES;
+  uniform_values.mode = NO_MODE;
   uniform_values.seed = -1.;
-  uniform_values.precomputed = false;
 
   Shaders shaders;
   shaders.vertex_file = NULL;
@@ -72,7 +71,7 @@ int main(int argc, char** argv)
 
   do
   {
-    if (!parsing_options(&fps, &generation, &(atlas.width), &(atlas.height),
+    if (!parsing_options(&fps, &new_atlas, &(atlas.width), &(atlas.height),
       &uniform_values, &log, &argc, argv))
     {
       status = false;
@@ -83,11 +82,12 @@ int main(int argc, char** argv)
     struct timeval end_loop;
     unsigned gpu_time;
     unsigned delay;
-    if ((fps > 0) && (uniform_values.slide == 0))
+    if ((uniform_values.mode >= ANIM_MOTION_MODE) &&
+      (uniform_values.mode <= ANIM_MODE))
     {
       delay = 1000000.0f / fps;
-    } else {
-      delay = uniform_values.slide;
+    } else if (uniform_values.mode == SLIDE_MODE) {
+      delay = slide_delay;
     }
 
     writeLog(&log, stdout, DEBUG, "", "Initializing paths ...\n");
@@ -115,13 +115,13 @@ int main(int argc, char** argv)
 
     // GENERATE TEXTURES ATLAS: TODO
     // GENERATE BACKGROUND: TODO
-    if (generation || (access(png_atlas.path, F_OK) != 0))
+    if (new_atlas || (access(png_atlas.path, F_OK) != 0))
     {
       writeLog(&log, stdout, INFO, "",
         "Computing textures atlas dimensions ...\n");
 
       if ((atlas.width == UNDEFINED_SIZE) || (atlas.height == UNDEFINED_SIZE)
-        || !generation)
+        || !new_atlas)
       {
         atlas.width = nextpow2(7);
         atlas.height = nextpow2(7);
@@ -176,8 +176,7 @@ int main(int argc, char** argv)
     GLuint uniformIds[UNIFORM_COUNT];
 
     writeLog(&log, stdout, DEBUG, "", "Loading textures atlas ...\n");
-    if (!loadAtlas(&atlas, &png_atlas, &shaders,
-      &(uniform_values.precomputed), &log))
+    if (!loadAtlas(&atlas, &png_atlas, &shaders, &log))
     {
       writeLog(&log, (log.verbose ? stdout : stderr), ERROR, "",
         "Failed to load textures atlas\n");
@@ -198,7 +197,8 @@ int main(int argc, char** argv)
 
     while (true)
     {
-      if ((fps > 0) && (uniform_values.slide == 0))
+      if ((uniform_values.mode >= ANIM_MOTION_MODE) &&
+        (uniform_values.mode <= ANIM_MODE))
       {
         gettimeofday(&start_loop, NULL);
 
@@ -244,7 +244,8 @@ int main(int argc, char** argv)
       }
 #endif
 
-      if ((fps > 0) && (uniform_values.slide == 0))
+      if ((uniform_values.mode >= ANIM_MOTION_MODE) &&
+        (uniform_values.mode <= ANIM_MODE))
       {
         gettimeofday(&end_loop, NULL);
         gpu_time = timediff(&start_loop, &end_loop) * 1000000.0f;

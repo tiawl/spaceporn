@@ -4,7 +4,7 @@ void help()
 {
   fprintf(stderr, "\n%s %s\n", NAME, VERSION);
   fprintf(stderr,
-    "\nUsage: %s %s LEVEL|%s [WIDTHxHEIGHT]|%s MINS [%s] [%s] [%s FPS] \n\
+    "\nUsage: %s %s LEVEL|%s [WIDTHxHEIGHT]|%s [MINS] [%s] [%s] [%s FPS] \n\
     [%s] [%s PIXELS] [%s ZOOM] [%s] [%s] [%s ROADMAP] [%s] [%s]\n\n", NAME,
   ANIMATION_FLAG, BGGEN_FLAG, SLIDE_FLAG, ATLASFORCED_FLAG, PALETTES_FLAG,
   FPS_FLAG, STOP_FLAG, PIXEL_FLAG, ZOOM_FLAG, FRAGMENTFILEROADMAPS_FLAG,
@@ -44,7 +44,7 @@ void help()
       VERTEXFILEROADMAPS_FLAG, FRAGMENTFILEROADMAPS_FLAG);
 }
 
-bool parsing_options(long* fps, bool* generation, unsigned* width,
+bool parsing_options(long* fps, bool* new_atlas, unsigned* width,
   unsigned* height, UniformValues* uniform_values, Log* log, int* argc,
   char** argv)
 {
@@ -54,7 +54,8 @@ bool parsing_options(long* fps, bool* generation, unsigned* width,
   do
   {
     errno = 0;
-    char* end;
+    char* end = NULL;
+    char* new_start = NULL;
     log->roadmap.glsl_file = "";
 
     if (*argc <= 1)
@@ -66,22 +67,23 @@ bool parsing_options(long* fps, bool* generation, unsigned* width,
     for (int i = 1; i < *argc; i++)
     {
       if (strcmp(argv[i], ANIMATION_FLAG) == 0)
+      {
         if (uniform_values->mode < ANIM_MOTION_MODE)
         {
           if (++i < *argc)
           {
-            uniform_values->mode = strtol(argv[i], &end, 10);
+            uniform_values->mode = strtol(argv[i], &end, DECIMAL);
             if (argv[i] == end)
             {
               fprintf(stderr, "Unrecognized character in %s option"
-                " parameter.\n", ANIMATION_FLAG);
+                " parameter: %s\n", ANIMATION_FLAG, argv[i]);
               status = false;
               break;
             }
             if (errno == ERANGE)
             {
               fprintf(stderr, "Range error occurred during %s option"
-                " parsing.\n", ANIMATION_FLAG);
+                " parameter parsing for: %s\n", ANIMATION_FLAG, argv[i]);
               status = false;
               break;
             }
@@ -95,82 +97,147 @@ bool parsing_options(long* fps, bool* generation, unsigned* width,
             status = false;
             break;
           }
-        } else {
+        } else if (uniform_values->mode != LOCKED) {
+          fprintf(stderr, "%s mode already set. You can not use several"
+            " modes.", (uniform_values->mode < SLIDE_MODE ?
+              (uniform_values->mode < BGGEN_MODE ? "Animation" : "Generation")
+                : "Slide"));
           status = false;
           break;
         }
-      {
       } else if (strcmp(argv[i], BGGEN_FLAG) == 0) {
-      } else if (strcmp(argv[i], ATLASFORCED_FLAG) == 0) {
-        *generation = true;
-      } else if (strcmp(argv[i], PALETTES_FLAG) == 0) {
-        uniform_values->palettes = true;
-      } else if ((strcmp(argv[i], FPS_FLAG) == 0) &&
-        (uniform_values->slide == 0)) {
+        if (uniform_values->mode < ANIM_MOTION_MODE)
+        {
           if (++i < *argc)
           {
-            *fps = strtol(argv[i], &end, 10);
+            *width = strtol(argv[i], &end, DECIMAL);
             if (argv[i] == end)
             {
-              fprintf(stderr,
-                "Unrecognized character in %s option parameter.\n", FPS_FLAG);
+              fprintf(stderr, "Unrecognized character in %s option"
+                " parameter: %s\n", BGGEN_FLAG, argv[i]);
               status = false;
               break;
             }
             if (errno == ERANGE)
             {
-              fprintf(stderr,
-                "Range error occurred during %s option parsing.\n", FPS_FLAG);
+              fprintf(stderr, "Range error occurred during %s option"
+                " parameter parsing: %s\n", BGGEN_FLAG, argv[i]);
               status = false;
               break;
             }
-            if ((*fps < MIN_FPS) || (*fps > MAX_FPS))
+            if (end[0] != 'x')
+            {
+              fprintf(stderr, "Unrecognized separator character in %s option"
+                " parameter: %s\n", BGGEN_FLAG, argv[i]);
+              status = false;
+              break;
+            }
+            new_start = end + 1;
+            *height = strtol(new_start, &end, DECIMAL); // TODO: test -b 640x
+            if (argv[i] == end)
+            {
+              fprintf(stderr, "Unrecognized character in %s option"
+                " parameter: %s\n", BGGEN_FLAG, argv[i]);
+              status = false;
+              break;
+            }
+            if (errno == ERANGE)
+            {
+              fprintf(stderr, "Range error occurred during %s option"
+                " parameter parsing: %s\n", BGGEN_FLAG, argv[i]);
+              status = false;
+              break;
+            }
+          }
+          uniform_values->mode = BGGEN_MODE;
+        } else if (uniform_values->mode != LOCKED) {
+          fprintf(stderr, "%s mode already set. You can not use several"
+            " modes.", (uniform_values->mode < SLIDE_MODE ?
+              (uniform_values->mode < BGGEN_MODE ? "Animation" : "Generation")
+                : "Slide"));
+          status = false;
+          break;
+        }
+      } else if (strcmp(argv[i], ATLASFORCED_FLAG) == 0) {
+        *new_atlas = true;
+      } else if (strcmp(argv[i], PALETTES_FLAG) == 0) {
+        uniform_values->palettes = true;
+      } else if (strcmp(argv[i], FPS_FLAG) == 0) {
+        if (++i < *argc)
+        {
+          *fps = strtol(argv[i], &end, DECIMAL);
+          if (argv[i] == end)
+          {
+            fprintf(stderr, "Unrecognized character in %s option"
+              " parameter: %s\n", FPS_FLAG, argv[i]);
+            status = false;
+            break;
+          }
+          if (errno == ERANGE)
+          {
+            fprintf(stderr, "Range error occurred during %s option"
+              " parameter parsing: %s\n", FPS_FLAG, argv[i]);
+            status = false;
+            break;
+          }
+          if ((*fps < MIN_FPS) || (*fps > MAX_FPS))
+          {
+            status = false;
+            break;
+          }
+        }
+      } else if (strcmp(argv[i], SLIDE_FLAG) == 0) {
+        if (uniform_values->mode < ANIM_MOTION_MODE)
+        {
+          if (++i < *argc)
+          {
+            *slide_delay = strtol(argv[i], &end, DECIMAL);
+            if (argv[i] == end)
+            {
+              fprintf(stderr, "Unrecognized character in %s option"
+                " parameter: %s\n", SLIDE_FLAG, argv[i]);
+              status = false;
+              break;
+            }
+            if (errno == ERANGE)
+            {
+              fprintf(stderr, "Range error occurred during %s option"
+                " parsing: %s\n", SLIDE_FLAG, argv[i]);
+              status = false;
+              break;
+            }
+            if (*slide_delay <= 0)
             {
               status = false;
               break;
             }
           }
-      } else if (strcmp(argv[i], SLIDE_FLAG) == 0) {
-        if (++i < *argc)
-        {
-          uniform_values->slide = strtol(argv[i], &end, 10);
-          if (argv[i] == end)
-          {
-            fprintf(stderr,
-              "Unrecognized character in %s option parameter.\n", SLIDE_FLAG);
-            status = false;
-            break;
-          }
-          if (errno == ERANGE)
-          {
-            fprintf(stderr,
-              "Range error occurred during %s option parsing.\n", SLIDE_FLAG);
-            status = false;
-            break;
-          }
-          if (uniform_values->slide <= 0)
-          {
-            status = false;
-            break;
-          }
-          *fps = 0;
+          uniform_values->mode = SLIDE_MODE;
+        } else if (uniform_values->mode != LOCKED) {
+          fprintf(stderr, "%s mode already set. You can not use several"
+            " modes.", (uniform_values->mode < SLIDE_MODE ?
+              (uniform_values->mode < BGGEN_MODE ? "Animation" : "Generation")
+                : "Slide"));
+          status = false;
+          break;
         }
       } else if (strcmp(argv[i], STOP_FLAG) == 0) {
+        uniform_values->mode = LOCKED;
       } else if (strcmp(argv[i], PIXEL_FLAG) == 0) {
         if (++i < *argc)
         {
-          uniform_values->pixels = strtol(argv[i], &end, 10);
+          uniform_values->pixels = strtol(argv[i], &end, DECIMAL);
           if (argv[i] == end)
           {
-            fprintf(stderr,
-              "Unrecognized character in %s option parameter.\n", PIXEL_FLAG);
+            fprintf(stderr, "Unrecognized character in %s option"
+              " parameter: %s\n", PIXEL_FLAG, argv[i]);
             status = false;
             break;
           }
           if (errno == ERANGE)
           {
-            fprintf(stderr,
-              "Range error occurred during %s option parsing.\n", PIXEL_FLAG);
+            fprintf(stderr, "Range error occurred during %s option"
+              " parameter parsing: %s\n", PIXEL_FLAG, argv[i]);
             status = false;
             break;
           }
@@ -184,18 +251,18 @@ bool parsing_options(long* fps, bool* generation, unsigned* width,
       } else if (strcmp(argv[i], ZOOM_FLAG) == 0) {
         if (++i < *argc)
         {
-          uniform_values->zoom = strtol(argv[i], &end, 10);
+          uniform_values->zoom = strtol(argv[i], &end, DECIMAL);
           if (argv[i] == end)
           {
-            fprintf(stderr,
-              "Unrecognized character in %s option parameter.\n", ZOOM_FLAG);
+            fprintf(stderr, "Unrecognized character in %s option"
+              " parameter: %s\n", ZOOM_FLAG, argv[i]);
             status = false;
             break;
           }
           if (errno == ERANGE)
           {
-            fprintf(stderr,
-              "Range error occurred during %s option parsing.\n", ZOOM_FLAG);
+            fprintf(stderr, "Range error occurred during %s option"
+              " parameter parsing: %s\n", ZOOM_FLAG, argv[i]);
             status = false;
             break;
           }
@@ -211,20 +278,18 @@ bool parsing_options(long* fps, bool* generation, unsigned* width,
       } else if (strcmp(argv[i], ROADMAP_FLAG) == 0) {
         if (++i < *argc)
         {
-          log->roadmap.id = strtol(argv[i], &end, 10);
+          log->roadmap.id = strtol(argv[i], &end, DECIMAL);
           if (argv[i] == end)
           {
-            fprintf(stderr,
-              "Unrecognized character in %s option parameter.\n",
-              ROADMAP_FLAG);
+            fprintf(stderr, "Unrecognized character in %s option"
+              " parameter: %s\n", ROADMAP_FLAG, argv[i]);
             status = false;
             break;
           }
           if (errno == ERANGE)
           {
-            fprintf(stderr,
-              "Range error occurred during %s option parsing.\n",
-              ROADMAP_FLAG);
+            fprintf(stderr, "Range error occurred during %s option"
+              " parameter parsing: %s\n", ROADMAP_FLAG, argv[i]);
             status = false;
             break;
           }

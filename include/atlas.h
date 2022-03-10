@@ -24,9 +24,8 @@ bool writePng(Atlas* atlas, PNG* png, Log* log);
 void generatePcgTexture(Atlas* atlas, int offset);
 void generateFakeAtlas(Atlas* atlas, int offset);
 bool generateAtlas(Atlas* atlas, PNG* png, Log* log);
-bool readAtlas(Atlas* atlas, PNG* png, GLboolean* precomputed, Log* log);
-bool loadAtlas(Atlas* atlas, PNG* png, Shaders* shaders,
-  GLboolean* precomputed, Log* log);
+bool readAtlas(Atlas* atlas, PNG* png, Log* log);
+bool loadAtlas(Atlas* atlas, PNG* png, Shaders* shaders, Log* log);
 void freeAtlas(Atlas* atlas, Log* log);
 
 #endif

@@ -11,9 +11,7 @@ vec4 atlas_main(vec2 fragCoords)
     time = 0.;
   }
 
-  float motion_radius = 2. * zoom; //TODO: rework this distance
-  vec2 offset = motion_radius
-    * vec2(sin(MOTION_SPEED * time), sin(MOTION_SPEED * time * 0.75));
+  vec2 move = vec2(sin(MOTION_SPEED * time), sin(MOTION_SPEED * time * 0.75));
 
   if ((mode > ANIM_MOTION_MODE / 2.) &&
     (mode < (ANIM_MODE + MOTION_MODE) / 2.))
@@ -24,11 +22,11 @@ vec4 atlas_main(vec2 fragCoords)
   }
 
   vec2 UV = fragCoords / shorter_res;
-  UV += offset;
+  UV += move;
   vec2 stars_UV = UV * pixels;
   UV = floor(stars_UV) / pixels;
   UV *= zoom;
-  bool dith = dither(fragCoords / shorter_res + offset, UV / zoom);
+  bool dith = dither(fragCoords / shorter_res + move, UV / zoom);
 
   vec4 col = planets(UV, dith);
   if (col.x <= -1.)
@@ -41,10 +39,10 @@ vec4 atlas_main(vec2 fragCoords)
 vec4 slide_main(vec2 fragCoords)
 {
   time = 0.;
-  const float offset = 5.;
+  const float move = 5.;
 
   vec2 UV = fragCoords / shorter_res;
-  UV += offset;
+  UV += move;
   vec2 stars_UV = UV * pixels;
   UV = floor(stars_UV) / pixels;
   UV *= zoom;

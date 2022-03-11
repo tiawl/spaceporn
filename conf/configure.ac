@@ -1,7 +1,6 @@
 AC_PREREQ([2.69])
 AC_INIT([spaceporn], [0.1], [pabtomas@protonmail.com])
 AC_CONFIG_SRCDIR([../../src/spaceporn.c])
-AC_CONFIG_HEADERS([../../include/config.h:../../conf/config.h.in])
 
 AC_LANG(C)
 
@@ -17,7 +16,6 @@ AC_CHECK_HEADERS([errno.h stdio.h stdlib.h string.h unistd.h \
 string.h regex.h math.h limits.h], [], AC_MSG_ERROR([Some GLibC headers are \
 missing. Install or check the GLibC library.]))
 
-AC_OPENMP
 AC_CHECK_LIB([m], [pow], [], [AC_MSG_ERROR([lib math linking flag (-lm) is \
 missing. Install or check GLibC library.])])
 AC_CHECK_LIB([png], [png_create_read_struct], [], [AC_MSG_ERROR([libPNG \
@@ -45,8 +43,6 @@ Install or check GLEW library.])])
 AC_CHECK_HEADERS([X11/X.h X11/Xlib.h X11/Xutil.h X11/Xatom.h], [],
   [AC_MSG_ERROR([Some X11 headers are missing. Install or check X11 \
 library.])])
-AC_CHECK_HEADER([omp.h], [AC_DEFINE([HAVE_OPENMP], [true])],
-  [AC_DEFINE([HAVE_OPENMP], [false])])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_HEADER_STDBOOL

@@ -1,9 +1,8 @@
 #ifndef SPACEPORN_UTIL_H
 #define SPACEPORN_UTIL_H
 
-#include "config.h"
-
 #include <stdarg.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -11,10 +10,6 @@
 #include <systemd/sd-journal.h>
 #include <GL/glew.h>
 #include <GL/glx.h>
-
-#if HAVE_OPENMP
-#include <omp.h>
-#endif
 
 #define DEV GCC_DEV
 

@@ -24,7 +24,7 @@ VERROR := $(shell ./$(MAKE_SCRIPTS)/erroneous_shader \
 MERROR := $(shell ./$(MAKE_SCRIPTS)/erroneous_shader \
   $(SHAD_DIR)/vertex/main.glsl 1)
 LIB_FLAGS := $(shell pkg-config --static --libs gl glx glew x11 libpng \
-  libsystemd) -fopenmp
+  libsystemd)
 DEV_FLAGS := -Wall -Wextra -g
 CFLAGS := $(shell pkg-config --cflags gl glx glew x11 libpng libsystemd) \
   -I./$(HEAD_DIR)

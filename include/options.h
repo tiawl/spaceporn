@@ -14,6 +14,7 @@
 #define DEFAULT_ANIMATIONS                    false
 #define DEFAULT_MOTION                        false
 #define DEFAULT_PALETTES                      false
+#define DEFAULT_SLIDE                             1
 
 #define ANIMATION_FLAG                         "-a"
 #define BGGEN_FLAG                             "-b"
@@ -34,15 +35,15 @@
 #define MAX_PIXELS                              600
 #define MIN_FPS                                   1
 #define MAX_FPS                                  60
-#define MIN_ZOOM                                 10
-#define MAX_ZOOM                                 50
+#define MIN_ZOOM                                  1
+#define MAX_ZOOM                                 40
 
 #define DECIMAL                                  10
 #define UNDEFINED_SIZE 0
 
 void help();
-bool parsing_options(long* fps, bool* new_atlas, unsigned* width,
-  unsigned* height, UniformValues* uniform_values, Log* log, int* argc,
-  char** argv);
+bool parsing_options(long* fps, bool* new_atlas, long* png_width,
+  long* png_height, long* slide_delay, UniformValues* uniform_values,
+  Log* log, int* argc, char** argv);
 
 #endif

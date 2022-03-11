@@ -10,16 +10,18 @@ void help()
   FPS_FLAG, STOP_FLAG, PIXEL_FLAG, ZOOM_FLAG, FRAGMENTFILEROADMAPS_FLAG,
   MAXROADMAP_FLAG, ROADMAP_FLAG, VERTEXFILEROADMAPS_FLAG, VERBOSE_FLAG);
   fprintf(stderr, "User options:\n\n\
-  %s  Enable Animation mode: display animated wallpaper. If LEVEL is 0,\n\
-      camera motion and animations are enabled, 1 disables camera motion, 2\n\
-      disables animations. Exit in error if called with %s or %s flags.\n\n\
+  %s  Enable Animation mode: display animated wallpaper. If LEVEL is 1,\n\
+      camera motion and animations are enabled, 2 only disables camera\n\
+      motion, 3 only disables animations. Exit in error if called with %s\n\
+      or %s flags.\n\n\
   %s  Enable Generation mode: generate background in PNG format and exit.\n\
       WIDTH and HEIGHT can be specified in this format: WIDTHxHEIGHT. If\n\
       WIDTH and HEIGHT are not specified, screen dimensions are used. Exit\n\
       in error if called with %s or %s flags.\n\n\
   %s  Enable Slide mode: display new static wallpaper every MINS minutes.\n\
       Exit in error if called with %s or %s flags.\n\n\
-  %s  Force new seed generation.\n\n\
+  %s  Force new seed generation. Only available for Animation and\n\
+      Generation Mode.\n\n\
   %s  Enable usage of unique palette for each object.\n\n\
   %s  Frames per second between %d to %d. Animation mode option.\n\
       [default: %d]\n\n\
@@ -44,9 +46,9 @@ void help()
       VERTEXFILEROADMAPS_FLAG, FRAGMENTFILEROADMAPS_FLAG);
 }
 
-bool parsing_options(long* fps, bool* new_atlas, unsigned* width,
-  unsigned* height, UniformValues* uniform_values, Log* log, int* argc,
-  char** argv)
+bool parsing_options(long* fps, bool* new_atlas, long* png_width,
+  long* png_height, long* slide_delay, UniformValues* uniform_values,
+  Log* log, int* argc, char** argv)
 {
   int status = true;
   char* dir = NULL;
@@ -90,10 +92,13 @@ bool parsing_options(long* fps, bool* new_atlas, unsigned* width,
             if ((uniform_values->mode < ANIM_MOTION_MODE) ||
               (uniform_values->mode > MOTION_MODE))
             {
+              fprintf(stderr, "%s parameter should be 1, 2 or 3\n",
+                ANIMATION_FLAG);
               status = false;
               break;
             }
           } else {
+            fprintf(stderr, "%s option needs parameter\n", ANIMATION_FLAG);
             status = false;
             break;
           }
@@ -110,7 +115,7 @@ bool parsing_options(long* fps, bool* new_atlas, unsigned* width,
         {
           if (++i < *argc)
           {
-            *width = strtol(argv[i], &end, DECIMAL);
+            *png_width = strtol(argv[i], &end, DECIMAL);
             if (argv[i] == end)
             {
               fprintf(stderr, "Unrecognized character in %s option"
@@ -133,7 +138,7 @@ bool parsing_options(long* fps, bool* new_atlas, unsigned* width,
               break;
             }
             new_start = end + 1;
-            *height = strtol(new_start, &end, DECIMAL); // TODO: test -b 640x
+            *png_height = strtol(new_start, &end, DECIMAL);
             if (argv[i] == end)
             {
               fprintf(stderr, "Unrecognized character in %s option"
@@ -145,6 +150,13 @@ bool parsing_options(long* fps, bool* new_atlas, unsigned* width,
             {
               fprintf(stderr, "Range error occurred during %s option"
                 " parameter parsing: %s\n", BGGEN_FLAG, argv[i]);
+              status = false;
+              break;
+            }
+            if ((*png_width < 1) || (*png_height < 1))
+            {
+              fprintf(stderr, "Generated PNG file must have"
+                " greater than 0 size\n");
               status = false;
               break;
             }
@@ -182,6 +194,8 @@ bool parsing_options(long* fps, bool* new_atlas, unsigned* width,
           }
           if ((*fps < MIN_FPS) || (*fps > MAX_FPS))
           {
+            fprintf(stderr, "Frame rate must be greater or equal than %d and"
+              " less or equal than %d.\n", MIN_FPS, MAX_FPS);
             status = false;
             break;
           }
@@ -208,6 +222,8 @@ bool parsing_options(long* fps, bool* new_atlas, unsigned* width,
             }
             if (*slide_delay <= 0)
             {
+              fprintf(stderr, "%s option parameter should be grater than 0\n",
+                SLIDE_FLAG);
               status = false;
               break;
             }
@@ -244,6 +260,8 @@ bool parsing_options(long* fps, bool* new_atlas, unsigned* width,
           if ((uniform_values->pixels > MAX_PIXELS) ||
             (uniform_values->pixels < MIN_PIXELS))
           {
+            fprintf(stderr, "Pixelization must be greater or equal than %d"
+              " and less or equal than %d.\n", MIN_PIXELS, MAX_PIXELS);
             status = false;
             break;
           }
@@ -269,6 +287,8 @@ bool parsing_options(long* fps, bool* new_atlas, unsigned* width,
           if ((uniform_values->zoom < MIN_ZOOM) ||
             (uniform_values->zoom > MAX_ZOOM))
           {
+            fprintf(stderr, "Pixelization must be greater or equal than %d"
+              " and less or equal than %d.\n", MIN_ZOOM, MAX_ZOOM);
             status = false;
             break;
           }
@@ -403,7 +423,7 @@ bool parsing_options(long* fps, bool* new_atlas, unsigned* width,
 //     log->roadmap.id = BREAK_SUCCESS_RM;
 //   }
 
-  uniform_values->zoom /= 100.;
+  uniform_values->zoom = (51. - uniform_values->zoom) / 100.;
 
   return status;
 }

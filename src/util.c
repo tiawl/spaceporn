@@ -1,11 +1,5 @@
 #include "util.h"
 
-static const char* modes[] =
-{
-  "NO_MODE", "ANIM_MOTION_MODE", "ANIM_MODE", "MOTION_MODE", "BGGEN_MODE",
-  "SLIDE_MODE"
-};
-
 static const char* loglevels[] =
 {
   "DEBUG", "INFO", "INFO", "WARNING", "ERROR"
@@ -27,7 +21,6 @@ void writeLog(Log* log, FILE* stream, enum LogLevel loglevel,
   switch (loglevel)
   {
     case INFO:
-    case USER:
       loglevel_len += 4;
       break;
     case DEBUG:
@@ -66,7 +59,7 @@ void writeLog(Log* log, FILE* stream, enum LogLevel loglevel,
 
     vsnprintf(expanded_str, expanded_len, str, args);
 
-    if ((loglevel >= LOGLEVEL) && (loglevel != USER))
+    if (loglevel >= LOGLEVEL)
     {
       log_message = malloc(sizeof(char)
         * (expanded_len + loglevel_len + MSG_LEN));

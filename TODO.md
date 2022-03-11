@@ -19,10 +19,8 @@ REMINDER:
 HIGH PRIORITY:
 - use FrameBuffer with RenderBuffer and tilling (1024x1024 max size for opengl 3.3) to generate textures atlas:
 https://stackoverflow.com/questions/59433403/how-to-save-fragment-shader-image-changes-to-image-output-file
-- avoid usage of animated shader without generating textures atlas
-- zoom default value should be 1
-- add a flag to generate wallpaper into a PNG file with screen dimensions
-- default values for parameters should be random
+- -b flag
+- rework roadmaps
 
 MEDIUM PRIORITY:
 - use GLAD instead of GLEW

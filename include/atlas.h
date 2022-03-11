@@ -7,9 +7,6 @@
 #include "precompute.h"
 #include "texture.h"
 
-#define FAKE_ATLAS_SZ 8
-#define FAKE_ATLAS_COLOR 150
-
 typedef struct
 {
   png_byte** texels;
@@ -22,7 +19,6 @@ typedef struct
 
 bool writePng(Atlas* atlas, PNG* png, Log* log);
 void generatePcgTexture(Atlas* atlas, int offset);
-void generateFakeAtlas(Atlas* atlas, int offset);
 bool generateAtlas(Atlas* atlas, PNG* png, Log* log);
 bool readAtlas(Atlas* atlas, PNG* png, Log* log);
 bool loadAtlas(Atlas* atlas, PNG* png, Shaders* shaders, Log* log);

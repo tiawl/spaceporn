@@ -29,24 +29,6 @@ void generatePcgTexture(Atlas* atlas, int offset)
   }
 }
 
-void generateFakeAtlas(Atlas* atlas, int offset)
-{
-  for (unsigned y = 0; y < atlas->height; y++)
-  {
-    for (unsigned x = 0; x < atlas->width * 4; x += 4)
-    {
-      atlas->texels[(atlas->pcg_depth - 1 - offset) * atlas->height
-        + atlas->height - 1 - y][x] = (GLubyte) FAKE_ATLAS_COLOR;
-      atlas->texels[(atlas->pcg_depth - 1 - offset) * atlas->height
-        + atlas->height - 1 - y][x + 1] = (GLubyte) FAKE_ATLAS_COLOR;
-      atlas->texels[(atlas->pcg_depth - 1 - offset) * atlas->height
-        + atlas->height - 1 - y][x + 2] = (GLubyte) FAKE_ATLAS_COLOR;
-      atlas->texels[(atlas->pcg_depth - 1 - offset) * atlas->height
-        + atlas->height - 1 - y][x + 3] = (GLubyte) 255;
-    }
-  }
-}
-
 bool readAtlas(Atlas* atlas, PNG* png, Log* log)
 {
   bool status = true;
@@ -149,17 +131,6 @@ bool readAtlas(Atlas* atlas, PNG* png, Log* log)
     png_get_IHDR(png->ptr, png->info, &(atlas->width), &(atlas->height),
       &bit_depth, &color_type, 0, 0, 0);
     writeLog(log, stdout, DEBUG, "", "    PNG_IHDR chunk information found\n");
-
-    writeLog(log, stdout, INFO, "",
-      "    Will the fragment shader use textures atlas ?\n");
-    if (atlas->width == FAKE_ATLAS_SZ)
-    {
-      writeLog(log, stdout, INFO, "", "    Fake textures atlas detected, %s",
-        "fragment shader will not use textures atlas\n");
-    } else {
-      writeLog(log, stdout, INFO, "", "    Fake textures atlas not %s",
-        "detected, fragment shader will use textures atlas\n");
-    }
 
     writeLog(log, stdout, DEBUG, "", "    Updating PNG info structure ...\n");
     png_read_update_info(png->ptr, png->info);
@@ -427,12 +398,7 @@ bool generateAtlas(Atlas* atlas, PNG* png, Log* log)
     {
       writeLog(log, stdout, DEBUG, "", "    Generating PCG texture %d ...\n",
         seed);
-      if (atlas->width == FAKE_ATLAS_SZ)
-      {
-        generateFakeAtlas(atlas, seed);
-      } else {
-        generatePcgTexture(atlas, seed);
-      }
+      generatePcgTexture(atlas, seed);
       writeLog(log, stdout, DEBUG, "",
         "    PCG texture %d generated successfully\n", seed);
     }

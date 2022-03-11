@@ -9,6 +9,9 @@ int main(int argc, char** argv)
   bool status = true;
   long fps = DEFAULT_FPS;
   bool new_atlas = false;
+  long png_width = -1;
+  long png_height = -1;
+  long slide_delay = DEFAULT_SLIDE;
 
   Log log;
   log.verbose = false;
@@ -17,8 +20,8 @@ int main(int argc, char** argv)
   UniformValues uniform_values;
   uniform_values.time = 0.0f;
   gettimeofday(&(uniform_values.start), NULL);
-  uniform_values.pixels = DEFAULT_PIXELS;
-  uniform_values.zoom = DEFAULT_ZOOM;
+  uniform_values.pixels = (rand() % (MAX_PIXELS - MIN_PIXELS)) + MIN_PIXELS;
+  uniform_values.zoom = (rand() % (MAX_ZOOM - MIN_ZOOM)) + MIN_ZOOM;
   uniform_values.palettes = DEFAULT_PALETTES;
   uniform_values.mode = NO_MODE;
   uniform_values.seed = -1.;
@@ -71,8 +74,8 @@ int main(int argc, char** argv)
 
   do
   {
-    if (!parsing_options(&fps, &new_atlas, &(atlas.width), &(atlas.height),
-      &uniform_values, &log, &argc, argv))
+    if (!parsing_options(&fps, &new_atlas, &png_width, &png_height,
+      &slide_delay, &uniform_values, &log, &argc, argv))
     {
       status = false;
       break;
@@ -83,7 +86,7 @@ int main(int argc, char** argv)
     unsigned gpu_time;
     unsigned delay;
     if ((uniform_values.mode >= ANIM_MOTION_MODE) &&
-      (uniform_values.mode <= ANIM_MODE))
+      (uniform_values.mode <= MOTION_MODE))
     {
       delay = 1000000.0f / fps;
     } else if (uniform_values.mode == SLIDE_MODE) {
@@ -113,29 +116,26 @@ int main(int argc, char** argv)
     uniform_values.width = context.window_attribs.width;
     uniform_values.height = context.window_attribs.height;
 
-    // GENERATE TEXTURES ATLAS: TODO
-    // GENERATE BACKGROUND: TODO
     if (new_atlas || (access(png_atlas.path, F_OK) != 0))
     {
+      if (!new_atlas)
+      {
+        printf("No seed found\n");
+      }
+
+      printf("Generating new seed ...\n");
       writeLog(&log, stdout, INFO, "",
         "Computing textures atlas dimensions ...\n");
 
-      if ((atlas.width == UNDEFINED_SIZE) || (atlas.height == UNDEFINED_SIZE)
-        || !new_atlas)
+      if (context.window_attribs.width >= context.window_attribs.height)
       {
-        atlas.width = nextpow2(7);
-        atlas.height = nextpow2(7);
+        atlas.width = nextpow2(MAX_PIXELS * 5 *
+        ((int) round(((double) context.window_attribs.width) /
+          ((double) context.window_attribs.height))));
       } else {
-        if (context.window_attribs.width >= context.window_attribs.height)
-        {
-          atlas.width = nextpow2(MAX_PIXELS * 5 *
-          ((int) round(((double) context.window_attribs.width) /
-            ((double) context.window_attribs.height))));
-        } else {
-          atlas.height = nextpow2(MAX_PIXELS * 5 *
-          ((int) round(((double) context.window_attribs.height) /
-            ((double) context.window_attribs.width))));
-        }
+        atlas.height = nextpow2(MAX_PIXELS * 5 *
+        ((int) round(((double) context.window_attribs.height) /
+          ((double) context.window_attribs.width))));
       }
       writeLog(&log, stdout, INFO, "",
         "Textures atlas dimensions are: %dx%d\n", atlas.width, atlas.height);
@@ -149,6 +149,25 @@ int main(int argc, char** argv)
         break;
       }
       writeLog(&log, stdout, DEBUG, "", "Textures atlas generated\n");
+      printf("New seed generated\n");
+    }
+
+    if (uniform_values.mode == LOCKED)
+    {
+      printf("No mode used. Exit\n");
+      break;
+    }
+
+    if (uniform_values.mode == BGGEN_MODE)
+    {
+      if ((png_width == -1) || (png_height == -1))
+      {
+        png_width = context.window_attribs.width;
+        png_height = context.window_attribs.height;
+      }
+      printf("Generation Mode used to generate a %ldx%ld PNG\n", png_width,
+        png_height);
+      break;
     }
 
     writeLog(&log, stdout, DEBUG, "", "Loading OpenGL program ...\n");
@@ -198,7 +217,7 @@ int main(int argc, char** argv)
     while (true)
     {
       if ((uniform_values.mode >= ANIM_MOTION_MODE) &&
-        (uniform_values.mode <= ANIM_MODE))
+        (uniform_values.mode <= MOTION_MODE))
       {
         gettimeofday(&start_loop, NULL);
 
@@ -245,7 +264,7 @@ int main(int argc, char** argv)
 #endif
 
       if ((uniform_values.mode >= ANIM_MOTION_MODE) &&
-        (uniform_values.mode <= ANIM_MODE))
+        (uniform_values.mode <= MOTION_MODE))
       {
         gettimeofday(&end_loop, NULL);
         gpu_time = timediff(&start_loop, &end_loop) * 1000000.0f;

@@ -30,19 +30,12 @@ CFLAGS := $(shell pkg-config --cflags gl glx glew x11 libpng libsystemd) \
   -I./$(HEAD_DIR)
 ALL_FLAGS := $(LIB_FLAGS)
 
-eq = $(and $(findstring x$(1),x$(2)),$(findstring x$(2),x$(1)))
-check_loglevel = $(if $(call eq,$(1),USER),$(error USER value not allowed),)
-
-all: loglevel_checker
 all: ENV_FLAGS := -D'GCC_SPREFIX="$(SPREFIX)"' -D'GCC_TPREFIX="$(TPREFIX)"' \
   -D'GCC_DEV=false' -D'GCC_ERRONEOUS_FRAGMENT=$(FERROR)' \
   -D'GCC_ERRONEOUS_VERTEX=$(VERROR)' -D'GCC_MISSINGMAIN_VERTEX=$(MERROR)' \
   -D'GCC_LOGLEVEL=$(LOGLEVEL)'
 all: OBJ_FLAGS := $(CFLAGS) $(ENV_FLAGS)
 all: $(ALL_DIR)/$(BIN)
-
-loglevel_checker:
-	$(call check_loglevel,$(LOGLEVEL))
 
 dev: PREFIX := ${PWD}
 dev: SPREFIX := ${PWD}/$(SHAD_DIR)/

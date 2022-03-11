@@ -11,12 +11,12 @@ vec2 resolution = vec2(fflags[0], fflags[1]);
 float shorter_res = min(resolution.x, resolution.y);
 float larger_res = max(resolution.x, resolution.y);
 uint seed = uint(floor(fflags[2]));
-float time = fflags[3] / 50.;
+float time = fflags[3];
 float pixels = fflags[4];
 float zoom = fflags[5];
 float mode = fflags[6];
 
-bool palettes = (bflags[0] > 0 ? true : false);
+bool palettes = (bflags[0] > 0);
 bool stars_done = false;
 
 # define NB_COLS              7.

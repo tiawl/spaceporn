@@ -1,5 +1,11 @@
 #include "uniform.h"
 
+static const char* modes[] =
+{
+  "NO_MODE", "ANIM_MOTION_MODE", "ANIM_MODE", "MOTION_MODE", "BGGEN_MODE",
+  "SLIDE_MODE"
+};
+
 bool updateFloatUniforms(GLint uniformId, UniformValues* values, Log* log)
 {
   bool status = true;
@@ -24,8 +30,8 @@ bool updateFloatUniforms(GLint uniformId, UniformValues* values, Log* log)
 
     GLfloat fflags[UNIFORM_FLOATS] =
     {
-      values->width, values->height, values->seed, values->time, values->pixels,
-      values->zoom, values->mode
+      values->width, values->height, values->seed, values->time / 50.,
+      values->pixels, values->zoom, values->mode
     };
 
     writeLog(log, stdout, INFO, "",

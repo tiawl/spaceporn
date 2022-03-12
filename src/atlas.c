@@ -419,6 +419,12 @@ bool generateAtlas(Atlas* atlas, PNG* png, Log* log)
   return status;
 }
 
+bool generateAtlas2(Atlas* atlas, PNG* png, Log* log)
+{
+  bool status = true;
+  return status;
+}
+
 void freeAtlas(Atlas* atlas, Log* log)
 {
 

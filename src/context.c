@@ -8,9 +8,7 @@ bool isExtensionSupported(const char* extList, const char* extension, Log* log)
 
   do
   {
-    const char* start = NULL;
     const char* where = NULL;
-    const char* terminator = NULL;
 
     // Extension names should not have spaces.
     writeLog(log, stdout, DEBUG, "", "    Testing presence of space in %s",
@@ -29,34 +27,19 @@ bool isExtensionSupported(const char* extList, const char* extension, Log* log)
     writeLog(log, stdout, INFO, "",
       "    Searching GLX extension \"%s\" in extensions list ...\n",
         extension);
-    for (start = extList;;)
+    char* token = strtok((char*) extList, " ");
+    while (token != NULL)
     {
-      if (log->roadmap.id != UNSUPPORTED_GLX_EXT_RM)
+      if (strcmp(token, extension) == 0)
       {
-        where = strstr(start, extension);
-      }
-
-      if (!where)
-      {
-        writeLog(log, stdout, ERROR, "",
-          "    Unable to found GLX extension \"%s\"\n", extension);
+        writeLog(log, stdout, INFO, "", "    GLX extension found\n");
+        status = true;
         break;
       }
-
-      terminator = where + strlen(extension);
-
-      if ((where == start) || (*(where - 1) == ' '))
-      {
-        if ((*terminator == ' ') || (*terminator == '\0'))
-        {
-          writeLog(log, stdout, INFO, "", "    GLX extension found\n");
-          status = true;
-          break;
-        }
-      }
-
-      start = terminator;
+      token = strtok(NULL, " ");
     }
+    writeLog(log, stdout, ERROR, "",
+      "    Unable to found GLX extension \"%s\"\n", extension);
   } while (false);
 
   return status;
@@ -407,12 +390,14 @@ bool initContext(Context* context, Log* log)
       DefaultScreen(context->display));
     writeLog(log, stdout, INFO, "",
       "  Default screen's GLX extensions list is:\n");
-    char* token = strtok((char*) glxExts, " ");
-    while (token != NULL)
+    unsigned s = 0;
+    unsigned e = 0;
+    while (s < strlen(glxExts))
     {
-      writeLog(log, stdout, INFO, "", "  - %s\n", token);
-      token = strtok(NULL, " ");
-    };
+      e = strcspn(glxExts + s, " ");
+      writeLog(log, stdout, INFO, "", "  - %.*s\n", e, glxExts + s);
+      s += e + 1;
+    }
 
     writeLog(log, stdout, DEBUG, "",
       "  Querying pointer to glXCreateContextAttribsARB() function ...\n");
@@ -556,6 +541,8 @@ bool initContext(Context* context, Log* log)
     GL_CHECK(glDepthFunc(GL_LESS), status, log);
     GL_CHECK(glEnable(GL_DEPTH_TEST), status, log);
     writeLog(log, stdout, DEBUG, "", "  Depth buffer enabled\n");
+
+    glEnable(GL_DEBUG_OUTPUT);
 
     writeLog(log, stdout, INFO, "",
       "  Querying maximum array textures layers ...\n");

@@ -43,7 +43,7 @@ If you run **spaceporn** successfully on an unlisted environment, you can open a
 ## Known issues
 
 - Running **spaceporn** hides desktop icons &rarr; This is an Ubuntu issue. For this OS, the desktop icons are part of desktop window. This is the same entity. During execution, **spaceporn** creates a window above the desktop window and behind every other windows to render the shader. This is why desktop icons disappear during execution. Unfortunely using root window is not as easy as using your own window and can potentially causes unexpected side effects so it is not planned to fix this issue. 
-- Running **spaceporn** shows an expensive weird white and black screen &rarr; For some GPU (especially Intel), shaders are acting really weird and the maintainers do not have any explaination to help you. It is probably coming from the OpenGL context but it is only an assumption.
+- Running **spaceporn** shows an expensive white and/or black screen &rarr; This is an Ubuntu issue. It is possible that you are using Intel i965 driver. This is a deprecated driver. Use Crocus instead. For this, you have to add `MESA_LOADER_DRIVER_OVERRIDE=crocus` to /etc/environment file and reboot your computer.
 
 ## Bugs and Feature request
 

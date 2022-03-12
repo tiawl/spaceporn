@@ -20,6 +20,7 @@ typedef struct
 bool writePng(Atlas* atlas, PNG* png, Log* log);
 void generatePcgTexture(Atlas* atlas, int offset);
 bool generateAtlas(Atlas* atlas, PNG* png, Log* log);
+bool generateAtlas2(Atlas* atlas, PNG* png, Log* log);
 bool readAtlas(Atlas* atlas, PNG* png, Log* log);
 bool loadAtlas(Atlas* atlas, PNG* png, Shaders* shaders, Log* log);
 void freeAtlas(Atlas* atlas, Log* log);

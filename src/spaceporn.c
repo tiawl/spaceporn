@@ -124,6 +124,9 @@ int main(int argc, char** argv)
       }
 
       printf("Generating new seed ...\n");
+      struct timeval start_new_atlas;
+      struct timeval end_new_atlas;
+      gettimeofday(&start_new_atlas, NULL);
       writeLog(&log, stdout, INFO, "",
         "Computing textures atlas dimensions ...\n");
 
@@ -149,7 +152,11 @@ int main(int argc, char** argv)
         break;
       }
       writeLog(&log, stdout, DEBUG, "", "Textures atlas generated\n");
-      printf("New seed generated\n");
+      gettimeofday(&end_new_atlas, NULL);
+      double diff = timediff(&start_new_atlas, &end_new_atlas) * 1000000.0f;
+      printf("New seed generated in %fs\n", diff / 1000000.0f);
+
+      generateAtlas2(&atlas, &png_atlas, &log);
     }
 
     if (uniform_values.mode == LOCKED)

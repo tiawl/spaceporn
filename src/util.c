@@ -2,7 +2,7 @@
 
 static const char* loglevels[] =
 {
-  "DEBUG", "INFO", "INFO", "WARNING", "ERROR"
+  "DEBUG", "INFO", "WARNING", "ERROR"
 };
 
 void writeLog(Log* log, FILE* stream, enum LogLevel loglevel,

@@ -17,6 +17,6 @@ Here the maintainers' [todolist](TODO.md). You should consider this file.
 This is a list of tasks the maintainers can not improve or solve by itself. If you want to contribute to this project and have skills for one of this task, you are welcome !
 - Shaders maths can largely be improved,
 - False positives returned by Valgrind listed in [amd.supp](amd.supp),
-- **Know Issues** section in [README.md](README.md),
+- unsolved **Know Issues** section in [README.md](README.md),
 - Run **spaceporn** on modern Windows OS.
 - Build an online version (with limited features).

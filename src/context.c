@@ -401,10 +401,6 @@ bool initDebugWindow(Context* context, Log* log)
         1, 0, context->visual_info->depth, InputOutput,
         context->visual_info->visual,
         CWBorderPixel | CWColormap | CWEventMask, &swa);
-      context->debug_window = XCreateSimpleWindow(context->display,
-        RootWindow(context->display, DefaultScreen(context->display)), 0, 0, 1,
-        1, 1, BlackPixel(context->display, DefaultScreen(context->display)),
-        WhitePixel(context->display, DefaultScreen(context->display)));
     }
 
     if (!context->debug_window)

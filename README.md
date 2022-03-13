@@ -43,13 +43,7 @@ If you run **spaceporn** successfully on an unlisted environment, you can open a
 ## Known issues
 
 - [SOLVED] Running **spaceporn** hides desktop icons &rarr; This is a Ubuntu issue. For this OS, the desktop icons are part of root window. This is the same entity. During execution, **spaceporn** creates a window above the root window and behind every other windows to render the shader. This is why desktop icons disappear during execution. Unfortunely using root window is not as easy as using your own window and can potentially causes unexpected side effects. 
-- [SOLVED] Running **spaceporn** shows an expensive white and/or black screen &rarr; If you are using Linux OS, it is possible that you are using a deprecated version of i965 driver. What you can do is updating your mesa driver. For Ubuntu:
-```
-sudo add-apt-repository ppa:kisak/kisak-mesa
-sudo apt update
-sudo apt upgrade
-```
-Then, you can run **spaceporn** again. If you are falling on the same weird result, you have to use another mesa driver. For this example, We picked Crocus driver but you can choose another one. You have to add `MESA_LOADER_DRIVER_OVERRIDE=crocus` to /etc/environment file and reboot your computer.
+- [SOLVED] Running **spaceporn** shows an expensive white and/or black screen &rarr; If you are using Linux OS, it is possible that you are using a deprecated version of i965 driver. What you can do is updating your mesa driver. For Ubuntu: `sudo add-apt-repository ppa:kisak/kisak-mesa && sudo apt update && sudo apt upgrade`. Then, you can run **spaceporn** again. If you are falling on the same weird result, you have to use another mesa driver. For this example, We picked Crocus driver but you can choose another one. You have to add `MESA_LOADER_DRIVER_OVERRIDE=crocus` to /etc/environment file and reboot your computer.
 
 ## Bugs and Feature request
 

@@ -286,6 +286,74 @@ bool initWindow(Context* context, Log* log)
     writeLog(log, stdout, DEBUG, "", "  _NET_WM_WINDOW_TYPE discarded and %s",
       "_NET_WM_WINDOW_TYPE_DESKTOP stored\n");
 
+    writeLog(log, stdout, DEBUG, "",
+      "  Querying _NET_WM_NAME atom identifier ...\n");
+    xa = XInternAtom(context->display, "_NET_WM_NAME", False);
+    writeLog(log, stdout, DEBUG, "", "  _NET_WM_NAME atom identifier found\n");
+
+    writeLog(log, stdout, DEBUG, "",
+      "  Querying UTF8_STRING atom identifier ...\n");
+    Atom xa2 = XInternAtom(context->display, "UTF8_STRING", False);
+    writeLog(log, stdout, DEBUG, "", "  UTF8_STRING atom identifier found\n");
+
+    writeLog(log, stdout, DEBUG, "", "  Changing _NET_WM_NAME ...\n");
+    char window_name[] = "spaceporn";
+    XChangeProperty(context->display, context->window, xa, xa2, 8,
+      PropModeReplace, (unsigned char*) window_name, strlen(window_name));
+    writeLog(log, stdout, DEBUG, "", "  _NET_WM_NAME changed\n");
+
+    writeLog(log, stdout, DEBUG, "",
+      "  Querying _NET_WM_ICON_NAME atom identifier ...\n");
+    xa = XInternAtom(context->display, "_NET_WM_ICON_NAME", False);
+    writeLog(log, stdout, DEBUG, "",
+      "  _NET_WM_ICON_NAME atom identifier found\n");
+
+    writeLog(log, stdout, DEBUG, "", "  Changing _NET_WM_ICON_NAME ...\n");
+    XChangeProperty(context->display, context->window, xa, xa2, 8,
+      PropModeReplace, (unsigned char*) window_name, strlen(window_name));
+    writeLog(log, stdout, DEBUG, "", "  _NET_WM_ICON_NAME changed\n");
+
+    writeLog(log, stdout, DEBUG, "",
+      "  Querying _NET_WM_PID atom identifier ...\n");
+    xa = XInternAtom(context->display, "_NET_WM_PID", False);
+    writeLog(log, stdout, DEBUG, "", "  _NET_WM_PID atom identifier found\n");
+
+    writeLog(log, stdout, DEBUG, "", "  Changing _NET_WM_PID ...\n");
+    long pid = getpid();
+    XChangeProperty(context->display, context->window, xa, XA_CARDINAL, 32,
+      PropModeReplace, (unsigned char*) &pid, 1);
+    writeLog(log, stdout, DEBUG, "", "  _NET_WM_PID changed to %l\n", pid);
+
+    int ret;
+    char hostname[256];
+
+    ret = gethostname(&hostname[0], 256);
+    if (ret == -1)
+    {
+      perror("gethostname");
+      status = false;
+      break;
+    }
+
+    XTextProperty xtp;
+    writeLog(log, stdout, DEBUG, "",
+      "  Querying WM_CLIENT_MACHINE atom identifier ...\n");
+    xa = XInternAtom(context->display, "WM_CLIENT_MACHINE", False);
+    writeLog(log, stdout, DEBUG, "",
+      "  WM_CLIENT_MACHINE atom identifier found\n");
+
+    writeLog(log, stdout, DEBUG, "",
+      "  Querying WM_CLIENT_MACHINE text property ...\n");
+    XGetTextProperty(context->display, context->window, &xtp, xa);
+    xtp.value = (unsigned char*) hostname;
+    writeLog(log, stdout, DEBUG, "",
+      "  WM_CLIENT_MACHINE text property found\n");
+
+    writeLog(log, stdout, DEBUG, "", "  Changing WM_CLIENT_MACHINE ...\n");
+    XSetWMClientMachine(context->display, context->window, &xtp);
+    writeLog(log, stdout, DEBUG, "", "  WM_CLIENT_MACHINE changed to %s\n",
+      hostname);
+
     writeLog(log, stdout, DEBUG, "", "  Freeing window manager hints ...\n");
     XFree(wmHint);
     writeLog(log, stdout, DEBUG, "", "  Window manager hints freed\n");
@@ -310,6 +378,29 @@ bool initDebugWindow(Context* context, Log* log)
 
     if (log->roadmap.id != XCREATEKBWINDOW_FAILED_RM)
     {
+      writeLog(log, stdout, INFO, "",
+        "  Searching X root window from visual's screen ...\n");
+      Window root = RootWindow(context->display, context->visual_info->screen);
+      writeLog(log, stdout, INFO, "", "  X root window: 0x%lx\n", root);
+
+      XSetWindowAttributes swa;
+
+      writeLog(log, stdout, DEBUG, "",
+        "  Creating color map from visual and root window ...\n");
+      swa.colormap = context->cmap = XCreateColormap(context->display, root,
+        context->visual_info->visual, AllocNone);
+      writeLog(log, stdout, DEBUG, "", "  Color map created\n");
+
+      swa.background_pixmap = None;
+      swa.border_pixel      = 0;
+      swa.event_mask        = StructureNotifyMask;
+      writeLog(log, stdout, DEBUG, "",
+      "  XSetWindowAttributes structure initialized\n");
+
+      context->debug_window = XCreateWindow(context->display, root, 0, 0, 1,
+        1, 0, context->visual_info->depth, InputOutput,
+        context->visual_info->visual,
+        CWBorderPixel | CWColormap | CWEventMask, &swa);
       context->debug_window = XCreateSimpleWindow(context->display,
         RootWindow(context->display, DefaultScreen(context->display)), 0, 0, 1,
         1, 1, BlackPixel(context->display, DefaultScreen(context->display)),
@@ -325,6 +416,62 @@ bool initDebugWindow(Context* context, Log* log)
       break;
     }
     writeLog(log, stdout, DEBUG, "", "  Debug window created\n");
+
+    writeLog(log, stdout, DEBUG, "",
+      "  Querying _NET_WM_NAME atom identifier ...\n");
+    Atom xa = XInternAtom(context->display, "_NET_WM_NAME", False);
+    writeLog(log, stdout, DEBUG, "", "  _NET_WM_NAME atom identifier found\n");
+
+    writeLog(log, stdout, DEBUG, "",
+      "  Querying UTF8_STRING atom identifier ...\n");
+    Atom xa2 = XInternAtom(context->display, "UTF8_STRING", False);
+    writeLog(log, stdout, DEBUG, "", "  UTF8_STRING atom identifier found\n");
+
+    writeLog(log, stdout, DEBUG, "", "  Changing _NET_WM_NAME ...\n");
+    char window_name[] = "[debug] spaceporn";
+    XChangeProperty(context->display, context->debug_window, xa, xa2, 8,
+      PropModeReplace, (unsigned char*) window_name, strlen(window_name));
+    writeLog(log, stdout, DEBUG, "", "  _NET_WM_NAME changed\n");
+
+    writeLog(log, stdout, DEBUG, "",
+      "  Querying _NET_WM_ICON_NAME atom identifier ...\n");
+    xa = XInternAtom(context->display, "_NET_WM_ICON_NAME", False);
+    writeLog(log, stdout, DEBUG, "",
+      "  _NET_WM_ICON_NAME atom identifier found\n");
+
+    writeLog(log, stdout, DEBUG, "", "  Changing _NET_WM_ICON_NAME ...\n");
+    XChangeProperty(context->display, context->debug_window, xa, xa2, 8,
+      PropModeReplace, (unsigned char*) window_name, strlen(window_name));
+    writeLog(log, stdout, DEBUG, "", "  _NET_WM_ICON_NAME changed\n");
+
+    writeLog(log, stdout, DEBUG, "",
+      "  Querying _NET_WM_PID atom identifier ...\n");
+    xa = XInternAtom(context->display, "_NET_WM_PID", False);
+    writeLog(log, stdout, DEBUG, "", "  _NET_WM_PID atom identifier found\n");
+
+    writeLog(log, stdout, DEBUG, "", "  Changing _NET_WM_PID ...\n");
+    long pid = getpid();
+    XChangeProperty(context->display, context->debug_window, xa, XA_CARDINAL,
+      32, PropModeReplace, (unsigned char*) &pid, 1);
+    writeLog(log, stdout, DEBUG, "", "  _NET_WM_PID changed to %l\n", pid);
+
+    XTextProperty xtp;
+    writeLog(log, stdout, DEBUG, "",
+      "  Querying WM_CLIENT_MACHINE atom identifier ...\n");
+    xa = XInternAtom(context->display, "WM_CLIENT_MACHINE", False);
+    writeLog(log, stdout, DEBUG, "",
+      "  WM_CLIENT_MACHINE atom identifier found\n");
+
+    writeLog(log, stdout, DEBUG, "",
+      "  Querying WM_CLIENT_MACHINE text property ...\n");
+    XGetTextProperty(context->display, context->window, &xtp, xa);
+    writeLog(log, stdout, DEBUG, "",
+      "  WM_CLIENT_MACHINE text property found\n");
+
+    writeLog(log, stdout, DEBUG, "", "  Changing WM_CLIENT_MACHINE ...\n");
+    XSetWMClientMachine(context->display, context->debug_window, &xtp);
+    writeLog(log, stdout, DEBUG, "", "  WM_CLIENT_MACHINE changed to %s\n",
+      xtp.value);
 
     writeLog(log, stdout, DEBUG, "",
       "  Requesting X server to report key press events for debug window ...\n");

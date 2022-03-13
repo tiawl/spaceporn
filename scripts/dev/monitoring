@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+
+BIN="bin/all/spaceporn"
+if [[ -x ${BIN} ]]; then
+  sudo -k && sudo printf ""
+
+  # '\e[s':      Save cursor pos
+  # '\e[H':      Move cursor to home position (0, 0)
+  # '\e[?1049h': Use alternative screen buffer
+  # '\e[?7l':    Disable line wrapping
+  # '\e[?25l':   Hide the cursor
+  # '\e[2J':     Clear the terminal
+  printf '\e[s\e[H\e[?1049h\e[?7l\e[?25l\e[2J'
+  stty -echo
+
+  LOG="bin/all/monitor.log"
+
+  unbuffer ./${BIN} ${@} > ${LOG} &
+
+  while [[ $(cat ${LOG} | grep -E "Seed is" | wc -l) -eq 0 ]]; do
+    sleep 0.1s
+    [[ $(pgrep spaceporn | wc -l) -eq 0 ]] && break;
+  done
+
+  [[ $(pgrep spaceporn | wc -l) -gt 0 ]] \
+    && echo "[SEED] $(cat ${LOG} \
+      | grep -P -o "(?<=Seed is )[[:digit:]]+(?=\.0+)")"
+
+  while [[ $(pgrep spaceporn | wc -l) -gt 0 ]]; do
+    echo "[FPS] $(tail -n 1 ${LOG} | grep -P -o "[[:digit:]]+(?= FPS)")"
+    I=0
+    for USAGE in $(top -b -n 1 -1 | grep -E "^%Cpu[0-9]+" \
+      | awk "{printf \" %s\", \$3}"); do
+
+        # '%%'  : Escape % character in printf format
+        # '\e[J': Erase from cursor position to end of line
+        printf "CPU ${I}: ${USAGE}%%\e[K\n"
+        I=$(( ${I} + 1 ))
+    done
+
+    # '\e[X;YH': Move cursor to position (X, Y)
+    printf "\e[2;0H"
+  done
+
+  xdotool key --window $(wmctrl -pl | grep -E '\[debug\] spaceporn' \
+    | awk '{printf $1}') Escape
+
+  rm ${LOG}
+
+  # '\e[?7h':   Re-enable line wrapping
+  # '\e[?25h':  Unhide the cursor
+  # '\e[2J':    Clear the terminal
+  # '\e[?1049l: Restore main screen buffer
+  # '\e[s':     Restore cursor pos
+  printf '\e[?7h\e[?25h\e[2J\e[?1049l\e[u'
+  stty echo
+else
+  echo "No spaceporn process to monitor"
+fi

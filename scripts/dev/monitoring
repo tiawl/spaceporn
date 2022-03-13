@@ -13,8 +13,15 @@ if [[ -x ${BIN} ]]; then
   printf '\e[s\e[H\e[?1049h\e[?7l\e[?25l\e[2J'
   stty -echo
 
-  LOG="bin/all/monitor.log"
+  TMP_DIR="bin/tmp"
+  mkdir -p ${TMP_DIR}
+  LOG="${TMP_DIR}/stdout"
+  GPULOG="${TMP_DIR}/gpu"
 
+  sudo intel_gpu_top -J -s 500 \
+    | sed --unbuffered -e 's/^{/'$(printf "\x1e")'{/' \
+    | jq --seq --unbuffered '.engines."Render/3D/0".busy' \
+      > ${GPULOG} 2> /dev/null &
   unbuffer ./${BIN} ${@} > ${LOG} &
 
   while [[ $(cat ${LOG} | grep -E "Seed is" | wc -l) -eq 0 ]]; do
@@ -28,13 +35,14 @@ if [[ -x ${BIN} ]]; then
 
   while [[ $(pgrep spaceporn | wc -l) -gt 0 ]]; do
     echo "[FPS] $(tail -n 1 ${LOG} | grep -P -o "[[:digit:]]+(?= FPS)")"
+    echo "[GPU] $(tail -n 1 ${GPULOG})%"
     I=0
     for USAGE in $(top -b -n 1 -1 | grep -E "^%Cpu[0-9]+" \
       | awk "{printf \" %s\", \$3}"); do
 
         # '%%'  : Escape % character in printf format
         # '\e[J': Erase from cursor position to end of line
-        printf "CPU ${I}: ${USAGE}%%\e[K\n"
+        printf "[CPU ${I}] ${USAGE}%%\e[K\n"
         I=$(( ${I} + 1 ))
     done
 
@@ -42,10 +50,7 @@ if [[ -x ${BIN} ]]; then
     printf "\e[2;0H"
   done
 
-  xdotool key --window $(wmctrl -pl | grep -E '\[debug\] spaceporn' \
-    | awk '{printf $1}') Escape
-
-  rm ${LOG}
+  rm -rf ${TMP_DIR}
 
   # '\e[?7h':   Re-enable line wrapping
   # '\e[?25h':  Unhide the cursor

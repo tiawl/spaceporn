@@ -685,8 +685,6 @@ bool initContext(Context* context, Log* log)
     GL_CHECK(glEnable(GL_DEPTH_TEST), status, log);
     writeLog(log, stdout, DEBUG, "", "  Depth buffer enabled\n");
 
-    glEnable(GL_DEBUG_OUTPUT);
-
     writeLog(log, stdout, INFO, "",
       "  Querying maximum array textures layers ...\n");
     int max_arraytextures_layers;

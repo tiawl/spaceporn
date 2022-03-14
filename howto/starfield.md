@@ -22,7 +22,8 @@ recommend you go do some reading/testing first.
 
 I will write my shader on [Shadertoy](https://www.shadertoy.com/new) so you
 can get the same result if you copy-paste **Result** section of each step.
-There are very minor changes between Shadertoy's shaders and GLSL shader.
+There are very minor changes between Shadertoy's shaders and GLSL shader. So
+it will not be hard to translate the final result in your GLSL shaders.
 
 ## 1
 

@@ -79,5 +79,5 @@ if [[ -x ${BIN} ]]; then
   printf "${LINEWRAP}${SHOW_CURSOR}${CLEAR_TERM}${MAIN_BUFFER}${RESTORE_CURSOR}"
   stty echo
 else
-  echo "No spaceporn process to monitor"
+  echo "No spaceporn binary found"
 fi

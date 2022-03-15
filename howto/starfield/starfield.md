@@ -112,7 +112,7 @@ We have this result (nearer is the point from the origin, darker it is):
 
 <img src="/howto/starfield/media/dist.png">
 
-First we need to center the result. We saw that iResolution was the viewport
+First we need to center the result. We saw that *iResolution* was the viewport
 resolution. So we just uniformize this value, half it and substract it
 to our pixel's UV coordinates to get a centered light. Finally, we have to
 revert the color to get our first light. To achieve this, we multiply the

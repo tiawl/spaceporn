@@ -42,12 +42,32 @@ This function will be called for each pixel of our screen.
 *fragColor* is the pixel color where each field match to a RGBA field. Each
 one of the *fragColor* field have to be between *0.0* and *1.0*. It is the
 ouput of our fragment shader.
-*fragCoord* is the pixel coordinates. So if the screen have a 1920x1080 size,
-our first pixel coordinates are *(0.0, 0.0)* and our last pixel coordinates
-are *(1919.0, 1079.0)*. It is the input of our fragment shader.
+*fragCoord* is the pixel coordinates. So if your screen's resolution are
+1920x1080, your first pixel coordinates are *(0.0, 0.0)* and your last pixel
+coordinates are *(1919.0, 1079.0)*. It is the input of our fragment shader.
 
 As you can see, now our *mainImage()* function is empty. We have to fill it to
 display something on screen.
+
+The first step is to uniformize our coordinate system. Depending of your
+screen, the coordinates system of your shader is not the same as mine. My
+screen's resolution are 1920x1080 but maybe your screen's resolution are
+1280x1024. We have to find a way for you to see on your screen what I see on
+mine. For this reason we can't work with *fragCoord*, we have to translate
+this system in UV system. The better way to achieve this, is to add this line
+in our *mainImage()* function:
+```
+  vec2 UV = fragCoord / iResolution.y;
+```
+*iResolution* is a Shadertoy specific variable. It is defined as: "The
+viewport resolution". So *iResolution.y* is our height resolution. So now
+instead of this coordinate system:
+
+<img src="/howto/starfield/media/fragcoord_sys.png">
+
+We have this one:
+
+<img src="/howto/starfield/media/uvcoord_sys.png">
 
 ## Author
 

@@ -26,8 +26,8 @@ maths),
 types (*vec2*, *vec3*, *vec4*, *ivec2*, *uvec2*, *mat2*, ...) and built-in
 functions (*abs()*, *sin()*, *floor()*, *fract()*, *length()*, ...).
 
-If not, you can follow this tutorial but it will not be easy. I recommend you
-to do some reading/testing first.
+If not, you can follow this tutorial but it will not be easy. So I recommend
+you to do some reading/testing first.
 
 ### Setup
 
@@ -48,12 +48,14 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord)
 }
 ```
 This function will be called for each pixel of our screen.
-*fragColor* is the pixel color where each field match to a RGBA field. Each
-one of the *fragColor* field have to be between *0.0* and *1.0*. It is the
-ouput of our fragment shader.
+*fragColor* is the pixel color where each of its *vec4* channel match to a
+RGBA channel. Each one of the *fragColor* channel has to be between *0.0* and
+*1.0*. If a *fragColor* channel value is not in this interval, the visual
+result is clamped. *fragColor* is the ouput of our fragment shader.
 *fragCoord* is the pixel coordinates. So if your screen's resolution are
 1920x1080, your first pixel coordinates are *(0.0, 0.0)* and your last pixel
-coordinates are *(1919.0, 1079.0)*. It is the input of our fragment shader.
+coordinates are *(1919.0, 1079.0)*. *fragCoord* is the input of our fragment
+shader.
 
 As you can see, now our *mainImage()* function is empty. We have to fill it to
 display something on screen.
@@ -88,7 +90,7 @@ To draw nebula on this shader, We have to draw a lot of circled light. So
 before going further we need to understand how to draw a lonely circled light.
 For this we can use the *length(v)* function. This function returns the
 [length of the vector](https://onlinemschool.com/math/library/vector/length/)
-*v*. Passing the UV coordinates of the current pixel to the *length(v)*
+*v*. Giving the UV coordinates of the current pixel to the *length(v)*
 function will return the distance between our pixel and the origin. So for
 this script:
 
@@ -101,7 +103,7 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord)
   // Compute the distance between the current pixel and the origin
   float dist = length(UV);
 
-  // Output the result
+  // Dislay the result
   fragColor = vec4(vec3(dist), 1.0);
 }
 ```
@@ -109,6 +111,38 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord)
 We have this result (nearer is the point from the origin, darker it is):
 
 <img src="/howto/starfield/media/dist.png">
+
+First we need to center the result. We saw that iResolution was the viewport
+resolution. So we just uniformize this value, half it and substract it
+to our pixel's UV coordinates to get a centered light. Finally, we have to
+revert the color to get our first light. To achieve this, we multiply the
+*dist* variable by *-1.0* and we add a radius value.
+
+```
+void mainImage(out vec4 fragColor, in vec2 fragCoord)
+{
+  vec2 UV = fragCoord / iResolution.y;
+
+  // Uniformize viewport resolution
+  vec2 res = iResolution.xy / iResolution.y;
+
+  // Half it
+  res /= 2.0;
+
+  // Substract it to the pixel's UV coordinates
+  UV -= res;
+
+  // Light radius
+  float radius = 0.5;
+
+  // Revert color value and give a radius to the light
+  float dist = -1.0 * length(UV) + radius;
+
+  fragColor = vec4(vec3(dist), 1.0);
+}
+```
+
+<img src="/howto/starfield/media/blur_light.png">
 
 ## Author
 

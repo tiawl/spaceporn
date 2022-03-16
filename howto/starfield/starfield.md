@@ -132,7 +132,6 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord)
   // Substract it to the pixel's UV coordinates
   UV -= res;
 
-  // Light radius
   float radius = 0.5;
 
   // Revert color value and give a radius to the light

@@ -8,19 +8,17 @@
  * Char Map, chars written with "0xab" a is X coord b is Y coord :
  * 
  *    0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F
- *    
- * 0  
- * 1
- * 2     !
- * 3  0  1  2  3  4  5  6  7  8  9 
+ * 1      
+ * 2     !                    (  )     +     -  .  /
+ * 3  0  1  2  3  4  5  6  7  8  9     ;           ?
  * 4  @  A  B  C  D  E  F  G  H  I  J  K  L  M  N  O
  * 5  P  Q  R  S  T  U  V  W  X  Y  Z  [  \  ]  ^  _
  * 6     a  b  c  d  e  f  g  h  i  j  k  l  m  n  o
  * 7  p  q  r  s  t  u  v  w  x  y  z
- * 8
- * 9
- * A
- * B
+ * 8  
+ * 9                                               sqrt
+ * A                                               
+ * B        ²
  * C
  * D
  * E
@@ -658,20 +656,43 @@ vec3 color(float sm, uint cseed)
 
 void mainImage(out vec4 O, vec2 u)
 {
-  if (iTime < 5.)
+  seed = 1u;
+  uint col_seed = 0u;
+  pix = 150.;
+  float cols = 18.;
+  
+  fontSize = 0.075;
+  fontSpacing = 0.45;
+  fontUV = viewport(u);
+  fontColFill = vec3(1.);
+  fontColBorder = vec3(0.);
+  O = vec4(0.);
+    
+  if (iTime < 4.)
   {
-    seed = 1u + uint(floor(iTime * 0.5));
-    uint col_seed = uint(floor(iTime * 0.5));
-    pix = 150.;
-    float cols = 18.;
-  
-    fontCaret = vec2(-0.8, 0.4);
     fontSize = 0.1;
-    fontSpacing = 0.45;
-    fontUV = viewport(u);
-    fontColFill = vec3(1.);
-    fontColBorder = vec3(0.);
-  
+    fontCaret = vec2(-0.4, 0.1);
+    _(uvec4(0x84F67702, 0x47F602D6, 0x16B65602, 0x47869637));
+    
+    if (fontCol.w > 0.)
+    {
+      O = vec4((0.6 + 0.6 * cos(6.3 *
+        ((u.x * 6. - iResolution.x * 0.25) / (3.14 * iResolution.y)) + vec4(0, 23, 21, 0))
+        * 0.85 + 0.15) * fontCol.x);
+      return;
+    }
+    
+    fontCaret = vec2(-0.425, 0.0);  
+    _(uvec4(0x02020237, 0x47162766, 0x9656C646, 0x02F30202));
+    
+    if (fontCol.w > 0.)
+    {
+      O = vec4((0.6 + 0.6 * cos(6.3 *
+        ((u.x * 6. - iResolution.x * 0.25) / (3.14 * iResolution.y)) + vec4(0, 23, 21, 0))
+        * 0.85 + 0.15) * fontCol.x);
+      return;
+    }
+     
     vec2 bU = 2. + (u / iResolution.y) + iTime * 0.05;
     vec2 U = floor(bU * pix) / pix;
     bool dith = mod(bU.x + U.y, 2. / pix) < 1. / pix;
@@ -686,6 +707,44 @@ void mainImage(out vec4 O, vec2 u)
 
     g = max(b.x, g);
     g = floor(g * cols) / cols;
-    O = vec4(color(10. * g, col_seed), 1.);
+    O = vec4(color(10. * g, col_seed), 1.) * (iTime > 3. ? (4. - iTime) / 2. : 1.);
+    
+  } else if (iTime < 6.) {
+    fontSize = 0.1;
+    fontCaret = vec2(-0.225, 0.05);
+    _(uvec3(0x13E202E4, 0x562657C6, 0x16020202));
+    if (fontCol.w > 0.)
+    {
+      O = vec4((0.6 + 0.6 * cos(6.3 *
+        ((u.x * 6. - iResolution.x * 0.25) / (3.14 * iResolution.y)) + vec4(0, 23, 21, 0))
+        * 0.85 + 0.15) * fontCol.x)  * (iTime > 5. ? (6. - iTime) / 2. : 1.);
+    }
+  } else if (iTime < 9.) {
+    fontCaret = vec2(-0.825, 0.4);    
+    _(uvec4(0x84562756, 0x02160236, 0x962736C6, 0x564602C6));
+    if (fontCol.w > 0.)
+    {
+      O = vec4((0.6 + 0.6 * cos(6.3 *
+        ((u.x * 6. - iResolution.x * 0.25) / (3.14 * iResolution.y)) + vec4(0, 23, 21, 0))
+        * 0.85 + 0.15) * fontCol.x);
+      return;
+    }
+    
+    fontCaret = vec2(-0.29, 0.4);    
+    _(uint(0x96768647));
+    if (fontCol.w > 0.)
+    {
+      O = vec4((0.6 + 0.6 * cos(6.3 *
+        ((u.x * 6. - iResolution.x * 0.25) / (3.14 * iResolution.y)) + vec4(0, 23, 21, 0))
+        * 0.85 + 0.15) * fontCol.x);
+      return;
+    }
+    if (iTime > 7.)
+    {
+      vec2 U = (u - iResolution.xy * 0.5) / iResolution.y;
+      O = vec4(vec3(-length(U) + 0.5), 1.0) * min(1., iTime - 7.);
+    }
+  } else if (iTime < 10.) {
+  
   }
 }

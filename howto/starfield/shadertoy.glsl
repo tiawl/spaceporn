@@ -16,13 +16,6 @@
  * 6     a  b  c  d  e  f  g  h  i  j  k  l  m  n  o
  * 7  p  q  r  s  t  u  v  w  x  y  z
  * 8  
- * 9                                               sqrt
- * A                                               
- * B        ²
- * C
- * D
- * E
- * F
  * 
  */
 
@@ -280,54 +273,39 @@ float noise(vec2 coord, uint noise_seed)
   return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
 }
 
-// https://iquilezles.org/www/articles/smoothvoronoi/smoothvoronoi.htm
-float voronoi(vec2 x, float w, uint seed)
-{
-  vec2 n = floor(x);
-  vec2 f = fract(x);
-
-  float m = 8.;
-  for (int j = -2; j <= 2; j++)
-  for (int i = -2; i <= 2; i++)
-  {
-    vec2 g = vec2(i, j);
-    vec2 o = vec2(hash(n + g, seed), hash(n + g, seed + 84u));
-	float d = length(g - f + o);
-    vec3 col = 0.5 + 0.5 * sin(hash(n + g, seed + 32u) * 2.5 + 3.5 + vec3(2.));
-        		
-    float h = smoothstep(0., 1., 0.5 + 0.5 * (m - d) / w);
-	m = mix(m, d, h) - h * (1. - h) * w / (1. + 3. * w);
-  }
-	
-  return 1. - m;
-}
-
-float fbmVoronoi( in vec2 U, uint seed)
-{
-  float r = (voronoi(6. * U, 0.3, seed)) * 0.625
-    + (voronoi(12. * U, 0.3, seed + 314u)) * 0.25
-    + (voronoi(24. * U, 0.3, seed + 92u)) * 0.125;
-  return r;
-}
-
 // https://www.shadertoy.com/view/NsfyDs
-float circles( vec2 p, float r, uint s)
+float circles(vec2 p, float r, float w, uint s)
 {
-  vec2 i = floor(p), f = fract(p), h, a;
+  vec3 col;
+  vec2 i = floor(p), f = fract(p), h;
 
-  float d = 1e9, c, rad;
-  for(int k = 0; k < 9; k++)
+  float d = 8., c, rad, h2;
+  for (int k = 0; k < 9; k++)
   {
     p = vec2(k % 3, k / 3) - 1.;
-    rad = 0.2 + hash(i + p, s + 2u) * r;
     h = vec2(hash(i + p, s + 89u), hash(i + p, s + 52u));
-
-    p += h - f;
-
-    c = length(p) - rad;
-    d = smin(d, c, 0.3);
+    c = length(p + h - f);
+    
+    if (sign(w) > -0.5)
+    {
+      // https://iquilezles.org/www/articles/smoothvoronoi/smoothvoronoi.htm
+      col = 0.5 + 0.5 * sin(hash(i + p, seed + 32u) * 2.5 + 3.5 + vec3(2.));  		
+      h2 = smoothstep(0., 1., 0.5 + 0.5 * (d - c) / w);
+	  d = mix(d, c, h2) - h2 * (1. - h2) * w / (1. + 3. * w);
+    } else {
+      rad = 0.2 + hash(i + p, s + 2u) * r;
+      d = smin(d, c - rad, 0.3);
+    }
   }
-  return d;
+  return (sign(w) > -0.5 ? 1. - d : d);
+}
+
+float fbmVoronoi(vec2 U, uint seed)
+{
+  float r = (circles(6. * U, -1., 0.3, seed)) * 0.625
+    + (circles(12. * U, -1., 0.3, seed + 314u)) * 0.25
+    + (circles(24. * U, -1., 0.3, seed + 92u)) * 0.125;
+  return r;
 }
 
 // https://iquilezles.org/www/articles/fbmsdf/fbmsdf.htm
@@ -337,7 +315,7 @@ float fbmCircles(vec2 p, uint se)
   int o = 2;
   for(int i = 0; i < o; i++)
   {
-    float n = s * circles(p, 0.5, se);
+    float n = s * circles(p, 0.5, -1., se);
 
     d = smin(d, n, 0.3 * s);
 
@@ -654,6 +632,19 @@ vec3 color(float sm, uint cseed)
   return hsv2rgb(vec3(hu, sa, br));
 }
 
+bool text(vec2 u, out vec4 O)
+{
+  bool b = false;
+  if (fontCol.w > 0.)
+  {
+    O = vec4((0.6 + 0.6 * cos(6.3 *
+      ((u.x * 6. - iResolution.x * 0.25) / (3.14 * iResolution.y)) + vec4(0, 23, 21, 0))
+      * 0.85 + 0.15) * fontCol.x);
+    b = true;
+  }
+  return b;
+}
+
 void mainImage(out vec4 O, vec2 u)
 {
   seed = 1u;
@@ -673,25 +664,11 @@ void mainImage(out vec4 O, vec2 u)
     fontSize = 0.1;
     fontCaret = vec2(-0.4, 0.1);
     _(uvec4(0x84F67702, 0x47F602D6, 0x16B65602, 0x47869637));
-    
-    if (fontCol.w > 0.)
-    {
-      O = vec4((0.6 + 0.6 * cos(6.3 *
-        ((u.x * 6. - iResolution.x * 0.25) / (3.14 * iResolution.y)) + vec4(0, 23, 21, 0))
-        * 0.85 + 0.15) * fontCol.x);
-      return;
-    }
-    
+    if (text(u, O)) return;
+
     fontCaret = vec2(-0.425, 0.0);  
     _(uvec4(0x02020237, 0x47162766, 0x9656C646, 0x02F30202));
-    
-    if (fontCol.w > 0.)
-    {
-      O = vec4((0.6 + 0.6 * cos(6.3 *
-        ((u.x * 6. - iResolution.x * 0.25) / (3.14 * iResolution.y)) + vec4(0, 23, 21, 0))
-        * 0.85 + 0.15) * fontCol.x);
-      return;
-    }
+    if (text(u, O)) return;
      
     vec2 bU = 2. + (u / iResolution.y) + iTime * 0.05;
     vec2 U = floor(bU * pix) / pix;
@@ -713,38 +690,83 @@ void mainImage(out vec4 O, vec2 u)
     fontSize = 0.1;
     fontCaret = vec2(-0.225, 0.05);
     _(uvec3(0x13E202E4, 0x562657C6, 0x16020202));
-    if (fontCol.w > 0.)
-    {
-      O = vec4((0.6 + 0.6 * cos(6.3 *
-        ((u.x * 6. - iResolution.x * 0.25) / (3.14 * iResolution.y)) + vec4(0, 23, 21, 0))
-        * 0.85 + 0.15) * fontCol.x)  * (iTime > 5. ? (6. - iTime) / 2. : 1.);
-    }
+    text(u, O);
+    O *= (iTime > 5. ? (6. - iTime) / 2. : 1.);
   } else if (iTime < 9.) {
     fontCaret = vec2(-0.825, 0.4);    
-    _(uvec4(0x84562756, 0x02160236, 0x962736C6, 0x564602C6));
-    if (fontCol.w > 0.)
-    {
-      O = vec4((0.6 + 0.6 * cos(6.3 *
-        ((u.x * 6. - iResolution.x * 0.25) / (3.14 * iResolution.y)) + vec4(0, 23, 21, 0))
-        * 0.85 + 0.15) * fontCol.x);
-      return;
-    }
+    _(uvec4(0x44271677, 0x02160236, 0x962736C6, 0x564602C6));
+    if (text(u, O)) return;
     
-    fontCaret = vec2(-0.29, 0.4);    
+    fontCaret = vec2(-0.29, 0.4); 
     _(uint(0x96768647));
-    if (fontCol.w > 0.)
-    {
-      O = vec4((0.6 + 0.6 * cos(6.3 *
-        ((u.x * 6. - iResolution.x * 0.25) / (3.14 * iResolution.y)) + vec4(0, 23, 21, 0))
-        * 0.85 + 0.15) * fontCol.x);
-      return;
-    }
+    if (text(u, O)) return;
+    
     if (iTime > 7.)
     {
       vec2 U = (u - iResolution.xy * 0.5) / iResolution.y;
-      O = vec4(vec3(-length(U) + 0.5), 1.0) * min(1., iTime - 7.);
+      O = vec4(vec3(-length(U) + 0.5), 1.) * min(1., iTime - 7.);
     }
-  } else if (iTime < 10.) {
-  
+  } else if (iTime < 12.) {
+    fontCaret = vec2(-0.825, 0.4);    
+    _(uvec4(0x458656E6, 0x02160266, 0x57C6C602, 0x76279646));
+    if (text(u, O)) return;
+    
+    vec2 U = (iTime > 9. ? min(2., iTime - 9.) * 2. + 1.: 1.)
+      * (u - iResolution.xy * 0.5) / iResolution.y;
+    vec2 i = floor(U), f = fract(U), p = U;
+
+    float d = 8., c;
+    for (int k = 0; k < 9; k++)
+    {
+      p = vec2(k % 3, k / 3) - 1.;
+      p -= f;
+
+      c = length(p) - 0.5;
+      d = min(d, c);
+    }
+    O = vec4(vec3(max(10. - iTime, 0.) * (-length(U) + 0.5) + (-d) * min(1., iTime - 9.)), 1.);
+  } else if (iTime < 20.) {
+    fontCaret = vec2(-0.825, 0.4);   
+    _((iTime < 16. ? uvec4(0x2516E646, 0xF6D696A7, 0x56024786, 0x56962702) :
+      (iTime < 18. ? uvec4(0x25564657, 0x36560236, 0xF6C6F627, 0x02E657D6) :
+        uvec4(0x35D6F6F6, 0x47860296, 0xE6475627, 0x37563647))));
+    if (text(u, O)) return;
+    
+    fontCaret = vec2(-0.29, 0.4);
+    _((iTime < 14. ? uvec2(0x27164696, 0x57370202) :
+        (iTime < 16. ? uvec2(0x07F63796, 0x4796F6E6) :
+          (iTime < 18. ? uvec2(0x26562702, 0x02020202) :
+            uvec2(0x96F6E637, 0x02020202)))));
+    if (text(u, O)) return;
+    
+    vec2 U = 5. * (u - iResolution.xy * 0.5) / iResolution.y;
+    seed += 10u;
+    vec2 i = floor(U), f = fract(U), p = U, h;
+
+    float d = 8., c, rad;
+    for (int k = 0; k < 9; k++)
+    {
+      p = vec2(k % 3, k / 3) - 1.;
+      rad = max((14. - iTime) * 0.5, 0.) * 0.5
+        + (0.2 + hash(i + p, seed + 2u) * 0.5) * min(1., (iTime - 12.) * 0.5);
+      h = clamp((iTime - 14.) * 0.5, 0., 1.) * vec2(hash(i + p, seed + 89u), hash(i + p, seed + 52u));
+      p += h - f;
+
+      c = length(p) - rad;
+      d = (iTime < 18. ? min(d, c) : smin(d, c, min(1., iTime - 18.) * 0.3));
+    }
+    O = vec4(vec3(-d), 1.);
+    if (iTime > 16.)
+    {
+      cols = max(0., 17. - iTime) * 100. + 8.;
+      O = floor(O * cols) / cols;
+    }
+  } else if (iTime < 22.) {
+    vec2 U = 5. * (u - iResolution.xy * 0.5) / iResolution.y;
+    float g = -min(fbmCircles(U, seed + 10u), fbmCircles(U, seed + 20u));
+    O = vec4(vec3(0.5 * (22. - iTime) * (-circles(U, 0.5, -1., seed + 10u))
+      + (iTime - 20.) * 0.5 * g), 1.);
+    cols = 8.;
+    O = floor(O * cols) / cols;
   }
 }

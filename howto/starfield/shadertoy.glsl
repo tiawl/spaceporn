@@ -311,9 +311,9 @@ float fbmVoronoi( in vec2 U, uint seed)
 }
 
 // https://www.shadertoy.com/view/NsfyDs
-float circles( vec2 p, float r, uint s)
+float circles(vec2 p, float r, uint s)
 {
-  vec2 i = floor(p), f = fract(p), h, a;
+  vec2 i = floor(p), f = fract(p), h;
 
   float d = 1e9, c, rad;
   for(int k = 0; k < 9; k++)
@@ -721,7 +721,7 @@ void mainImage(out vec4 O, vec2 u)
     }
   } else if (iTime < 9.) {
     fontCaret = vec2(-0.825, 0.4);    
-    _(uvec4(0x84562756, 0x02160236, 0x962736C6, 0x564602C6));
+    _(uvec4(0x44271677, 0x02160236, 0x962736C6, 0x564602C6));
     if (fontCol.w > 0.)
     {
       O = vec4((0.6 + 0.6 * cos(6.3 *
@@ -742,9 +742,31 @@ void mainImage(out vec4 O, vec2 u)
     if (iTime > 7.)
     {
       vec2 U = (u - iResolution.xy * 0.5) / iResolution.y;
-      O = vec4(vec3(-length(U) + 0.5), 1.0) * min(1., iTime - 7.);
+      O = vec4(vec3(-length(U) + 0.5), 1.) * min(1., iTime - 7.);
     }
-  } else if (iTime < 10.) {
-  
+  } else if (iTime < 11.) {
+    fontCaret = vec2(-0.825, 0.4);    
+    _(uvec4(0x458656E6, 0x02160266, 0x57C6C602, 0x76279646));
+    if (fontCol.w > 0.)
+    {
+      O = vec4((0.6 + 0.6 * cos(6.3 *
+        ((u.x * 6. - iResolution.x * 0.25) / (3.14 * iResolution.y)) + vec4(0, 23, 21, 0))
+        * 0.85 + 0.15) * fontCol.x);
+      return;
+    }
+    
+    vec2 U = (u - iResolution.xy * 0.5) / iResolution.y;
+    vec2 i = floor(U), f = fract(U), p = U;
+
+    float d = 1e9, c;
+    for(int k = 0; k < 9; k++)
+    {
+      p = vec2(k % 3, k / 3) - 1.;
+      p += f;
+
+      c = length(p) - 0.5;
+      d = smin(d, c, 0.3);
+    }
+    O = vec4(vec3(max(10. - iTime, 0.) * (-length(U) + 0.5) + (-d) * min(1., iTime - 9.)), 1.);
   }
 }

@@ -3,20 +3,19 @@
 precision highp float;
 precision highp int;
 
-uniform float fflags[7];
-uniform int bflags[1];
+uniform float flags[8];
 uniform sampler2DArray atlas;
 
-vec2 resolution = vec2(fflags[0], fflags[1]);
+vec2 resolution = vec2(flags[0], flags[1]);
 float shorter_res = min(resolution.x, resolution.y);
 float larger_res = max(resolution.x, resolution.y);
-uint seed = uint(floor(fflags[2]));
-float time = fflags[3];
-float pixels = fflags[4];
-float zoom = fflags[5];
-float mode = fflags[6];
+uint seed = uint(floor(flags[2]));
+float time = flags[3];
+float pixels = flags[4];
+float zoom = flags[5];
+float mode = flags[6];
+float color_settings = flags[7];
 
-bool palettes = (bflags[0] > 0);
 bool stars_done = false;
 
 # define NB_COLS              7.

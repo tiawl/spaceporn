@@ -52,7 +52,7 @@ LOW PRIORITY:
 - galaxy
 - dark hole (with event horizon animation)
 - group of asteroids
-- palette gen
+- color settings
 - lab : https://www.shadertoy.com/view/3slXDf, https://www.shadertoy.com/view/7dffzn, https://www.shadertoy.com/view/NdlfzX
 
 REMINDER:

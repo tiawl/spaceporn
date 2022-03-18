@@ -22,7 +22,7 @@ int main(int argc, char** argv)
   gettimeofday(&(uniform_values.start), NULL);
   uniform_values.pixels = (rand() % (MAX_PIXELS - MIN_PIXELS)) + MIN_PIXELS;
   uniform_values.zoom = (rand() % (MAX_ZOOM - MIN_ZOOM)) + MIN_ZOOM;
-  uniform_values.palettes = DEFAULT_PALETTES;
+  uniform_values.color = BLACK_WHITE;
   uniform_values.mode = NO_MODE;
   uniform_values.seed = -1.;
 
@@ -195,8 +195,7 @@ int main(int argc, char** argv)
     // array of all uniforms to pass to the shader
     const Uniform uniforms[] =
     {
-      {"fflags", &updateFloatUniforms},
-      {"bflags", &updateBoolUniforms},
+      {"flags", &updateFloatUniforms},
     };
 
     GLuint uniformIds[UNIFORM_COUNT];

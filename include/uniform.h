@@ -11,7 +11,7 @@ typedef struct
   GLint height;
   GLint pixels;
   GLint mode;
-  GLboolean palettes;
+  GLint color;
   GLfloat zoom;
   GLfloat seed;
 } UniformValues;
@@ -22,13 +22,11 @@ typedef struct
   bool (*update)(GLint, UniformValues*, Log*);
 } Uniform;
 
-#define UNIFORM_COUNT 2
-#define UNIFORM_FLOATS 7
-#define UNIFORM_BOOLEANS 1
+#define UNIFORM_COUNT 1
+#define UNIFORM_FLOATS 8
 
 // custom functions used to set uniform values
 bool updateFloatUniforms(GLint uniformId, UniformValues* values, Log* log);
-bool updateBoolUniforms(GLint uniformId, UniformValues* values, Log* log);
 
 bool getUniforms(const Uniform uniforms[UNIFORM_COUNT],
   GLuint uniformIds[UNIFORM_COUNT], GLuint* program, Log* log);

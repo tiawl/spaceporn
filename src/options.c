@@ -4,45 +4,52 @@ void help()
 {
   fprintf(stderr, "\n%s %s\n", NAME, VERSION);
   fprintf(stderr,
-    "\nUsage: %s %s LEVEL|%s [WIDTHxHEIGHT]|%s [MINS] [%s] [%s] [%s FPS] \n\
-    [%s] [%s PIXELS] [%s ZOOM] [%s] [%s] [%s ROADMAP] [%s] [%s]\n\n", NAME,
-  ANIMATION_FLAG, BGGEN_FLAG, SLIDE_FLAG, ATLASFORCED_FLAG, PALETTES_FLAG,
-  FPS_FLAG, STOP_FLAG, PIXEL_FLAG, ZOOM_FLAG, FRAGMENTFILEROADMAPS_FLAG,
-  MAXROADMAP_FLAG, ROADMAP_FLAG, VERTEXFILEROADMAPS_FLAG, VERBOSE_FLAG);
-  fprintf(stderr, "User options:\n\n\
-  %s  Enable Animation mode: display animated wallpaper. If LEVEL is 1,\n\
-      camera motion and animations are enabled, 2 only disables camera\n\
-      motion, 3 only disables animations. Exit in error if called with %s\n\
-      or %s flags.\n\n\
+    "\nUsage: %s %s ANIM|%s [WIDTHxHEIGHT]|%s [MINS] [%s COLOR] [%s] \n\
+    [%s FPS] [%s] [%s PIXELS] [%s ZOOM] [%s] [%s] [%s ROADMAP] [%s] [%s]\n\n",
+    NAME, ANIMATION_FLAG, BGGEN_FLAG, SLIDE_FLAG, COLOR_FLAG,
+    ATLASFORCED_FLAG, FPS_FLAG, STOP_FLAG, PIXEL_FLAG, ZOOM_FLAG,
+    FRAGMENTFILEROADMAPS_FLAG, MAXROADMAP_FLAG, ROADMAP_FLAG,
+    VERTEXFILEROADMAPS_FLAG, VERBOSE_FLAG);
+  fprintf(stderr, "User options:\n\
+  %s  Enable Animation mode: display animated wallpaper. Exit in error if\n\
+      called with %s or %s flags. ANIM must be specified. Possible values:\n\
+      - 1: camera motion and animations enabled,\n\
+      - 2: camera motion disabled and animations enabled,\n\
+      - 3: camera motion enables and animations disabled.\n\
   %s  Enable Generation mode: generate background in PNG format and exit.\n\
       WIDTH and HEIGHT can be specified in this format: WIDTHxHEIGHT. If\n\
       WIDTH and HEIGHT are not specified, screen dimensions are used. Exit\n\
-      in error if called with %s or %s flags.\n\n\
+      in error if called with %s or %s flags.\n\
   %s  Enable Slide mode: display new static wallpaper every MINS minutes.\n\
-      Exit in error if called with %s or %s flags.\n\n\
+      If MINS is not specied, MINS is 1. Exit in error if called with %s or\n\
+      %s flags.\n\
+  %s  Color setting. COLOR must be specified. Possible values:\n\
+      - 1: black and white,\n\
+      - 2: static random monochromatic,\n\
+      - 3: dynamic random monochromatic,\n\
+      - 4: colorful.\n\
   %s  Force new seed generation. Only available for Animation and\n\
-      Generation Mode.\n\n\
-  %s  Enable usage of unique palette for each object.\n\n\
+      Generation Mode.\n\
   %s  Frames per second between %d to %d. Animation mode option.\n\
-      [default: %d]\n\n\
-  %s  Run without using a mode and exit. Useful with %s flag.\n\n\
+      [default: %d]\n\
+  %s  Run without using a mode and exit. Useful with %s flag.\n\
   %s  Pixelization value between %d to %d.\n\
-      [default: random]\n\n\
+      [default: random]\n\
   %s  Zoom value between %d to %d.\n\
       [default: random]\n\n", ANIMATION_FLAG, BGGEN_FLAG, SLIDE_FLAG,
       BGGEN_FLAG, ANIMATION_FLAG, SLIDE_FLAG, SLIDE_FLAG, ANIMATION_FLAG,
-      BGGEN_FLAG, ATLASFORCED_FLAG, PALETTES_FLAG, FPS_FLAG, MIN_FPS, MAX_FPS,
+      BGGEN_FLAG, COLOR_FLAG, ATLASFORCED_FLAG, FPS_FLAG, MIN_FPS, MAX_FPS,
       DEFAULT_FPS, STOP_FLAG, ATLASFORCED_FLAG, PIXEL_FLAG, MIN_PIXELS,
       MAX_PIXELS, ZOOM_FLAG, MIN_ZOOM, MAX_ZOOM);
-  fprintf(stderr, "Debug options:\n\n\
-  %s  Verbose mode.\n\n\
+  fprintf(stderr, "Debug options:\n\
+  %s  Verbose mode.\n\
   %s  Run the corresponding execution roadmap.\n\
-      [default: 0]\n\n\
-  %s  Print last roadmap.\n\n\
+      [default: 0]\n\
+  %s  Print last roadmap.\n\
   %s  Print first and last roadmaps which need a vertex shader\n\
-      file as argument.\n\n\
+      file as argument.\n\
   %s  Print first and last roadmaps which need a fragment shader\n\
-      file as argument.\n\n", VERBOSE_FLAG, ROADMAP_FLAG, MAXROADMAP_FLAG,
+      file as argument.\n", VERBOSE_FLAG, ROADMAP_FLAG, MAXROADMAP_FLAG,
       VERTEXFILEROADMAPS_FLAG, FRAGMENTFILEROADMAPS_FLAG);
 }
 
@@ -172,8 +179,37 @@ bool parsing_options(long* fps, bool* new_atlas, long* png_width,
         }
       } else if (strcmp(argv[i], ATLASFORCED_FLAG) == 0) {
         *new_atlas = true;
-      } else if (strcmp(argv[i], PALETTES_FLAG) == 0) {
-        uniform_values->palettes = true;
+      } else if (strcmp(argv[i], COLOR_FLAG) == 0) {
+        if (++i < *argc)
+        {
+          uniform_values->color = strtol(argv[i], &end, DECIMAL);
+          if (argv[i] == end)
+          {
+            fprintf(stderr, "Unrecognized character in %s option"
+              " parameter: %s\n", COLOR_FLAG, argv[i]);
+            status = false;
+            break;
+          }
+          if (errno == ERANGE)
+          {
+            fprintf(stderr, "Range error occurred during %s option"
+              " parameter parsing for: %s\n", COLOR_FLAG, argv[i]);
+            status = false;
+            break;
+          }
+          if ((uniform_values->color < BLACK_WHITE) ||
+            (uniform_values->color > COLORFUL))
+          {
+            fprintf(stderr, "%s parameter should be 0, 1, 2 or 3\n",
+              COLOR_FLAG);
+            status = false;
+            break;
+          }
+        } else {
+          fprintf(stderr, "%s option needs parameter\n", ANIMATION_FLAG);
+          status = false;
+          break;
+        }
       } else if (strcmp(argv[i], FPS_FLAG) == 0) {
         if (++i < *argc)
         {

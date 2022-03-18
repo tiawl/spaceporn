@@ -3,7 +3,12 @@
 static const char* modes[] =
 {
   "NO_MODE", "ANIM_MOTION_MODE", "ANIM_MODE", "MOTION_MODE", "BGGEN_MODE",
-  "SLIDE_MODE"
+  "SLIDE_MODE", "LOCKED"
+};
+
+static const char* colors[] =
+{
+  "BLACK_WHITE", "STATIC_MONO", "DYNAMIC_MONO", "COLORFUL"
 };
 
 bool updateFloatUniforms(GLint uniformId, UniformValues* values, Log* log)
@@ -28,46 +33,23 @@ bool updateFloatUniforms(GLint uniformId, UniformValues* values, Log* log)
     gettimeofday(&now, NULL);
     values->time = timediff(&(values->start), &now);
 
-    GLfloat fflags[UNIFORM_FLOATS] =
+    GLfloat float_flags[UNIFORM_FLOATS] =
     {
       values->width, values->height, values->seed, values->time / 50.,
-      values->pixels, values->zoom, values->mode
+      values->pixels, values->zoom, values->mode, values->color
     };
 
     writeLog(log, stdout, INFO, "",
-      "    New fflags values: [%d, %d, %f, %f, %d, %f, %s]\n",
-      values->width, values->height, fflags[2], fflags[3], values->pixels,
-      values->zoom, modes[values->mode]);
+      "    New float_flags values: [%d, %d, %f, %f, %d, %f, %s, %s]\n",
+      values->width, values->height, float_flags[2], float_flags[3],
+      values->pixels, values->zoom, modes[values->mode],
+      colors[values->color]);
 
     writeLog(log, stdout, DEBUG, "",
-      "    Specifying value of fflags in current program ...\n");
-    GL_CHECK(glUniform1fv(uniformId, UNIFORM_FLOATS, fflags), status, log);
+      "    Specifying value of float_flags in current program ...\n");
+    GL_CHECK(glUniform1fv(uniformId, UNIFORM_FLOATS, float_flags), status, log);
     writeLog(log, stdout, DEBUG, "",
-      "    Value of fflags specified in current program\n");
-  } while (false);
-
-  return status;
-}
-
-bool updateBoolUniforms(GLint uniformId, UniformValues* values, Log* log)
-{
-  bool status = true;
-
-  do
-  {
-    GLint bflags[UNIFORM_BOOLEANS] =
-    {
-      values->palettes
-    };
-
-    writeLog(log, stdout, INFO, "", "    New bflags values: [%s]\n",
-      values->palettes ? "true" : "false");
-
-    writeLog(log, stdout, DEBUG, "",
-      "    Specifying value of bflags in current program ...\n");
-    GL_CHECK(glUniform1iv(uniformId, UNIFORM_BOOLEANS, bflags), status, log);
-    writeLog(log, stdout, DEBUG, "",
-      "    Value of bflags specified in current program\n");
+      "    Value of float_flags specified in current program\n");
   } while (false);
 
   return status;

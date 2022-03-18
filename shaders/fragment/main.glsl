@@ -16,7 +16,7 @@ vec4 atlas_main(vec2 fragCoords)
   if ((mode > ANIM_MOTION_MODE / 2.) &&
     (mode < (ANIM_MODE + MOTION_MODE) / 2.))
   {
-    time = fflags[3];
+    time = flags[3];
   } else {
     time = 0.;
   }

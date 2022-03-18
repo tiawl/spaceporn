@@ -24,6 +24,14 @@ enum Mode
   LOCKED
 };
 
+enum ColorSetting
+{
+  BLACK_WHITE,
+  STATIC_MONO,
+  DYNAMIC_MONO,
+  COLORFUL
+};
+
 enum RoadmapID
 {
   IMPROVELOGSHADER_REGCOMP_FAILED_RM =                                 -26,

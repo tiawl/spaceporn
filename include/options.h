@@ -13,13 +13,13 @@
 #define DEFAULT_FPS                              30
 #define DEFAULT_ANIMATIONS                    false
 #define DEFAULT_MOTION                        false
-#define DEFAULT_PALETTES                      false
+#define DEFAULT_COLOR                          MONO
 #define DEFAULT_SLIDE                             1
 
 #define ANIMATION_FLAG                         "-a"
 #define BGGEN_FLAG                             "-b"
+#define COLOR_FLAG                             "-c"
 #define ATLASFORCED_FLAG                       "-f"
-#define PALETTES_FLAG                          "-p"
 #define FPS_FLAG                               "-r"
 #define SLIDE_FLAG                             "-s"
 #define STOP_FLAG                              "-t"

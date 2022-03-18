@@ -635,6 +635,7 @@ vec3 color(float sm, uint cseed)
 bool text(vec2 u, out vec4 O)
 {
   bool b = false;
+  O = vec4(0.);
   if (fontCol.w > 0.)
   {
     O = vec4((0.6 + 0.6 * cos(6.3 *
@@ -711,7 +712,7 @@ void mainImage(out vec4 O, vec2 u)
     _(uvec4(0x458656E6, 0x02160266, 0x57C6C602, 0x76279646));
     if (text(u, O)) return;
     
-    vec2 U = (iTime > 9. ? min(2., iTime - 9.) * 2. + 1.: 1.)
+    vec2 U = (iTime > 9. ? min(2., iTime - 9.) * 2. + 1. : 1.)
       * (u - iResolution.xy * 0.5) / iResolution.y;
     vec2 i = floor(U), f = fract(U), p = U;
 
@@ -739,7 +740,7 @@ void mainImage(out vec4 O, vec2 u)
             uvec2(0x96F6E637, 0x02020202)))));
     if (text(u, O)) return;
     
-    vec2 U = 5. * (u - iResolution.xy * 0.5) / iResolution.y;
+    vec2 U = 5. * (2. + (u - iResolution.xy * 0.5) / iResolution.y);
     seed += 10u;
     vec2 i = floor(U), f = fract(U), p = U, h;
 
@@ -761,11 +762,13 @@ void mainImage(out vec4 O, vec2 u)
       cols = max(0., 17. - iTime) * 100. + 8.;
       O = floor(O * cols) / cols;
     }
-  } else if (iTime < 22.) {
-    vec2 U = 5. * (u - iResolution.xy * 0.5) / iResolution.y;
-    float g = -min(fbmCircles(U, seed + 10u), fbmCircles(U, seed + 20u));
-    O = vec4(vec3(0.5 * (22. - iTime) * (-circles(U, 0.5, -1., seed + 10u))
-      + (iTime - 20.) * 0.5 * g), 1.);
+  } else if (iTime < 25.) {
+    vec2 bU = 2. + (u - iResolution.xy * 0.5) / iResolution.y;
+    vec2 U = 5. * bU;
+    float g = min(fbmCircles(U, seed + 10u), fbmCircles(U, seed + 20u));
+    float fv = fbmVoronoi(0.25 * bU, seed);
+    O = vec4(vec3(max(0., 0.5 * (22. - iTime)) * (-circles(U, 0.5, -1., seed + 10u))
+      + min(1., (iTime - 20.) * 0.5) * -smin(1., g, 3.3 * min(1., (iTime - 20.) * 0.5) * fv * fv)), 1.);
     cols = 8.;
     O = floor(O * cols) / cols;
   }

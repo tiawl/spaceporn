@@ -715,7 +715,7 @@ void mainImage(out vec4 O, vec2 u)
       * (u - iResolution.xy * 0.5) / iResolution.y;
     vec2 i = floor(U), f = fract(U), p = U;
 
-    float d = 1e9, c;
+    float d = 8., c;
     for (int k = 0; k < 9; k++)
     {
       p = vec2(k % 3, k / 3) - 1.;
@@ -725,32 +725,35 @@ void mainImage(out vec4 O, vec2 u)
       d = min(d, c);
     }
     O = vec4(vec3(max(10. - iTime, 0.) * (-length(U) + 0.5) + (-d) * min(1., iTime - 9.)), 1.);
-  } else if (iTime < 18.) {
+  } else if (iTime < 20.) {
     fontCaret = vec2(-0.825, 0.4);   
     _((iTime < 16. ? uvec4(0x2516E646, 0xF6D696A7, 0x56024786, 0x56962702) :
-      uvec4(0x25564657, 0x36560236, 0xF6C6F627, 0x02E657D6)));
+      (iTime < 18. ? uvec4(0x25564657, 0x36560236, 0xF6C6F627, 0x02E657D6) :
+        uvec4(0x35D6F6F6, 0x47860296, 0xE6475627, 0x37563647))));
     if (text(u, O)) return;
     
     fontCaret = vec2(-0.29, 0.4);
     _((iTime < 14. ? uvec2(0x27164696, 0x57370202) :
         (iTime < 16. ? uvec2(0x07F63796, 0x4796F6E6) :
-          uvec2(0x26562702, 0x02020202))));
+          (iTime < 18. ? uvec2(0x26562702, 0x02020202) :
+            uvec2(0x96F6E637, 0x02020202)))));
     if (text(u, O)) return;
     
     vec2 U = 5. * (u - iResolution.xy * 0.5) / iResolution.y;
+    seed += 10u;
     vec2 i = floor(U), f = fract(U), p = U, h;
 
-    float d = 1e9, c, rad;
+    float d = 8., c, rad;
     for (int k = 0; k < 9; k++)
     {
       p = vec2(k % 3, k / 3) - 1.;
       rad = max((14. - iTime) * 0.5, 0.) * 0.5
         + (0.2 + hash(i + p, seed + 2u) * 0.5) * min(1., (iTime - 12.) * 0.5);
-      h = 0.5 * clamp(iTime - 14., 0., 1.) * vec2(hash(i + p, seed + 89u), hash(i + p, seed + 52u));
+      h = clamp((iTime - 14.) * 0.5, 0., 1.) * vec2(hash(i + p, seed + 89u), hash(i + p, seed + 52u));
       p += h - f;
 
       c = length(p) - rad;
-      d = min(d, c);
+      d = (iTime < 18. ? min(d, c) : smin(d, c, min(1., iTime - 18.) * 0.3));
     }
     O = vec4(vec3(-d), 1.);
     if (iTime > 16.)
@@ -758,5 +761,12 @@ void mainImage(out vec4 O, vec2 u)
       cols = max(0., 17. - iTime) * 100. + 8.;
       O = floor(O * cols) / cols;
     }
+  } else if (iTime < 22.) {
+    vec2 U = 5. * (u - iResolution.xy * 0.5) / iResolution.y;
+    float g = -min(fbmCircles(U, seed + 10u), fbmCircles(U, seed + 20u));
+    O = vec4(vec3(0.5 * (22. - iTime) * (-circles(U, 0.5, -1., seed + 10u))
+      + (iTime - 20.) * 0.5 * g), 1.);
+    cols = 8.;
+    O = floor(O * cols) / cols;
   }
 }

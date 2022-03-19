@@ -671,7 +671,7 @@ void mainImage(out vec4 O, vec2 u)
     _(uvec4(0x02020237, 0x47162766, 0x9656C646, 0x02F30202));
     if (text(u, O)) return;
      
-    vec2 bU = 2. + (u / iResolution.y) + iTime * 0.05;
+    vec2 bU = 2. + (u - iResolution.xy * 0.5) / iResolution.y + iTime * 0.05;
     vec2 U = floor(bU * pix) / pix;
     bool dith = mod(bU.x + U.y, 2. / pix) < 1. / pix;
   
@@ -712,7 +712,7 @@ void mainImage(out vec4 O, vec2 u)
     _(uvec4(0x458656E6, 0x02160266, 0x57C6C602, 0x76279646));
     if (text(u, O)) return;
     
-    vec2 U = (iTime > 9. ? min(2., iTime - 9.) * 2. + 1. : 1.)
+    vec2 U = (iTime > 9. ? min(1., (iTime - 9.) * 0.5) * 9. + 1. : 1.)
       * (u - iResolution.xy * 0.5) / iResolution.y;
     vec2 i = floor(U), f = fract(U), p = U;
 
@@ -740,7 +740,7 @@ void mainImage(out vec4 O, vec2 u)
             uvec2(0x96F6E637, 0x02020202)))));
     if (text(u, O)) return;
     
-    vec2 U = 5. * (2. + (u - iResolution.xy * 0.5) / iResolution.y);
+    vec2 U = 10. * (2. + (u - iResolution.xy * 0.5) / iResolution.y);
     seed += 10u;
     vec2 i = floor(U), f = fract(U), p = U, h;
 
@@ -762,13 +762,29 @@ void mainImage(out vec4 O, vec2 u)
       cols = max(0., 17. - iTime) * 100. + 8.;
       O = floor(O * cols) / cols;
     }
-  } else if (iTime < 25.) {
-    vec2 bU = 2. + (u - iResolution.xy * 0.5) / iResolution.y;
-    vec2 U = 5. * bU;
+  } else if (iTime < 22.) {
+    vec2 U = 10. * (2. + (u - iResolution.xy * 0.5) / iResolution.y);
     float g = min(fbmCircles(U, seed + 10u), fbmCircles(U, seed + 20u));
-    float fv = fbmVoronoi(0.25 * bU, seed);
     O = vec4(vec3(max(0., 0.5 * (22. - iTime)) * (-circles(U, 0.5, -1., seed + 10u))
-      + min(1., (iTime - 20.) * 0.5) * -smin(1., g, 3.3 * min(1., (iTime - 20.) * 0.5) * fv * fv)), 1.);
+      + min(1., (iTime - 20.) * 0.5) * -smin(1., g, 3.3 * min(1., (iTime - 20.) * 0.5))), 1.);
+    cols = 8.;
+    O = floor(O * cols) / cols;
+  } else if (iTime < 24.) {
+    vec2 bU = 2. + (u - iResolution.xy * 0.5) / iResolution.y;
+    vec2 U = 10. * bU;
+    float fv = fbmVoronoi(0.25 * bU, seed);
+    float g = min(fbmCircles(U, seed + 10u), fbmCircles(U, seed + 20u));
+    g = -smin(1., g, 3.3);
+    O = vec4(vec3(g * fv * fv), 1.);
+    cols = 8.;
+    O = floor(O * cols) / cols;
+  } else if (iTime < 26.) {
+    vec2 U = 2. + (u - iResolution.xy * 0.5) / iResolution.y;
+    float fv = fbmVoronoi(0.25 * U, seed);
+    vec2 aU = fbmSwirls(U, seed) * 10.;
+    float g = min(fbmCircles(aU, seed + 10u), fbmCircles(aU, seed + 20u));
+    g = -smin(1., g, 3.3);
+    O = vec4(vec3(g * fv * fv), 1.);
     cols = 8.;
     O = floor(O * cols) / cols;
   }

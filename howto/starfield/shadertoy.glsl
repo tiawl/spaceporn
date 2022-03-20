@@ -501,6 +501,11 @@ uvec4 Reduce_color_num = uvec4(0x25564657, 0x36560236, 0xF6C6F627, 0x02E657D6);
 uvec2 ber =      uvec2(0x26562702, 0x02020202);
 uvec4 Smooth_intersect = uvec4(0x35D6F6F6, 0x47860296, 0xE6475627, 0x37563647);
 uvec2 ions =     uvec2(0x96F6E637, 0x02020202);
+uvec4 Add_more_circles = uvec4(0x14464602, 0xD6F62756, 0x02369627, 0x36C65637);
+uvec4 Increase_their_r = uvec4(0x94E63627, 0x56163756, 0x02478656, 0x96270227);
+uvec2 adius =    uvec2(0x16469657, 0x37020202);
+uvec4 Apply_noisy_shap = uvec4(0x140707C6, 0x9702E6F6, 0x96379702, 0x37861607);
+uint e = uint(0x56020202);
 
 bool text(vec2 u, out vec4 O)
 {
@@ -594,7 +599,7 @@ void mainImage(out vec4 O, vec2 u)
       c = length(p) - 0.5;
       d = min(d, c);
     }
-    O = vec4(vec3(max(10. - iTime, 0.) * (-length(U) + 0.5) + (-d) * min(1., iTime - 9.)), 1.);
+    O = vec4(vec3(max((10. - iTime), 0.) * (-length(U) + 0.5) + (-d) * min(1., iTime - 9.)), 1.);
   } else if (iTime < 22.) {
     if ((iTime < 16.) || ((iTime > 17.) && (iTime < 21.)))
     {
@@ -631,29 +636,57 @@ void mainImage(out vec4 O, vec2 u)
       cols = max(0., 18. - iTime) * 100. + 8.;
       O = floor(O * cols) / cols;
     }
-  } else if (iTime < 24.) {
+  } else if (iTime < 27.) {
+    fontCaret = vec2(-0.825, 0.4);    
+    _((iTime < 24. ? Add_more_circles : Increase_their_r));
+    if (text(u, O)) return;
+    
+    if (iTime > 24.)
+    {
+      fontCaret = vec2(-0.29, 0.4);
+      _(adius);
+      if (text(u, O)) return;
+    }
+    
     vec2 U = 10. * (2. + (u - iResolution.xy * 0.5) / iResolution.y);
     float g = min(fbmCircles(U, seed + 10u), fbmCircles(U, seed + 20u));
-    O = vec4(vec3(max(0., 0.5 * (24. - iTime)) * (-circles(U, 0.5, -1., seed + 10u))
-      + min(1., (iTime - 22.) * 0.5) * -smin(1., g, 3.3 * min(1., (iTime - 22.) * 0.5))), 1.);
+    O = vec4(vec3((iTime < 24. ? max(0., 0.5 * (24. - iTime)) * (-circles(U, 0.5, -1., seed + 10u))
+      + min(1., (iTime - 22.) * 0.5) * -g : max(0., 0.5 * (26. - iTime)) * (-g)
+      + min(1., (iTime - 24.) * 0.5) * -smin(1., g, 3.3 * min(1., (iTime - 24.) * 0.5)))), 1.);
     cols = 8.;
     O = floor(O * cols) / cols;
-  } else if (iTime < 26.) {
+  } else if (iTime < 30.) {
+    fontCaret = vec2(-0.825, 0.4);    
+    _(Apply_noisy_shap);
+    if (text(u, O))
+    {
+      O *= clamp(0., 1., 30. - iTime); return;
+    }
+    
+    fontCaret = vec2(-0.29, 0.4);
+    _(e);
+    if (text(u, O))
+    {
+      O *= clamp(0., 1., 30. - iTime); return;
+    }
+    
     vec2 bU = 2. + (u - iResolution.xy * 0.5) / iResolution.y;
     vec2 U = 10. * bU;
     float fv = fbmVoronoi(0.25 * bU, seed);
+    fv *= fv * 1.5;
     float g = min(fbmCircles(U, seed + 10u), fbmCircles(U, seed + 20u));
     g = -smin(1., g, 3.3);
-    O = vec4(vec3(g * fv * fv), 1.);
+    O = vec4(vec3(g * (min(1., iTime - 27.) * fv + max(0., 28. - iTime))), 1.);
     cols = 8.;
-    O = floor(O * cols) / cols;
-  } else if (iTime < 28.) {
+    O = (floor(O * cols) / cols) * clamp(0., 1., 30. - iTime);
+  } else if (iTime < 32.) {
     vec2 U = 2. + (u - iResolution.xy * 0.5) / iResolution.y;
     float fv = fbmVoronoi(0.25 * U, seed);
+    fv *= fv * 1.5;
     vec2 aU = fbmSwirls(U, seed) * 10.;
     float g = min(fbmCircles(aU, seed + 10u), fbmCircles(aU, seed + 20u));
     g = -smin(1., g, 3.3);
-    O = vec4(vec3(g * fv * fv), 1.);
+    O = vec4(vec3(g * fv), 1.);
     cols = 8.;
     O = floor(O * cols) / cols;
   }

@@ -24,12 +24,14 @@ const int[] FONT_NB = int[](0x03, 0x13, 0x23, 0x33, 0x43, 0x53, 0x63, 0x73, 0x83
 // end of copy-pasting
 
 float pixel_res;
-uint seed;
 float pix;
 const float depth = 1. / 360.;
 
 # define BIGSTARS_DENSITY 4.5
 # define MAX_BIGSTAR_SZ 8.
+# define COLS 18.
+# define COL_SEED 0u
+# define SEED 1u
 
 # define DIAMOND 0u
 # define NOVA    1u
@@ -145,7 +147,7 @@ float circles(vec2 p, float r, float w, uint s)
     if (sign(w) > -0.5)
     {
       // https://iquilezles.org/www/articles/smoothvoronoi/smoothvoronoi.htm
-      col = 0.5 + 0.5 * sin(hash(i + p, seed + 32u) * 2.5 + 3.5 + vec3(2.));  		
+      col = 0.5 + 0.5 * sin(hash(i + p, SEED + 32u) * 2.5 + 3.5 + vec3(2.));  		
       h2 = smoothstep(0., 1., 0.5 + 0.5 * (d - c) / w);
 	  d = mix(d, c, h2) - h2 * (1. - h2) * w / (1. + 3. * w);
     } else {
@@ -185,35 +187,26 @@ float fbmCircles(vec2 p, uint se)
 // https://www.shadertoy.com/view/fsKSWD
 vec2 swirls(vec2 p, uint se, float sz, float ro)
 {
-  float r;
-  float s = 0.012 * sz;
-
-  p = p * s * 360.;
-  vec2 F = abs(fract(p + 0.5) - 0.5);
-  float y = min(F.x, F.y);
-  vec2 I = floor(p);
-  F = fract(p);
-
-  float d = 3. * ro;
-  y = d * cos(d * y);
-  p -= p;
-  vec2 D;
+  p *= 360. / sz;
+  
+  vec2 i = floor(p), f = fract(p), d;
   int k;
+  float r;
   for (k = 0; k < 9; k++)
   {
-    D = vec2(k % 3, k / 3) - 1.;
-    D += hash(I + D, se + 222u);
-    r = length(F - D) * (1. + hash(I + D, se + 72u));
-    F = rotation(F - D, y * smoothstep(0.5, 0., r)) + D;
-    p = F + I;
+    d = vec2(k % 3, k / 3) - 1.;
+    d += hash(i + d, se + 222u);
+    r = length(f - d) * (1. + hash(i + d, se + 72u));
+    f = rotation(f - d, ro * smoothstep(0.5, 0., r)) + d;
+    p = f + i;
   }
-  return p / (s * 360.);
+  return p / (360. / sz);
 }
 
 vec2 fbmSwirls(vec2 p, uint se)
 {
   uint o = 3u;
-  float sz = 2., ro = 0.5;
+  float sz = 42., ro = 1.5;
   for(uint i = 0u; i < o; i++)
   {
     p = swirls(p, se + i, sz, ro);
@@ -378,35 +371,35 @@ float polar(vec2 coords, Star star)
 
 float calc_star(vec2 coords, vec2 center)
 {
-  float type = hash(center, seed + 2u);
+  float type = hash(center, SEED + 2u);
   uint rd_bigstar = (type < 0.15 ? NOVA : (type < 0.3 ? POLAR : DIAMOND));
-  float size_hash = hash(center, seed + 3u) * 0.05;
+  float size_hash = hash(center, SEED + 3u) * 0.05;
   float min_size = (rd_bigstar == DIAMOND ? 3. : 7.);
   float max_size = MAX_BIGSTAR_SZ - min_size;
   float size =
     (min(floor(size_hash * (max_size + 1.)), max_size) + min_size) * pixel_res * (pix / 150.);
-  float brightness = hash(center, seed + 4u) + 1.;
-  float ring_size = hash(center, seed + 5u) * 0.8;
+  float brightness = hash(center, SEED + 4u) + 1.;
+  float ring_size = hash(center, SEED + 5u) * 0.8;
   ring_size = (ring_size * size < pixel_res * 4. ? 0. : ring_size);
-  float power = round(sin(iTime * (3. + 4. * hash(center, seed + 6u)))) * 0.2 + 1.;
+  float power = round(sin(iTime * (3. + 4. * hash(center, SEED + 6u)))) * 0.2 + 1.;
 
   float star = 0.;
   Star bigstar =
     Star(rd_bigstar, center, size, power, 1., 0u, 1., ring_size);
   if (bigstar.type == DIAMOND)
   {
-    bool rotated = hash(bigstar.center, seed + 7u) > 0.5;
+    bool rotated = hash(bigstar.center, SEED + 7u) > 0.5;
     bigstar.brightness *= bigstar.size;
     bigstar.brightness *= bigstar.power;
     coords = rotation(coords, radians(rotated ? 45. : 0.));
     star = diamond(coords, bigstar);
   } else if (bigstar.type == NOVA) {
-    bigstar.shape = uint(ceil(hash(bigstar.center, seed + 7u) * 38.));
+    bigstar.shape = uint(ceil(hash(bigstar.center, SEED + 7u) * 38.));
     bigstar.diag = (bigstar.shape > 38u ? 0. :
       (bigstar.shape < 25u ?
-        1. + hash(bigstar.center, seed + 8u) * 3.5 :
-        hash(bigstar.center, seed + 8u) > 0.5 ? bigstar.size / pixel_res :
-        2. + hash(bigstar.center, seed + 9u) * 3.));
+        1. + hash(bigstar.center, SEED + 8u) * 3.5 :
+        hash(bigstar.center, SEED + 8u) > 0.5 ? bigstar.size / pixel_res :
+        2. + hash(bigstar.center, SEED + 9u) * 3.));
     bigstar.brightness = (bigstar.shape > 38u ?
       100. / pix : bigstar.size * bigstar.brightness);
     bigstar.brightness *= bigstar.power;
@@ -414,7 +407,7 @@ float calc_star(vec2 coords, vec2 center)
   } else {
     bigstar.brightness *= bigstar.size;
     bigstar.brightness *= bigstar.power;
-    bigstar.diag = 2.5 + hash(bigstar.center, seed + 7u) * 0.5;
+    bigstar.diag = 2.5 + hash(bigstar.center, SEED + 7u) * 0.5;
     star = polar(coords, bigstar);
   }
   return star;
@@ -436,7 +429,7 @@ vec3 bigstars(vec2 coords)
     o = vec2(k % 3, k / 3) - 1.;
 
     center = i + o;
-    h = vec2(hash(center, seed), hash(center, seed + 1u));
+    h = vec2(hash(center, SEED), hash(center, SEED + 1u));
     p = vec2(floor2(o.x + h.x - f.x, pixel_res),
       floor2(o.y + h.y - f.y, pixel_res));
 
@@ -449,7 +442,7 @@ vec3 bigstars(vec2 coords)
   }
   
   vec2 U = (coords + tmp) / BIGSTARS_DENSITY;
-  float fv = fbmVoronoi(0.25 * U, seed);
+  float fv = fbmVoronoi(0.25 * U, SEED);
   
   return vec3(-d * fv * fv * 0.5, U * pix);
 }
@@ -488,9 +481,28 @@ vec3 color(float sm, uint cseed)
   return hsv2rgb(vec3(hu, sa, br));
 }
 
+void starfield(vec2 u, out vec4 O)
+{
+  vec2 bU = 2. + (u - iResolution.xy * 0.5) / iResolution.y + iTime * 0.05;
+  vec2 U = floor(bU * pix) / pix;
+  bool dith = mod(bU.x + U.y, 2. / pix) < 1. / pix;
+  
+  float fv = fbmVoronoi(0.25 * U, SEED);
+  vec2 aU = fbmSwirls(U, SEED) * 10.;
+  float g = min(fbmCircles(aU, SEED + 10u), fbmCircles(aU, SEED + 20u));
+  g = -smin(1., g, 3.3) * fv * fv;
+  g *= (dith ? 1.35 : 1.5);
+  
+  vec3 b = bigstars(U) * vec3(4., 1., 1.);
+
+  g = max(b.x, g);
+  g = floor(g * COLS) / COLS;
+  O = vec4(color(10. * g, COL_SEED), 1.) * (iTime > 3. ? (4. - iTime) / 2. : 1.);
+}
+
 uvec4 How_to_make_this = uvec4(0x84F67702, 0x47F602D6, 0x16B65602, 0x47869637);
 uvec4 starfield_X =      uvec4(0x02020237, 0x47162766, 0x9656C646, 0x02F30202);
-uvec3 XX_circles =   uvec3(0x13E20234, 0x962736C6, 0x56370202);
+uvec3 XX_Circles =   uvec3(0x13E20234, 0x962736C6, 0x56370202);
 uvec4 Draw_a_circled_l = uvec4(0x44271677, 0x02160236, 0x962736C6, 0x564602C6);
 uint ight = uint(0x96768647);
 uvec4 Then_a_full_grid = uvec4(0x458656E6, 0x02160266, 0x57C6C602, 0x76279646);
@@ -502,10 +514,11 @@ uvec2 ber =      uvec2(0x26562702, 0x02020202);
 uvec4 Smooth_intersect = uvec4(0x35D6F6F6, 0x47860296, 0xE6475627, 0x37563647);
 uvec2 ions =     uvec2(0x96F6E637, 0x02020202);
 uvec4 Add_more_circles = uvec4(0x14464602, 0xD6F62756, 0x02369627, 0x36C65637);
-uvec4 Increase_their_r = uvec4(0x94E63627, 0x56163756, 0x02478656, 0x96270227);
-uvec2 adius =    uvec2(0x16469657, 0x37020202);
+uvec4 Increase_smoothn = uvec4(0x94E63627, 0x56163756, 0x0237D6F6, 0xF64786E6);
+uvec2 ess =    uvec2(0x56373702, 0x02020202);
 uvec4 Apply_noisy_shap = uvec4(0x140707C6, 0x9702E6F6, 0x96379702, 0x37861607);
 uint e = uint(0x56020202);
+uvec3 XX_Swirls =    uvec3(0x23E20235, 0x779627C6, 0x37020202);
 
 bool text(vec2 u, out vec4 O)
 {
@@ -523,10 +536,7 @@ bool text(vec2 u, out vec4 O)
 
 void mainImage(out vec4 O, vec2 u)
 {
-  seed = 1u;
-  uint col_seed = 0u;
   pix = 150.;
-  float cols = 18.;
   
   fontSize = 0.075;
   fontSpacing = 0.45;
@@ -546,25 +556,11 @@ void mainImage(out vec4 O, vec2 u)
     _(starfield_X);
     if (text(u, O)) return;
      
-    vec2 bU = 2. + (u - iResolution.xy * 0.5) / iResolution.y + iTime * 0.05;
-    vec2 U = floor(bU * pix) / pix;
-    bool dith = mod(bU.x + U.y, 2. / pix) < 1. / pix;
-  
-    float fv = fbmVoronoi(0.25 * U, seed);
-    vec2 aU = fbmSwirls(U, seed) * 10.;
-    float g = min(fbmCircles(aU, seed + 10u), fbmCircles(aU, seed + 20u));
-    g = -smin(1., g, 3.3) * fv * fv;
-    g *= (dith ? 1.35 : 1.5);
-  
-    vec3 b = bigstars(U) * vec3(4., 1., 1.);
-
-    g = max(b.x, g);
-    g = floor(g * cols) / cols;
-    O = vec4(color(10. * g, col_seed), 1.) * (iTime > 3. ? (4. - iTime) / 2. : 1.);
+    starfield(u, O);
   } else if (iTime < 6.) {
     fontSize = 0.1;
     fontCaret = vec2(-0.25, 0.05);
-    _(XX_circles);
+    _(XX_Circles);
     text(u, O);
     O *= (iTime > 5. ? (6. - iTime) / 2. : 1.);
   } else if (iTime < 9.) {
@@ -615,7 +611,7 @@ void mainImage(out vec4 O, vec2 u)
     vec2 U = (iTime < 16. ? 10. * (2. + (u - iResolution.xy * 0.5) / iResolution.y) : 
       (iTime < 21. ? 20. + (max(0., 17. - iTime) * 7. + 3.) * (u - iResolution.xy * 0.5) / iResolution.y :
         20. + (min(1., iTime - 21.) * 7. + 3.) * (u - iResolution.xy * 0.5) / iResolution.y));
-    seed += 10u;
+    uint seed = SEED + 10u;
     vec2 i = floor(U), f = fract(U), p = U, h;
 
     float d = 8., c, rad;
@@ -633,28 +629,27 @@ void mainImage(out vec4 O, vec2 u)
     O = vec4(vec3(-d), 1.);
     if (iTime > 17.)
     {
-      cols = max(0., 18. - iTime) * 100. + 8.;
+      float cols = max(0., 18. - iTime) * 100. + COLS;
       O = floor(O * cols) / cols;
     }
   } else if (iTime < 27.) {
     fontCaret = vec2(-0.825, 0.4);    
-    _((iTime < 24. ? Add_more_circles : Increase_their_r));
+    _((iTime < 24. ? Add_more_circles : Increase_smoothn));
     if (text(u, O)) return;
     
     if (iTime > 24.)
     {
       fontCaret = vec2(-0.29, 0.4);
-      _(adius);
+      _(ess);
       if (text(u, O)) return;
     }
     
     vec2 U = 10. * (2. + (u - iResolution.xy * 0.5) / iResolution.y);
-    float g = min(fbmCircles(U, seed + 10u), fbmCircles(U, seed + 20u));
-    O = vec4(vec3((iTime < 24. ? max(0., 0.5 * (24. - iTime)) * (-circles(U, 0.5, -1., seed + 10u))
+    float g = min(fbmCircles(U, SEED + 10u), fbmCircles(U, SEED + 20u));
+    O = vec4(vec3((iTime < 24. ? max(0., 0.5 * (24. - iTime)) * (-circles(U, 0.5, -1., SEED + 10u))
       + min(1., (iTime - 22.) * 0.5) * -g : max(0., 0.5 * (26. - iTime)) * (-g)
-      + min(1., (iTime - 24.) * 0.5) * -smin(1., g, 3.3 * min(1., (iTime - 24.) * 0.5)))), 1.);
-    cols = 8.;
-    O = floor(O * cols) / cols;
+      + min(1., (iTime - 24.) * 0.5) * -smin(1., g, 3.3 * min(1., (iTime - 24.) * 0.5)))), 1.);;
+    O = floor(O * COLS) / COLS;
   } else if (iTime < 30.) {
     fontCaret = vec2(-0.825, 0.4);    
     _(Apply_noisy_shap);
@@ -672,22 +667,34 @@ void mainImage(out vec4 O, vec2 u)
     
     vec2 bU = 2. + (u - iResolution.xy * 0.5) / iResolution.y;
     vec2 U = 10. * bU;
-    float fv = fbmVoronoi(0.25 * bU, seed);
+    float fv = fbmVoronoi(0.25 * bU, SEED);
     fv *= fv * 1.5;
-    float g = min(fbmCircles(U, seed + 10u), fbmCircles(U, seed + 20u));
+    float g = min(fbmCircles(U, SEED + 10u), fbmCircles(U, SEED + 20u));
     g = -smin(1., g, 3.3);
     O = vec4(vec3(g * (min(1., iTime - 27.) * fv + max(0., 28. - iTime))), 1.);
-    cols = 8.;
-    O = (floor(O * cols) / cols) * clamp(0., 1., 30. - iTime);
+    O = (floor(O * COLS) / COLS) * clamp(0., 1., 30. - iTime);
   } else if (iTime < 32.) {
+    fontSize = 0.1;
+    fontCaret = vec2(-0.225, 0.05);
+    _(XX_Swirls);
+    text(u, O);
+    O *= (iTime > 5. ? (32. - iTime) / 2. : 1.);
+  } else if (iTime < 34.) {
+    vec2 U = (u - iResolution.xy * 0.5) / iResolution.y;
+    //
+    U = rotation(U, smoothstep(0.5, 0., length(U)));
+    //
+    U *= 100.;
+    float g = sin(U.x + U.y);
+    O = vec4(vec3(g), 1.);
+  } else {
     vec2 U = 2. + (u - iResolution.xy * 0.5) / iResolution.y;
-    float fv = fbmVoronoi(0.25 * U, seed);
+    float fv = fbmVoronoi(0.25 * U, SEED);
     fv *= fv * 1.5;
-    vec2 aU = fbmSwirls(U, seed) * 10.;
-    float g = min(fbmCircles(aU, seed + 10u), fbmCircles(aU, seed + 20u));
+    vec2 aU = fbmSwirls(U, SEED) * 10.;
+    float g = min(fbmCircles(aU, SEED + 10u), fbmCircles(aU, SEED + 20u));
     g = -smin(1., g, 3.3);
     O = vec4(vec3(g * fv), 1.);
-    cols = 8.;
-    O = floor(O * cols) / cols;
+    O = floor(O * COLS) / COLS;
   }
 }

@@ -519,6 +519,7 @@ uvec4 Apply_noisy_shap = uvec4(0x140707C6, 0x9702E6F6, 0x96379702, 0x37861607);
 uint e =    uint(0x56020202);
 uvec3 XX_Swirls =    uvec3(0x23E20235, 0x779627C6, 0x37020202);
 uvec4 XCheck_patternX =  uvec4(0x82348656, 0x36B60207, 0x16474756, 0x27E69202);
+uvec4 Draw_a_swirl =     uvec4(0x44271677, 0x02160237, 0x779627C6, 0x02020202);
 
 bool text(vec2 u, out vec4 O)
 {
@@ -674,7 +675,7 @@ void mainImage(out vec4 O, vec2 u)
     O *= (iTime > 5. ? (32. - iTime) / 2. : 1.);
   } else if (iTime < 36.) {
     fontCaret = vec2(-0.825, 0.4);    
-    _((iTime < 33. ? XCheck_patternX : XCheck_patternX));
+    _((iTime < 33. ? XCheck_patternX : Draw_a_swirl));
     if (text(u, O)) return;
     
     vec2 U = (u - iResolution.xy * 0.5) / iResolution.y;
@@ -682,7 +683,35 @@ void mainImage(out vec4 O, vec2 u)
     pix = 2.;
     vec2 UU = floor(U * pix) / pix;
     bool dith = mod(U.x + UU.y, 2. / pix) < 1. / pix;
-    O = vec4(vec3(dith ? min(1., iTime - 32.): 0.), 1.);
+    O = vec4(vec3(0.25 + (dith ? 0.5 : 0.)), 1.) * min(1., iTime - 32.);
+    
+  } else if (iTime < 39.) {
+    fontCaret = vec2(-0.825, 0.4);    
+    _(Then_a_full_grid);
+    if (text(u, O)) return;
+    
+    vec2 U = (min(1., (iTime - 36.) * 0.5) * 9. + 1.) * (u - iResolution.xy * 0.5) / iResolution.y;
+    
+    if (length(U) > 0.5)
+    {
+      vec2 i = floor(U), f = fract(U), d;
+      int k;
+      float r;
+      for (k = 0; k < 9; k++)
+      {
+        d = vec2(k % 3, k / 3) - 1.;
+        r = length(f - d);
+        f = rotation(f - d, 1.5 * clamp((iTime - 36.) * 0.5, 0., 1.) * (1. - smoothstep(0., 0.5, r))) + d;
+        U = f + i;
+      }
+    } else {
+      U = rotation(U, 1.5 * (1. - smoothstep(0., 0.5, length(U))));
+    }
+    
+    pix = 2.;
+    vec2 UU = floor(U * pix) / pix;
+    bool dith = mod(U.x + UU.y, 2. / pix) < 1. / pix;
+    O = vec4(vec3(0.25 + (dith ? 0.5 : 0.)), 1.);
   } else {
     vec2 U = 2. + (u - iResolution.xy * 0.5) / iResolution.y;
     float fv = fbmVoronoi(0.25 * U, SEED);

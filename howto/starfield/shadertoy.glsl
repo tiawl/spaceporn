@@ -197,7 +197,7 @@ vec2 swirls(vec2 p, uint se, float sz, float ro)
     d = vec2(k % 3, k / 3) - 1.;
     d += hash(i + d, se + 222u);
     r = length(f - d) * (1. + hash(i + d, se + 72u));
-    f = rotation(f - d, ro * smoothstep(0.5, 0., r)) + d;
+    f = rotation(f - d, ro * (1. - smoothstep(0., 0.5, r))) + d;
     p = f + i;
   }
   return p / (360. / sz);
@@ -514,11 +514,11 @@ uvec2 ber =      uvec2(0x26562702, 0x02020202);
 uvec4 Smooth_intersect = uvec4(0x35D6F6F6, 0x47860296, 0xE6475627, 0x37563647);
 uvec2 ions =     uvec2(0x96F6E637, 0x02020202);
 uvec4 Add_more_circles = uvec4(0x14464602, 0xD6F62756, 0x02369627, 0x36C65637);
-uvec4 Increase_smoothn = uvec4(0x94E63627, 0x56163756, 0x0237D6F6, 0xF64786E6);
-uvec2 ess =    uvec2(0x56373702, 0x02020202);
+uvec4 Increase_light =   uvec4(0x94E63627, 0x56163756, 0x02C69676, 0x86470202);
 uvec4 Apply_noisy_shap = uvec4(0x140707C6, 0x9702E6F6, 0x96379702, 0x37861607);
-uint e = uint(0x56020202);
+uint e =    uint(0x56020202);
 uvec3 XX_Swirls =    uvec3(0x23E20235, 0x779627C6, 0x37020202);
+uvec4 XCheck_patternX =  uvec4(0x82348656, 0x36B60207, 0x16474756, 0x27E69202);
 
 bool text(vec2 u, out vec4 O)
 {
@@ -634,15 +634,8 @@ void mainImage(out vec4 O, vec2 u)
     }
   } else if (iTime < 27.) {
     fontCaret = vec2(-0.825, 0.4);    
-    _((iTime < 24. ? Add_more_circles : Increase_smoothn));
+    _((iTime < 24. ? Add_more_circles : Increase_light));
     if (text(u, O)) return;
-    
-    if (iTime > 24.)
-    {
-      fontCaret = vec2(-0.29, 0.4);
-      _(ess);
-      if (text(u, O)) return;
-    }
     
     vec2 U = 10. * (2. + (u - iResolution.xy * 0.5) / iResolution.y);
     float g = min(fbmCircles(U, SEED + 10u), fbmCircles(U, SEED + 20u));
@@ -655,14 +648,14 @@ void mainImage(out vec4 O, vec2 u)
     _(Apply_noisy_shap);
     if (text(u, O))
     {
-      O *= clamp(0., 1., 30. - iTime); return;
+      O *= clamp(30. - iTime, 0., 1.); return;
     }
     
     fontCaret = vec2(-0.29, 0.4);
     _(e);
     if (text(u, O))
     {
-      O *= clamp(0., 1., 30. - iTime); return;
+      O *= clamp(30. - iTime, 0., 1.); return;
     }
     
     vec2 bU = 2. + (u - iResolution.xy * 0.5) / iResolution.y;
@@ -672,21 +665,24 @@ void mainImage(out vec4 O, vec2 u)
     float g = min(fbmCircles(U, SEED + 10u), fbmCircles(U, SEED + 20u));
     g = -smin(1., g, 3.3);
     O = vec4(vec3(g * (min(1., iTime - 27.) * fv + max(0., 28. - iTime))), 1.);
-    O = (floor(O * COLS) / COLS) * clamp(0., 1., 30. - iTime);
+    O = (floor(O * COLS) / COLS) * clamp(30. - iTime, 0., 1.);
   } else if (iTime < 32.) {
     fontSize = 0.1;
     fontCaret = vec2(-0.225, 0.05);
     _(XX_Swirls);
     text(u, O);
     O *= (iTime > 5. ? (32. - iTime) / 2. : 1.);
-  } else if (iTime < 34.) {
+  } else if (iTime < 36.) {
+    fontCaret = vec2(-0.825, 0.4);    
+    _((iTime < 33. ? XCheck_patternX : XCheck_patternX));
+    if (text(u, O)) return;
+    
     vec2 U = (u - iResolution.xy * 0.5) / iResolution.y;
-    //
-    U = rotation(U, smoothstep(0.5, 0., length(U)));
-    //
-    U *= 100.;
-    float g = sin(U.x + U.y);
-    O = vec4(vec3(g), 1.);
+    U = rotation(U, 1.5 * clamp(iTime - 34., 0., 1.) * (1. - smoothstep(0., 0.5, length(U))));
+    pix = 2.;
+    vec2 UU = floor(U * pix) / pix;
+    bool dith = mod(U.x + UU.y, 2. / pix) < 1. / pix;
+    O = vec4(vec3(dith ? min(1., iTime - 32.): 0.), 1.);
   } else {
     vec2 U = 2. + (u - iResolution.xy * 0.5) / iResolution.y;
     float fv = fbmVoronoi(0.25 * U, SEED);

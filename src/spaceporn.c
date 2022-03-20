@@ -22,7 +22,7 @@ int main(int argc, char** argv)
   gettimeofday(&(uniform_values.start), NULL);
   uniform_values.pixels = (rand() % (MAX_PIXELS - MIN_PIXELS)) + MIN_PIXELS;
   uniform_values.zoom = (rand() % (MAX_ZOOM - MIN_ZOOM)) + MIN_ZOOM;
-  uniform_values.color = BLACK_WHITE;
+  uniform_values.color = STATIC_MONO;
   uniform_values.mode = NO_MODE;
   uniform_values.seed = -1.;
 

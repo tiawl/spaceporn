@@ -6,9 +6,9 @@ this [tutorial shader]() but I will go further to describe GLSL details.
 
 ## Table of contents
 
-[0) Before starting](howto/starfield/0_before_starting.md)
-[1) Nebula](howto/starfield/1_nebula.md)
-[1.1) A circled light](howto/starfield/1_1_a_circled_light.md)
+0) [Before starting](howto/starfield/0_before_starting.md)</br>
+1) [Nebula](howto/starfield/1_nebula.md)</br>
+1.1) [A circled light](howto/starfield/1_1_a_circled_light.md)
 
 ## Author
 

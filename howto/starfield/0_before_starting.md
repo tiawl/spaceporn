@@ -1,4 +1,4 @@
-<div style="text-align: right">[Next page: 1) Nebula](howto/starfield/1_nebula.md)</div>
+[&#8883; Next page: Nebula](howto/starfield/1_nebula.md)
 
 ---
 
@@ -79,3 +79,7 @@ We have this one:
 <img src="/howto/starfield/media/uvcoord_sys.png">
 
 And we have the same Y axis. Now we can start to draw something.
+
+---
+
+[&#8883; Next page: Nebula](howto/starfield/1_nebula.md)

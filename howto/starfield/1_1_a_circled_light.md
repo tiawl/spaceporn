@@ -1,3 +1,7 @@
+[Previous page: Nebula &#8882;](howto/starfield/1_nebula.md) | [&#8883; Next page: A full grid of circled light]()
+
+---
+
 # 1.1) A circled light
 
 To draw nebula on this shader, We have to draw a lot of circled light. So
@@ -56,3 +60,7 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord)
 ```
 
 <img src="/howto/starfield/media/blur_light.png">
+
+---
+
+[Previous page: Nebula &#8882;](howto/starfield/1_nebula.md) | [&#8883; Next page: A full grid of circled light]()

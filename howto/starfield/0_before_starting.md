@@ -1,10 +1,8 @@
-# How to make a pixelized starfield in GLSL ?
+<div style="text-align: right">[Next page: 1) Nebula](howto/starfield/1_nebula.md)</div>
 
-This is a tutorial to explain how I made starfield from this
-[shader](https://www.shadertoy.com/view/fsjBzy). I will follow same steps from
-this [tutorial shader]() but I will go further to describe GLSL details.
+---
 
-## Before starting
+# Before starting
 
 I'm not a pro graphic programmer. I did not receive a formal shadering
 formation. I learned by myself (and from ressources I found on Internet). So I
@@ -16,7 +14,7 @@ very grateful if you can open an issue to fix it ! I will also be very
 grateful if you can open an issue to share an article which could allow a
 better understanding of this tutorial.
 
-### Prerequites
+## Prerequites
 
 I assume:
 - you have maths knowledges (or at least curious and not afraid about
@@ -29,7 +27,7 @@ functions (*abs()*, *sin()*, *floor()*, *fract()*, *length()*, ...).
 If not, you can follow this tutorial but it will not be easy. So I recommend
 you to do some reading/testing first.
 
-### Setup
+## Setup
 
 In this tutorial we will only write a fragment shader. We do not need any
 other shader to make it. We will write this shader on
@@ -39,7 +37,7 @@ result on you own *Shadertoy* session if you copy-paste the script I am
 writing. There are very minor changes between Shadertoy's shaders and GLSL
 shader. So it will not be hard to translate the final result in a GLSL shader.
 
-### Synchronize our viewports
+## Synchronize our viewports
 
 Here is our main function:
 ```
@@ -81,68 +79,3 @@ We have this one:
 <img src="/howto/starfield/media/uvcoord_sys.png">
 
 And we have the same Y axis. Now we can start to draw something.
-
-## 1. Nebula
-
-### A simple blur circled light
-
-To draw nebula on this shader, We have to draw a lot of circled light. So
-before going further we need to understand how to draw a lonely circled light.
-For this we can use the *length(v)* function. This function returns the
-[length of the vector](https://onlinemschool.com/math/library/vector/length/)
-*v*. Giving the UV coordinates of the current pixel to the *length(v)*
-function will return the distance between our pixel and the origin. So for
-this script:
-
-```
-void mainImage(out vec4 fragColor, in vec2 fragCoord)
-{
-  // Uniformize coordinate system
-  vec2 UV = fragCoord / iResolution.y;
-
-  // Compute the distance between the current pixel and the origin
-  float dist = length(UV);
-
-  // Dislay the result
-  fragColor = vec4(vec3(dist), 1.0);
-}
-```
-
-We have this result (nearer is the point from the origin, darker it is):
-
-<img src="/howto/starfield/media/dist.png">
-
-First we need to center the result. We saw that *iResolution* was the viewport
-resolution. So we just uniformize this value, half it and substract it
-to our pixel's UV coordinates to get a centered light. Finally, we have to
-revert the color to get our first light. To achieve this, we multiply the
-*dist* variable by *-1.0* and we add a radius value.
-
-```
-void mainImage(out vec4 fragColor, in vec2 fragCoord)
-{
-  vec2 UV = fragCoord / iResolution.y;
-
-  // Uniformize viewport resolution
-  vec2 res = iResolution.xy / iResolution.y;
-
-  // Half it
-  res /= 2.0;
-
-  // Substract it to the pixel's UV coordinates
-  UV -= res;
-
-  float radius = 0.5;
-
-  // Revert color value and give a radius to the light
-  float dist = -1.0 * length(UV) + radius;
-
-  fragColor = vec4(vec3(dist), 1.0);
-}
-```
-
-<img src="/howto/starfield/media/blur_light.png">
-
-## Author
-
-tiawl/trapped_in_a_while_loop

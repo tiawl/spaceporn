@@ -1,4 +1,4 @@
-[Previous page: Setup &#8882;](0_setup.md) | [&#8883; Next page: Circled lights grid](1_2_circles_grid.md)
+[Previous page: Setup &#8882;](0_setup.md) | [&#8883; Next page: Circles grid](1_2_circles_grid.md)
 
 ---
 
@@ -64,4 +64,4 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord)
 
 ---
 
-[Previous page: Setup &#8882;](0_setup.md) | [&#8883; Next page: Circled lights grid](1_2_circles_grid.md)
+[Previous page: Setup &#8882;](0_setup.md) | [&#8883; Next page: Circles grid](1_2_circles_grid.md)

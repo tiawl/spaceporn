@@ -1,4 +1,4 @@
-[Previous page: Nebula &#8882;](1_nebula.md) | [&#8883; Next page: A full grid of circled light]()
+[Previous page: Setup &#8882;](0_setup.md) | [&#8883; Next page: A full grid of circled light]()
 
 ---
 
@@ -63,4 +63,4 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord)
 
 ---
 
-[Previous page: Nebula &#8882;](1_nebula.md) | [&#8883; Next page: A full grid of circled light]()
+[Previous page: Setup &#8882;](0_setup.md) | [&#8883; Next page: A full grid of circled light]()

@@ -1,33 +1,8 @@
-[&#8883; Next page: Nebula](1_nebula.md)
+[&#8883; Next page: A circled light](1_1_a_circled_light.md)
 
 ---
 
-# Before starting
-
-I'm not a pro graphic programmer. I did not receive a formal shadering
-formation. I learned by myself (and from ressources I found on Internet). So I
-will explain details the way I understand them. This is why:
-- this tutorial can leak some knowledges and/or precision,
-- I will, as mush as possible, link articles.
-If you have better knowledges than mine and you found a mistake, I will be
-very grateful if you can open an issue to fix it ! I will also be very
-grateful if you can open an issue to share an article which could allow a
-better understanding of this tutorial.
-
-## Prerequites
-
-I assume:
-- you have maths knowledges (or at least curious and not afraid about
-maths),
-- you know what is a fragment shader,
-- you already have basic knowlegde of GLSL shaders. At leat about specific
-types (*vec2*, *vec3*, *vec4*, *ivec2*, *uvec2*, *mat2*, ...) and built-in
-functions (*abs()*, *sin()*, *floor()*, *fract()*, *length()*, ...).
-
-If not, you can follow this tutorial but it will not be easy. So I recommend
-you to do some reading/testing first.
-
-## Setup
+# Setup
 
 In this tutorial we will only write a fragment shader. We do not need any
 other shader to make it. We will write this shader on
@@ -82,4 +57,4 @@ And we have the same Y axis. Now we can start to draw something.
 
 ---
 
-[&#8883; Next page: Nebula](1_nebula.md)
+[&#8883; Next page: A circled light](1_1_a_circled_light.md)

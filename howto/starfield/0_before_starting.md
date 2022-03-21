@@ -1,4 +1,4 @@
-[&#8883; Next page: Nebula](howto/starfield/1_nebula.md)
+[&#8883; Next page: Nebula](1_nebula.md)
 
 ---
 
@@ -72,14 +72,14 @@ in UV system. The better way to achieve this, is to add this line in our
 viewport resolution". So *iResolution.y* is our height resolution. So now
 instead of this coordinate system:
 
-<img src="/howto/starfield/media/fragcoord_sys.png">
+<img src="media/fragcoord_sys.png">
 
 We have this one:
 
-<img src="/howto/starfield/media/uvcoord_sys.png">
+<img src="media/uvcoord_sys.png">
 
 And we have the same Y axis. Now we can start to draw something.
 
 ---
 
-[&#8883; Next page: Nebula](howto/starfield/1_nebula.md)
+[&#8883; Next page: Nebula](1_nebula.md)

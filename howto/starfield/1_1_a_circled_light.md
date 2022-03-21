@@ -1,12 +1,13 @@
-[Previous page: Setup &#8882;](0_setup.md) | [&#8883; Next page: A full grid of circled light]()
+[Previous page: Setup &#8882;](0_setup.md) | [&#8883; Next page: Circled lights grid](1_2_circles_grid.md)
 
 ---
 
-# 1.1) A circled light
+# 1.1. A circled light
 
-To draw nebula on this shader, We have to draw a lot of circled light. So
-before going further we need to understand how to draw a lonely circled light.
-For this we can use the *length(v)* function. This function returns the
+For this shader, we have to draw a lot of circled light. So before going
+further we need to understand how to draw a lonely circled light. One of the
+easier way to achieve this is to use the *length(v)* builtin function. This
+function returns the
 [length of the vector](https://onlinemschool.com/math/library/vector/length/)
 *v*. Giving the UV coordinates of the current pixel to the *length(v)*
 function will return the distance between our pixel and the origin. So for
@@ -63,4 +64,4 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord)
 
 ---
 
-[Previous page: Setup &#8882;](0_setup.md) | [&#8883; Next page: A full grid of circled light]()
+[Previous page: Setup &#8882;](0_setup.md) | [&#8883; Next page: Circled lights grid](1_2_circles_grid.md)

@@ -34,6 +34,10 @@ you to do some reading/testing first.
 0) [Setup](0_setup.md)</br>
 1) Circles</br>
 1.1. [A circled light](1_1_a_circled_light.md)</br>
+1.2. [Circles grid](1_2_circles_grid.md)</br>
+1.3. [Randomize the circles grid](1_3_rd_circles_grid.md)</br>
+1.4. [Use circles grid as a noise](1_4_noise_circles_grid.md)</br>
+1.5. [Shape the circles grid](1_5_shape_circles_grid.md)</br>
 2) Swirls</br>
 3) Stars</br>
 4) Details</br>

@@ -31,11 +31,15 @@ We have this result (nearer is the point from the origin, darker it is):
 
 <img src="media/dist.png">
 
-First we need to center the result. We saw that *iResolution* was the viewport
-resolution. So we just uniformize this value, half it and substract it
-to our pixel's UV coordinates to get a centered light. Finally, we have to
-revert the color to get our first light. To achieve this, we multiply the
-*dist* variable by *-1.0* and we add a radius value.
+First we need to center the result. We saw *iResolution* was the viewport
+resolution. So we just uniformize this value, half it and substract it to our
+pixel's UV coordinates to center the light. Finally, we have to revert the
+color. To achieve this, we multiply the *length(UV)* function by *-1.0*. Now
+the color value is between *0.0* and *-&infin;*. So if we display something,
+we will see a black screen. We have to add a value to increase the maximum
+color value (which is *0.0*). Greater this value will be, greater will be the
+maximum color value and bigger will be our circle. This value will be its
+radius.
 
 ```
 void mainImage(out vec4 fragColor, in vec2 fragCoord)
@@ -54,7 +58,7 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord)
   float radius = 0.5;
 
   // Revert color value and give a radius to the light
-  float dist = -1.0 * length(UV) + radius;
+  float dist = radius - length(UV);
 
   fragColor = vec4(vec3(dist), 1.0);
 }

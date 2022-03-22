@@ -15,17 +15,18 @@ each *length(v)* call.
 ```
   vec2 UV = 10. * fragCoord / iResolution.y;
 
-  vec2 f = fract(UV);
-  vec2 p;
+  vec2 fractional = fract(UV);
 
-  float d = -1e9;
-  float c;
+  float maximum = -1e9;
+  float tmp;
   float radius = 0.5;
-  for (int k = 0; k < 9; k++)
+  for (int x = -1; x < 2; x++)
   {
-    p = vec2(k % 3, k / 3) + 1.;
-    c = radius - length(p - f);
-    d = max(d, c);
+    for (int y = -1; y < 2; y++)
+    {
+      tmp = radius - length(vec2(x, y) - fractional);
+      maximum = max(maximum, tmp);
+    }
   }
 
   fragColor = vec4(vec3(d), 1.);

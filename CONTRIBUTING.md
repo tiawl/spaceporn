@@ -1,3 +1,4 @@
+vim: syntax=markdown
 # Contributing
 
 First off, thank you for considering contributing to **spaceporn**.

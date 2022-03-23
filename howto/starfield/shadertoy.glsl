@@ -17,7 +17,7 @@
 #define SPACE_CHAR 0x02U
 #define STOP_CHAR 0x0AU
 
-vec4 fontCol;vec3 fontColFill;vec3 fontColBorder;vec4 fontBuffer;vec2 fontCaret;float fontSize;float fontSpacing;vec2 fontUV;vec4 fontTextureLookup(vec2 xy){float dxy = 1024. * 1.5;vec2 dx = vec2(1., 0.) / dxy;vec2 dy = vec2(0., 1.) / dxy;return texture(fontChannel, xy);}void drawStr4(uint str){if (str < 0x100U){str = str * 0x100U + SPACE_CHAR;}if (str < 0x10000U){str = str * 0x100U + SPACE_CHAR;}if (str < 0x1000000U){str = str * 0x100U + SPACE_CHAR;}for (int i = 0; i < 4; i++){uint xy = (str >> 8 * (3 - i)) % 256U;if (xy != SPACE_CHAR){vec2 K = (fontUV - fontCaret) / fontSize;if (length(K) < 0.6){vec4 Q = fontTextureLookup((K + vec2(float(xy / 16U) + 0.5,16. - float(xy % 16U) - 0.5)) / 16.);fontBuffer.rgb += Q.rgb * smoothstep(0.6, 0.4, length(K));if (max(abs(K.x), abs(K.y)) < 0.5){fontBuffer.a = min(Q.a, fontBuffer.a);}}}if (xy != STOP_CHAR){fontCaret.x += fontSpacing * fontSize;}}}void beginDraw(){fontBuffer = vec4(0., 0., 0. , 1.);fontCol = vec4(0.);fontCaret.x += fontSpacing * fontSize / 2.;}void endDraw(){float a = smoothstep(1., 0., smoothstep(0.51, 0.53, fontBuffer.a));float b = smoothstep(0., 1., smoothstep(0.48, 0.51, fontBuffer.a));fontCol.rgb = mix(fontColFill, fontColBorder, b);fontCol.a = a;}void _(uint str){beginDraw();drawStr4(str);endDraw();}void _(uvec2 str){beginDraw();drawStr4(str.x);drawStr4(str.y);endDraw();}void _(uvec3 str){beginDraw();drawStr4(str.x);drawStr4(str.y);drawStr4(str.z);endDraw();}void _(uvec4 str){beginDraw();drawStr4(str.x);drawStr4(str.y);drawStr4(str.z);drawStr4(str.w);endDraw();}vec2 viewport(vec2 b){return (b / iResolution.xy - vec2(0.5)) * vec2(iResolution.x / iResolution.y, 1.);}
+vec4 fontCol;vec3 fontColFill;vec3 fontColBorder;vec4 fontBuffer;vec2 fontCaret;float fontSize;float fontSpacing;vec2 fontUV;vec4 fontTextureLookup(vec2 xy){return texture(fontChannel, xy);}void drawStr4(uint str){if (str < 0x100U){str = str * 0x100U + SPACE_CHAR;}if (str < 0x10000U){str = str * 0x100U + SPACE_CHAR;}if (str < 0x1000000U){str = str * 0x100U + SPACE_CHAR;}for (int i = 0; i < 4; i++){uint xy = (str >> 8 * (3 - i)) % 256U;if (xy != SPACE_CHAR){vec2 K = (fontUV - fontCaret) / fontSize;if (length(K) < 0.6){vec4 Q = fontTextureLookup((K + vec2(float(xy / 16U) + 0.5,16. - float(xy % 16U) - 0.5)) / 16.);fontBuffer.rgb += Q.rgb * smoothstep(0.6, 0.4, length(K));if (max(abs(K.x), abs(K.y)) < 0.5){fontBuffer.a = min(Q.a, fontBuffer.a);}}}if (xy != STOP_CHAR){fontCaret.x += fontSpacing * fontSize;}}}void beginDraw(){fontBuffer = vec4(0., 0., 0. , 1.);fontCol = vec4(0.);fontCaret.x += fontSpacing * fontSize / 2.;}void endDraw(){float a = smoothstep(1., 0., smoothstep(0.51, 0.53, fontBuffer.a));float b = smoothstep(0., 1., smoothstep(0.48, 0.51, fontBuffer.a));fontCol.rgb = mix(fontColFill, fontColBorder, b);fontCol.a = a;}void _(uint str){beginDraw();drawStr4(str);endDraw();}void _(uvec2 str){beginDraw();drawStr4(str.x);drawStr4(str.y);endDraw();}void _(uvec3 str){beginDraw();drawStr4(str.x);drawStr4(str.y);drawStr4(str.z);endDraw();}void _(uvec4 str){beginDraw();drawStr4(str.x);drawStr4(str.y);drawStr4(str.z);drawStr4(str.w);endDraw();}vec2 viewport(vec2 b){return (b / iResolution.xy - vec2(0.5)) * vec2(iResolution.x / iResolution.y, 1.);}
 
 // end of copy-pasting
 
@@ -175,13 +175,14 @@ vec2 swirls(vec2 p, uint se, float sz, float ro)
   
   vec2 i = floor(p), f = fract(p), d;
   int k;
-  float r;
+  float r, h;
   for (k = 0; k < 9; k++)
   {
     d = vec2(k % 3, k / 3) - 1.;
     d += hash(i + d, se + 222u);
-    r = length(f - d) * (1. + hash(i + d, se + 72u));
-    f = rotation(f - d, ro * (1. - smoothstep(0., 0.5, r))) + d;
+    h = hash(i + d, 72u) * 2. - 1.;
+    r = length(f - d) * (1. + abs(h));
+    f = rotation(f - d, ro * sign(h) * (1. - smoothstep(0., 0.5, r))) + d;
     p = f + i;
   }
   return p / (360. / sz);
@@ -502,7 +503,6 @@ uvec4 _Increase_light_ =   uvec4(0x94E63627, 0x56163756, 0x02C69676, 0x8647);
 uvec4 _Apply_noisy_shap_ = uvec4(0x140707C6, 0x9702E6F6, 0x96379702, 0x37861607);
 uvec4  _e_ =               uvec4(0x56,       SPACE_CHAR, SPACE_CHAR, SPACE_CHAR);
 uvec4 _XX_Swirls_ =        uvec4(0x23E20235, 0x779627C6, 0x37,       SPACE_CHAR);
-uvec4 _XCheck_patternX_ =  uvec4(0x82348656, 0x36B60207, 0x16474756, 0x27E692);
 uvec4 _Draw_a_swirl_ =     uvec4(0x44271677, 0x02160237, 0x779627C6, SPACE_CHAR);
 uvec4 _rotation_ =         uvec4(0x27F64716, 0x4796F6E6, SPACE_CHAR, SPACE_CHAR);
 
@@ -660,18 +660,26 @@ void mainImage(out vec4 O, vec2 u)
     text(u, O);
     O *= (iTime > 5. ? (32. - iTime) / 2. : 1.);
   } else if (iTime < 36.) {
-    fontCaret = vec2(-0.825, 0.4);    
-    _((iTime < 33. ? _XCheck_patternX_ : _Draw_a_swirl_));
-    if (text(u, O)) return;
+    if (iTime > 33.)
+    {
+      fontCaret = vec2(-0.825, 0.4);    
+      _(_Draw_a_swirl_);
+      if (text(u, O)) return;
+    }
     
     vec2 U = (u - iResolution.xy * 0.5) / iResolution.y;
     U = rotation(U, 1.5 * clamp(iTime - 34., 0., 1.) * (1. - smoothstep(0., 0.5, length(U))));
     pix = 2.;
     vec2 UU = floor(U * pix) / pix;
-    bool dith = mod(U.x + UU.y, 2. / pix) < 1. / pix;
-    O = vec4(vec3(0.25 + (dith ? 0.5 : 0.)), 1.) * min(1., iTime - 32.);
+    bool d1 = mod(U.x + UU.y, 2. / pix) < 1. / pix;
     
-  } else if (iTime < 41.) {
+    pix = sqrt(pix);
+    U = rotation(U, 3.1415 / 4.);
+    UU = floor(U * pix) / pix;
+    bool d2 = mod(U.x + UU.y, 2. / pix) < 1. / pix;
+    
+    O = vec4(vec3(0.2 + 0.6 * (float(d1 || d2) - float(d1 && d2))), 1.) * min(1., iTime - 32.);   
+  } else if (iTime < 42.) {
     fontCaret = vec2(-0.825, 0.4);    
     _((iTime < 39. ? _Then_a_full_grid_ : _Randomize_their_));
     if (text(u, O)) return;
@@ -691,12 +699,16 @@ void mainImage(out vec4 O, vec2 u)
     {
       vec2 i = floor(U), f = fract(U), d;
       int k;
-      float r;
+      float r, h;
       for (k = 0; k < 9; k++)
       {
         d = vec2(k % 3, k / 3) - 1.;
-        r = length(f - d) * (1. + hash(i + d, SEED + 72u) * clamp(iTime - 39., 0., 1.));
-        f = rotation(f - d, 1.5 * clamp((iTime - 36.) * 0.5, 0., 1.) * (1. - smoothstep(0., 0.5, r))) + d;
+        h = hash(i + d, SEED + 72u) * 2. - 1.;
+        r = length(f - d) * (1. + abs(h) * clamp(iTime - 39., 0., 1.));
+        f = rotation(f - d, (iTime < 39. ? 1.5 * clamp((iTime - 36.) * 0.5, 0., 1.)
+          * (1. - smoothstep(0., 0.5, r)) : 1.5 *
+          (clamp(0.5 * (41. - iTime), 0., 1.) * (1. - smoothstep(0., 0.5, length(f - d))) +
+           clamp(0.5 * (iTime - 39.), 0., 1.) * sign(h) * (1. - smoothstep(0., 0.5, r))))) + d;
         U = f + i;
       }
     } else {
@@ -705,8 +717,14 @@ void mainImage(out vec4 O, vec2 u)
     
     pix = 2.;
     vec2 UU = floor(U * pix) / pix;
-    bool dith = mod(U.x + UU.y, 2. / pix) < 1. / pix;
-    O = vec4(vec3(0.25 + (dith ? 0.5 : 0.)), 1.);
+    bool d1 = mod(U.x + UU.y, 2. / pix) < 1. / pix;
+    
+    pix = sqrt(pix);
+    U = rotation(U, 3.1415 / 4.);
+    UU = floor(U * pix) / pix;
+    bool d2 = mod(U.x + UU.y, 2. / pix) < 1. / pix;
+    
+    O = vec4(vec3(0.2 + 0.6 * (float(d1 || d2) - float(d1 && d2))), 1.);
   } else {
     vec2 U = 2. + (u - iResolution.xy * 0.5) / iResolution.y;
     float fv = fbmVoronoi(0.25 * U, SEED);

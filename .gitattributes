@@ -1,2 +1,3 @@
 *.md linguist-detectable
 shaders/lab/*.glsl linguist-vendored
+howto/*/*.glsl linguist-vendored

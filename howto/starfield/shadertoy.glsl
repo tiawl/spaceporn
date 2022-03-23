@@ -1,26 +1,38 @@
 // https://www.shadertoy.com/view/llySRh
 
-int char_id = -1; vec2 char_pos, dfdx, dfdy; 
-vec4 char(vec2 p, int c) {
-    vec2 dFdx = dFdx(p/16.), dFdy = dFdy(p/16.);
- // if ( p.x>.25&& p.x<.75 && p.y>.0&& p.y<1. )  // normal char box
-    if ( p.x>.25&& p.x<.75 && p.y>.1&& p.y<.85 ) // thighly y-clamped to allow dense text
-        char_id = c, char_pos = p, dfdx = dFdx, dfdy = dFdy;
-    return vec4(0);
+int char_id = -1;
+vec2 char_pos, dfdx, dfdy;
+
+void char(vec2 p, int c)
+{
+    vec2 dFdx = dFdx(p / 16.), dFdy = dFdy(p / 16.);
+    if (p.x > 0.27 && p.x < 0.77 && p.y > 0. && p.y < 1.)
+      char_id = c, char_pos = p, dfdx = dFdx, dfdy = dFdy;
 }
-vec4 draw_char() {
-    int c = char_id; vec2 p = char_pos;
-    return c < 0 
-        ? vec4(0,0,0,1e5)
-        : textureGrad( iChannel0, p/16. + fract( vec2(c, 15-c/16) / 16. ), 
-                       dfdx, dfdy );
+
+vec4 draw_char()
+{
+    int c = char_id;
+    vec2 p = char_pos;
+    float r = 1. / 2048.;
+    vec4 t = (c < 0 ? vec4(0., 0., 0., 1e5) :
+      (textureGrad(iChannel0, p / 16. + fract(vec2(c, 15 - c / 16) / 16.), dfdx, dfdy) * 2. +
+      textureGrad(iChannel0, p / 16. + fract(vec2(c, 15 - c / 16) / 16.) + r, dfdx, dfdy) +
+      textureGrad(iChannel0, p / 16. + fract(vec2(c, 15 - c / 16) / 16.) + vec2(r, -r), dfdx, dfdy) +
+      textureGrad(iChannel0, p / 16. + fract(vec2(c, 15 - c / 16) / 16.) + vec2(-r, r), dfdx, dfdy) +
+      textureGrad(iChannel0, p / 16. + fract(vec2(c, 15 - c / 16) / 16.) - r, dfdx, dfdy)
+    ) / 6.);
+    float a = 1. - smoothstep(0., 1., smoothstep(0.505, 0.52, t.w));
+    float b = smoothstep(0., 1., smoothstep(0.48, 0.505, t.w));
+    return vec4(mix(vec3(1.), vec3(0.), b), a);
 }
 
 int CAPS=0;
 #define low CAPS=32;
 #define caps CAPS=0;
-#define spc  U.x-=.5;
-#define C(c) spc O+= char(U,64+CAPS+c);
+#define C(c) U.x-=.54; char(U,64+CAPS+c);
+#define __ caps C(-32)
+#define _ __ low
 
 float pixel_res;
 float pix;
@@ -486,8 +498,6 @@ void starfield(vec2 u, out vec4 O)
 }
 
 /*
-uvec4 _How_to_make_this_ = uvec4(0x84F67702, 0x47F602D6, 0x16B65602, 0x47869637);
-uvec4 _starfield_X_ =      uvec4(0x02020237, 0x47162766, 0x9656C646, 0x02F3);
 uvec4 _XX_Circles_ =       uvec4(0x13E20234, 0x962736C6, 0x5637,     SPACE_CHAR);
 uvec4 _Draw_a_circled_l_ = uvec4(0x44271677, 0x02160236, 0x962736C6, 0x564602C6);
 uvec4  _ight_ =            uvec4(0x96768647, SPACE_CHAR, SPACE_CHAR, SPACE_CHAR);
@@ -512,12 +522,12 @@ uvec4 _rotation_ =         uvec4(0x27F64716, 0x4796F6E6, SPACE_CHAR, SPACE_CHAR)
 bool text(vec2 u, out vec4 O)
 {
   bool b = false;
-  O = draw_char().xxxx;;
+  O = draw_char();
   if (O.w > 0.)
   {
-    O = vec4((0.6 + 0.6 * cos(6.3 *
+    O *= (0.6 + 0.6 * cos(6.3 *
       ((u.x * 6. - iResolution.x * 0.25) / (3.14 * iResolution.y)) + vec4(0., 23., 21., 0.))
-      * 0.85 + 0.15) * O.x);
+      * 0.85 + 0.15);
     b = true;
   }
   return b;
@@ -528,15 +538,18 @@ void mainImage(out vec4 O, vec2 u)
   pix = 150.;
   
   O = vec4(0.);
+  vec2 U, uv = u / iResolution.y;
+  float fontSize;
     
   if (iTime < 4.)
   {
-    //fontCaret = vec2(-0.4, 0.1);
-    //_(_How_to_make_this_);
-    if (text(u, O)) return;
+    fontSize = 10.;
+    U = (uv - vec2(0.4, 0.54)) * fontSize;
+    caps C(8) low C(15)C(23) _ C(20)C(15) _ C(13)C(1)C(11)C(5) _ C(20)C(8)C(9)C(19) 
+    if (text(U * 50., O)) return;
 
-    //fontCaret = vec2(-0.425, 0.0);
-    //_(_starfield_X_);
+    U = (uv - vec2(0.55, 0.46)) * fontSize;
+    C(19)C(20)C(1)C(18)C(6)C(9)C(5)C(12)C(4) __ C(-1)
     if (text(u, O)) return;
      
     starfield(u, O);

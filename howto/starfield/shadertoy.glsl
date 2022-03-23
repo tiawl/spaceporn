@@ -498,25 +498,20 @@ void starfield(vec2 u, out vec4 O)
 }
 
 /*
-uvec4 _XX_Circles_ =       uvec4(0x13E20234, 0x962736C6, 0x5637,     SPACE_CHAR);
-uvec4 _Draw_a_circled_l_ = uvec4(0x44271677, 0x02160236, 0x962736C6, 0x564602C6);
-uvec4  _ight_ =            uvec4(0x96768647, SPACE_CHAR, SPACE_CHAR, SPACE_CHAR);
-uvec4 _Then_a_full_grid_ = uvec4(0x458656E6, 0x02160266, 0x57C6C602, 0x76279646);
-uvec4 _Randomize_their_ =  uvec4(0x2516E646, 0xF6D696A7, 0x56024786, 0x569627);
-uvec4 _size_ =             uvec4(0x27164696, 0x5737,     SPACE_CHAR, SPACE_CHAR);
-uvec4 _position_ =         uvec4(0x07F63796, 0x4796F6E6, SPACE_CHAR, SPACE_CHAR);
-uvec4 _Reduce_color_num_ = uvec4(0x25564657, 0x36560236, 0xF6C6F627, 0x02E657D6);
-uvec4 _ber_ =              uvec4(0x265627,   SPACE_CHAR, SPACE_CHAR, SPACE_CHAR);
-uvec4 _Smooth_intersect_ = uvec4(0x35D6F6F6, 0x47860296, 0xE6475627, 0x37563647);
-uvec4 _ions_ =             uvec4(0x96F6E637, SPACE_CHAR, SPACE_CHAR, SPACE_CHAR);
-uvec4 _Add_more_circles_ = uvec4(0x14464602, 0xD6F62756, 0x02369627, 0x36C65637);
-uvec4 _Increase_light_ =   uvec4(0x94E63627, 0x56163756, 0x02C69676, 0x8647);
-uvec4 _Apply_noisy_shap_ = uvec4(0x140707C6, 0x9702E6F6, 0x96379702, 0x37861607);
-uvec4  _e_ =               uvec4(0x56,       SPACE_CHAR, SPACE_CHAR, SPACE_CHAR);
-uvec4 _XX_Swirls_ =        uvec4(0x23E20235, 0x779627C6, 0x37,       SPACE_CHAR);
-uvec4 _XCheck_patternX_ =  uvec4(0x82348656, 0x36B60207, 0x16474756, 0x27E692);
-uvec4 _Draw_a_swirl_ =     uvec4(0x44271677, 0x02160237, 0x779627C6, SPACE_CHAR);
-uvec4 _rotation_ =         uvec4(0x27F64716, 0x4796F6E6, SPACE_CHAR, SPACE_CHAR);
+uvec4 _XX_Circles               = caps C()C() __ C(3) low C(9)C(18)C(3)C(12)C(5)C(19)
+uvec4 _Draw_a_circled_light     = caps C(4) low C(18)C(1)C(23) _ C(1) _ C(3)C(9)C(18)C(3)C(12)C(5)C(4) _ C(12)C(9)C(7)C(8)C(20)
+uvec4 _Then_a_full_grid         = caps C(20) low C(8)C(5)C(14) _ C(1) _ C(6)C(21)C(12)C(12) _ C(7)C(18)C(9)C(4)
+uvec4 _Randomize_their_size     = caps C(18) low C(1)C(14)C(4)C(15)C(13)C(9)C(26)C(5) _ C(20)C(8)C(5)C(9)C(18) _ C(19)C(9)C(26)C(5)
+uvec4 _Randomize_their_position = caps C(18) low C(1)C(14)C(4)C(15)C(13)C(9)C(26)C(5) _ C(20)C(8)C(5)C(9)C(18) _ C(16)C(15)C(19)C(9)C(20)C(9)C(15)C(14)
+uvec4 _Reduce_color_number      = caps C(18) low C(5)C(4)C(21)C(3)C(5) _ C(3)C(15)C(12)C(15)C(18) _ C(14)C(21)C(13)C(2)C(5)C(18)
+uvec4 _Smooth_intersections     = caps C(19) low C(13)C(15)C(15)C(20)C(8) _ C(9)C(14)C(20)C(5)C(18)C(19)C(5)C(3)C(20)C(9)C(15)C(14)C(19)
+uvec4 _Add_more_circles         = caps C(1) low C(4)C(4) _ C(14)C(15)C(18)C(5) _ C(3)C(9)C(18)C(3)C(12)C(5)C(19)
+uvec4 _Increase_light           = caps C(9) low C(14)C(3)C(18)C(5)C(1)C(19)C(2) _ C(12)C(9)C(7)C(8)C(20)
+uvec4 _Apply_noisy_shape        = caps C(1) low C(16)C(16)C(12)C(25) _ C(14)C(15)C(9)C(19)C(25) _ C(19)C(8)C(1)C(16)C(5)
+uvec4 _XX_Swirls                = caps C()C() __ C(19) low C(23)C(9)C(18)C(12)C(19)
+uvec4 _XCheck_patternX          = caps C()C(3) low C(8)C(5)C(3)C(11) _ C(16)C(1)C(20)C(20)C(5)C(18)C(14)C()
+uvec4 _Draw_a_swirl             = caps C(4) low C(18)C(1)C(23) _ C(1) _ C(19)C(23)C(9)C(18)C(12)
+uvec4 _Randomize_their_rotation = caps C(18) low C(1)C(14)C(4)C(15)C(13)C(9)C(26)C(5) _ C(20)C(8)C(5)C(9)C(18) _ C(18)C(15)C(20)C(1)C(20)C(9)C(15)C(14)
 */
 
 bool text(vec2 u, out vec4 O)

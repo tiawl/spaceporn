@@ -25,6 +25,7 @@ you think you found:
     - something you can improve,
 
 this is (at least) the best reason to open an issue.
+
 2. Sharing an article/tutorial which could allow a better understanding of a
 tutorial aspect.
 3. For a tutorial request of **spaceporn-cli** graphic content.

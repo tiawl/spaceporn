@@ -2,5 +2,5 @@ cli/shaders/lab/*.glsl linguist-vendored
 cli/Makefile           linguist-vendored
 cli/scripts/*/*        linguist-vendored
 cli/conf/*             linguist-vendored
+doc                   -linguist-vendored
 *.md                   linguist-detectable
-doc/**             linguist-detectable

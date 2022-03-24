@@ -14,15 +14,16 @@ you should. Here some of these reasons (but there are many more):
 graphic developer. In addition he is not a teacher and is not a native english
 speaker. So there are potentially a lot of thing that can be improved. So if
 you think you found:
-- a misspelling,
-- a shader error,
-- a bad practice,
-- a maths knowledges leak,
-- a bad algorithm,
-- a bad implementation,
-- an unprecision,
-- a leak of pedagogy/methology,
-- something you can improve,
+    - a misspelling,
+    - a shader error,
+    - a bad practice,
+    - a maths knowledges leak,
+    - a bad algorithm,
+    - a bad implementation,
+    - an unprecision,
+    - a leak of pedagogy/methology,
+    - something you can improve,
+
 this is (at least) the best reason to open an issue.
 2. Sharing an article/tutorial which could allow a better understanding of a
 tutorial aspect.

@@ -24,7 +24,7 @@ you think you found:
     - a leak of pedagogy/methology,
     - something you can improve,
 
-this is (at least) the best reason to open an issue.
+    this is (at least) the best reason to open an issue.
 
 2. Sharing an article/tutorial which could allow a better understanding of a
 tutorial aspect.

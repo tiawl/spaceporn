@@ -1,6 +1,6 @@
 # spaceporn
 
-Doc and CLI for pixelized space background contemplators
+Doc and CLI for space contemplators
 
 ## spaceporn-cli
 

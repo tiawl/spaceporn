@@ -2,5 +2,5 @@
 shaders/lab/*.glsl linguist-vendored
 howto/*/*.glsl     linguist-vendored
 Makefile           linguist-vendored
-scripts/**         linguist-vendored
+scripts/*/*        linguist-vendored
 conf/*             linguist-vendored

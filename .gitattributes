@@ -1,4 +1,4 @@
-doc                    linguist-detectable
+*.md                   linguist-detectable
 
 cli/shaders/lab/*.glsl linguist-vendored
 cli/Makefile           linguist-vendored

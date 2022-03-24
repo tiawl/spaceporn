@@ -7,8 +7,10 @@
 #include "path.h"
 #include "uniform.h"
 
-#define NAME                            "spaceporn"
+#define NAME                        "spaceporn-cli"
+#define BIN_NAME                        "spaceporn"
 #define VERSION                             "0.0.0"
+#define BRANCH                           GCC_BRANCH
 
 #define DEFAULT_FPS                              30
 #define DEFAULT_ANIMATIONS                    false

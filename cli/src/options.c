@@ -2,11 +2,11 @@
 
 void help()
 {
-  fprintf(stderr, "\n%s %s\n", NAME, VERSION);
+  fprintf(stderr, "\n%s %s %s\n", NAME, VERSION, BRANCH);
   fprintf(stderr,
     "\nUsage: %s %s ANIM|%s [WIDTHxHEIGHT]|%s [MINS] [%s COLOR] [%s] \n\
     [%s FPS] [%s] [%s PIXELS] [%s ZOOM] [%s] [%s] [%s ROADMAP] [%s] [%s]\n\n",
-    NAME, ANIMATION_FLAG, BGGEN_FLAG, SLIDE_FLAG, COLOR_FLAG,
+    BIN_NAME, ANIMATION_FLAG, BGGEN_FLAG, SLIDE_FLAG, COLOR_FLAG,
     ATLASFORCED_FLAG, FPS_FLAG, STOP_FLAG, PIXEL_FLAG, ZOOM_FLAG,
     FRAGMENTFILEROADMAPS_FLAG, MAXROADMAP_FLAG, ROADMAP_FLAG,
     VERTEXFILEROADMAPS_FLAG, VERBOSE_FLAG);

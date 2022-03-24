@@ -1,6 +1,7 @@
 .*.sw[a-z]
 Session.vim
-bin
-obj
-atlas.png
-log
+cli/*.png
+cli/textures/*.png
+cli/bin
+cli/obj
+cli/log

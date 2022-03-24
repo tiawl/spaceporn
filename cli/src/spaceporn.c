@@ -93,6 +93,9 @@ int main(int argc, char** argv)
       delay = slide_delay;
     }
 
+    writeLog(&log, stdout, INFO, "", "Running %s %s %s\n", NAME, VERSION,
+      BRANCH);
+
     writeLog(&log, stdout, DEBUG, "", "Initializing paths ...\n");
     if (!initPaths(&shaders, &png_atlas, &log))
     {

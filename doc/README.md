@@ -13,24 +13,9 @@ understand them. This is why:
 - tutorials can leak some knowledges and/or precision,
 - articles/tutorials are linked as mush as possible.
 
-## Opening an issue
+## Contributing
 
-If you found:
-- a misspelling,
-- a shader error,
-- a bad practice,
-- a maths knowledges leak,
-- a bad algorithm,
-- a bad implementation,
-- an unprecision,
-- whatever you can improve,
-
-the author will be very grateful if you can open an issue to fix it !
-
-The author will also be very grateful if you can open an issue to share an
-article which could allow a better understanding of a tutorial aspect.
-
-If you have a tutorial request, you can also open an issue.
+Here are the [instructions](CONTRIBUTING.md).
 
 ## Available tutorials
 

@@ -1,7 +1,5 @@
 # TODO
 
-This is a list of tasks expressed by the maintainers for the maintainers. It is not intented to be read by others so the tasks are not detailed. But if you want to contribute without going against the maintainers' work, you are in the right place. If you do not really know what a task is talking about and it might be a problem for a future contribution: open an issue to ask more details.
-
 ## Project management
 
 LOW PRIORITY:

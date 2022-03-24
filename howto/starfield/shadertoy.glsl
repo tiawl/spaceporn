@@ -550,7 +550,7 @@ void mainImage(out vec4 O, vec2 u)
     _(_XX_Circles_);
     text(u, O);
     O *= (iTime > 5. ? (6. - iTime) / 2. : 1.);
-  } else if (iTime < 9.) {
+  } else if (iTime < 8.) {
     fontCaret = vec2(-0.825, 0.4);    
     _(_Draw_a_circled_l_);
     if (text(u, O)) return;
@@ -559,17 +559,14 @@ void mainImage(out vec4 O, vec2 u)
     _(_ight_);
     if (text(u, O)) return;
     
-    if (iTime > 7.)
-    {
-      vec2 U = (u - iResolution.xy * 0.5) / iResolution.y;
-      O = vec4(vec3(0.5 - length(U)), 1.) * min(1., iTime - 7.);
-    }
-  } else if (iTime < 12.) {
+    vec2 U = (u - iResolution.xy * 0.5) / iResolution.y;
+    O = vec4(vec3(0.5 - length(U)), 1.) * min(1., iTime - 6.);
+  } else if (iTime < 10.) {
     fontCaret = vec2(-0.825, 0.4);    
     _(_Then_a_full_grid_);
     if (text(u, O)) return;
     
-    vec2 U = (iTime > 9. ? min(1., (iTime - 9.) * 0.5) * 9. + 1. : 1.)
+    vec2 U = (iTime > 8. ? min(1., (iTime - 8.) * 0.5) * 9. + 1. : 1.)
       * (u - iResolution.xy * 0.5) / iResolution.y;
     vec2 i = floor(U), f = fract(U), p = U;
 
@@ -582,22 +579,22 @@ void mainImage(out vec4 O, vec2 u)
       c = 0.5 - length(p);
       d = max(d, c);
     }
-    O = vec4(vec3(max((10. - iTime), 0.) * (-length(U) + 0.5) + d * min(1., iTime - 9.)), 1.);
-  } else if (iTime < 22.) {
-    if ((iTime < 16.) || ((iTime > 17.) && (iTime < 21.)))
+    O = vec4(vec3(max((9. - iTime), 0.) * (-length(U) + 0.5) + d * min(1., iTime - 8.)), 1.);
+  } else if (iTime < 20.) {
+    if ((iTime < 14.) || ((iTime > 15.) && (iTime < 19.)))
     {
       fontCaret = vec2(-0.825, 0.4);
-      _((iTime < 16. ? _Randomize_their_ : (iTime < 19. ? _Reduce_color_num_ : _Smooth_intersect_)));
+      _((iTime < 14. ? _Randomize_their_ : (iTime < 17. ? _Reduce_color_num_ : _Smooth_intersect_)));
       if (text(u, O)) return;
     
       fontCaret = vec2(-0.29, 0.4);
-      _((iTime < 14. ? _size_ : (iTime < 16. ? _position_ : (iTime < 19. ? _ber_ : _ions_))));
+      _((iTime < 12. ? _size_ : (iTime < 14. ? _position_ : (iTime < 17. ? _ber_ : _ions_))));
       if (text(u, O)) return;
     }
     
-    vec2 U = (iTime < 16. ? 10. * (2. + (u - iResolution.xy * 0.5) / iResolution.y) : 
-      (iTime < 21. ? 20. + (max(0., 17. - iTime) * 7. + 3.) * (u - iResolution.xy * 0.5) / iResolution.y :
-        20. + (min(1., iTime - 21.) * 7. + 3.) * (u - iResolution.xy * 0.5) / iResolution.y));
+    vec2 U = (iTime < 14. ? 10. * (2. + (u - iResolution.xy * 0.5) / iResolution.y) : 
+      (iTime < 19. ? 20. + (max(0., 15. - iTime) * 7. + 3.) * (u - iResolution.xy * 0.5) / iResolution.y :
+        20. + (min(1., iTime - 19.) * 7. + 3.) * (u - iResolution.xy * 0.5) / iResolution.y));
     uint seed = SEED + 10u;
     vec2 i = floor(U), f = fract(U), p = U, h;
 
@@ -605,44 +602,44 @@ void mainImage(out vec4 O, vec2 u)
     for (int k = 0; k < 9; k++)
     {
       p = vec2(k % 3, k / 3) - 1.;
-      rad = max((14. - iTime) * 0.5, 0.) * 0.5
-        + (0.2 + hash(i + p, seed + 2u) * 0.5) * min(1., (iTime - 12.) * 0.5);
-      h = clamp((iTime - 14.) * 0.5, 0., 1.) * vec2(hash(i + p, seed + 89u), hash(i + p, seed + 52u));
+      rad = max((12. - iTime) * 0.5, 0.) * 0.5
+        + (0.25 + hash(i + p, seed + 2u) * 0.5) * min(1., (iTime - 10.) * 0.5);
+      h = clamp((iTime - 12.) * 0.5, 0., 1.) * vec2(hash(i + p, seed + 89u), hash(i + p, seed + 52u));
       p += h - f;
 
       c = rad - length(p);
-      d = (iTime < 19. ? max(d, c) : smax(d, c, min(1., iTime - 19.) * 0.3));
+      d = (iTime < 17. ? max(d, c) : smax(d, c, min(1., iTime - 17.) * 0.3));
     }
     O = vec4(vec3(d), 1.);
-    if (iTime > 17.)
+    if (iTime > 15.)
     {
-      float cols = max(0., 18. - iTime) * 100. + COLS;
+      float cols = max(0., 16. - iTime) * 100. + COLS;
       O = floor(O * cols) / cols;
     }
-  } else if (iTime < 27.) {
+  } else if (iTime < 25.) {
     fontCaret = vec2(-0.825, 0.4);    
-    _((iTime < 24. ? _Add_more_circles_ : _Increase_light_));
+    _((iTime < 22. ? _Add_more_circles_ : _Increase_light_));
     if (text(u, O)) return;
     
     vec2 U = 10. * (2. + (u - iResolution.xy * 0.5) / iResolution.y);
     float g = max(fbmCircles(U, SEED + 10u), fbmCircles(U, SEED + 20u));
-    O = vec4(vec3((iTime < 24. ? max(0., 0.5 * (24. - iTime)) * (circles(U, 0.5, -1., SEED + 10u))
-      + min(1., (iTime - 22.) * 0.5) * g : max(0., 0.5 * (26. - iTime)) * g
-      + min(1., (iTime - 24.) * 0.5) * smax(-1., g, 3.2 * min(1., (iTime - 24.) * 0.5)))), 1.);;
+    O = vec4(vec3((iTime < 22. ? max(0., 0.5 * (22. - iTime)) * (circles(U, 0.5, -1., SEED + 10u))
+      + min(1., (iTime - 20.) * 0.5) * g : max(0., 0.5 * (24. - iTime)) * g
+      + min(1., (iTime - 22.) * 0.5) * smax(-1., g, 3.2 * min(1., (iTime - 22.) * 0.5)))), 1.);;
     O = floor(O * COLS) / COLS;
-  } else if (iTime < 30.) {
+  } else if (iTime < 28.) {
     fontCaret = vec2(-0.825, 0.4);    
     _(_Apply_noisy_shap_);
     if (text(u, O))
     {
-      O *= clamp(30. - iTime, 0., 1.); return;
+      O *= clamp(28. - iTime, 0., 1.); return;
     }
     
     fontCaret = vec2(-0.29, 0.4);
     _(_e_);
     if (text(u, O))
     {
-      O *= clamp(30. - iTime, 0., 1.); return;
+      O *= clamp(28. - iTime, 0., 1.); return;
     }
     
     vec2 bU = 2. + (u - iResolution.xy * 0.5) / iResolution.y;
@@ -651,16 +648,16 @@ void mainImage(out vec4 O, vec2 u)
     fv *= fv * 1.5;
     float g = max(fbmCircles(U, SEED + 10u), fbmCircles(U, SEED + 20u));
     g = smax(-1., g, 3.2);
-    O = vec4(vec3(g * (min(1., iTime - 27.) * fv + max(0., 28. - iTime))), 1.);
-    O = (floor(O * COLS) / COLS) * clamp(30. - iTime, 0., 1.);
-  } else if (iTime < 32.) {
+    O = vec4(vec3(g * (min(1., iTime - 25.) * fv + max(0., 26. - iTime))), 1.);
+    O = (floor(O * COLS) / COLS) * clamp(28. - iTime, 0., 1.);
+  } else if (iTime < 30.) {
     fontSize = 0.1;
     fontCaret = vec2(-0.225, 0.05);
     _(_XX_Swirls_);
     text(u, O);
-    O *= (iTime > 5. ? (32. - iTime) / 2. : 1.);
-  } else if (iTime < 36.) {
-    if (iTime > 33.)
+    O *= (30. - iTime) * 0.5;
+  } else if (iTime < 33.) {
+    if (iTime > 31.)
     {
       fontCaret = vec2(-0.825, 0.4);    
       _(_Draw_a_swirl_);
@@ -668,31 +665,31 @@ void mainImage(out vec4 O, vec2 u)
     }
     
     vec2 U = (u - iResolution.xy * 0.5) / iResolution.y;
-    U = rotation(U, 1.5 * clamp(iTime - 34., 0., 1.) * (1. - smoothstep(0., 0.5, length(U))));
+    U = rotation(U, 5. * clamp((iTime - 31.) * 0.5, 0., 1.) * (1. - smoothstep(0., 0.5, length(U))));
     pix = 2.;
     vec2 UU = floor(U * pix) / pix;
     bool d1 = mod(U.x + UU.y, 2. / pix) < 1. / pix;
     
     pix = sqrt(pix);
-    U = rotation(U, 3.1415 / 4.);
+    U = rotation(U, 0.7853);
     UU = floor(U * pix) / pix;
     bool d2 = mod(U.x + UU.y, 2. / pix) < 1. / pix;
     
-    O = vec4(vec3(0.2 + 0.6 * (float(d1 || d2) - float(d1 && d2))), 1.) * min(1., iTime - 32.);   
-  } else if (iTime < 42.) {
+    O = vec4(vec3(0.2 + 0.2 * (float(d1 || d2) - float(d1 && d2))), 1.) * min(1., iTime - 30.);   
+  } else if (iTime < 38.) {
     fontCaret = vec2(-0.825, 0.4);    
-    _((iTime < 39. ? _Then_a_full_grid_ : _Randomize_their_));
+    _((iTime < 35. ? _Then_a_full_grid_ : _Randomize_their_));
     if (text(u, O)) return;
     
-    if (iTime > 39.)
+    if (iTime > 35.)
     {
       fontCaret = vec2(-0.29, 0.4);    
       _(_rotation_);
       if (text(u, O)) return;
     }
     
-    vec2 U = (iTime < 39. ?
-      (min(1., (iTime - 36.) * 0.5) * 9. + 1.) * (u - iResolution.xy * 0.5) / iResolution.y :
+    vec2 U = (iTime < 35. ?
+      (min(1., (iTime - 33.) * 0.5) * 9. + 1.) * (u - iResolution.xy * 0.5) / iResolution.y :
       10. * (2. + (u - iResolution.xy * 0.5) / iResolution.y));
     
     if (length(U) > 0.5)
@@ -704,15 +701,15 @@ void mainImage(out vec4 O, vec2 u)
       {
         d = vec2(k % 3, k / 3) - 1.;
         h = hash(i + d, SEED + 72u) * 2. - 1.;
-        r = length(f - d) * (1. + abs(h) * clamp(iTime - 39., 0., 1.));
-        f = rotation(f - d, (iTime < 39. ? 1.5 * clamp((iTime - 36.) * 0.5, 0., 1.)
-          * (1. - smoothstep(0., 0.5, r)) : 1.5 *
-          (clamp(0.5 * (41. - iTime), 0., 1.) * (1. - smoothstep(0., 0.5, length(f - d))) +
-           clamp(0.5 * (iTime - 39.), 0., 1.) * sign(h) * (1. - smoothstep(0., 0.5, r))))) + d;
+        r = length(f - d) * (1. + abs(h) * clamp(iTime - 35., 0., 1.));
+        f = rotation(f - d, (iTime < 35. ? 5. * clamp((iTime - 33.) * 0.5, 0., 1.)
+          * (1. - smoothstep(0., 0.5, r)) :
+          (5. * clamp(0.5 * (37. - iTime), 0., 1.) * (1. - smoothstep(0., 0.5, length(f - d))) +
+           1.5 * clamp(0.5 * (iTime - 35.), 0., 1.) * sign(h) * (1. - smoothstep(0., 0.5, r))))) + d;
         U = f + i;
       }
     } else {
-      U = rotation(U, 1.5 * (1. - smoothstep(0., 0.5, length(U))));
+      U = rotation(U, 5. * (1. - smoothstep(0., 0.5, length(U))));
     }
     
     pix = 2.;
@@ -720,11 +717,11 @@ void mainImage(out vec4 O, vec2 u)
     bool d1 = mod(U.x + UU.y, 2. / pix) < 1. / pix;
     
     pix = sqrt(pix);
-    U = rotation(U, 3.1415 / 4.);
+    U = rotation(U, 0.7853);
     UU = floor(U * pix) / pix;
     bool d2 = mod(U.x + UU.y, 2. / pix) < 1. / pix;
     
-    O = vec4(vec3(0.2 + 0.6 * (float(d1 || d2) - float(d1 && d2))), 1.);
+    O = vec4(vec3(0.2 + 0.2 * (float(d1 || d2) - float(d1 && d2))), 1.);
   } else {
     vec2 U = 2. + (u - iResolution.xy * 0.5) / iResolution.y;
     float fv = fbmVoronoi(0.25 * U, SEED);

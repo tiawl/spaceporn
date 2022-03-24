@@ -2,7 +2,7 @@
 
 Doc and CLI for space contemplators
 
-## spaceporn-cli
+## [spaceporn-cli](cli)
 
 **spaceporn-cli** is in early stage development and is not ready to be used.
 
@@ -10,13 +10,9 @@ Doc and CLI for space contemplators
 - display procedural pixelized space animated/static wallpaper,
 - generate procedural pixelized space pictures.
 
-[More details](cli)
-
-## spaceporn-doc
+## [spaceporn-doc](doc)
 
 **spaceporn-doc** is a list of GLSL tutorials and online shaders about procedural pixelized space shaders.
-
-[More details](doc)
 
 ## Contributing
 

@@ -24,6 +24,7 @@ If you found:
 - a bad implementation,
 - an unprecision,
 - whatever you can improve,
+
 the author will be very grateful if you can open an issue to fix it !
 
 The author will also be very grateful if you can open an issue to share an

@@ -10,13 +10,13 @@ Doc and CLI for pixelized space background contemplators
 - display procedural pixelized space animated/static wallpaper,
 - generate procedural pixelized space pictures.
 
-[More details](cli/README.md)
+[More details](cli)
 
 ## spaceporn-doc
 
 **spaceporn-doc** is a list of GLSL tutorials and online shaders about procedural pixelized space shaders.
 
-[More details](doc/README.md)
+[More details](doc)
 
 ## Contributing
 

@@ -1,10 +1,8 @@
-*.md                   linguist-detectable
-cli/*.md               linguist-detectable
-doc/*.md               linguist-detectable
-doc/*/*.md             linguist-detectable
 doc/*/*.glsl           linguist-vendored
 
 cli/shaders/lab/*.glsl linguist-vendored
 cli/Makefile           linguist-vendored
 cli/scripts/*/*        linguist-vendored
 cli/conf/*             linguist-vendored
+
+*.md                   linguist-detectable

@@ -1,5 +1,3 @@
-doc/*/*.glsl           linguist-vendored
-
 cli/shaders/lab/*.glsl linguist-vendored
 cli/Makefile           linguist-vendored
 cli/scripts/*/*        linguist-vendored

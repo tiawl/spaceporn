@@ -24,10 +24,10 @@ void help()
       If MINS is not specied, MINS is 1. Exit in error if called with %s or\n\
       %s flags.\n\
   %s  Color setting. COLOR must be specified. Possible values:\n\
-      - 1: black and white,\n\
-      - 2: static random monochromatic,\n\
-      - 3: dynamic random monochromatic,\n\
-      - 4: colorful.\n\
+      - 0: black and white,\n\
+      - 1: static random monochromatic,\n\
+      - 2: dynamic random monochromatic,\n\
+      - 3: colorful.\n\
   %s  Force new seed generation. Only available for Animation and\n\
       Generation Mode.\n\
   %s  Frames per second between %d to %d. Animation mode option.\n\

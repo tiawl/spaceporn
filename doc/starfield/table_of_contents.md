@@ -6,19 +6,11 @@ this [tutorial shader]() but I will go further to describe GLSL details.
 
 ## Before starting
 
-I'm not a pro graphic programmer. I did not receive a formal shadering
-formation. I learned by myself (and from ressources I found on Internet). So I
-will explain details the way I understand them. This is why:
-- this tutorial can leak some knowledges and/or precision,
-- I will, as mush as possible, link articles.
-If you have better knowledges than mine and you found a mistake, I will be
-very grateful if you can open an issue to fix it ! I will also be very
-grateful if you can open an issue to share an article which could allow a
-better understanding of this tutorial.
+If you did not, you should read this [README](/doc/README.md) first.
 
 ## Prerequites
 
-I assume:
+The author assumes:
 - you have maths knowledges (or at least curious and not afraid about
 maths),
 - you know what is a fragment shader,
@@ -26,8 +18,8 @@ maths),
 types (*vec2*, *vec3*, *vec4*, *ivec2*, *uvec2*, *mat2*, ...) and built-in
 functions (*abs()*, *sin()*, *floor()*, *fract()*, *length()*, ...).
 
-If not, you can follow this tutorial but it will not be easy. So I recommend
-you to do some reading/testing first.
+If not, you can follow this tutorial but it will not be easy. So it is
+recommended to do some reading/testing first.
 
 ## Table of contents
 

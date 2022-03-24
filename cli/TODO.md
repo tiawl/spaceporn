@@ -28,6 +28,7 @@ MEDIUM PRIORITY:
 LOW PRIORITY:
 - add a flag to disable some planets/galaxy/darkhole/asteroids/bigstars
 - Windows OS portability
+- Vulkan compatibility
 
 ## Shader files
 

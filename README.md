@@ -1,18 +1,21 @@
 # spaceporn
 
-Doc and CLI for pixelized space background lovers
+Doc and CLI for pixelized space background contemplators
 
 ## spaceporn-cli
 
 **spaceporn-cli** is in early stage development and is not ready to be used.
+
 **spaceporn-cli** is a command line which could:
 - display procedural pixelized space animated/static wallpaper,
 - generate procedural pixelized space pictures.
+
 [More details](cli/README.md)
 
 ## spaceporn-doc
 
-**spaceporn-cli** is a list of GLSL tutorials and online shaders about procedural pixelized space shaders.
+**spaceporn-doc** is a list of GLSL tutorials and online shaders about procedural pixelized space shaders.
+
 [More details](doc/README.md)
 
 ## Contributing

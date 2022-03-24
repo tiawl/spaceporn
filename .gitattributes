@@ -3,6 +3,4 @@ cli/Makefile           linguist-vendored
 cli/scripts/*/*        linguist-vendored
 cli/conf/*             linguist-vendored
 *.md                   linguist-detectable
-doc/*.md               linguist-detectable
-doc/*/*.md             linguist-detectable
-cli/*.md               linguist-detectable
+doc/**             linguist-detectable

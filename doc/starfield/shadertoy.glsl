@@ -666,6 +666,7 @@ void mainImage(out vec4 O, vec2 u)
     
     vec2 U = (u - iResolution.xy * 0.5) / iResolution.y;
     U = rotation(U, 5. * clamp((iTime - 31.) * 0.5, 0., 1.) * (1. - smoothstep(0., 0.5, length(U))));
+    
     pix = 2.;
     vec2 UU = floor(U * pix) / pix;
     bool d1 = mod(U.x + UU.y, 2. / pix) < 1. / pix;
@@ -676,7 +677,7 @@ void mainImage(out vec4 O, vec2 u)
     bool d2 = mod(U.x + UU.y, 2. / pix) < 1. / pix;
     
     O = vec4(vec3(0.2 + 0.2 * (float(d1 || d2) - float(d1 && d2))), 1.) * min(1., iTime - 30.);   
-  } else if (iTime < 39.) {
+  } else if (iTime < 40.) {
     fontCaret = vec2(-0.825, 0.4);    
     _((iTime < 35. ? _Then_a_full_grid_ : _Randomize_their_));
     if (text(u, O)) return;
@@ -691,16 +692,20 @@ void mainImage(out vec4 O, vec2 u)
     vec2 U = (iTime < 35. ?
       (min(1., (iTime - 33.) * 0.5) * 9. + 1.) * (u - iResolution.xy * 0.5) / iResolution.y :
       10. * (2. + (u - iResolution.xy * 0.5) / iResolution.y));
-      
+    vec2 bU = U;
+    float t = 0.1;
+    
     if (length(U) > 0.5)
     {
       vec2 i = floor(U), f = fract(U), d;
       int k;
       float r, h;
+      t = 0.;
       for (k = 0; k < 9; k++)
       {
         d = vec2(k % 3, k / 3) - 1.;
-        d += clamp((iTime - 37.) * 0.5, 0., 1.) * vec2(hash(i + d, SEED + 222u), hash(i + d, SEED + 278u));
+        d += clamp((iTime - 38.) * 0.5, 0., 1.) * vec2(hash(i + d, SEED + 222u), hash(i + d, SEED + 278u));
+        t = max(t, 0.1 - length(d - f));
         h = hash(i + d, SEED + 72u) * 2. - 1.;
         r = length(f - d) * (1. + abs(h) * clamp(iTime - 35., 0., 1.));
         f = rotation(f - d, (iTime < 35. ? 5. * clamp((iTime - 33.) * 0.5, 0., 1.)
@@ -712,6 +717,7 @@ void mainImage(out vec4 O, vec2 u)
     } else {
       U = rotation(U, 5. * (1. - smoothstep(0., 0.5, length(U))));
     }
+    vec2 bU2 = abs(bU - U);
     
     pix = 2.;
     vec2 UU = floor(U * pix) / pix;
@@ -723,6 +729,8 @@ void mainImage(out vec4 O, vec2 u)
     bool d2 = mod(U.x + UU.y, 2. / pix) < 1. / pix;
     
     O = vec4(vec3(0.2 + 0.2 * (float(d1 || d2) - float(d1 && d2))), 1.);
+    if (bU2.x + bU2.y > 0.00001 && bU2.x + bU2.y < 0.05 * clamp(iTime - 37., 0., 1.) && t <= 0.)
+      O = vec4(0.0, 0.6, 0.4, 1.);
   } else {
     vec2 U = 2. + (u - iResolution.xy * 0.5) / iResolution.y;
     float fv = fbmVoronoi(0.25 * U, SEED);

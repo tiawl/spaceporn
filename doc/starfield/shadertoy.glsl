@@ -17,6 +17,28 @@
 #define SPACE_CHAR 0x02U
 #define STOP_CHAR 0x0AU
 
+uvec4 _How_to_make_this_ = uvec4(0x84F67702, 0x47F602D6, 0x16B65602, 0x47869637);
+uvec4 _starfield_X_ =      uvec4(0x02020237, 0x47162766, 0x9656C646, 0x02F3);
+uvec4 _XX_Circles_ =       uvec4(0x13E20234, 0x962736C6, 0x5637,     SPACE_CHAR);
+uvec4 _Draw_a_circled_l_ = uvec4(0x44271677, 0x02160236, 0x962736C6, 0x564602C6);
+uvec4  _ight_ =            uvec4(0x96768647, SPACE_CHAR, SPACE_CHAR, SPACE_CHAR);
+uvec4 _Then_a_full_grid_ = uvec4(0x458656E6, 0x02160266, 0x57C6C602, 0x76279646);
+uvec4 _Randomize_their_ =  uvec4(0x2516E646, 0xF6D696A7, 0x56024786, 0x569627);
+uvec4 _size_ =             uvec4(0x27164696, 0x5737,     SPACE_CHAR, SPACE_CHAR);
+uvec4 _position_ =         uvec4(0x07F63796, 0x4796F6E6, SPACE_CHAR, SPACE_CHAR);
+uvec4 _Reduce_color_num_ = uvec4(0x25564657, 0x36560236, 0xF6C6F627, 0x02E657D6);
+uvec4 _ber_ =              uvec4(0x265627,   SPACE_CHAR, SPACE_CHAR, SPACE_CHAR);
+uvec4 _Smooth_intersect_ = uvec4(0x35D6F6F6, 0x47860296, 0xE6475627, 0x37563647);
+uvec4 _ions_ =             uvec4(0x96F6E637, SPACE_CHAR, SPACE_CHAR, SPACE_CHAR);
+uvec4 _Add_more_circles_ = uvec4(0x14464602, 0xD6F62756, 0x02369627, 0x36C65637);
+uvec4 _Increase_light_ =   uvec4(0x94E63627, 0x56163756, 0x02C69676, 0x8647);
+uvec4 _Apply_noisy_shap_ = uvec4(0x140707C6, 0x9702E6F6, 0x96379702, 0x37861607);
+uvec4  _e_ =               uvec4(0x56,       SPACE_CHAR, SPACE_CHAR, SPACE_CHAR);
+uvec4 _XX_Swirls_ =        uvec4(0x23E20235, 0x779627C6, 0x37,       SPACE_CHAR);
+uvec4 _Draw_a_swirl_ =     uvec4(0x44271677, 0x02160237, 0x779627C6, SPACE_CHAR);
+uvec4 _rotation_ =         uvec4(0x27F64716, 0x4796F6E6, SPACE_CHAR, SPACE_CHAR);
+uvec4 _Add_more_swirls_ =  uvec4(0x14464602, 0xD6F62756, 0x02377796, 0x27C637);
+
 vec4 fontCol;vec3 fontColFill;vec3 fontColBorder;vec4 fontBuffer;vec2 fontCaret;float fontSize;float fontSpacing;vec2 fontUV;void drawStr4(uint str){if (str < 0x100U){str = str * 0x100U + SPACE_CHAR;}if (str < 0x10000U){str = str * 0x100U + SPACE_CHAR;}if (str < 0x1000000U){str = str * 0x100U + SPACE_CHAR;}for (int i = 0; i < 4; i++){uint xy = (str >> 8 * (3 - i)) % 256U;if (xy != SPACE_CHAR){vec2 K = (fontUV - fontCaret) / fontSize;if (length(K) < 0.6){vec4 Q = texture(fontChannel, (K + vec2(float(xy / 16U) + 0.5,16. - float(xy % 16U) - 0.5)) / 16.);fontBuffer.rgb += Q.rgb * smoothstep(0.6, 0.4, length(K));if (max(abs(K.x), abs(K.y)) < 0.5){fontBuffer.a = min(Q.a, fontBuffer.a);}}}if (xy != STOP_CHAR){fontCaret.x += fontSpacing * fontSize;}}}void beginDraw(){fontBuffer = vec4(0., 0., 0. , 1.);fontCol = vec4(0.);fontCaret.x += fontSpacing * fontSize / 2.;}void endDraw(){float a = smoothstep(1., 0., smoothstep(0.51, 0.53, fontBuffer.a));float b = smoothstep(0., 1., smoothstep(0.48, 0.51, fontBuffer.a));fontCol.rgb = mix(fontColFill, fontColBorder, b);fontCol.a = a;}void _(uint str){beginDraw();drawStr4(str);endDraw();}void _(uvec2 str){beginDraw();drawStr4(str.x);drawStr4(str.y);endDraw();}void _(uvec3 str){beginDraw();drawStr4(str.x);drawStr4(str.y);drawStr4(str.z);endDraw();}void _(uvec4 str){beginDraw();drawStr4(str.x);drawStr4(str.y);drawStr4(str.z);drawStr4(str.w);endDraw();}vec2 viewport(vec2 b){return (b / iResolution.xy - vec2(0.5)) * vec2(iResolution.x / iResolution.y, 1.);}
 
 // end of copy-pasting
@@ -155,7 +177,7 @@ float fbmCircles(vec2 p, uint se)
 {
   float s = 1., d = 0.;
   int o = 2;
-  for(int i = 0; i < o; i++)
+  for (int i = 0; i < o; i++)
   {
     float n = s * circles(p, 0.5, -1., se);
 
@@ -192,10 +214,9 @@ vec2 fbmSwirls(vec2 p, uint se)
 {
   uint o = 3u;
   float sz = 42., ro = 1.5;
-  for(uint i = 0u; i < o; i++)
+  for (uint i = 0u; i < o; i++)
   {
     p = swirls(p, se + i, sz, ro);
-    sz *= 1.;
   }
   return p;
 }
@@ -485,27 +506,6 @@ void starfield(vec2 u, out vec4 O)
   O = vec4(color(10. * g, COL_SEED), 1.) * (iTime > 3. ? (4. - iTime) / 2. : 1.);
 }
 
-uvec4 _How_to_make_this_ = uvec4(0x84F67702, 0x47F602D6, 0x16B65602, 0x47869637);
-uvec4 _starfield_X_ =      uvec4(0x02020237, 0x47162766, 0x9656C646, 0x02F3);
-uvec4 _XX_Circles_ =       uvec4(0x13E20234, 0x962736C6, 0x5637,     SPACE_CHAR);
-uvec4 _Draw_a_circled_l_ = uvec4(0x44271677, 0x02160236, 0x962736C6, 0x564602C6);
-uvec4  _ight_ =            uvec4(0x96768647, SPACE_CHAR, SPACE_CHAR, SPACE_CHAR);
-uvec4 _Then_a_full_grid_ = uvec4(0x458656E6, 0x02160266, 0x57C6C602, 0x76279646);
-uvec4 _Randomize_their_ =  uvec4(0x2516E646, 0xF6D696A7, 0x56024786, 0x569627);
-uvec4 _size_ =             uvec4(0x27164696, 0x5737,     SPACE_CHAR, SPACE_CHAR);
-uvec4 _position_ =         uvec4(0x07F63796, 0x4796F6E6, SPACE_CHAR, SPACE_CHAR);
-uvec4 _Reduce_color_num_ = uvec4(0x25564657, 0x36560236, 0xF6C6F627, 0x02E657D6);
-uvec4 _ber_ =              uvec4(0x265627,   SPACE_CHAR, SPACE_CHAR, SPACE_CHAR);
-uvec4 _Smooth_intersect_ = uvec4(0x35D6F6F6, 0x47860296, 0xE6475627, 0x37563647);
-uvec4 _ions_ =             uvec4(0x96F6E637, SPACE_CHAR, SPACE_CHAR, SPACE_CHAR);
-uvec4 _Add_more_circles_ = uvec4(0x14464602, 0xD6F62756, 0x02369627, 0x36C65637);
-uvec4 _Increase_light_ =   uvec4(0x94E63627, 0x56163756, 0x02C69676, 0x8647);
-uvec4 _Apply_noisy_shap_ = uvec4(0x140707C6, 0x9702E6F6, 0x96379702, 0x37861607);
-uvec4  _e_ =               uvec4(0x56,       SPACE_CHAR, SPACE_CHAR, SPACE_CHAR);
-uvec4 _XX_Swirls_ =        uvec4(0x23E20235, 0x779627C6, 0x37,       SPACE_CHAR);
-uvec4 _Draw_a_swirl_ =     uvec4(0x44271677, 0x02160237, 0x779627C6, SPACE_CHAR);
-uvec4 _rotation_ =         uvec4(0x27F64716, 0x4796F6E6, SPACE_CHAR, SPACE_CHAR);
-
 bool text(vec2 u, out vec4 O)
 {
   bool b = false;
@@ -730,7 +730,59 @@ void mainImage(out vec4 O, vec2 u)
     
     O = vec4(vec3(0.2 + 0.2 * (float(d1 || d2) - float(d1 && d2))), 1.);
     if (bU2.x + bU2.y > 0.00001 && bU2.x + bU2.y < 0.05 * clamp(iTime - 37., 0., 1.) && t <= 0.)
-      O = vec4(0.0, 0.6, 0.4, 1.);
+      O = vec4(0., 0.6, 0.4, 1.);
+  } else if (iTime < 48.) {
+    fontCaret = vec2(-0.825, 0.4);    
+    _(_Add_more_swirls_);
+    if (text(u, O)) return;
+    
+    
+    vec2 bU = 2. + (u - iResolution.xy * 0.5) / iResolution.y;
+    vec2 U = 10. * bU;
+    vec2 aU = U;
+    
+    vec2 i = floor(U), f = fract(U), d;
+    int k;
+    float r, h, t = 0.;
+    for (uint l = 0u; l < 3u; l++)
+    {
+      for (k = 0; k < 9; k++)
+      {
+        d = vec2(k % 3, k / 3) - 1.;
+        d += vec2(hash(i + d, SEED + l + 222u), hash(i + d, SEED + l + 278u));
+        t = max(t, 0.1 - length(d - f));
+        h = hash(i + d, SEED + l + 72u) * 2. - 1.;
+        r = length(f - d) * (1. + abs(h)) * (l > 0u ? 1. + 2. * max(0., 42. - iTime) : 1.);
+        f = rotation(f - d, 1.5 * sign(h) * (1. - smoothstep(0., 0.5, r))) + d;
+        U = f + i;
+      }
+    }
+    vec2 dU = U;
+    vec2 aU2 = abs(aU - U);
+    
+    pix = 2.;
+    vec2 UU = floor(U * pix) / pix;
+    bool d1 = mod(U.x + UU.y, 2. / pix) < 1. / pix;
+    
+    pix = sqrt(pix);
+    U = rotation(U, 0.7853);
+    UU = floor(U * pix) / pix;
+    bool d2 = mod(U.x + UU.y, 2. / pix) < 1. / pix;
+    
+    O = vec4(vec3(0.2 + 0.2 * (float(d1 || d2) - float(d1 && d2))), 1.);
+    
+    if (iTime > 44.)
+    {
+      float fv = fbmVoronoi(0.25 * bU, SEED);
+      fv *= fv * 1.5;
+      float g = max(fbmCircles(dU, SEED + 10u), fbmCircles(dU, SEED + 20u));
+      g = smax(-1., g, 3.2);
+      O *= max(0., (46. - iTime) * 0.5);
+      O += min(1., (iTime - 44.) * 0.5) * floor(vec4(vec3(g * fv), 1.) * COLS) / COLS;
+    }
+    
+    //if (aU2.x + aU2.y > 0.00001 && aU2.x + aU2.y < 0.05 && t <= 0.)
+      //O = vec4(0., 0.6, 0.4, 1.);
   } else {
     vec2 U = 2. + (u - iResolution.xy * 0.5) / iResolution.y;
     float fv = fbmVoronoi(0.25 * U, SEED);

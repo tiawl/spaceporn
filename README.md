@@ -16,7 +16,7 @@ Doc and CLI for space contemplators
 
 ## Contributing
 
-Each component of this repository have its own contributing rules:
+Each component of this repository has its own contributing rules:
 - [spaceporn-cli contributing rules](cli/CONTRIBUTING.md)
 - [spaceporn-doc contributing rules](doc/CONTRIBUTING.md)
 

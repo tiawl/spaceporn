@@ -179,7 +179,7 @@ vec2 swirls(vec2 p, uint se, float sz, float ro)
   for (k = 0; k < 9; k++)
   {
     d = vec2(k % 3, k / 3) - 1.;
-    d += hash(i + d, se + 222u);
+    d += vec2(hash(i + d, se + 222u), hash(i + d, se + 278u));
     h = hash(i + d, 72u) * 2. - 1.;
     r = length(f - d) * (1. + abs(h));
     f = rotation(f - d, ro * sign(h) * (1. - smoothstep(0., 0.5, r))) + d;
@@ -676,7 +676,7 @@ void mainImage(out vec4 O, vec2 u)
     bool d2 = mod(U.x + UU.y, 2. / pix) < 1. / pix;
     
     O = vec4(vec3(0.2 + 0.2 * (float(d1 || d2) - float(d1 && d2))), 1.) * min(1., iTime - 30.);   
-  } else if (iTime < 38.) {
+  } else if (iTime < 39.) {
     fontCaret = vec2(-0.825, 0.4);    
     _((iTime < 35. ? _Then_a_full_grid_ : _Randomize_their_));
     if (text(u, O)) return;
@@ -684,14 +684,14 @@ void mainImage(out vec4 O, vec2 u)
     if (iTime > 35.)
     {
       fontCaret = vec2(-0.29, 0.4);    
-      _(_rotation_);
+      _((iTime < 37. ? _rotation_ : _position_));
       if (text(u, O)) return;
     }
     
     vec2 U = (iTime < 35. ?
       (min(1., (iTime - 33.) * 0.5) * 9. + 1.) * (u - iResolution.xy * 0.5) / iResolution.y :
       10. * (2. + (u - iResolution.xy * 0.5) / iResolution.y));
-    
+      
     if (length(U) > 0.5)
     {
       vec2 i = floor(U), f = fract(U), d;
@@ -700,6 +700,7 @@ void mainImage(out vec4 O, vec2 u)
       for (k = 0; k < 9; k++)
       {
         d = vec2(k % 3, k / 3) - 1.;
+        d += clamp((iTime - 37.) * 0.5, 0., 1.) * vec2(hash(i + d, SEED + 222u), hash(i + d, SEED + 278u));
         h = hash(i + d, SEED + 72u) * 2. - 1.;
         r = length(f - d) * (1. + abs(h) * clamp(iTime - 35., 0., 1.));
         f = rotation(f - d, (iTime < 35. ? 5. * clamp((iTime - 33.) * 0.5, 0., 1.)

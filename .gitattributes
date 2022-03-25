@@ -1,1 +1,9 @@
+*.md -linguist-vendored
+*.md -linguist-generated
+*.md -linguist-documentation
 *.md linguist-detectable
+
+cli/shaders/lab/*.glsl linguist-vendored
+cli/Makefile           linguist-vendored
+cli/scripts/*/*        linguist-vendored
+cli/conf/*             linguist-vendored

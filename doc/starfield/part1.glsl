@@ -1,21 +1,7 @@
-/*
- * Char Map, chars written with "0xab" a is X coord b is Y coord :
- * 
- *    0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F
- * 1      
- * 2     !                    (  )     +     -  .  /
- * 3  0  1  2  3  4  5  6  7  8  9     ;           ?
- * 4  @  A  B  C  D  E  F  G  H  I  J  K  L  M  N  O
- * 5  P  Q  R  S  T  U  V  W  X  Y  Z  [  \  ]  ^  _
- * 6     a  b  c  d  e  f  g  h  i  j  k  l  m  n  o
- * 7  p  q  r  s  t  u  v  w  x  y  z
- * 8  
- * 
- */
-
-#define fontChannel iChannel1
+#define BufferAChannel iChannel0
+#define fontChannel    iChannel1
 #define SPACE_CHAR 0x02U
-#define STOP_CHAR 0x0AU
+#define STOP_CHAR  0x0AU
 
 uvec4 _How_to_make_this_ = uvec4(0x84F677,   0x47F602D6, 0x16B656,   0x47869637);
 uvec4 _starfield_X_ =      uvec4(0x02020237, 0x47162766, 0x9656C646, 0x02F3);
@@ -525,7 +511,7 @@ void mainImage(out vec4 O, vec2 u)
   fontColFill = vec3(1.);
   fontColBorder = vec3(0.);
   
-  time = min(VIDEO_LENGTH, iTime + texelFetch(iChannel0, ivec2(u), 0).x);
+  time = min(VIDEO_LENGTH, iTime + texelFetch(BufferAChannel, ivec2(u), 0).x);
   
   O = vec4(0.);
   

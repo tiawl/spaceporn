@@ -14,10 +14,10 @@ uvec4 _rotation_ =         uvec4(0x27F64716, 0x4796F6E6, SPACE_CHAR, SPACE_CHAR)
 uvec4 _Add_more_swirls_ =  uvec4(0x144646,   0xD6F62756, 0x02377796, 0x27C637);
 uvec4 _Replace_triangle_ = uvec4(0x255607C6, 0x163656,   0x47279616, 0xE676C656);
 uvec4 _s_with_Part_1_ci_ = uvec4(0x37027796, 0x47860205, 0x162747,   0x13023696);
-uvec2 _rcles_ =            uvec2(0x2736C656, 0x37);
+uvec4 _rcles_ =            uvec4(0x2736C656, 0x37,       SPACE_CHAR, SPACE_CHAR);
 uvec4 _Remove_borders_ =   uvec4(0x2556D6F6, 0x67560226, 0xF6274656, 0x2737);
 
-const int[] FONT_NB = int[](0x03, 0x13, 0x23, 0x33, 0x43, 0x53, 0x63, 0x73, 0x83, 0x93);vec4 fontCol;vec3 fontColFill;vec3 fontColBorder;vec4 fontBuffer;vec2 fontCaret;float fontSize;float fontSpacing;vec2 fontUV;float log10(float x){if (x < 9.9999){return 0.;} else if (x < 99.9999) {return 1.;} else if (x < 999.9999) {return 2.;} else if (x < 9999.9999) {return 3.;} else if (x < 99999.9999) {return 4.;} else {return floor(log(x) / log(10.));}}void drawStr4(uint str){if (str < 0x100U){str = str * 0x100U + SPACE_CHAR;}if (str < 0x10000U){str = str * 0x100U + SPACE_CHAR;}if (str < 0x1000000U){str = str * 0x100U + SPACE_CHAR;}for (int i = 0; i < 4; i++){uint xy = (str >> 8 * (3 - i)) % 256U;if (xy != SPACE_CHAR){vec2 K = (fontUV - fontCaret) / fontSize;if (length(K) < 0.6){vec4 Q = texture(fontChannel, (K + vec2(float(xy / 16U) + 0.5,16. - float(xy % 16U) - 0.5)) / 16.);fontBuffer.rgb += Q.rgb * smoothstep(0.6, 0.4, length(K));if (max(abs(K.x), abs(K.y)) < 0.5){fontBuffer.a = min(Q.a, fontBuffer.a);}}}if (xy != STOP_CHAR){fontCaret.x += fontSpacing * fontSize;}}}void beginDraw(){fontBuffer = vec4(0., 0., 0. , 1.);fontCol = vec4(0.);fontCaret.x += fontSpacing * fontSize / 2.;}void endDraw(){float a = smoothstep(1., 0., smoothstep(0.51, 0.53, fontBuffer.a));float b = smoothstep(0., 1., smoothstep(0.48, 0.51, fontBuffer.a));fontCol.rgb = mix(fontColFill, fontColBorder, b);fontCol.a = a;}void _(uint str){beginDraw();drawStr4(str);endDraw();}void _(uvec2 str){beginDraw();drawStr4(str.x);drawStr4(str.y);endDraw();}void _(uvec3 str){beginDraw();drawStr4(str.x);drawStr4(str.y);drawStr4(str.z);endDraw();}void _(uvec4 str){beginDraw();drawStr4(str.x);drawStr4(str.y);drawStr4(str.z);drawStr4(str.w);endDraw();}vec2 viewport(vec2 b){return (b / iResolution.xy - vec2(0.5)) * vec2(iResolution.x / iResolution.y, 1.);}
+const int[] FONT_NB = int[](0x03, 0x13, 0x23, 0x33, 0x43, 0x53, 0x63, 0x73, 0x83, 0x93);vec4 fontCol;vec3 fontColFill;vec3 fontColBorder;vec4 fontBuffer;vec2 fontCaret;float fontSize;float fontSpacing;vec2 fontUV;float log10(float x){if (x < 9.9999){return 0.;} else if (x < 99.9999) {return 1.;} else if (x < 999.9999) {return 2.;} else if (x < 9999.9999) {return 3.;} else if (x < 99999.9999) {return 4.;} else {return floor(log(x) / log(10.));}}vec4 fontTextureLookup(vec2 xy){float dxy = 1024.*1.5;vec2 dx = vec2(1.,0.)/dxy;vec2 dy = vec2(0.,1.)/dxy;return (texture(fontChannel,xy + dx + dy)+texture(fontChannel,xy + dx - dy)+texture(fontChannel,xy - dx - dy)+texture(fontChannel,xy - dx + dy)+2.*texture(fontChannel,xy))/6.;}void drawStr4(uint str){if (str < 0x100U){str = str * 0x100U + SPACE_CHAR;}if (str < 0x10000U){str = str * 0x100U + SPACE_CHAR;}if (str < 0x1000000U){str = str * 0x100U + SPACE_CHAR;}for (int i = 0; i < 4; i++){uint xy = (str >> 8 * (3 - i)) % 256U;if (xy != SPACE_CHAR){vec2 K = (fontUV - fontCaret) / fontSize;if (length(K) < 0.6){vec4 Q = fontTextureLookup((K + vec2(float(xy / 16U) + 0.5,16. - float(xy % 16U) - 0.5)) / 16.);fontBuffer.rgb += Q.rgb * smoothstep(0.6, 0.4, length(K));if (max(abs(K.x), abs(K.y)) < 0.5){fontBuffer.a = min(Q.a, fontBuffer.a);}}}if (xy != STOP_CHAR){fontCaret.x += fontSpacing * fontSize;}}}void beginDraw(){fontBuffer = vec4(0., 0., 0. , 1.);fontCol = vec4(0.);fontCaret.x += fontSpacing * fontSize / 2.;}void endDraw(){float a = smoothstep(1., 0., smoothstep(0.51, 0.53, fontBuffer.a));float b = smoothstep(0., 1., smoothstep(0.48, 0.51, fontBuffer.a));fontCol.rgb = mix(fontColFill, fontColBorder, b);fontCol.a = a;}void _(uint str){beginDraw();drawStr4(str);endDraw();}void _(uvec2 str){beginDraw();drawStr4(str.x);drawStr4(str.y);endDraw();}void _(uvec3 str){beginDraw();drawStr4(str.x);drawStr4(str.y);drawStr4(str.z);endDraw();}void _(uvec4 str){beginDraw();drawStr4(str.x);drawStr4(str.y);drawStr4(str.z);drawStr4(str.w);endDraw();}vec2 viewport(vec2 b){return (b / iResolution.xy - vec2(0.5)) * vec2(iResolution.x / iResolution.y, 1.);}
 // end of copy-pasting
 
 float pixel_res;
@@ -501,11 +501,13 @@ void mainImage(out vec4 O, vec2 u)
 {
   pix = 150.;
   
+  vec2 v = viewport(u);
   fontSize = 0.075;
   fontSpacing = 0.45;
   fontUV = viewport(u);
   fontColFill = vec3(1.);
   fontColBorder = vec3(0.);
+  uvec4 txt = uvec4(0x02020202);
   
   time = min(VIDEO_LENGTH, iTime + texelFetch(BufferAChannel, ivec2(u), 0).x);
   
@@ -527,32 +529,67 @@ void mainImage(out vec4 O, vec2 u)
   }
   _(uvec3(str, 0xF22313E2, 0x03));
   if (text(u, O)) return;
-    
+  
   if (time < 4.)
   {
     fontSize = 0.1;
-    fontCaret = vec2(-0.4, 0.2);
-    _(_How_to_make_this_);
-    if (text(u, O)) { O *= (time > 3. ? (4. - time) * 0.5 : 1.); return; }
-
-    fontCaret = vec2(-0.425, 0.1);
-    _(_starfield_X_);
-    if (text(u, O)) { O *= (time > 3. ? (4. - time) * 0.5 : 1.); return; }
-    
-    fontCaret = vec2(-0.25, -0.15);
-    _(_XX_Swirls_);
-    if (text(u, O)) { O *= (time > 3. ? (4. - time) * 0.5 : 1.); return; }
-     
-    starfield(u, O);
-    O *= (time > 3. ? (4. - time) * 0.5 : 1.);
+    if (v.y > 0.15)
+    {
+      fontCaret = vec2(-0.4, 0.2);
+      txt = _How_to_make_this_;
+    } else if (v.y > 0.) {
+      fontCaret = vec2(-0.425, 0.1);
+      txt = _starfield_X_;
+    } else {
+      fontCaret = vec2(-0.25, -0.15);
+      txt = _XX_Swirls_;
+    }
   } else if (time < 7.) {
     if (time > 5.)
     {
       fontCaret = vec2(-0.825, 0.4);    
-      _(_Draw_a_swirl_);
-      if (text(u, O)) return;
+      txt = _Draw_a_swirl_;
     }
-    
+  } else if (time < 14.) {
+    if (v.x < -0.29)
+    {
+      fontCaret = vec2(-0.825, 0.4);    
+      txt = (time < 9. ? _Then_a_full_grid_ : _Randomize_their_);
+    } else {
+      if (time > 9.)
+      {
+        fontCaret = vec2(-0.29, 0.4);    
+        txt = (time < 11. ? _rotation_ : _position_);
+      }
+    }
+  } else if (time < 19.) {
+    if (v.x < -0.29)
+    {
+      fontCaret = vec2(-0.825, 0.4);    
+      txt = (time < 16. ? _Add_more_swirls_ : (time < 18. ? _Replace_triangle_ : _Remove_borders_));
+    } else if (v.x < 0.245) {
+      if (time > 16. && time < 18.)
+      {
+        fontCaret = vec2(-0.29, 0.4);
+        txt = _s_with_Part_1_ci_;
+      }
+    } else {
+      if (time > 16. && time < 18.)
+      {
+        fontCaret = vec2(0.245, 0.4);
+        txt = _rcles_;
+      }
+    }
+  }
+
+  _(txt);
+  if (text(u, O)) { O *= (time > 3. && time < 4. ? (4. - time) * 0.5 : 1.); return; }
+
+  if (time < 4.)
+  {
+    starfield(u, O);
+    O *= (time > 3. ? (4. - time) * 0.5 : 1.);
+  } else if (time < 7.) {
     vec2 U = (u - iResolution.xy * 0.5) / iResolution.y;
     U = rotation(U, 5. * clamp((time - 5.) * 0.5, 0., 1.) * (1. - smoothstep(0., 0.5, length(U))));
     
@@ -567,17 +604,6 @@ void mainImage(out vec4 O, vec2 u)
     
     O = vec4(vec3(0.2 + 0.2 * (float(d1 || d2) - float(d1 && d2))), 1.) * min(1., time - 4.);   
   } else if (time < 14.) {
-    fontCaret = vec2(-0.825, 0.4);    
-    _((time < 9. ? _Then_a_full_grid_ : _Randomize_their_));
-    if (text(u, O)) return;
-    
-    if (time > 9.)
-    {
-      fontCaret = vec2(-0.29, 0.4);    
-      _((time < 11. ? _rotation_ : _position_));
-      if (text(u, O)) return;
-    }
-    
     float k0 = min(1., (time - 7.) * 0.5) * 7.5714 + 1.;
     float k1 = ceil(k0 * 2.);
     vec2 U = k1 / k0 + (u - iResolution.xy * 0.5) / iResolution.y;
@@ -623,21 +649,6 @@ void mainImage(out vec4 O, vec2 u)
     if (bU2.x + bU2.y > 0.00001 && bU2.x + bU2.y < 0.05 * clamp(time - 11., 0., 1.) && t <= 0.)
       O = vec4(0., 0.6, 0.4, 1.);
   } else if (time < 19.) {
-    fontCaret = vec2(-0.825, 0.4);    
-    _((time < 16. ? _Add_more_swirls_ : (time < 18. ? _Replace_triangle_ : _Remove_borders_)));
-    if (text(u, O)) return;
-      
-    if (time > 16. && time < 18.)
-    {
-      fontCaret = vec2(-0.29, 0.4);
-      _(_s_with_Part_1_ci_);
-      if (text(u, O)) return;
-      
-      fontCaret = vec2(0.245, 0.4);
-      _(_rcles_);
-      if (text(u, O)) return;
-    }
-    
     float k0 = 8.5714;
     vec2 U = (2.1 + (u - iResolution.xy * 0.5) / iResolution.y) * k0;
     vec2 aU = U;

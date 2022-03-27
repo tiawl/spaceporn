@@ -5,24 +5,21 @@
 
 uvec4 _How_to_make_this_ = uvec4(0x84F677,   0x47F602D6, 0x16B656,   0x47869637);
 uvec4 _starfield_X_ =      uvec4(0x02020237, 0x47162766, 0x9656C646, 0x02F3);
-uvec4 _XX_Circles_ =       uvec4(0x13E20234, 0x962736C6, 0x5637,     SPACE_CHAR);
-uvec4 _Draw_a_circled_l_ = uvec4(0x44271677, 0x02160236, 0x962736C6, 0x564602C6);
-uvec4  _ight_ =            uvec4(0x96768647, SPACE_CHAR, SPACE_CHAR, SPACE_CHAR);
 uvec4 _Then_a_full_grid_ = uvec4(0x458656E6, 0x02160266, 0x57C6C6,   0x76279646);
 uvec4 _Randomize_their_ =  uvec4(0x2516E646, 0xF6D696A7, 0x56024786, 0x569627);
-uvec4 _radius_ =           uvec4(0x27164696, 0x5737,     SPACE_CHAR, SPACE_CHAR);
+uvec4 _size_ =             uvec4(0x3796A756, SPACE_CHAR, SPACE_CHAR, SPACE_CHAR);
 uvec4 _position_ =         uvec4(0x07F63796, 0x4796F6E6, SPACE_CHAR, SPACE_CHAR);
-uvec4 _Reduce_color_num_ = uvec4(0x25564657, 0x36560236, 0xF6C6F627, 0x02E657D6);
-uvec4 _ber_ =              uvec4(0x265627,   SPACE_CHAR, SPACE_CHAR, SPACE_CHAR);
-uvec4 _Smooth_intersect_ = uvec4(0x35D6F6F6, 0x47860296, 0xE6475627, 0x37563647);
-uvec4 _ions_ =             uvec4(0x96F6E637, SPACE_CHAR, SPACE_CHAR, SPACE_CHAR);
-uvec4 _Add_more_circles_ = uvec4(0x144646,   0xD6F62756, 0x02369627, 0x36C65637);
-uvec4 _Increase_light_ =   uvec4(0x94E63627, 0x56163756, 0x02C69676, 0x8647);
-uvec4 _Apply_noisy_shap_ = uvec4(0x140707C6, 0x9702E6F6, 0x963797,   0x37861607);
-uvec4  _e_ =               uvec4(0x56,       SPACE_CHAR, SPACE_CHAR, SPACE_CHAR);
+uvec4 _XX_Stars_ =         uvec4(0x33E20235, 0x47162737, SPACE_CHAR, SPACE_CHAR);
+uvec4 _Draw_a_cross_ =     uvec4(0x44271677, 0x02160236, 0x27F63737, SPACE_CHAR);
+uvec4 _Rotate_some_of_t_ = uvec4(0x25F64716, 0x47560237, 0xF6D65602, 0xF6660247);
+uvec4 _hem_ =              uvec4(0x8656D6,   SPACE_CHAR, SPACE_CHAR, SPACE_CHAR);
+uvec4 _Randomize_more_p_ = uvec4(0x2516E646, 0xF6D696A7, 0x5602D6F6, 0x27560207);
+uvec4 _arameters_ =        uvec4(0x162716D6, 0x56475627, 0x37,       SPACE_CHAR);
+uvec4 _Add_stars_to_Par_ = uvec4(0x144646,   0x37471627, 0x370247F6, 0x02051627);
+uvec4 _t_2_circles_swir_ = uvec4(0x470223,   0x36962736, 0xC65637D2, 0x37779627);
+uvec4 _ls_mix_           = uvec4(0xC63702D6, 0x9687,       SPACE_CHAR, SPACE_CHAR);
 
 const int[] FONT_NB = int[](0x03, 0x13, 0x23, 0x33, 0x43, 0x53, 0x63, 0x73, 0x83, 0x93);vec4 fontCol;vec3 fontColFill;vec3 fontColBorder;vec4 fontBuffer;vec2 fontCaret;float fontSize;float fontSpacing;vec2 fontUV;float log10(float x){if (x < 9.9999){return 0.;} else if (x < 99.9999) {return 1.;} else if (x < 999.9999) {return 2.;} else if (x < 9999.9999) {return 3.;} else if (x < 99999.9999) {return 4.;} else {return floor(log(x) / log(10.));}}vec4 fontTextureLookup(vec2 xy){float dxy = 1024.*1.5;vec2 dx = vec2(1.,0.)/dxy;vec2 dy = vec2(0.,1.)/dxy;return (texture(fontChannel,xy + dx + dy)+texture(fontChannel,xy + dx - dy)+texture(fontChannel,xy - dx - dy)+texture(fontChannel,xy - dx + dy)+2.*texture(fontChannel,xy))/6.;}void drawStr4(uint str){if (str < 0x100U){str = str * 0x100U + SPACE_CHAR;}if (str < 0x10000U){str = str * 0x100U + SPACE_CHAR;}if (str < 0x1000000U){str = str * 0x100U + SPACE_CHAR;}for (int i = 0; i < 4; i++){uint xy = (str >> 8 * (3 - i)) % 256U;if (xy != SPACE_CHAR){vec2 K = (fontUV - fontCaret) / fontSize;if (length(K) < 0.6){vec4 Q = fontTextureLookup((K + vec2(float(xy / 16U) + 0.5,16. - float(xy % 16U) - 0.5)) / 16.);fontBuffer.rgb += Q.rgb * smoothstep(0.6, 0.4, length(K));if (max(abs(K.x), abs(K.y)) < 0.5){fontBuffer.a = min(Q.a, fontBuffer.a);}}}if (xy != STOP_CHAR){fontCaret.x += fontSpacing * fontSize;}}}void beginDraw(){fontBuffer = vec4(0., 0., 0. , 1.);fontCol = vec4(0.);fontCaret.x += fontSpacing * fontSize / 2.;}void endDraw(){float a = smoothstep(1., 0., smoothstep(0.51, 0.53, fontBuffer.a));float b = smoothstep(0., 1., smoothstep(0.48, 0.51, fontBuffer.a));fontCol.rgb = mix(fontColFill, fontColBorder, b);fontCol.a = a;}void _(uint str){beginDraw();drawStr4(str);endDraw();}void _(uvec2 str){beginDraw();drawStr4(str.x);drawStr4(str.y);endDraw();}void _(uvec3 str){beginDraw();drawStr4(str.x);drawStr4(str.y);drawStr4(str.z);endDraw();}void _(uvec4 str){beginDraw();drawStr4(str.x);drawStr4(str.y);drawStr4(str.z);drawStr4(str.w);endDraw();}vec2 viewport(vec2 b){return (b / iResolution.xy - vec2(0.5)) * vec2(iResolution.x / iResolution.y, 1.);}
-// end of copy-pasting
 
 float pixel_res;
 float pix;
@@ -356,7 +353,7 @@ float polar(vec2 coords, Star star)
   return color;
 }
 
-float calc_star(vec2 coords, vec2 center)
+float calc_star(vec2 coords, vec2 center, bool anim)
 {
   float type = hash(center, SEED + 2u);
   uint rd_bigstar = (type < 0.15 ? NOVA : (type < 0.3 ? POLAR : DIAMOND));
@@ -368,7 +365,7 @@ float calc_star(vec2 coords, vec2 center)
   float brightness = hash(center, SEED + 4u) + 1.;
   float ring_size = hash(center, SEED + 5u) * 0.8;
   ring_size = (ring_size * size < pixel_res * 4. ? 0. : ring_size);
-  float power = round(sin(iTime * (3. + 4. * hash(center, SEED + 6u)))) * 0.2 + 1.;
+  float power = round(sin((anim ? iTime : 1.) * (3. + 4. * hash(center, SEED + 6u)))) * 0.2 + 1.;
 
   float star = 0.;
   Star bigstar =
@@ -400,7 +397,7 @@ float calc_star(vec2 coords, vec2 center)
   return star;
 }
 
-vec3 bigstars(vec2 coords)
+vec3 bigstars(vec2 coords, bool anim, bool l)
 {
   coords *= BIGSTARS_DENSITY;
   float d = 1e9, c;
@@ -420,18 +417,18 @@ vec3 bigstars(vec2 coords)
     p = vec2(floor2(o.x + h.x - f.x, pixel_res),
       floor2(o.y + h.y - f.y, pixel_res));
 
-    c = calc_star(p, center);
+    c = calc_star(p, center, anim);
     if (c < d)
     {
       d = c;
       tmp = p;
     }
   }
-  
+
   vec2 U = (coords + tmp) / BIGSTARS_DENSITY;
   float fv = fbmVoronoi(0.25 * U, SEED);
   
-  return vec3(-d * fv * fv * 0.5, U * pix);
+  return vec3(l ? -d * fv * fv * 0.5 : -d, U * pix);
 }
 
 vec3 hsv2rgb(vec3 c)
@@ -480,7 +477,7 @@ void starfield(vec2 u, out vec4 O)
   g = smax(-1., g, 3.2) * fv * fv;
   g *= (dith ? 1.35 : 1.5);
   
-  vec3 b = bigstars(U) * vec3(4., 1., 1.);
+  vec3 b = bigstars(U, true, true) * vec3(4., 1., 1.);
 
   g = max(b.x, g);
   g = floor(g * COLS) / COLS;
@@ -531,9 +528,9 @@ void mainImage(out vec4 O, vec2 u)
     p = floor(mod(p, power));
     a++;
   }
-  _(uvec3(str, 0xF22363E2, 0x03));
+  _(uvec3(str, 0xF22313E2, 0x03));
   if (text(u, O)) return;
-  
+
   if (time < 4.)
   {
     fontSize = 0.1;
@@ -545,113 +542,120 @@ void mainImage(out vec4 O, vec2 u)
       fontCaret = vec2(-0.425, 0.1);
       txt = _starfield_X_;
     } else {
-      fontCaret = vec2(-0.275, -0.15);
-      txt = _XX_Circles_;
+      fontCaret = vec2(-0.225, -0.15);
+      txt = _XX_Stars_;
     }
   } else if (time < 6.) {
-    if (v.x < -0.29)
-    {
-      fontCaret = vec2(-0.825, 0.4);    
-      txt = _Draw_a_circled_l_;
-    } else {
-      fontCaret = vec2(-0.29, 0.4); 
-      txt = _ight_;
-    }
+    fontCaret = vec2(-0.825, 0.4);    
+    txt = _Draw_a_cross_;
   } else if (time < 8.) {
     fontCaret = vec2(-0.825, 0.4);    
     txt = _Then_a_full_grid_;
-  } else if (time < 18.) {
-    if ((time < 12.) || ((time > 13.) && (time < 17.)))
-    {
-      if (v.x < -0.29)
-      {
-        fontCaret = vec2(-0.825, 0.4);
-        txt = (time < 12. ? _Randomize_their_ : (time < 15. ? _Reduce_color_num_ : _Smooth_intersect_));
-      } else {
-        fontCaret = vec2(-0.29, 0.4);
-        txt = (time < 10. ? _radius_ : (time < 12. ? _position_ : (time < 15. ? _ber_ : _ions_)));
-      }
-    }
-  } else if (time < 23.) {
-    fontCaret = vec2(-0.825, 0.4);    
-    txt = (time < 20. ? _Add_more_circles_ : _Increase_light_);
-  } else {
+  } else if (time < 15.) {
     if (v.x < -0.29)
     {
-      fontCaret = vec2(-0.825, 0.4);    
-      txt = _Apply_noisy_shap_;
+      fontCaret = vec2(-0.825, 0.4);
+      txt = (time < 10. ? _Rotate_some_of_t_ : (time < 13. ? _Randomize_their_ : _Randomize_more_p_));
     } else {
       fontCaret = vec2(-0.29, 0.4);
-      txt = _e_;
+      txt = (time < 10. ? _hem_ : (time < 11. ? _size_ : (time < 13. ? _position_ : _arameters_)));
+    }
+  } else if (time < 17.) {
+    if (v.x < -0.29)
+    {
+      fontCaret = vec2(-0.825, 0.4);
+      txt = _Add_stars_to_Par_;
+    } else if (v.x < 0.245) {
+      fontCaret = vec2(-0.29, 0.4);
+      txt = _t_2_circles_swir_;
+    } else {
+      fontCaret = vec2(0.245, 0.4);
+      txt = _ls_mix_;
     }
   }
   
   _(txt);
-  if (text(u, O)) { O *= (time > 3. && time < 4. ? (4. - time) * 0.5 :
-    (time < 24. ? 1. : clamp(26. - time, 0., 1.))); return; }
+  if (text(u, O)) { O *= (time > 3. && time < 4. ? (4. - time) * 0.5 : 1.); return; }
   
   if (time < 4.)
   {
     starfield(u, O);
     O *= (time > 3. ? (4. - time) * 0.5 : 1.);
   } else if (time < 6.) {
-    vec2 U = (u - iResolution.xy * 0.5) / iResolution.y;
-    O = vec4(vec3(0.5 - length(U)), 1.) * min(1., time - 4.);
+    vec2 U = 9.45 + (1. + 0.9 * clamp(time - 5., 0., 1.)) * (u - iResolution.xy * 0.5) / iResolution.y;
+    float s = min(1., time - 4.) * 0.4;
+    float o = 9. + 0.45 * clamp(6. - time, 0., 1.);
+    float c = max(1. - smoothstep(0., 0.01, sdSegment(U, o + vec2(s, 0.), o + vec2(-s, 0.))),
+      1. - smoothstep(0., 0.01, sdSegment(U, o + vec2(0., s), o + vec2(0., -s))));
+    O = vec4(vec3(c), 1.);
   } else if (time < 8.) {
-    vec2 U = (time > 6. ? min(1., (time - 6.) * 0.5) * 9. + 1. : 1.)
+    vec2 U = 9.45 + (min(1., (time - 6.) * 0.5) * 2.6 + 1.9)
       * (u - iResolution.xy * 0.5) / iResolution.y;
-    vec2 i = floor(U), f = fract(U), p = U;
+    vec2 i = floor(U), f = fract(U), o, p;
 
-    float d = 0., c;
+    float d = 0., c, s = min(1., time - 6.) * 0.4;
+    float d2 = max(1. - smoothstep(0., 0.01, sdSegment(U, 9. + vec2(0.4, 0.), 9. + vec2(-0.4, 0.))),
+      1. - smoothstep(0., 0.01, sdSegment(U, 9. + vec2(0., 0.4), 9. + vec2(0., -0.4))));
     for (int k = 0; k < 9; k++)
     {
-      p = vec2(k % 3, k / 3) - 1.;
-      p -= f;
+      o = vec2(k % 3, k / 3) - 1.;
+      p = o - f;
 
-      c = 0.5 - length(p);
+      c = max(1. - smoothstep(0.,  0.01, sdSegment(p, vec2(s, 0.), vec2(-s, 0.))),
+        1. - smoothstep(0., 0.01, sdSegment(p, vec2(0., s), vec2(0., -s))));
       d = max(d, c);
     }
-    O = vec4(vec3(max((7. - time), 0.) * (-length(U) + 0.5) + d * min(1., time - 6.)), 1.);
-  } else if (time < 18.) {
-    vec2 U = (time < 12. ? 10. * (2.1 + (u - iResolution.xy * 0.5) / iResolution.y) : 
-      (time < 17. ? 21. + (max(0., 13. - time) * 7. + 3.) * (u - iResolution.xy * 0.5) / iResolution.y :
-        21. + (min(1., time - 17.) * 7. + 3.) * (u - iResolution.xy * 0.5) / iResolution.y));
-    uint seed = SEED + 10u;
-    vec2 i = floor(U), f = fract(U), p = U, h;
-
-    float d = 0., c, rad;
+    O = vec4(vec3(max(d2, d * min(1., time - 6.))) * (1. + time - 6.), 1.);
+  } else if (time < 15.) {
+    vec2 U = 4.5 * (2.1 + (u - iResolution.xy * 0.5) / iResolution.y);
+    vec2 i = floor(U), f = fract(U), p, h, o;
+    bool r = false;
+    float d = 0., c, s, max_size = MAX_BIGSTAR_SZ - 3.;
     for (int k = 0; k < 9; k++)
     {
-      p = vec2(k % 3, k / 3) - 1.;
-      rad = max((10. - time) * 0.5, 0.) * 0.5
-        + (0.25 + hash(i + p, seed + 2u) * 0.5) * min(1., (time - 8.) * 0.5);
-      h = clamp((time - 10.) * 0.5, 0., 1.) * vec2(hash(i + p, seed + 89u), hash(i + p, seed + 52u));
-      p += h - f;
+      o = vec2(k % 3, k / 3) - 1.;
+      h = vec2(hash(i + o, SEED), hash(i + o, SEED + 1u)) * clamp((time - 11.) * 0.5, 0., 1.);
+      p = o + h - f;
 
-      c = rad - length(p);
-      d = (time < 15. ? max(d, c) : smax(d, c, min(1., time - 15.) * 0.3));
+      r = hash(i + o, SEED + 7u) > 0.5;
+      p = rotation(p, radians(r ? 45. * min(1., (time - 8.)) : 0.));
+      
+      s = hash(i + o, SEED + 3u) * 0.5;
+      s = 0.4 * clamp(11. - time, 0., 1.) + s * s * clamp(time - 10., 0., 1.);
+      c = max(1. - smoothstep(0., 0.01, sdSegment(p, vec2(s, 0.), vec2(-s, 0.))),
+        1. - smoothstep(0., 0.01, sdSegment(p, vec2(0., s), vec2(0., -s))));
+      d = max(d, c);
     }
-    O = vec4(vec3(d), 1.);
+    O = vec4(vec3(d * 3.), 1.);
     if (time > 13.)
     {
-      float cols = max(0., 14. - time) * 100. + COLS;
-      O = floor(O * cols) / cols;
+      pix = iResolution.y;
+      vec2 bU = 2.1 + (u - iResolution.xy * 0.5) / iResolution.y;
+      vec2 U = floor(bU * pix) / pix;
+      vec3 b = bigstars(U, false, false) * vec3(4., 1., 1.);
+      O *= 0.5 * (15. - time);
+      O += 0.5 * (time - 13.) * vec4(vec3(floor(b.x * COLS) / COLS), 1.);
     }
-  } else if (time < 23.) {
-    vec2 U = 10. * (2.1 + (u - iResolution.xy * 0.5) / iResolution.y);
-    float g = max(fbmCircles(U, SEED + 10u), fbmCircles(U, SEED + 20u));
-    O = vec4(vec3((time < 20. ? max(0., 0.5 * (20. - time)) * (circles(U, 0.5, -1., SEED + 10u))
-      + min(1., (time - 18.) * 0.5) * g : max(0., 0.5 * (22. - time)) * g
-      + min(1., (time - 20.) * 0.5) * smax(-1., g, 3.2 * min(1., (time - 20.) * 0.5)))), 1.);;
-    O = floor(O * COLS) / COLS;
-  } else {
+  } else if (time < 17.) {
+    pix = iResolution.y;
     vec2 bU = 2.1 + (u - iResolution.xy * 0.5) / iResolution.y;
-    vec2 U = 10. * bU;
-    float fv = fbmVoronoi(0.25 * bU, SEED);
+    vec2 U = floor(bU * pix) / pix;
+    vec3 b = bigstars(U, false, false) * vec3(4., 1., 1.);
+    O = vec4(vec3(floor(b.x * COLS) / COLS), 1.);
+  } else {
+    pix = iResolution.y;
+    vec2 bU = 2.1 + (u - iResolution.xy * 0.5) / iResolution.y;
+    vec2 U = floor(bU * pix) / pix;
+    
+    float fv = fbmVoronoi(0.25 * U, SEED);
     fv *= fv * 1.5;
-    float g = max(fbmCircles(U, SEED + 10u), fbmCircles(U, SEED + 20u));
-    g = smax(-1., g, 3.2);
-    O = vec4(vec3(g * (min(1., time - 23.) * fv + max(0., 24. - time))), 1.);
-    O = (floor(O * COLS) / COLS) * clamp(26. - time, 0., 1.);
+    vec2 aU = fbmSwirls(U, SEED) * 10.;
+    float g = max(fbmCircles(aU, SEED + 10u), fbmCircles(aU, SEED + 20u));
+    g = smax(-1., g, 3.2) * fv;
+    
+    vec3 b = bigstars(U, false, true) * vec3(4., 1., 1.);
+  
+    O = vec4(vec3(max(b.x, g)), 1.);
+    O = (floor(O * COLS) / COLS) * clamp(21. - time, 0., 1.);
   }
 }

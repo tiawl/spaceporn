@@ -24,7 +24,7 @@
 const int KEY_LEFT  = 37;
 const int KEY_RIGHT = 39;
 
-void mainImage( out vec4 fragColor, in vec2 fragCoord )
+void mainImage(out vec4 fragColor, in vec2 fragCoord)
 {
   fragColor = texelFetch(BufferAChannel, ivec2(fragCoord), 0);
   float right = texelFetch(KeyboardChannel, ivec2(KEY_RIGHT, 0), 0).x;

@@ -427,10 +427,10 @@ vec3 bigstars(vec2 coords)
       tmp = p;
     }
   }
-  
+
   vec2 U = (coords + tmp) / BIGSTARS_DENSITY;
   float fv = fbmVoronoi(0.25 * U, SEED);
-  
+
   return vec3(-d * fv * fv * 0.5, U * pix);
 }
 
@@ -473,13 +473,13 @@ void starfield(vec2 u, out vec4 O)
   vec2 bU = 2.1 + (u - iResolution.xy * 0.5) / iResolution.y + time * 0.05;
   vec2 U = floor(bU * pix) / pix;
   bool dith = mod(bU.x + U.y, 2. / pix) < 1. / pix;
-  
+
   float fv = fbmVoronoi(0.25 * U, SEED);
   vec2 aU = fbmSwirls(U, SEED) * 10.;
   float g = max(fbmCircles(aU, SEED + 10u), fbmCircles(aU, SEED + 20u));
   g = smax(-1., g, 3.2) * fv * fv;
   g *= (dith ? 1.35 : 1.5);
-  
+
   vec3 b = bigstars(U) * vec3(4., 1., 1.);
 
   g = max(b.x, g);
@@ -503,8 +503,7 @@ bool text(vec2 u, out vec4 O)
 
 void mainImage(out vec4 O, vec2 u)
 {
-  pix = 150.;
-  
+  pix = iResolution.y;
   vec2 v = viewport(u);
   fontSize = 0.075;
   fontSpacing = 0.45;
@@ -512,11 +511,11 @@ void mainImage(out vec4 O, vec2 u)
   fontColFill = vec3(1.);
   fontColBorder = vec3(0.);
   uvec4 txt = uvec4(0x02020202);
-  
+
   time = min(VIDEO_LENGTH, iTime + texelFetch(BufferAChannel, ivec2(u), 0).x);
-  
+
   O = vec4(0.);
-  
+
   fontCaret = vec2(-0.85, -0.45);
   float p = time * 10., power;
   float chars = log10(p) + 1.;
@@ -533,7 +532,7 @@ void mainImage(out vec4 O, vec2 u)
   }
   _(uvec3(str, 0xF22363E2, 0x03));
   if (text(u, O)) return;
-  
+
   if (time < 4.)
   {
     fontSize = 0.1;
@@ -551,14 +550,14 @@ void mainImage(out vec4 O, vec2 u)
   } else if (time < 6.) {
     if (v.x < -0.29)
     {
-      fontCaret = vec2(-0.825, 0.4);    
+      fontCaret = vec2(-0.825, 0.4);
       txt = _Draw_a_circled_l_;
     } else {
-      fontCaret = vec2(-0.29, 0.4); 
+      fontCaret = vec2(-0.29, 0.4);
       txt = _ight_;
     }
   } else if (time < 8.) {
-    fontCaret = vec2(-0.825, 0.4);    
+    fontCaret = vec2(-0.825, 0.4);
     txt = _Then_a_full_grid_;
   } else if (time < 18.) {
     if ((time < 12.) || ((time > 13.) && (time < 17.)))
@@ -573,25 +572,26 @@ void mainImage(out vec4 O, vec2 u)
       }
     }
   } else if (time < 23.) {
-    fontCaret = vec2(-0.825, 0.4);    
+    fontCaret = vec2(-0.825, 0.4);
     txt = (time < 20. ? _Add_more_circles_ : _Increase_light_);
   } else {
     if (v.x < -0.29)
     {
-      fontCaret = vec2(-0.825, 0.4);    
+      fontCaret = vec2(-0.825, 0.4);
       txt = _Apply_noisy_shap_;
     } else {
       fontCaret = vec2(-0.29, 0.4);
       txt = _e_;
     }
   }
-  
+
   _(txt);
   if (text(u, O)) { O *= (time > 3. && time < 4. ? (4. - time) * 0.5 :
     (time < 24. ? 1. : clamp(26. - time, 0., 1.))); return; }
-  
+
   if (time < 4.)
   {
+    pix = 150.;
     starfield(u, O);
     O *= (time > 3. ? (4. - time) * 0.5 : 1.);
   } else if (time < 6.) {

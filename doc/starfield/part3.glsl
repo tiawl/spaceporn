@@ -500,8 +500,8 @@ bool text(vec2 u, out vec4 O)
 
 void mainImage(out vec4 O, vec2 u)
 {
-  pix = 150.;
-  
+  pix = iResolution.y;
+
   vec2 v = viewport(u);
   fontSize = 0.075;
   fontSpacing = 0.45;
@@ -509,11 +509,11 @@ void mainImage(out vec4 O, vec2 u)
   fontColFill = vec3(1.);
   fontColBorder = vec3(0.);
   uvec4 txt = uvec4(0x02020202);
-  
+
   time = min(VIDEO_LENGTH, iTime + texelFetch(BufferAChannel, ivec2(u), 0).x);
-  
+
   O = vec4(0.);
-  
+
   fontCaret = vec2(-0.85, -0.45);
   float p = time * 10., power;
   float chars = log10(p) + 1.;
@@ -546,10 +546,10 @@ void mainImage(out vec4 O, vec2 u)
       txt = _XX_Stars_;
     }
   } else if (time < 6.) {
-    fontCaret = vec2(-0.825, 0.4);    
+    fontCaret = vec2(-0.825, 0.4);
     txt = _Draw_a_cross_;
   } else if (time < 8.) {
-    fontCaret = vec2(-0.825, 0.4);    
+    fontCaret = vec2(-0.825, 0.4);
     txt = _Then_a_full_grid_;
   } else if (time < 15.) {
     if (v.x < -0.29)
@@ -573,12 +573,13 @@ void mainImage(out vec4 O, vec2 u)
       txt = _ls_mix_;
     }
   }
-  
+
   _(txt);
   if (text(u, O)) { O *= (time > 3. && time < 4. ? (4. - time) * 0.5 : 1.); return; }
-  
+
   if (time < 4.)
   {
+    pix = 150.;
     starfield(u, O);
     O *= (time > 3. ? (4. - time) * 0.5 : 1.);
   } else if (time < 6.) {
@@ -619,7 +620,7 @@ void mainImage(out vec4 O, vec2 u)
 
       r = hash(i + o, SEED + 7u) > 0.5;
       p = rotation(p, radians(r ? 45. * min(1., (time - 8.)) : 0.));
-      
+
       s = hash(i + o, SEED + 3u) * 0.5;
       s = 0.4 * clamp(11. - time, 0., 1.) + s * s * clamp(time - 10., 0., 1.);
       c = max(1. - smoothstep(0., 0.01, sdSegment(p, vec2(s, 0.), vec2(-s, 0.))),
@@ -629,7 +630,6 @@ void mainImage(out vec4 O, vec2 u)
     O = vec4(vec3(d * 3.), 1.);
     if (time > 13.)
     {
-      pix = iResolution.y;
       vec2 bU = 2.1 + (u - iResolution.xy * 0.5) / iResolution.y;
       vec2 U = floor(bU * pix) / pix;
       vec3 b = bigstars(U, false, false) * vec3(4., 1., 1.);
@@ -637,24 +637,22 @@ void mainImage(out vec4 O, vec2 u)
       O += 0.5 * (time - 13.) * vec4(vec3(floor(b.x * COLS) / COLS), 1.);
     }
   } else if (time < 17.) {
-    pix = iResolution.y;
     vec2 bU = 2.1 + (u - iResolution.xy * 0.5) / iResolution.y;
     vec2 U = floor(bU * pix) / pix;
     vec3 b = bigstars(U, false, false) * vec3(4., 1., 1.);
     O = vec4(vec3(floor(b.x * COLS) / COLS), 1.);
   } else {
-    pix = iResolution.y;
     vec2 bU = 2.1 + (u - iResolution.xy * 0.5) / iResolution.y;
     vec2 U = floor(bU * pix) / pix;
-    
+
     float fv = fbmVoronoi(0.25 * U, SEED);
     fv *= fv * 1.5;
     vec2 aU = fbmSwirls(U, SEED) * 10.;
     float g = max(fbmCircles(aU, SEED + 10u), fbmCircles(aU, SEED + 20u));
     g = smax(-1., g, 3.2) * fv;
-    
+
     vec3 b = bigstars(U, false, true) * vec3(4., 1., 1.);
-  
+
     O = vec4(vec3(max(b.x, g)), 1.);
     O = (floor(O * COLS) / COLS) * clamp(21. - time, 0., 1.);
   }

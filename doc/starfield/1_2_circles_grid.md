@@ -28,6 +28,7 @@ nearest integer to *v.y* is *0*. So *vec2 i = vec2(0.0, 5.0)*,
 nearest integer to *v.y* is *2*. So *vec2 i = vec2(2.0, 2.0)*,
 - for *vec2 v = vec2(8.8, 4.6)*, the nearest integer to *v.x* is *9* and the
 nearest integer to *v.y* is *5*. So *vec2 i = vec2(9.0, 5.0)*.
+
 The *round(x)* builtin-function returns the nearest integer to *x*. This is
 exactly what we need to find the center of our circles.
 

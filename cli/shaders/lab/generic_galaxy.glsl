@@ -83,16 +83,16 @@ void mainImage( out vec4 O, in vec2 u )
     U *= vec2(0.6, 1.2);
     vec2 bU = U;
    U = rotation(U, 3.5 * (1. - smoothstep(0., 1.2, length(U))));
-    float s1 = 0.4, s2 = 0.6;
-    float d1 = 0.5;
-    float d2 = 0.5;
+    float s1 = 0.4, s2 = 0.8;
+    float d1 = abs(bU.x) + abs(bU.y) > 1. ? 0.6*abs(sin(20.*bU.x)) : 0.5;
+    float d2 = abs(U.x) + abs(U.y) > 0.7 ? 0.6*abs(sin(10.*bU.y)) : 0.5;
 
-    float c = max(1. - smoothstep(0., d1, sdSegment(U, vec2(s1*2., 0.), vec2(-s1, 0.))),
-      1. - smoothstep(0., d2, sdSegment(U, vec2(0., s2), vec2(0., -s2))));
-    c = max(c, 1. - smoothstep(0., d1, sdSegment(U, vec2(-s1*2., 0.4), vec2(-s1, 0.))));
-    c = max(c, 1. - smoothstep(0., d1/1.5, sdSegment(U, vec2(-s1*2., -0.4), vec2(-s1, 0.))));
+    float c = max(1. - smoothstep(0., d1/1.5, sdSegment(U, vec2(s1*2., 0.), vec2(-s1, 0.))),
+      1. - smoothstep(0., d2/1.5, sdSegment(U, vec2(0., s2), vec2(0., -s2))));
+    c = max(c, 1. - smoothstep(0., d1/1.5, sdSegment(U, vec2(-s1*2., 0.4), vec2(-s1, 0.))));
+    c = max(c, 1. - smoothstep(0., d1/1.8, sdSegment(U, vec2(-s1*2., -0.4), vec2(-s1, 0.))));
     c *= (2. - length(U)) * (length(U) + 0.15);
     c += max(0., 0.3 - abs(U.x) - abs(0.8*bU.y)) * 3.;
-    c = floor(c * COLS) / COLS;
+    c = floor(c * COLS * 0.8) / COLS;
     O = vec4(color(10. * c, COL_SEED), 1.);
 }

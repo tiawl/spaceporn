@@ -25,6 +25,7 @@ MEDIUM PRIORITY:
 
 LOW PRIORITY:
 - add a flag to disable some planets/galaxy/darkhole/asteroids/bigstars
+- add a (--sample ?) flag to show one instance of a planet/galaxy/bigstar (new generation every 3 secs) in a little window
 - Windows OS portability
 - Vulkan compatibility
 
@@ -48,7 +49,8 @@ LOW PRIORITY:
 - abueloretrowave ring planet
 - abueloretrowave metal planet
 - death star ??
-- galaxy
+- Deep-Fold galaxy
+- generic galaxies
 - dark hole (with event horizon animation)
 - group of asteroids
 - color settings

@@ -57,7 +57,7 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord)
 
 And we have a beautiful circles grid:
 
-<img src="media/grid.png">
+<img src="media/circles_grid.png">
 
 ---
 

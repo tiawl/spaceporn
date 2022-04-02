@@ -9,8 +9,8 @@ other shader to make it. We will write this shader on
 [Shadertoy](https://www.shadertoy.com/new). It is one of the online tool
 letting you play interactively with WebGL 2.0 shaders. You can get the same
 result on your own Shadertoy session. There are very minor changes between
-Shadertoy's shaders and GLSL shader. So it will not be hard to translate the
-final result in a GLSL shader.
+Shadertoy's shaders and GLSL shader. So it will not be hard to translate for
+your own needs.
 
 ## Synchronize our viewports
 

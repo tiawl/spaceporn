@@ -44,7 +44,7 @@ in UV system. The better way to achieve this, is to add this line in our
   vec2 UV = fragCoord / iResolution.y;
 ```
 `iResolution` is a Shadertoy specific variable. It is defined as: "The
-viewport resolution". So `iResolution.y` is our height resolution. So now
+viewport resolution". So `iResolution.y` is our height resolution and now
 instead of this coordinate system:
 
 ![](media/fragcoord_sys.png)

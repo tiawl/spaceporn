@@ -1,4 +1,5 @@
-[Previous page: Setup &#8882;](0_setup.md) | [&#8883; Next page: Circles grid](1_2_circles_grid.md)
+[&#8882; Previous page - Setup](0_setup.md) | [Next page - Circles grid &#8883;](1_2_circles_grid.md)
+---|---
 
 ---
 
@@ -37,9 +38,9 @@ pixel's UV coordinates to center the light. Finally, we have to revert the
 color. To achieve this, we multiply the `length(UV)` function by `-1.0`. Now
 the color value is between `0.0` and `-∞`. So if we display something,
 we will see a black screen. We have to add a value to increase the maximum
-color value (which is `0.0`). Greater this value will be, greater will be the
-maximum color value and bigger will be our circle. This value will be its
-radius.
+color value (which is right now `0.0`). Greater this value will be, greater
+will be the maximum color value and bigger will be our circle. This value will
+be its radius.
 
 ```glsl
 void mainImage(out vec4 fragColor, in vec2 fragCoord)
@@ -70,4 +71,5 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord)
 
 ---
 
-[Previous page: Setup &#8882;](0_setup.md) | [&#8883; Next page: Circles grid](1_2_circles_grid.md)
+[&#8882; Previous page - Setup](0_setup.md) | [Next page - Circles grid &#8883;](1_2_circles_grid.md)
+---|---

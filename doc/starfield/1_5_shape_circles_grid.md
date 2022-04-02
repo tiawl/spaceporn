@@ -1,4 +1,5 @@
-[Previous page: Use circled grid as a noise &#8882;](1_4_noise_circles_grid.md) | [&#8883; Next page: ]()
+[&#8882; Previous page: Use circled grid as a noise](1_4_noise_circles_grid.md) | [Next page: &#8883;]()
+---|---
 
 ---
 
@@ -6,4 +7,5 @@
 
 ---
 
-[Previous page: Use circled grid as a noise &#8882;](1_4_noise_circles_grid.md) | [&#8883; Next page: ]()
+[&#8882; Previous page: Use circled grid as a noise](1_4_noise_circles_grid.md) | [Next page: &#8883;]()
+---|---

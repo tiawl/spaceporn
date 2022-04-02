@@ -1,4 +1,5 @@
-[Previous page: A circled light &#8882;](1_1_a_circled_light.md) | [&#8883; Next page: Randomize the circles grid](1_3_rd_circles_grid.md)
+[&#8882; Previous page: A circled light](1_1_a_circled_light.md) | [Next page: Randomize the circles grid &#8883;](1_3_rd_circles_grid.md)
+---|---
 
 ---
 
@@ -63,4 +64,5 @@ And we have a beautiful circles grid:
 
 ---
 
-[Previous page: A circled light &#8882;](1_1_a_circled_light.md) | [&#8883; Next page: Randomize the circles grid](1_3_rd_circles_grid.md)
+[&#8882; Previous page: A circled light](1_1_a_circled_light.md) | [Next page: Randomize the circles grid &#8883;](1_3_rd_circles_grid.md)
+---|---

@@ -1,4 +1,5 @@
-[Previous page: Circles grid &#8882;](1_2_circles_grid.md) | [&#8883; Next page: Use circled grid as a noise](1_4_noise_circles_grid.md)
+[&#8882; Previous page: Circles grid](1_2_circles_grid.md) | [Next page: Use circled grid as a noise &#8883;](1_4_noise_circles_grid.md)
+---|---
 
 ---
 
@@ -104,4 +105,5 @@ This is not really what we expected, so what is happening ?
 
 ---
 
-[Previous page: Circles grid &#8882;](1_2_circles_grid.md) | [&#8883; Next page: Use circled grid as a noise](1_4_noise_circles_grid.md)
+[&#8882; Previous page: Circles grid](1_2_circles_grid.md) | [Next page: Use circled grid as a noise &#8883;](1_4_noise_circles_grid.md)
+---|---

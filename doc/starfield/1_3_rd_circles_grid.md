@@ -66,6 +66,7 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord)
 ```
 
 This is what you should see:
+
 ![](media/hash.png)
 
 Now we can use this on our grid and displace our circles:

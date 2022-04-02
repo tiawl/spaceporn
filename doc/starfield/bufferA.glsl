@@ -1,6 +1,7 @@
 /*
   #define VIDEO_LENGTH 26. // Part 1
   #define VIDEO_LENGTH 21. // Part 2
+  #define VIDEO_LENGTH 19. // Part 3
 */
 
 /*

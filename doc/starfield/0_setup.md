@@ -46,11 +46,11 @@ better way to achieve this, is to add this line in our *mainImage()* function:
 viewport resolution". So *iResolution.y* is our height resolution. So now
 instead of this coordinate system:
 
-<img src="media/fragcoord_sys.png">
+![](media/fragcoord_sys.png)
 
 We have this one:
 
-<img src="media/uvcoord_sys.png">
+![](media/uvcoord_sys.png)
 
 And we have the same Y axis. Now we can start to draw something.
 

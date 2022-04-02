@@ -528,7 +528,7 @@ void mainImage(out vec4 O, vec2 u)
     p = floor(mod(p, power));
     a++;
   }
-  _(uvec3(str, 0xF22313E2, 0x03));
+  _(uvec3(str, 0xF21393E2, 0x03));
   if (text(u, O)) return;
 
   if (time < 4.)
@@ -560,7 +560,7 @@ void mainImage(out vec4 O, vec2 u)
       fontCaret = vec2(-0.29, 0.4);
       txt = (time < 10. ? _hem_ : (time < 11. ? _size_ : (time < 13. ? _position_ : _arameters_)));
     }
-  } else if (time < 17.) {
+  } else if (time < 18.) {
     if (v.x < -0.29)
     {
       fontCaret = vec2(-0.825, 0.4);
@@ -636,14 +636,11 @@ void mainImage(out vec4 O, vec2 u)
       O *= 0.5 * (15. - time);
       O += 0.5 * (time - 13.) * vec4(vec3(floor(b.x * COLS) / COLS), 1.);
     }
-  } else if (time < 17.) {
-    vec2 bU = 2.1 + (u - iResolution.xy * 0.5) / iResolution.y;
-    vec2 U = floor(bU * pix) / pix;
-    vec3 b = bigstars(U, false, false) * vec3(4., 1., 1.);
-    O = vec4(vec3(floor(b.x * COLS) / COLS), 1.);
   } else {
     vec2 bU = 2.1 + (u - iResolution.xy * 0.5) / iResolution.y;
     vec2 U = floor(bU * pix) / pix;
+    vec3 b = bigstars(U, false, false) * vec3(4., 1., 1.);
+    float b1 = floor(b.x * COLS) / COLS;
 
     float fv = fbmVoronoi(0.25 * U, SEED);
     fv *= fv * 1.5;
@@ -651,9 +648,11 @@ void mainImage(out vec4 O, vec2 u)
     float g = max(fbmCircles(aU, SEED + 10u), fbmCircles(aU, SEED + 20u));
     g = smax(-1., g, 3.2) * fv;
 
-    vec3 b = bigstars(U, false, true) * vec3(4., 1., 1.);
+    vec3 b2 = bigstars(U, false, true) * vec3(4., 1., 1.);
 
-    O = vec4(vec3(max(b.x, g)), 1.);
-    O = (floor(O * COLS) / COLS) * clamp(21. - time, 0., 1.);
+    g = floor(max(b2.x, g) * COLS) / COLS;
+    
+    O = vec4(vec3(b1 * max(0., 0.5 * (17. - time)) + g * min(1., 0.5 * (time - 15.))), 1.)
+      * clamp(19. - time, 0., 1.);
   }
 }

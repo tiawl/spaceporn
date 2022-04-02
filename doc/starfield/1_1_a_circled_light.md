@@ -29,7 +29,7 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord)
 
 We have this result (nearer is the point from the origin, darker it is):
 
-<img src="media/dist.png">
+![](media/dist.png)
 
 First we need to center the result. We saw *iResolution* was the viewport
 resolution. So we just uniformize this value, half it and substract it to our
@@ -64,7 +64,9 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord)
 }
 ```
 
-<img src="media/blur_light.png">
+|![](media/light.png)|
+|:--:|
+|For better visibility on this picture, *dist* is multiplied by 2*|
 
 ---
 

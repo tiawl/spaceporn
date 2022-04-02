@@ -53,7 +53,7 @@ We have this one:
 
 ![](media/uvcoord_sys.png)
 
-And we have the same Y axis. Now we can start to draw something.
+And we have the same Y axis. It is time to draw something !
 
 ---
 

@@ -98,7 +98,7 @@ with the same value. We are using `hash()` function two times with two
 different seed parameter (`0u` and `1u`) to displace circles center with two
 different values. And here the result:
 
-![](error1.png)
+![](media/error1.png)
 
 This is not really what we expected, so what is happening ?
 

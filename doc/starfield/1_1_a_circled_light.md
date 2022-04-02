@@ -35,7 +35,7 @@ First we need to center the result. We saw `iResolution` was the viewport
 resolution. So we just uniformize this value, half it and substract it to our
 pixel's UV coordinates to center the light. Finally, we have to revert the
 color. To achieve this, we multiply the `length(UV)` function by `-1.0`. Now
-the color value is between `0.0` and `-&infin;`. So if we display something,
+the color value is between `0.0` and `-∞`. So if we display something,
 we will see a black screen. We have to add a value to increase the maximum
 color value (which is `0.0`). Greater this value will be, greater will be the
 maximum color value and bigger will be our circle. This value will be its

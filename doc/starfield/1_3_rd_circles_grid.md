@@ -126,7 +126,7 @@ circles. The current cell is `vec2(0.0, 0.0)`, so the bottom-left one is
 |:--:|
 
 But is it enough ? If we take the 8 neighbours around the current cell, the
-maximum covered distance is now `1.5` in each direction (`0.5` for current
+maximum covered distance is now `1.5` in each direction (`0.5` for the current
 cell and `1.0` for the neighbour). So yes it is enough !
 
 ```glsl
@@ -143,7 +143,7 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord)
   // Initialize this with a minimum value
   float dist = 0.0;
 
-  // Iterate over neighbours
+  // Iterate over the current cell and its neighborhood
   for (int x = -1; x <= 1; x++)
   {
     for (int y = -1; y <= 1; y++)

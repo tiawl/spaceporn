@@ -1,4 +1,4 @@
-[&#8882; Previous page: Circles grid](1_2_circles_grid.md) | [Next page: Use circled grid as a noise &#8883;](1_4_noise_circles_grid.md)
+[&#8882; Previous page: Circles grid](1_2_circles_grid.md) | [Next page: Use circles grid as a noise &#8883;](1_4_noise_circles_grid.md)
 ---|---
 
 ---
@@ -164,5 +164,5 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord)
 
 ---
 
-[&#8882; Previous page: Circles grid](1_2_circles_grid.md) | [Next page: Use circled grid as a noise &#8883;](1_4_noise_circles_grid.md)
+[&#8882; Previous page: Circles grid](1_2_circles_grid.md) | [Next page: Use circles grid as a noise &#8883;](1_4_noise_circles_grid.md)
 ---|---

@@ -106,8 +106,13 @@ different values. And here the result:
 This is not really what we expected, so what is happening ? The problem is
 that we are using the `round()` function. Because of this, our circles are
 only considering points with distance less than `0.5`. If a point exceeds
-this limit, it is considered as part of an other circle. This is what this GIF
-is highlighting:
+this limit, it is not considered for the current circle. And this is what we
+are facing now: The maximum radius of a circle is `0.5`. The maximum
+displacement is `0.5` horizontally and `0.5` vertically so
+`max_displacement = √(0.5 * 0.5 + 0.5 * 0.5) = √(0.5) ~= 0.707`. So the
+maximum distance for a point is
+`max_displacement + max_radius = 0.707 + 0.5 = 1.207`, which is greater than
+`0.5`. This is what this GIF is highlighting:
 
 |![](media/error.gif)|
 |:--:|
@@ -120,6 +125,10 @@ circles. The current cell is `vec2(0.0, 0.0)`, so the bottom-left one is
 |![](media/neighbours.png)|
 |:--:|
 
+But is it enough ? If we take the 8 neighbours around the current cell, the
+maximum covered distance is now `1.5` in each direction (`0.5` for current
+cell and `1.0` for the neighbour). So yes it is enough !
+
 ```glsl
 void mainImage(out vec4 fragColor, in vec2 fragCoord)
 {
@@ -130,8 +139,11 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord)
   vec2 cell_center;
   vec2 displacement;
   float radius = 0.5;
+
+  // Initialize this with a minimum value
   float dist = 0.0;
 
+  // Iterate over neighbours
   for (int x = -1; x <= 1; x++)
   {
     for (int y = -1; y <= 1; y++)

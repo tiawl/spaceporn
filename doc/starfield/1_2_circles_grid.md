@@ -52,7 +52,7 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord)
 
   float dist = radius - length(UV - center);
 
-  fragColor = vec4(vec3(dist), 1.);
+  fragColor = vec4(vec3(dist * 2.0), 1.0);
 }
 ```
 
@@ -60,7 +60,6 @@ And we have a beautiful circles grid:
 
 |![](media/grid.png)|
 |:--:|
-|For better visibility on this picture, `dist` is multiplied by 2|
 
 ---
 

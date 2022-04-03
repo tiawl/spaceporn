@@ -30,7 +30,8 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord)
 
 We have this result (nearer is the point from the origin, darker it is):
 
-![](media/dist.png)
+|![](media/dist.png)|
+|:--:|
 
 First we need to center the result. We saw `iResolution` was the viewport
 resolution. So we just uniformize this value, half it and substract it to our
@@ -61,13 +62,13 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord)
   // Revert color value and give a radius to the light
   float dist = radius - length(UV);
 
-  fragColor = vec4(vec3(dist), 1.0);
+  // Multiply dist by 2.0 for better visibility
+  fragColor = vec4(vec3(dist * 2.0), 1.0);
 }
 ```
 
 |![](media/light.png)|
 |:--:|
-|For better visibility on this picture, `dist` is multiplied by `2.0`|
 
 ---
 

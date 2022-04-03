@@ -35,7 +35,7 @@ float hash(vec2 s, uint hash_seed)
   float res;
   uvec4 u = uvec4(s, uint(s.x) ^ uint(s.y), uint(s.x) + uint(s.y));
   uvec3 p = pcg3d(uvec3(u.x, u.y, hash_seed));
-  res = float(p) * (1. / float(0xffffffffu));
+  res = float(p) * (1.0 / float(0xffffffffu));
   return res;
 }
 ```
@@ -62,32 +62,33 @@ modifications depending of your `hash()`):
 ```glsl
 void mainImage(out vec4 fragColor, in vec2 fragCoord)
 {
-  fragColor = vec4(vec3(hash(fragCoord, 0u)), 1.);
+  fragColor = vec4(vec3(hash(fragCoord, 0u)), 1.0);
 }
 ```
 
 You should see this:
 
-![](media/hash.png)
+|![](media/hash.png)|
+|:--:|
 
 Now we can use this on our grid and displace our circles:
 ```glsl
 void mainImage(out vec4 fragColor, in vec2 fragCoord)
 {
   vec2 UV = fragCoord / iResolution.y;
-  UV *= 10.;
+  UV *= 10.0;
 
   vec2 center = round(UV);
 
   // Generate values between -0.5 and 0.5
-  vec2 h = vec2(hash(center, 0u), hash(center, 1u)) - vec2(0.5);
+  vec2 displacement = vec2(hash(center, 0u), hash(center, 1u)) - vec2(0.5);
 
   float radius = 0.5;
 
   // Displace the center of our circle
-  float color = radius - length(UV + h - center);
+  float dist = radius - length(UV + displacement - center);
 
-  fragColor = vec4(vec3(color * 2.), 1.);
+  fragColor = vec4(vec3(dist * 2.0), 1.0);
 }
 ```
 
@@ -99,11 +100,55 @@ with the same value. We are using `hash()` function two times with two
 different seed parameter (`0u` and `1u`) to displace circles center with two
 different values. And here the result:
 
-![](media/error1.png)
+|![](media/error1.png)|
+|:--:|
 
-This is not really what we expected, so what is happening ?
+This is not really what we expected, so what is happening ? The problem is
+that we are using the `round()` function. Because of this, our circles are
+only considering points with distance less than `0.5`. If a point exceeds
+this limit, it is considered as part of an other circle. This is what this GIF
+is highlighting:
 
-![](media/error.gif)
+|![](media/error.gif)|
+|:--:|
+
+We need to enlarge this radius. To achieve this, for each pixel we will visit
+the current cell and its 8 neighbours to check if it is part of one of their
+circles. The current cell is `vec2(0.0, 0.0)`, so the bottom-left one is
+`vec2(-1.0, -1.0)` and the top-right one is `vec2(1.0, 1.0)`.
+
+|![](media/neighbours.png)|
+|:--:|
+
+```glsl
+void mainImage(out vec4 fragColor, in vec2 fragCoord)
+{
+  vec2 UV = fragCoord / iResolution.y;
+  UV *= 10.0;
+
+  vec2 center = round(UV);
+  vec2 cell_center;
+  vec2 displacement;
+  float radius = 0.5;
+  float dist = 0.0;
+
+  for (int x = -1; x <= 1; x++)
+  {
+    for (int y = -1; y <= 1; y++)
+    {
+      cell_center = center + vec2(x, y);
+
+      // Generate values between -0.5 and 0.5 for current cell
+      displacement = vec2(hash(cell_center, 0u), hash(cell_center, 1u)) - vec2(0.5);
+
+      // Keep the maximum light value
+      dist = max(dist, radius - length(UV + displacement - cell_center));
+    }
+  }
+
+  fragColor = vec4(vec3(dist * 2.0), 1.0);
+}
+```
 
 ---
 

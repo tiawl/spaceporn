@@ -48,11 +48,13 @@ in UV system. The better way to achieve this, is to add this line in our
 viewport resolution". So `iResolution.y` is our height resolution and now
 instead of this coordinate system:
 
-![](media/fragcoord_sys.png)
+|![](media/fragcoord_sys.png)|
+|:--:|
 
 We have this one:
 
-![](media/uvcoord_sys.png)
+|![](media/uvcoord_sys.png)|
+|:--:|
 
 And we have the same Y axis. It is time to draw something !
 

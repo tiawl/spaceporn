@@ -50,15 +50,15 @@ back later:
 
 I choosed this function because:
 - it is a 3D function and we are working with 2D coordinates. So I can use the
-Z axis to simulate the seeding of the `hash()` function,
+Z axis parameter to simulate the seeding of the `hash()` function,
 - the "How to evaluate a hash function ?" article evalutes this `hash()`
 function as a good one.
 
 What does really matter is that you can choose the `hash()` function you want.
 So if you do not like mine you can replace it by yours.
 
-Whatever the `hash()` function you choosed (and with minor modifications),
-with those lines:
+Whatever the `hash()` function you choosed, with those lines (and minor
+modifications depending of your `hash()`):
 ```glsl
 void mainImage(out vec4 fragColor, in vec2 fragCoord)
 {
@@ -66,7 +66,7 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord)
 }
 ```
 
-This is what you should see:
+You should see this:
 
 ![](media/hash.png)
 
@@ -102,6 +102,8 @@ different values. And here the result:
 ![](media/error1.png)
 
 This is not really what we expected, so what is happening ?
+
+![](media/error.gif)
 
 ---
 

@@ -170,7 +170,7 @@ And the displayed result is:
 We can also randomize the radius by adding this line in the main loop:
 
 ```glsl
-      radius = hash(cell_center, 2u);
+      radius = 0.25 + hash(cell_center, 2u) * 0.5;
 ```
 
 ---

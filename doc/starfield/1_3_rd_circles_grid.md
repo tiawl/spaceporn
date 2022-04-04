@@ -117,7 +117,7 @@ maximum distance for a point is
 |![](media/error.gif)|
 |:--:|
 
-We need to enlarge this radius. To achieve this, for each pixel we will visit
+We need to increase this radius. To achieve this, for each pixel we will visit
 the current cell and its 8 neighbours to check if it is part of one of their
 circles. The current cell is `vec2(0.0, 0.0)`, so the bottom-left one is
 `vec2(-1.0, -1.0)` and the top-right one is `vec2(1.0, 1.0)`.
@@ -127,7 +127,7 @@ circles. The current cell is `vec2(0.0, 0.0)`, so the bottom-left one is
 
 But is it enough ? If we take the 8 neighbours around the current cell, the
 maximum covered distance is now `1.5` in each direction (`0.5` for the current
-cell and `1.0` for the neighbour). So yes it is enough !
+cell and `1.0` for the neighbour). So yes it is enough ! Here our new code:
 
 ```glsl
 void mainImage(out vec4 fragColor, in vec2 fragCoord)
@@ -160,6 +160,17 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord)
 
   fragColor = vec4(vec3(dist * 2.0), 1.0);
 }
+```
+
+And the displayed result is:
+
+|![](media/displaced.png)|
+|:--:|
+
+We can also randomize the radius by adding this line in the main loop:
+
+```glsl
+      radius = hash(cell_center, 2u);
 ```
 
 ---

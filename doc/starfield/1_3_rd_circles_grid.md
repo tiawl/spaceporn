@@ -1,4 +1,4 @@
-[&#8882; Previous page: Circles grid](1_2_circles_grid.md) | [Next page: Use circles grid as a noise &#8883;](1_4_noise_circles_grid.md)
+[&#8882; Previous page: Circles grid](1_2_circles_grid.md) | [Next page: Parametrize circles grid &#8883;](1_4_param_circles_grid.md)
 ---|---
 
 ---
@@ -140,7 +140,7 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord)
   vec2 displacement;
   float radius = 0.5;
 
-  // Initialize this with a minimum value
+  // Initialize this variable with a minimum value
   float dist = 0.0;
 
   // Iterate over the current cell and its neighborhood
@@ -175,5 +175,5 @@ We can also randomize the radius by adding this line in the main loop:
 
 ---
 
-[&#8882; Previous page: Circles grid](1_2_circles_grid.md) | [Next page: Use circles grid as a noise &#8883;](1_4_noise_circles_grid.md)
+[&#8882; Previous page: Circles grid](1_2_circles_grid.md) | [Next page: Parametrize circles grid &#8883;](1_4_param_circles_grid.md)
 ---|---

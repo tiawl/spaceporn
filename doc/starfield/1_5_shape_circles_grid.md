@@ -1,4 +1,4 @@
-[&#8882; Previous page: Use circles grid as a noise](1_4_noise_circles_grid.md) | [Next page: &#8883;]()
+[&#8882; Previous page: Parametrize circles grid](1_4_param_circles_grid.md) | [Next page: &#8883;]()
 ---|---
 
 ---
@@ -7,5 +7,5 @@
 
 ---
 
-[&#8882; Previous page: Use circles grid as a noise](1_4_noise_circles_grid.md) | [Next page: &#8883;]()
+[&#8882; Previous page: Parametrize circles grid](1_4_param_circles_grid.md) | [Next page: &#8883;]()
 ---|---

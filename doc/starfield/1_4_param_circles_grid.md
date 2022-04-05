@@ -46,16 +46,16 @@ new function:
 float fbmCircles(vec2 UV, uint seed)
 {
   float strength = 1.;
-  float n;
+  float new;
   float dist = -1.;
   int octaves = 2;
   for (int i = 0; i < octaves; i++)
   {
     // Evaluate new octave
-    n = strength * circles(UV, 0.5, seed + uint(i));
+    new = strength * circles(UV, 0.5, seed + uint(i));
 
     // Add
-    dist = smax(dist, n, 0.3 * strength);
+    dist = smax(dist, new, 0.3 * strength);
 
     // Prepare new octave
     UV *= 2.;

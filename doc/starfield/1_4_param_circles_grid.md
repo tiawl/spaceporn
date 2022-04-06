@@ -68,7 +68,7 @@ float fbmCircles(vec2 UV, uint seed)
 What those lines are just doing is adding a new circles grid with smaller
 radius after each looping:
 
-|![]()|
+|![](media/fbm.gif)|
 |:--:|
 
 Here the `smax()` function used by `fbmCircles()` function:

@@ -37,9 +37,9 @@ float circles(vec2 UV, float r, uint seed)
 }
 ```
 
-This function has 2 new parameters:
+There are nothing new in this function except the 2 new parameters:
 - `r` allows us to control circles radius without manipulating `UV`,
-- `seed` to draw a new "random" circles grid.
+- `seed` to select a new "random" circles grid.
 
 Now the main idea is to use the method described in this
 [article](https://iquilezles.org/www/articles/fbmsdf/fbmsdf.htm) to write a

@@ -5,9 +5,12 @@
 
 # 1.4. Parametrize circles grid
 
-Now we have an easy way to display a lot of circles. But it is not enough.
-We have to make this script parametrable to use it as a function. The goal is
-to reuse this easily because we will draw more circles that we are drawing.
+Now we found a way to display a lot of circles. But it is not enough. We have
+to make this script parametrable to use it as a function. For now our script
+is not easily readable or reusable. The goal is:
+- avoiding some headaches when reading what we done,
+- to help us when drawing another circles grid.
+
 Here is our new `circles()` function:
 
 ```glsl
@@ -40,7 +43,7 @@ This function has 2 new parameters:
 
 Now the main idea is to use the method described in this
 [article](https://iquilezles.org/www/articles/fbmsdf/fbmsdf.htm) to write a
-new function:
+new function which will use our newly written `circles()` function:
 
 ```glsl
 float fbmCircles(vec2 UV, uint seed)
@@ -48,11 +51,11 @@ float fbmCircles(vec2 UV, uint seed)
   float strength = 1.;
   float new;
   float dist = -1.;
-  int octaves = 2;
-  for (int i = 0; i < octaves; i++)
+  uint octaves = 2u;
+  for (uint i = 0u; i < octaves; i++)
   {
     // Evaluate new octave
-    new = strength * circles(UV, 0.5, seed + uint(i));
+    new = strength * circles(UV, 0.5, seed + i);
 
     // Add
     dist = smax(dist, new, 0.3 * strength);
@@ -82,12 +85,49 @@ float smax(float a, float b, float k)
 ```
 
 You can find more details about this function in this
-[article](https://iquilezles.org/www/articles/smin/smin.htm). This allow us to
-smooth intersections between circles:
+[article](https://iquilezles.org/www/articles/smin/smin.htm). This new
+function allow us to smooth intersections between circles:
 
 |![](media/max.png)|![](media/smax.png)|
 |:--:|:--:|
 | with `max()` | with `smax()` |
+
+This is why we are going to include also this new function in `circles()`
+function instead of `max()` usage. We are going to replace this line:
+
+```glsl
+      dist = max(dist, radius - length(UV + displacement - cell_center));
+```
+
+with this line:
+
+```glsl
+      dist = smax(dist, radius - length(UV + displacement - cell_center), 0.3);
+```
+
+With those 3 new functions, drawing circles can be achieved with only some
+calls. Here is our new `mainImage()` function:
+
+```glsl
+void mainImage(out vec4 fragColor, in vec2 fragCoord)
+{
+  vec2 UV = 10.0 * fragCoord / iResolution.y;
+
+  // Draw 2 layers of circles grid
+  float dist = max(fbmCircles(UV, 0u), fbmCircles(UV, 5u));
+
+  fragColor = vec4(vec3(dist), 1.0);
+}
+```
+
+And the expected result:
+
+|![](media/2layerscircles.png)|
+|:--:|
+
+And that is it: we drew more circles than before but with a smaller
+`mainImage()` function. Drawing a circles grid is now as simple as calling the
+related function !
 
 ---
 

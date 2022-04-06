@@ -21,7 +21,7 @@ you think you found:
     - a bad algorithm,
     - a bad implementation,
     - an unprecision,
-    - a leak of pedagogy/methology,
+    - a leak of pedagogy/methodology,
     - something you can improve,
 
     this is (at least) the best reason to open an issue.

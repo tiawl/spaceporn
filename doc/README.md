@@ -19,7 +19,7 @@ Here are the [instructions](CONTRIBUTING.md).
 
 ## Available tutorials
 
-- [starfield](starfield/table_of_contents.md) (in progress)
+- [starfield](starfield/README.md) (in progress)
 
 ## Online shaders
 

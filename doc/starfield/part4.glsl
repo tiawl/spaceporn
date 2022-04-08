@@ -7,8 +7,8 @@ uvec4 _How_to_make_this_ = uvec4(0x84F677,   0x47F602D6, 0x16B656,   0x47869637)
 uvec4 _starfield_X_ =      uvec4(0x02020237, 0x47162766, 0x9656C646, 0x02F3);
 uvec4 _XX_Details_ =       uvec4(0x43E20244, 0x56471696, 0xC637,     SPACE_CHAR);
 uvec4 _Add_pixelization_ = uvec4(0x144646,   0x07968756, 0xC696A716, 0x4796F6E6);
-uvec4 _Add_dithering_    = uvec4(0x144646,   0x46964786, 0x562796E6, 0x76);
-
+uvec4 _Add_dithering_ =    uvec4(0x144646,   0x46964786, 0x562796E6, 0x76);
+uvec4 _Colorize_ =         uvec4(0x34F6C6F6, 0x2796A756, SPACE_CHAR, SPACE_CHAR);
 
 const int[] FONT_NB = int[](0x03, 0x13, 0x23, 0x33, 0x43, 0x53, 0x63, 0x73, 0x83, 0x93);vec4 fontCol;vec3 fontColFill;vec3 fontColBorder;vec4 fontBuffer;vec2 fontCaret;float fontSize;float fontSpacing;vec2 fontUV;float log10(float x){if (x < 9.9999){return 0.;} else if (x < 99.9999) {return 1.;} else if (x < 999.9999) {return 2.;} else if (x < 9999.9999) {return 3.;} else if (x < 99999.9999) {return 4.;} else {return floor(log(x) / log(10.));}}vec4 fontTextureLookup(vec2 xy){float dxy = 1024.*1.5;vec2 dx = vec2(1.,0.)/dxy;vec2 dy = vec2(0.,1.)/dxy;return (texture(fontChannel,xy + dx + dy)+texture(fontChannel,xy + dx - dy)+texture(fontChannel,xy - dx - dy)+texture(fontChannel,xy - dx + dy)+2.*texture(fontChannel,xy))/6.;}void drawStr4(uint str){if (str < 0x100U){str = str * 0x100U + SPACE_CHAR;}if (str < 0x10000U){str = str * 0x100U + SPACE_CHAR;}if (str < 0x1000000U){str = str * 0x100U + SPACE_CHAR;}for (int i = 0; i < 4; i++){uint xy = (str >> 8 * (3 - i)) % 256U;if (xy != SPACE_CHAR){vec2 K = (fontUV - fontCaret) / fontSize;if (length(K) < 0.6){vec4 Q = fontTextureLookup((K + vec2(float(xy / 16U) + 0.5,16. - float(xy % 16U) - 0.5)) / 16.);fontBuffer.rgb += Q.rgb * smoothstep(0.6, 0.4, length(K));if (max(abs(K.x), abs(K.y)) < 0.5){fontBuffer.a = min(Q.a, fontBuffer.a);}}}if (xy != STOP_CHAR){fontCaret.x += fontSpacing * fontSize;}}}void beginDraw(){fontBuffer = vec4(0., 0., 0. , 1.);fontCol = vec4(0.);fontCaret.x += fontSpacing * fontSize / 2.;}void endDraw(){float a = smoothstep(1., 0., smoothstep(0.51, 0.53, fontBuffer.a));float b = smoothstep(0., 1., smoothstep(0.48, 0.51, fontBuffer.a));fontCol.rgb = mix(fontColFill, fontColBorder, b);fontCol.a = a;}void _(uint str){beginDraw();drawStr4(str);endDraw();}void _(uvec2 str){beginDraw();drawStr4(str.x);drawStr4(str.y);endDraw();}void _(uvec3 str){beginDraw();drawStr4(str.x);drawStr4(str.y);drawStr4(str.z);endDraw();}void _(uvec4 str){beginDraw();drawStr4(str.x);drawStr4(str.y);drawStr4(str.z);drawStr4(str.w);endDraw();}vec2 viewport(vec2 b){return (b / iResolution.xy - vec2(0.5)) * vec2(iResolution.x / iResolution.y, 1.);}
 // end of copy-pasting
@@ -543,17 +543,20 @@ void mainImage(out vec4 O, vec2 u)
   } else if (time < 10.) {
     fontCaret = vec2(-0.825, 0.4);
     txt = _Add_dithering_;
+  } else if (time < 12.) {
+    fontCaret = vec2(-0.825, 0.4);
+    txt = _Colorize_;
   }
 
   _(txt);
-  if (text(u, O)) { return; }
+  if (text(u, O)) { O *= (time > 3. && time < 4. ? (4. - time) * 0.5 : 1.); return; }
 
   if (time < 4.)
   {
     pix = 150.;
     starfield(u, O);
     O *= (time > 3. ? (4. - time) * 0.5 : 1.);
-  } else if (time < 12.) {
+  } else if (time < 14.) {
     pix = iResolution.y * clamp(0.5 * (8. - time), 0., 1.) + 150. * clamp(0.5 * (time - 6.), 0., 1.);
     vec2 bU = 2.1 + (u - iResolution.xy * 0.5) / iResolution.y;
     vec2 U = floor(bU * pix) / pix;
@@ -564,7 +567,7 @@ void mainImage(out vec4 O, vec2 u)
     vec2 aU = fbmSwirls(U, SEED) * 10.;
     float g = max(fbmCircles(aU, SEED + 10u), fbmCircles(aU, SEED + 20u));
     g = smax(-1., g, 3.2) * fv;
-    g *= (dith && time > 8. ? 1.5 - 0.15 * (time - 8.) * 0.5 : 1.5);
+    g *= (dith && time > 8. ? 1.5 - 0.15 * min(1., (time - 8.) * 0.5) : 1.5);
 
     vec3 b = bigstars(U, false, true) * vec3(4., 1., 1.);
 

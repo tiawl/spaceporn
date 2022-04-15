@@ -6,7 +6,47 @@
 # 1.5. Shape the circles grid
 
 Ok, we drew enough circles in this tutorial ! Now the goal is to give them a
-cloudy shape.
+cloudy shape. For this task I am going to use a voronoi pattern because it is
+commonly use to draw clouds but you can use any other noise function you want
+and apply same principles. Here the voronoi function we are going to use:
+
+```glsl
+float voronoi(vec2 UV, float smoothness, uint seed)
+{
+  vec3 col;
+  vec2 i = floor(UV);
+  vec2 f = fract(UV);
+  vec2 displacement;
+  vec2 p;
+
+  float dist = 8.;
+  float tmp;
+  float h;
+
+  for (int x = -1; x <= 1; x++)
+  {
+    for (int y = -1; y <= 1; y++)
+    {
+      p = vec2(x, y);
+      displacement = vec2(hash(i + p, seed + 89u), hash(i + p, seed + 52u));
+      tmp = length(p + displacement - f);
+
+      col = 0.5 + 0.5 * sin(hash(i + p, seed + 32u) * 2.5 + 3.5 + vec3(2.));
+      h = smoothstep(0., 1., 0.5 + 0.5 * (dist - tmp) / smoothness);
+      dist = mix(dist, tmp, h) - h * (1. - h) * smoothness / (1. + 3. * smoothness);
+    }
+  }
+  return 1. - dist;
+}
+```
+
+As you can see this function has some similarities with the `circles()`
+function, we wrote in the last step of this tutorial. If you want more details
+about it, you can read this
+[article](https://iquilezles.org/www/articles/smoothvoronoi/smoothvoronoi.htm).
+
+Now, like in this last step of this tutorial, we are going to make a fractional
+brownian motion version of this function.
 
 ---
 

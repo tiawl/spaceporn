@@ -50,17 +50,17 @@ Aw we already do in the last step of this tutorial, we are going to make a
 fractional brownian motion version of this function to get a cloudy shape
 looking. Below what this function is looking for the first octave:
 
-|![](media/voronoi_oct1.pdf)|
+|![](media/voronoi_oct1.png)|
 |:--:|
 
 Below for 2 octaves:
 
-|![](media/voronoi_oct2.pdf)|
+|![](media/voronoi_oct2.png)|
 |:--:|
 
 Below for 3:
 
-|![](media/voronoi_oct3.pdf)|
+|![](media/voronoi_oct3.png)|
 |:--:|
 
 And that is it. We do not need more octaves, this is what we are looking for:

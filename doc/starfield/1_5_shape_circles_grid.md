@@ -48,7 +48,7 @@ about what is different with the function we wrote, you can read this
 
 Aw we already do in the last step of this tutorial, we are going to make a
 fractional brownian motion version of this function to get a cloudy shape
-looking. Below what this function is looking for the different octave:
+looking. Below what this function is looking for different octaves:
 
 |![](media/voronoi_oct1.png)|![](media/voronoi_oct2.png)|![](media/voronoi_oct3.png)|
 |:--:|:--:|:--:|

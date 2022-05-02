@@ -86,7 +86,8 @@ float smax(float a, float b, float k)
 
 You can find more details about this function in this
 [article](https://iquilezles.org/www/articles/smin/smin.htm). This new
-function allow us to smooth intersections between circles:
+function is an interpolation function. This allow us to smooth intersections
+between circles:
 
 |![](media/max.png)|![](media/smax.png)|
 |:--:|:--:|

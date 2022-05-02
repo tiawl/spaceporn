@@ -60,22 +60,48 @@ a cloudy shape. Here the function to get this image
 ```glsl
 float fbmVoronoi(vec2 UV, uint seed)
 {
-  return voronoi(3. * UV, 0.3, seed) * 0.625      // first octave
-    + voronoi(6. * UV, 0.3, seed + 1u) * 0.25     // second octave
-    + voronoi(12. * UV, 0.3, seed + 2u) * 0.125;  // third octave
+  return voronoi(1.5 * UV, 0.3, seed) * 0.625      // first octave
+    + voronoi(3. * UV, 0.3, seed + 1u) * 0.25     // second octave
+    + voronoi(6. * UV, 0.3, seed + 2u) * 0.125;  // third octave
 }
 ```
 
-Now, we are going to modify the `mainImage()` function we used in the last step.
+We are going to modify the `mainImage()` function we used in the last step.
+First of all we are going to increase contrast of our clouds. Our
+`fbmVoronoi()` fonction returns a value between `0.0` and `1.0`. So if we
+multiply the returned value by itself, more a value is near from `1.0`, less
+this value should decrease. This how we should create a contrast:
 
 ```glsl
 void mainImage(out vec4 fragColor, in vec2 fragCoord)
 {
-  vec2 UV = 10.0 * fragCoord / iResolution.y;
+  vec2 uv = fragCoord / iResolution.y;
+
+  float fv = fbmVoronoi(uv, 2u);
+
+  // Increase contrast
+  fv *= fv * 1.5;
+
+  fragColor = vec4(vec3(fv), 1.0);
+}
+```
+
+And this is what our clouds looks:
+
+|![](media/voronoi_contrast.png)|
+|:--:|
+
+
+
+```glsl
+void mainImage(out vec4 fragColor, in vec2 fragCoord)
+{
+  vec2 uv = fragCoord / iResolution.y;
+  vec2 UV = 10.0 * uv;
 
   float dist = max(fbmCircles(UV, 0u), fbmCircles(UV, 5u));
 
-  float fv = fbmVoronoi(UV / 20., 2u);
+  float fv = fbmVoronoi(uv, 2u);
   fv *= fv * 1.5;
   dist = smax(-1., dist, 3.2);
   dist = floor(dist * fv * 18.) / 18.;

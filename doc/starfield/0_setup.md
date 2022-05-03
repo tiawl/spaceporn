@@ -1,5 +1,5 @@
 |[Next page: A circled light &#8883;](1_1_a_circled_light.md)|
-|---|
+|:--:|
 
 ---
 
@@ -61,4 +61,4 @@ And we have the same Y axis. It is time to draw something !
 ---
 
 |[Next page: A circled light &#8883;](1_1_a_circled_light.md)|
-|---|
+|:--:|

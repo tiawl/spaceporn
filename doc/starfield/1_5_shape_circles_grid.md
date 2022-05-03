@@ -20,7 +20,7 @@ float voronoi(vec2 UV, float smoothness, uint seed)
   vec2 displacement;
   vec2 p;
 
-  float dist = 8.;
+  float dist = 8.0;
   float tmp;
   float h;
 
@@ -32,12 +32,12 @@ float voronoi(vec2 UV, float smoothness, uint seed)
       displacement = vec2(hash(i + p, seed), hash(i + p, seed + 1u));
       tmp = length(p + displacement - f);
 
-      col = 0.5 + 0.5 * sin(hash(i + p, seed + 2u) * 2.5 + 3.5 + vec3(2.));
-      h = smoothstep(0., 1., 0.5 + 0.5 * (dist - tmp) / smoothness);
-      dist = mix(dist, tmp, h) - h * (1. - h) * smoothness / (1. + 3. * smoothness);
+      col = 0.5 + 0.5 * sin(hash(i + p, seed + 2u) * 2.5 + 3.5 + vec3(2.0));
+      h = smoothstep(0.0, 1.0, 0.5 + 0.5 * (dist - tmp) / smoothness);
+      dist = mix(dist, tmp, h) - h * (1.0 - h) * smoothness / (1.0 + 3.0 * smoothness);
     }
   }
-  return 1. - dist;
+  return 1.0 - dist;
 }
 ```
 
@@ -61,8 +61,8 @@ a cloudy shape. Here the function to get this image:
 float fbmVoronoi(vec2 UV, uint seed)
 {
   return voronoi(1.5 * UV, 0.3, seed) * 0.625      // first octave
-    + voronoi(3. * UV, 0.3, seed + 1u) * 0.25      // second octave
-    + voronoi(6. * UV, 0.3, seed + 2u) * 0.125;    // third octave
+    + voronoi(3.0 * UV, 0.3, seed + 1u) * 0.25      // second octave
+    + voronoi(6.0 * UV, 0.3, seed + 2u) * 0.125;    // third octave
 }
 ```
 
@@ -162,8 +162,8 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord)
   // Apply cloudy shape on the circles grid
   dist = dist * fv;
 
-  // Reduce colors number
-  dist = floor(dist * 18.) / 18.;
+  // Reduce colors number to 18
+  dist = floor(dist * 18.0) / 18.0;
 
   fragColor = vec4(vec3(dist), 1.0);
 }

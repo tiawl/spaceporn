@@ -32,6 +32,7 @@ LOW PRIORITY:
 ## Shader files
 
 MEDIUM PRIORITY:
+- Check if dithering could be achieved with an other method
 - star clouds
 - star streams
 - swirl planet

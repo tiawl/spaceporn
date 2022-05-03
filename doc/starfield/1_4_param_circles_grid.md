@@ -48,7 +48,7 @@ new function which will use our newly written `circles()` function:
 ```glsl
 float fbmCircles(vec2 UV, uint seed)
 {
-  float strength = 1.;
+  float strength = 1.0;
   float new;
   float dist = -1.;
   uint octaves = 2u;
@@ -61,7 +61,7 @@ float fbmCircles(vec2 UV, uint seed)
     dist = smax(dist, new, 0.3 * strength);
 
     // Prepare new octave
-    UV *= 2.;
+    UV *= 2.0;
     strength *= 0.5;
   }
   return dist;
@@ -79,7 +79,7 @@ Here the `smax()` function used by `fbmCircles()` function:
 ```glsl
 float smax(float a, float b, float k)
 {
-  float h = max(k - abs(a - b), 0.);
+  float h = max(k - abs(a - b), 0.0);
   return max(a, b) + h * h * 0.25 / k;
 }
 ```

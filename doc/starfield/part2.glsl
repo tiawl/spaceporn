@@ -164,13 +164,13 @@ void mainImage(out vec4 O, vec2 u)
     U = rotation(U, 5. * clamp((time - 5.) * 0.5, 0., 1.) * (1. - smoothstep(0., 0.5, length(U))));
 
     pix = 2.;
-    vec2 UU = floor(U * pix) / pix;
-    bool d1 = mod(U.x + UU.y, 2. / pix) < 1. / pix;
+    vec2 UU = floor(U * pix);
+    bool d1 = mod(UU.x + UU.y, 2.) < 1.;
 
     pix = sqrt(pix);
     U = rotation(U, 0.7853);
-    UU = floor(U * pix) / pix;
-    bool d2 = mod(U.x + UU.y, 2. / pix) < 1. / pix;
+    UU = floor(U * pix);
+    bool d2 = mod(UU.x + UU.y, 2.) < 1.;
 
     O = vec4(vec3(0.2 + 0.2 * (float(d1 || d2) - float(d1 && d2))), 1.) * min(1., time - 4.);   
   } else if (time < 14.) {
@@ -207,13 +207,13 @@ void mainImage(out vec4 O, vec2 u)
     vec2 bU2 = abs(bU - U);
 
     pix = 2.;
-    vec2 UU = floor(U * pix) / pix;
-    bool d1 = mod(U.x + UU.y, 2. / pix) < 1. / pix;
+    vec2 UU = floor(U * pix);
+    bool d1 = mod(UU.x + UU.y, 2.) < 1.;
 
     pix = sqrt(pix);
     U = rotation(U, 0.7853);
-    UU = floor(U * pix) / pix;
-    bool d2 = mod(U.x + UU.y, 2. / pix) < 1. / pix;
+    UU = floor(U * pix);
+    bool d2 = mod(UU.x + UU.y, 2.) < 1.;
 
     O = vec4(vec3(0.2 + 0.2 * (float(d1 || d2) - float(d1 && d2))), 1.);
     if (bU2.x + bU2.y > 0.00001 && bU2.x + bU2.y < 0.05 * clamp(time - 11., 0., 1.) && t <= 0.)
@@ -245,13 +245,13 @@ void mainImage(out vec4 O, vec2 u)
     vec2 aU2 = abs(aU - U);
 
     pix = 2.;
-    vec2 UU = floor(U * pix) / pix;
-    bool d1 = mod(U.x + UU.y, 2. / pix) < 1. / pix;
+    vec2 UU = floor(U * pix);
+    bool d1 = mod(UU.x + UU.y, 2.) < 1.;
 
     pix = sqrt(pix);
     U = rotation(U, 0.7853);
-    UU = floor(U * pix) / pix;
-    bool d2 = mod(U.x + UU.y, 2. / pix) < 1. / pix;
+    UU = floor(U * pix);
+    bool d2 = mod(UU.x + UU.y, 2.) < 1.;
 
     O = vec4(vec3(0.2 + 0.2 * (float(d1 || d2) - float(d1 && d2))), 1.);
 

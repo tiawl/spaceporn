@@ -1,5 +1,5 @@
-[&#8882; Previous page - Star types](3_4_star_types.md)
----|---
+|[&#8882; Previous page - Star types](3_4_star_types.md)|
+|:--:|
 
 ---
 
@@ -12,5 +12,5 @@
 
 ---
 
-[&#8882; Previous page - Star types](3_4_star_types.md)
----|---
+|[&#8882; Previous page - Star types](3_4_star_types.md)|
+|:--:|

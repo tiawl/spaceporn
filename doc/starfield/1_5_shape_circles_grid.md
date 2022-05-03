@@ -136,6 +136,7 @@ is to apply this formula: `floor(v * COLOR_NUMBER) / COLOR_NUMBER`. So if the
 - the `[0.25; 0.5[` interval, this formula will return `0.25`,
 - the `[0.5; 0.75[` interval, this formula will return `0.5`,
 - the `[0.75; 1.0[` interval, this formula will return `0.75`,
+
 And this is how we have our 4 different colors:
 
 ```glsl
@@ -168,7 +169,10 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord)
 }
 ```
 
-And the last
+Here the expected result:
+
+|![media/final_1_5.png]()|
+|:--:|
 
 ---
 

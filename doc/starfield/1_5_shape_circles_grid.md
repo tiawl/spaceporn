@@ -1,4 +1,4 @@
-[&#8882; Previous page: Parametrize circles grid](1_4_param_circles_grid.md) | [Next page: &#8883;]()
+[&#8882; Previous page: Parametrize circles grid](1_4_param_circles_grid.md) | [Next page: A swirl &#8883;](2_1_a_swirl.md)
 ---|---
 
 ---
@@ -171,10 +171,10 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord)
 
 Here the expected result:
 
-|![media/final_1_5.png]()|
+|![](media/final_1_5.png)|
 |:--:|
 
 ---
 
-[&#8882; Previous page: Parametrize circles grid](1_4_param_circles_grid.md) | [Next page: &#8883;]()
+[&#8882; Previous page: Parametrize circles grid](1_4_param_circles_grid.md) | [Next page: A swirl &#8883;](2_1_a_swirl.md)
 ---|---

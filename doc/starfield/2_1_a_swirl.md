@@ -61,8 +61,8 @@ vec2 rotation(vec2 UV, float angle)
 }
 ```
 
-Secondly, we need to find the number of squares of size of first check pattern
-square diagonal length.
+Secondly, we need to find the number of squares with a size equal to the
+diagonal length of a square in the first check pattern.
 
 ```glsl
 void mainImage(out vec4 fragColor, in vec2 fragCoord)
@@ -74,7 +74,7 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord)
   vec2 truncated_UV = floor(UV * squares);
   bool is_white = mod(truncated_UV.x + truncated_UV.y, 2.0) < 1.0;
 
-  // Number of squares of size of first check pattern square diagonal
+  // Number of squares with a size equal to the diagonal length of a square in the first check pattern
   squares = sqrt(squares);
 
   // 45° rotation

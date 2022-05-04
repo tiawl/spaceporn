@@ -36,8 +36,9 @@ vec2 E = vec2(-star.size / star.diag, star.size / star.diag);vec2 F = vec2( star
 void starfield(vec2 u, out vec4 O)
 {
   vec2 bU = 2.1 + (u - iResolution.xy * 0.5) / iResolution.y + time * 0.05;
-  vec2 U = floor(bU * pix) / pix;
-  bool dith = mod(bU.x + U.y, 2. / pix) < 1. / pix;
+  vec2 U = floor(bU * pix);
+  bool dith = mod(U.x + U.y, 2.) < 1.;
+  U /= pix;
 
   float fv = fbmVoronoi(U, SEED);
   vec2 aU = fbmSwirls(U, SEED) * 10.;

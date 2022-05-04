@@ -17,11 +17,11 @@ this tutorial so you can use any pattern you want to highlight your swirls.
 Drawing a check pattern can be done with the `floor()` builtin function. I
 already talk about it in the last section of this tutorial. This allow us
 to split UV coordinates system into squares thanks to its integer part. To
-draw squares with alternate colors we need to check `S` the sum of the two
+draw squares with alternating colors we need to check `S` the sum of the two
 axis of the truncated UV. If the result is even it could be white. To check
 the mathematic parity of the result, we can use the `mod(v, b)` builtin
-function on `S`. If `mod(S, 2.0)` is less than `1.0`, `S` is even, so the
-current pixel is white:
+function on where `v` parameter is `S` and `b` parameter is `2.0`. If
+`mod(S, 2.0)` is less than `1.0`, `S` is even, so the current pixel is white:
 
 ```glsl
 void mainImage(out vec4 fragColor, in vec2 fragCoord)

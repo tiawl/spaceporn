@@ -136,8 +136,9 @@ void mainImage(out vec4 O, vec2 u)
   } else {
     pix = iResolution.y * clamp(0.5 * (8. - time), 0., 1.) + 150. * clamp(0.5 * (time - 6.), 0., 1.);
     vec2 bU = 2.1 + (u - iResolution.xy * 0.5) / iResolution.y;
-    vec2 U = floor(bU * pix) / pix;
-    bool dith = mod(bU.x + U.y, 2. / pix) < 1. / pix;
+    vec2 U = floor(bU * pix);
+    bool dith = mod(U.x + U.y, 2.) < 1.;
+    U /= pix;
 
     float fv = fbmVoronoi(U, SEED);
     fv *= fv;

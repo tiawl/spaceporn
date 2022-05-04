@@ -173,7 +173,7 @@ void mainImage(out vec4 O, vec2 u)
     UU = floor(U * pix);
     bool d2 = mod(UU.x + UU.y, 2.) < 1.;
 
-    O = vec4(vec3(0.2 + 0.2 * (float(d1 || d2) - float(d1 && d2))), 1.) * min(1., time - 4.);   
+    O = vec4(vec3(0.2 + 0.2 * float(d1 ^^ d2)), 1.) * min(1., time - 4.);   
   } else if (time < 14.) {
     float k0 = min(1., (time - 7.) * 0.5) * 7.5714 + 1.;
     float k1 = ceil(k0 * 2.);
@@ -216,7 +216,7 @@ void mainImage(out vec4 O, vec2 u)
     UU = floor(U * pix);
     bool d2 = mod(UU.x + UU.y, 2.) < 1.;
 
-    O = vec4(vec3(0.2 + 0.2 * (float(d1 || d2) - float(d1 && d2))), 1.);
+    O = vec4(vec3(0.2 + 0.2 * float(d1 ^^ d2)), 1.);
     if (bU2.x + bU2.y > 0.00001 && bU2.x + bU2.y < 0.05 * clamp(time - 11., 0., 1.) && t <= 0.)
       O = vec4(0., 0.6, 0.4, 1.);
   } else if (time < 19.) {
@@ -254,7 +254,7 @@ void mainImage(out vec4 O, vec2 u)
     UU = floor(U * pix);
     bool d2 = mod(UU.x + UU.y, 2.) < 1.;
 
-    O = vec4(vec3(0.2 + 0.2 * (float(d1 || d2) - float(d1 && d2))), 1.);
+    O = vec4(vec3(0.2 + 0.2 * float(d1 ^^ d2)), 1.);
 
     if (time > 16.)
     {

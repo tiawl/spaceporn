@@ -41,24 +41,51 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord)
   fragColor = vec4(vec3(0.2 + 0.2 * float(is_white)), 1.0);
 }
 ```
-```glsl
-vec2 rotation(vec2 p, float a){return p * mat2(cos(a), -sin(a),sin(a),cos(a));}
 
+This is the first version of our check pattern:
+
+|![](media/check1.png)|
+|:--:|
+
+To improve this check pattern, we also want to display alternating colors for
+squares' diagonals. To achieve this task, we are going to draw another check
+pattern above the first one with a 45° rotation. A common way to make a
+[vectorial rotation](https://en.wikipedia.org/wiki/Rotation_(mathematics)#Two_dimensions)
+is to define this function:
+
+```glsl
+vec2 rotation(vec2 UV, float angle)
+{
+  return UV * mat2(cos(angle), -sin(angle),
+                   sin(angle),  cos(angle));
+}
+```
+
+Secondly, we need to find the number of squares of size of first check pattern
+square diagonal length.
+
+```glsl
 void mainImage(out vec4 fragColor, in vec2 fragCoord)
 {
-    vec2 UV = (fragCoord - iResolution.xy * 0.5) / iResolution.y;
-    //UV = rotation(UV, (1. - smoothstep(0., 0.5, length(UV))));
+  vec2 UV = fragCoord / iResolution.y;
 
-    float squares = 2.;
-    vec2 UU = floor(UV * squares) / squares;
-    bool d1 = mod(UV.x + UU.y, 2. / squares) < 1. / squares;
+  // First check pattern
+  float squares = 2.0;
+  vec2 truncated_UV = floor(UV * squares);
+  bool is_white = mod(truncated_UV.x + truncated_UV.y, 2.0) < 1.0;
 
-    squares = sqrt(squares);
-    UV = rotation(UV, 0.7853);
-    UU = floor(UV * squares) / squares;
-    bool d2 = mod(UV.x + UU.y, 2. / squares) < 1. / squares;
+  // Number of squares of size of first check pattern square diagonal
+  squares = sqrt(squares);
 
-    fragColor = vec4(vec3(0.2 + 0.2 * (float(d1 || d2) - float(d1 && d2))), 1.);
+  // 45° rotation
+  UV = rotation(UV, 0.7853);
+
+  // Second ckeck pattern
+  truncated_UV = floor(UV * squares);
+  bool is_white2 = mod(truncated_UV.x + truncated_UV.y, 2.0) < 1.0;
+
+  // If sum1 is even XOR sum2 is even, color is brighter
+  fragColor = vec4(vec3(0.2 + 0.2 * float(is_white ^^ is_white2)), 1.0);
 }
 ```
 

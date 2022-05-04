@@ -31,8 +31,11 @@ LOW PRIORITY:
 
 ## Shader files
 
-MEDIUM PRIORITY:
+HIGH PRIORITY:
 - Check if dithering could be achieved with an other method
+- deferring heavy process out of loop & more advices: https://drive.google.com/file/d/1K50YnhApcdOV4RuqUTtl42JZqdxgMkm9/view
+
+MEDIUM PRIORITY:
 - star clouds
 - star streams
 - swirl planet
@@ -61,3 +64,4 @@ REMINDER:
 - no == and != operators between floats
 - check float format: 5. and 0.5
 - avoid pow() usage
+- deferring heavy process out of loop & more advices: https://drive.google.com/file/d/1K50YnhApcdOV4RuqUTtl42JZqdxgMkm9/view

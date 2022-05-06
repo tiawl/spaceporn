@@ -74,27 +74,15 @@ equal to `1.0`:
 Now we only need to apply Pythagorean theorem on `ABD` isoceles right-angled
 triangle:
 
-![](media/maths/AB^{2}+AD^{2}=DB^{2}.png)
+![](media/maths1.png)
 
-We know that: ![](media/maths/BD=1.png)
+We know that: ![](media/maths4.png)
 
-![](media/maths/LeftrightarrowAB^{2}+AD^{2}=1^{2}.png)
+![](media/maths2.png)
 
-![](media/maths/LeftrightarrowAB^{2}+AD^{2}=1.png)
+We know that: ![](media/maths5.png)
 
-We know that: ![](media/maths/AB=BC=CD=AD.png)
-
-![](media/maths/LeftrightarrowAB^{2}+AB^{2}=1.png)
-
-![](media/maths/Leftrightarrow2AB^{2}=1.png)
-
-![](media/maths/LeftrightarrowAB^{2}=frac{1}{2}.png)
-
-![](media/maths/LeftrightarrowAB=sqrt{frac{1}{2}}.png)
-
-![](media/maths/LeftrightarrowAB=frac{1}{sqrt{2}}.png)
-
-![](media/maths/LeftrightarrowAB=BC=CD=AD=frac{sqrt{2}}{2}.png)
+![](media/maths3.png)
 
 Then, we are going to divide the vertical size of our viewport (which is
 `1.0`) by the size of a square in the second check pattern and we should

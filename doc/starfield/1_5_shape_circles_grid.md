@@ -118,7 +118,7 @@ get a more smoothy light. For this we need to replace this line:
 by this line:
 
 ```glsl
-  dist = smax(-1., dist, 3.2);
+  dist = smax(-1.0, dist, 3.2);
 ```
 
 The `-1.0` magic number is a minimum value with what we interpolate the

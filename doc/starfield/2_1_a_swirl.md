@@ -74,27 +74,27 @@ equal to `1.0`:
 Now we only need to apply Pythagorean theorem on `ABD` isoceles right-angled
 triangle:
 
-![](https://latex.codecogs.com/svg.image?AB^{2}&plus;AD^{2}=DB^{2})
+![](media/maths/AB^{2}+AD^{2}=DB^{2}.png)
 
-We know that: ![](https://latex.codecogs.com/svg.image?BD=1)
+We know that: ![](media/maths/BD=1.png)
 
-![](https://latex.codecogs.com/svg.image?\LeftrightarrowAB^{2}&plus;AD^{2}=1^{2})
+![](media/maths/LeftrightarrowAB^{2}+AD^{2}=1^{2}.png)
 
-![](https://latex.codecogs.com/svg.image?\LeftrightarrowAB^{2}&plus;AD^{2}=1)
+![](media/maths/LeftrightarrowAB^{2}+AD^{2}=1.png)
 
-We know that: ![](https://latex.codecogs.com/svg.image?AB=BC=CD=AD)
+We know that: ![](media/maths/AB=BC=CD=AD.png)
 
-![](https://latex.codecogs.com/svg.image?\Leftrightarrow&spaceAB^{2}&plus;AB^{2}=1)
+![](media/maths/LeftrightarrowAB^{2}+AB^{2}=1.png)
 
-![](https://latex.codecogs.com/svg.image?\Leftrightarrow2AB^{2}=1)
+![](media/maths/Leftrightarrow2AB^{2}=1.png)
 
-![](https://latex.codecogs.com/svg.image?\LeftrightarrowAB^{2}=\frac{1}{2})
+![](media/maths/LeftrightarrowAB^{2}=frac{1}{2}.png)
 
-![](https://latex.codecogs.com/svg.image?\LeftrightarrowAB=\sqrt{\frac{1}{2}})
+![](media/maths/LeftrightarrowAB=sqrt{frac{1}{2}}.png)
 
-![](https://latex.codecogs.com/svg.image?\LeftrightarrowAB=\frac{1}{\sqrt{2}})
+![](media/maths/LeftrightarrowAB=frac{1}{sqrt{2}}.png)
 
-![](https://latex.codecogs.com/svg.image?\LeftrightarrowAB=BC=CD=AD=\frac{\sqrt{2}}{2})
+![](media/maths/LeftrightarrowAB=BC=CD=AD=frac{sqrt{2}}{2}.png)
 
 Then, we are going to divide the vertical size of our viewport (which is
 `1.0`) by the size of a square in the second check pattern and we should

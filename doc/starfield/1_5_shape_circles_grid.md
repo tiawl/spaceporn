@@ -132,10 +132,10 @@ grid we just need to multiply the two values between them. To reduce color
 Let suppose we only want 4 colors in our shader. The only thing we have to do
 is to apply this formula: `floor(v * COLOR_NUMBER) / COLOR_NUMBER`. So if the
 `v` value is in:
-- the ![](https://latex.codecogs.com/svg.image?[0.0;0.25[) interval, this formula will return `0.0`,
-- the ![](https://latex.codecogs.com/svg.image?[0.25;0.5[) interval, this formula will return `0.25`,
-- the ![](https://latex.codecogs.com/svg.image?[0.5;0.75[) interval, this formula will return `0.5`,
-- the ![](https://latex.codecogs.com/svg.image?[0.75;1.0[) interval, this formula will return `0.75`,
+- the ![](media/maths/[0.0;0.25[.png) interval, this formula will return `0.0`,
+- the ![](media/maths/[0.25;0.5[.png) interval, this formula will return `0.25`,
+- the ![](media/maths/[0.5;0.75[.png) interval, this formula will return `0.5`,
+- the ![](media/maths/[0.75;1.0[.png) interval, this formula will return `0.75`,
 
 And this is how we have our 4 different colors:
 

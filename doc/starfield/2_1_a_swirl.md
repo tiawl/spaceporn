@@ -62,9 +62,33 @@ vec2 rotation(vec2 UV, float angle)
 ```
 
 Secondly, we need to find the number of squares with a size equal to the
-diagonal length of a square in the first check pattern. To compute this,
-we need, in a first part to find the size of a square in the second check
-pattern.
+diagonal length of a square in the first check pattern. Before computing this,
+we need to find the size of a square in the second check pattern. Thanks to
+the **Synchronize our viewports** part from the [0. Setup](0_setup.md) section
+of this tutorial, we know that the diagonal of the square we are searching is
+equal to `1.0`:
+
+|![](media/diag_check.png)|
+|:--:|
+
+Now we only need to apply Pythagorean theorem on `ABD` isoceles right-angled
+triangle:
+
+```
+     AB² + AD² = BD²
+We know that: BD = 1
+
+<=>  AB² + AD² = 1²
+<=>  AB² + AD² = 1
+We know that: AB = BC = CD = AD
+
+<=>  AB² + AB² = 1
+<=>  2AB² = 1
+<=>  AB² = 1/2
+<=>  AB = √(1/2)
+<=>  AB = 1/√2
+<=>  AB = BC = CD = AD = √2/2
+```
 
 ```glsl
 void mainImage(out vec4 fragColor, in vec2 fragCoord)

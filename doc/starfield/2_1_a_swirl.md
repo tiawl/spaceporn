@@ -89,7 +89,7 @@ Then, we are going to divide the vertical size of our viewport (which is
 find the number of squares with a size equal to the diagonal length of a
 square in the first check pattern:
 
-![](media/maths/frac{1}{frac{sqrt{2}}{2}}=1timesfrac{2}{sqrt{2}}=frac{sqrt{2}}{sqrt{2}}timesfrac{2}{sqrt{2}}=frac{2sqrt{2}}{2}=sqrt{2}.png)
+![](media/maths6.png)
 
 ```glsl
 void mainImage(out vec4 fragColor, in vec2 fragCoord)

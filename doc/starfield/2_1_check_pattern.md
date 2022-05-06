@@ -1,9 +1,9 @@
-[&#8882; Previous page - Shape the circles grid](1_5_shape_circles_grid.md) | [Next page - Swirls grid &#8883;](2_2_swirls_grid.md)
+[&#8882; Previous page - Shape the circles grid](1_5_shape_circles_grid.md) | [Next page - A swirl &#8883;](2_2_a_swirl.md)
 ---|---
 
 ---
 
-# 2.1. A swirl
+# 2.1. Check pattern
 
 This new chapter is also a fresh start: I promise we are not going to draw
 a circle. Instead we are going to draw swirls. A lot of swirls. And what we
@@ -12,7 +12,8 @@ swirls, we will draw a check pattern. For this shader we will draw swirls to
 displace UV coordinates so we will only see our swirls if we have something to
 displace. I choosed a check pattern because it gives our swirls a nice
 looking but we are not going to use this check pattern in the main result of
-this tutorial so you can use any pattern you want to highlight your swirls.
+this tutorial. So you can use any pattern you want to highlight your swirls
+and skip this section.
 
 Drawing a check pattern can be done with the `floor()` builtin function. I
 already talk about it in the last section of this tutorial. This allow us
@@ -51,7 +52,7 @@ To improve this check pattern, we also want to display alternating colors for
 squares' diagonals. To achieve this task, we are going to draw another check
 pattern above the first one with a 45° rotation. A common way to make a
 [vectorial rotation](https://en.wikipedia.org/wiki/Rotation_(mathematics)#Two_dimensions)
-is to define this function:
+is to define this function (`angle` parameter is in radians not in degrees):
 
 ```glsl
 vec2 rotation(vec2 UV, float angle)
@@ -91,6 +92,37 @@ square in the first check pattern:
 
 ![](media/maths6.png)
 
+Finally we use this to draw the second check pattern:
+
+```glsl
+void mainImage(out vec4 fragColor, in vec2 fragCoord)
+{
+  vec2 UV = fragCoord / iResolution.y;
+
+  // 45° rotation
+  UV = rotation(UV, 0.7853);
+
+  // Number of squares with a size equal to the diagonal length of a square in the first check pattern
+  float squares = sqrt(2.0);
+
+  // Split UV cordinates system into squares
+  vec2 truncated_UV = floor(UV * squares);
+
+  // Check mathematic parity of the sum of the 2 axis of the truncated UV
+  bool is_white = mod(truncated_UV.x + truncated_UV.y, 2.0) < 1.0;
+
+  // If sum is odd, color is darker
+  fragColor = vec4(vec3(0.2 + 0.2 * float(is_white)), 1.0);
+}
+```
+
+And we have this result:
+
+|![](media/check45.png)|
+|:--:|
+
+Now we have to mix the two check patterns we previously drawn:
+
 ```glsl
 void mainImage(out vec4 fragColor, in vec2 fragCoord)
 {
@@ -101,22 +133,46 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord)
   vec2 truncated_UV = floor(UV * squares);
   bool is_white = mod(truncated_UV.x + truncated_UV.y, 2.0) < 1.0;
 
-  // Number of squares with a size equal to the diagonal length of a square in the first check pattern
-  squares = sqrt(2.0);
-
-  // 45° rotation
-  UV = rotation(UV, 0.7853);
-
   // Second ckeck pattern
+  squares = sqrt(2.0);
+  UV = rotation(UV, 0.7853);
   truncated_UV = floor(UV * squares);
   bool is_white2 = mod(truncated_UV.x + truncated_UV.y, 2.0) < 1.0;
 
-  // If sum1 is even XOR sum2 is even, color is brighter
-  fragColor = vec4(vec3(0.2 + 0.2 * float(is_white ^^ is_white2)), 1.0);
+  // If sum1 is even OR sum2 is even, color is brighter
+  fragColor = vec4(vec3(0.2 + 0.2 * float(is_white || is_white2)), 1.0);
 }
 ```
 
+But that is not really what we expected:
+
+|![](media/check_error.png)|
+|:--:|
+
+This is happening because we used OR boolean operator. The OR operator allows
+us to draw white if the intersection of the two check patterns are white. That
+is not what we want. We only want to display white if only one of the two
+check patterns is white. To achieve this we need to use the XOR boolean
+operator. You need to replace those lines:
+
+```glsl
+  // If sum1 is even OR sum2 is even, color is brighter
+  fragColor = vec4(vec3(0.2 + 0.2 * float(is_white || is_white2)), 1.0);
+```
+
+by those lines:
+
+```glsl
+  // If sum1 is even XOR sum2 is even, color is brighter
+  fragColor = vec4(vec3(0.2 + 0.2 * float(is_white ^^ is_white2)), 1.0);
+```
+
+And here we are, our check pattern is done:
+
+|![](media/check_final.png)|
+|:--:|
+
 ---
 
-[&#8882; Previous page - Shape the circles grid](1_5_shape_circles_grid.md) | [Next page - Swirls grid &#8883;](2_2_swirls_grid.md)
+[&#8882; Previous page - Shape the circles grid](1_5_shape_circles_grid.md) | [Next page - A swirl &#8883;](2_2_a_swirl.md)
 ---|---

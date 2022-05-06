@@ -31,9 +31,9 @@ recommended to do some reading/testing first.
 1.4. [Parametrize circles grid](1_4_param_circles_grid.md)</br>
 1.5. [Shape the circles grid](1_5_shape_circles_grid.md)</br>
 2) Swirls</br>
-2.1. [A swirl](2_1_a_swirl.md)</br>
-2.2. [Swirls grid](2_2_swirls_grid.md)</br>
-2.3. [Randomize the swirls grid](2_3_rd_swirls_grid.md)</br>
+2.1. [Check pattern](2_1_check_pattern.md)</br>
+2.2. [A swirl](2_2_a_swirl.md)</br>
+2.3. [Swirls grid](2_3_swirls_grid.md)</br>
 3) Stars</br>
 3.1. [A cross](3_1_a_cross.md)</br>
 3.2. [Crosses grid](3_2_crosses_grid.md)</br>

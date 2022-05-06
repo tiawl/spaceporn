@@ -1,4 +1,4 @@
-[&#8882; Previous page: Parametrize circles grid](1_4_param_circles_grid.md) | [Next page: A swirl &#8883;](2_1_a_swirl.md)
+[&#8882; Previous page: Parametrize circles grid](1_4_param_circles_grid.md) | [Next page: Check pattern &#8883;](2_1_check_pattern.md)
 ---|---
 
 ---
@@ -176,5 +176,5 @@ Here the expected result:
 
 ---
 
-[&#8882; Previous page: Parametrize circles grid](1_4_param_circles_grid.md) | [Next page: A swirl &#8883;](2_1_a_swirl.md)
+[&#8882; Previous page: Parametrize circles grid](1_4_param_circles_grid.md) | [Next page: Check pattern &#8883;](2_1_check_pattern.md)
 ---|---

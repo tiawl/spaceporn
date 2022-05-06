@@ -18,8 +18,8 @@ maths),
 types (*vec2*, *vec3*, *vec4*, *ivec2*, *uvec2*, *mat2*, ...) and built-in
 functions (*abs()*, *sin()*, *floor()*, *fract()*, *length()*, ...).
 
-If not, you can follow this tutorial but it will not be easy. So I advise you
-to do some reading/testing first.
+If not, you can follow this tutorial but it will not be easy. So the authors
+advise you to do some reading/testing first.
 
 ## Table of contents
 

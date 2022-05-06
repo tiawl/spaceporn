@@ -74,34 +74,34 @@ equal to `1.0`:
 Now we only need to apply Pythagorean theorem on `ABD` isoceles right-angled
 triangle:
 
-![](https://latex.codecogs.com/svg.image?AB^{2}&space;&plus;&space;AD^{2}&space;=&space;DB^{2})
+![](https://latex.codecogs.com/svg.image?AB^{2}&plus;AD^{2}=DB^{2})
 
-We know that: ![](https://latex.codecogs.com/svg.image?BD&space;=&space;1)
+We know that: ![](https://latex.codecogs.com/svg.image?BD=1)
 
-![](https://latex.codecogs.com/svg.image?\Leftrightarrow&space;AB^{2}&space;&plus;&space;AD^{2}&space;=&space;1^{2})
+![](https://latex.codecogs.com/svg.image?\LeftrightarrowAB^{2}&plus;AD^{2}=1^{2})
 
-![](https://latex.codecogs.com/svg.image?\Leftrightarrow&space;AB^{2}&space;&plus;&space;AD^{2}&space;=&space;1)
+![](https://latex.codecogs.com/svg.image?\LeftrightarrowAB^{2}&plus;AD^{2}=1)
 
-We know that: ![](https://latex.codecogs.com/svg.image?AB&space;=&space;BC&space;=&space;CD&space;=&space;AD)
+We know that: ![](https://latex.codecogs.com/svg.image?AB=BC=CD=AD)
 
-![](https://latex.codecogs.com/svg.image?\Leftrightarrow&spaceAB^{2}&space;&plus;&space;AB^{2}&space;=&space;1)
+![](https://latex.codecogs.com/svg.image?\Leftrightarrow&spaceAB^{2}&plus;AB^{2}=1)
 
-![](https://latex.codecogs.com/svg.image?\Leftrightarrow&space;2AB^{2}&space;=&space;1)
+![](https://latex.codecogs.com/svg.image?\Leftrightarrow2AB^{2}=1)
 
-![](https://latex.codecogs.com/svg.image?\Leftrightarrow&space;AB^{2}&space;=&space;\frac{1}{2})
+![](https://latex.codecogs.com/svg.image?\LeftrightarrowAB^{2}=\frac{1}{2})
 
-![](https://latex.codecogs.com/svg.image?\Leftrightarrow&space;AB&space;=&space;\sqrt{\frac{1}{2}})
+![](https://latex.codecogs.com/svg.image?\LeftrightarrowAB=\sqrt{\frac{1}{2}})
 
-![](https://latex.codecogs.com/svg.image?\Leftrightarrow&space;AB&space;=&space;\frac{1}{\sqrt{2}})
+![](https://latex.codecogs.com/svg.image?\LeftrightarrowAB=\frac{1}{\sqrt{2}})
 
-![](https://latex.codecogs.com/svg.image?\Leftrightarrow&space;AB&space;=&space;BC&space;=&space;CD&space;=&space;AD&space;=&space;\frac{\sqrt{2}}{2})
+![](https://latex.codecogs.com/svg.image?\LeftrightarrowAB=BC=CD=AD=\frac{\sqrt{2}}{2})
 
 Then, we are going to divide the vertical size of our viewport (which is
 `1.0`) by the size of a square in the second check pattern and we should
 find the number of squares with a size equal to the diagonal length of a
 square in the first check pattern:
 
-![](https://latex.codecogs.com/svg.image?\frac{1}{\frac{\sqrt{2}}{2}}&space;=&space;1&space;*&space;\frac{2}{\sqrt{2}}&space;=&space;\frac{\sqrt{2}}{\sqrt{2}}&space;*&space;\frac{2}{\sqrt{2}}&space;=&space;\frac{2&space;*&space;\sqrt{2}}{2}&space;=&space;\sqrt{2})
+![](https://latex.codecogs.com/svg.image?\frac{1}{\frac{\sqrt{2}}{2}}=1*\frac{2}{\sqrt{2}}=\frac{\sqrt{2}}{\sqrt{2}}*\frac{2}{\sqrt{2}}=\frac{2*\sqrt{2}}{2}=\sqrt{2})
 
 ```glsl
 void mainImage(out vec4 fragColor, in vec2 fragCoord)

@@ -168,7 +168,7 @@ void mainImage(out vec4 O, vec2 u)
     vec2 UU = floor(U * pix);
     bool d1 = mod(UU.x + UU.y, 2.) < 1.;
 
-    pix = sqrt(pix);
+    pix /= sqrt(2.);
     U = rotation(U, 0.7853);
     UU = floor(U * pix);
     bool d2 = mod(UU.x + UU.y, 2.) < 1.;
@@ -211,7 +211,7 @@ void mainImage(out vec4 O, vec2 u)
     vec2 UU = floor(U * pix);
     bool d1 = mod(UU.x + UU.y, 2.) < 1.;
 
-    pix = sqrt(pix);
+    pix /= sqrt(2.);
     U = rotation(U, 0.7853);
     UU = floor(U * pix);
     bool d2 = mod(UU.x + UU.y, 2.) < 1.;
@@ -249,7 +249,7 @@ void mainImage(out vec4 O, vec2 u)
     vec2 UU = floor(U * pix);
     bool d1 = mod(UU.x + UU.y, 2.) < 1.;
 
-    pix = sqrt(pix);
+    pix /= sqrt(2.);
     U = rotation(U, 0.7853);
     UU = floor(U * pix);
     bool d2 = mod(UU.x + UU.y, 2.) < 1.;

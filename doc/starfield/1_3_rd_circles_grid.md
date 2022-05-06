@@ -109,10 +109,10 @@ only considering points with distance less than `0.5`. If a point exceeds
 this limit, it is not considered for the current circle. And this is what we
 are facing now: The maximum radius of a circle is `0.5`. The maximum
 displacement is `0.5` horizontally and `0.5` vertically so
-`max_displacement = √(0.5 * 0.5 + 0.5 * 0.5) = √(0.5) ~= 0.707`. So the
-maximum distance for a point is
-`max_displacement + max_radius = 0.707 + 0.5 = 1.207`, which is greater than
-`0.5`. This is what this GIF is highlighting:
+![](https://latex.codecogs.com/svg.image?displacement_{max}&space;=&space;\sqrt{0.5&space;*&space;0.5&space;&plus;&space;0.5&space;*&space;0.5}&space;=&space;\sqrt{0.5}&space;\approx&space;0.707).
+So the maximum distance for a point is
+![](https://latex.codecogs.com/svg.image?displacement_{max}&space;&plus;&space;radius_{max}&space;\approx&space;0.5&space;&plus;&space;0.707&space;\approx&space;1.207),
+which is greater than `0.5`. This is what this GIF is highlighting:
 
 |![](media/error.gif)|
 |:--:|

@@ -74,21 +74,34 @@ equal to `1.0`:
 Now we only need to apply Pythagorean theorem on `ABD` isoceles right-angled
 triangle:
 
-```
-     AB² + AD² = BD²
-We know that: BD = 1
+![](https://latex.codecogs.com/svg.image?AB^{2}&space;&plus;&space;AD^{2}&space;=&space;DB^{2})
 
-<=>  AB² + AD² = 1²
-<=>  AB² + AD² = 1
-We know that: AB = BC = CD = AD
+We know that: ![](https://latex.codecogs.com/svg.image?BD&space;=&space;1)
 
-<=>  AB² + AB² = 1
-<=>  2AB² = 1
-<=>  AB² = 1/2
-<=>  AB = √(1/2)
-<=>  AB = 1/√2
-<=>  AB = BC = CD = AD = √2/2
-```
+![](https://latex.codecogs.com/svg.image?\Leftrightarrow&space;AB^{2}&space;&plus;&space;AD^{2}&space;=&space;1^{2})
+
+![](https://latex.codecogs.com/svg.image?\Leftrightarrow&space;AB^{2}&space;&plus;&space;AD^{2}&space;=&space;1)
+
+We know that: ![](https://latex.codecogs.com/svg.image?AB&space;=&space;BC&space;=&space;CD&space;=&space;AD)
+
+![](https://latex.codecogs.com/svg.image?\Leftrightarrow&spaceAB^{2}&space;&plus;&space;AB^{2}&space;=&space;1)
+
+![](https://latex.codecogs.com/svg.image?\Leftrightarrow&space;2AB^{2}&space;=&space;1)
+
+![](https://latex.codecogs.com/svg.image?\Leftrightarrow&space;AB^{2}&space;=&space;\frac{1}{2})
+
+![](https://latex.codecogs.com/svg.image?\Leftrightarrow&space;AB&space;=&space;\sqrt{\frac{1}{2}})
+
+![](https://latex.codecogs.com/svg.image?\Leftrightarrow&space;AB&space;=&space;\frac{1}{\sqrt{2}})
+
+![](https://latex.codecogs.com/svg.image?\Leftrightarrow&space;AB&space;=&space;BC&space;=&space;CD&space;=&space;AD&space;=&space;\frac{\sqrt{2}}{2})
+
+Then, we are going to divide the vertical size of our viewport (which is
+`1.0`) by the size of a square in the second check pattern and we should
+find the number of squares with a size equal to the diagonal length of a
+square in the first check pattern:
+
+![](https://latex.codecogs.com/svg.image?\frac{1}{\frac{\sqrt{2}}{2}}&space;=&space;1&space;*&space;\frac{2}{\sqrt{2}}&space;=&space;\frac{\sqrt{2}}{\sqrt{2}}&space;*&space;\frac{2}{\sqrt{2}}&space;=&space;\frac{2&space;*&space;\sqrt{2}}{2}&space;=&space;\sqrt{2})
 
 ```glsl
 void mainImage(out vec4 fragColor, in vec2 fragCoord)
@@ -101,7 +114,7 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord)
   bool is_white = mod(truncated_UV.x + truncated_UV.y, 2.0) < 1.0;
 
   // Number of squares with a size equal to the diagonal length of a square in the first check pattern
-  squares /= sqrt(2.0);
+  squares = sqrt(2.0);
 
   // 45° rotation
   UV = rotation(UV, 0.7853);

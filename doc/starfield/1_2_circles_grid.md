@@ -24,7 +24,7 @@ of them has an unique center. For each circle, its center will be an integer
 point of our viewport. We will call this point `i`. So for each pixel of our
 shader we will compare it to the nearest integer:
 - for `vec2 v = vec2(0.2, 5.3)`, the nearest integer to `v.x` is `0` and the
-nearest integer to `v.y` is `0`. So `vec2 i = vec2(0.0, 5.0)`,
+nearest integer to `v.y` is `5`. So `vec2 i = vec2(0.0, 5.0)`,
 - for `vec2 v = vec2(1.7, 2.3)`, the nearest integer to `v.x` is `2` and the
 nearest integer to `v.y` is `2`. So `vec2 i = vec2(2.0, 2.0)`,
 - for `vec2 v = vec2(8.8, 4.6)`, the nearest integer to `v.x` is `9` and the

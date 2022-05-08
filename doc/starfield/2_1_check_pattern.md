@@ -5,8 +5,8 @@
 
 # 2.1. Check pattern
 
-This new chapter is also a fresh start: I promise we are not going to draw
-a circle. Instead, we are going to draw swirls. A lot of swirls. And what we
+This new chapter is also a fresh start: I swear we are not going to draw a
+circle. Instead, we are going to draw swirls. A lot of swirls. And what we
 have already done before, will really speed up the process. But before drawing
 swirls, we will draw a check pattern. For this shader we will draw swirls to
 displace pixel's UV coordinates so we will only see our swirls if we have

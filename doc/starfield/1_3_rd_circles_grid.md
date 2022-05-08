@@ -7,7 +7,7 @@
 
 The next step of this tutorial is to give our grid a less "well-organized"
 aspect. We need to randomize some parameters (mainly radius and position of
-our circles). Unfortunely, GLSL does not provide a `rand()` builtin-function.
+our circles). Unfortunely, GLSL does not provide a `rand()` builtin function.
 However, many people worked on this subject to build `hash()` functions which
 simulate random. For this reason we are going to pick one of them. I choosed
 this one:

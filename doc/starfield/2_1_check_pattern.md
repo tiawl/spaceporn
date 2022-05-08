@@ -82,11 +82,13 @@ Pythagorean theorem on `ABD` isoceles right-angled triangle:
 ![](media/maths1.png)
 
 Because we know that: ![](media/maths4.png)
+
 We can symplify this equation like this:
 
 ![](media/maths2.png)
 
 And because we know that: ![](media/maths5.png)
+
 We can symplify this equation like this:
 
 ![](media/maths3.png)

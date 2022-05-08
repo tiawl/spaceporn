@@ -11,8 +11,9 @@ easier way to achieve this is to use the `length(v)` builtin function. This
 function returns the
 [length of the vector](https://onlinemschool.com/math/library/vector/length/)
 `v`. Giving the UV coordinates of the current pixel to the `length(v)`
-function will return the distance between our pixel and the origin. So for
-this script:
+function will return the distance between our pixel and the origin. So the
+further is a point from the origin, the greater is the `length(v)` returned
+value. For this script:
 
 ```glsl
 void mainImage(out vec4 fragColor, in vec2 fragCoord)
@@ -23,12 +24,13 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord)
   // Compute the distance between the current pixel and the origin
   float dist = length(UV);
 
-  // Dislay the result
+  // Dislay the distance value
   fragColor = vec4(vec3(dist), 1.0);
 }
 ```
 
-We have this result (nearer is the point from the origin, darker it is):
+What you should see (the nearer is the point from the origin, the darker it
+is):
 
 |![](media/dist.png)|
 |:--:|
@@ -39,9 +41,9 @@ pixel's UV coordinates to center the light. Finally, we have to revert the
 color. To achieve this, we multiply the `length(UV)` function by `-1.0`. Now
 the color value is between `0.0` and `-∞`. So if we display something,
 we will see a black screen. We have to add a value to increase the maximum
-color value (which is right now `0.0`). Greater this value will be, greater
-will be the maximum color value and bigger will be our circle. This value will
-be its radius.
+color value (which is right now `0.0`). The greater will be this value, the
+greater will be the maximum color value and the bigger will be our circle.
+This value is our circle radius.
 
 ```glsl
 void mainImage(out vec4 fragColor, in vec2 fragCoord)

@@ -107,7 +107,7 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord)
 }
 ```
 
-But instead, we could use the `smax()` function we already used before. The
+Instead, we could use the `smax()` function we already used before. The
 goal is to take advantage of the interpolation propriety of this function to
 get a more smoothy light. For this we need to replace this line:
 

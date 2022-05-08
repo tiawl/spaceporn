@@ -6,13 +6,13 @@
 # 2.1. Check pattern
 
 This new chapter is also a fresh start: I promise we are not going to draw
-a circle. Instead we are going to draw swirls. A lot of swirls. And what we
+a circle. Instead, we are going to draw swirls. A lot of swirls. And what we
 have already done before, will really speed up the process. But before drawing
 swirls, we will draw a check pattern. For this shader we will draw swirls to
-displace UV coordinates so we will only see our swirls if we have something to
-displace. I choosed a check pattern because it gives our swirls a nice
-looking but we are not going to use this check pattern in the main result of
-this tutorial. So you can use any pattern you want to highlight your swirls
+displace pixel's UV coordinates so we will only see our swirls if we have
+something to displace. I choosed a check pattern because it gives our swirls a
+nice looking but we are not going to use this check pattern in the main result
+of this tutorial. So you can use any pattern you want to highlight your swirls
 and skip this section.
 
 Drawing a check pattern can be done with the `floor(v)` builtin function. I
@@ -57,7 +57,7 @@ pattern above the first one with a 45° rotation. A common way to make a
 is to define this function (`angle` parameter is in radians not in degrees):
 
 ```glsl
-vec2 rotation(vec2 UV, float angle)
+vec2 rotate(vec2 UV, float angle)
 {
   return UV * mat2(cos(angle), -sin(angle),
                    sin(angle),  cos(angle));
@@ -108,7 +108,7 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord)
   vec2 UV = fragCoord / iResolution.y;
 
   // 45° rotation
-  UV = rotation(UV, 0.7853);
+  UV = rotate(UV, 0.7853);
 
   // Number of squares with a size equal to the diagonal length of a square from the first check pattern
   float squares = sqrt(2.0);
@@ -143,7 +143,7 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord)
 
   // Second ckeck pattern
   squares = sqrt(2.0);
-  UV = rotation(UV, 0.7853);
+  UV = rotate(UV, 0.7853);
   truncated_UV = floor(UV * squares);
   bool is_brighter2 = mod(truncated_UV.x + truncated_UV.y, 2.0) < 1.0;
 

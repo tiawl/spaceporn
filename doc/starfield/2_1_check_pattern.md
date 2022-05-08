@@ -15,14 +15,16 @@ looking but we are not going to use this check pattern in the main result of
 this tutorial. So you can use any pattern you want to highlight your swirls
 and skip this section.
 
-Drawing a check pattern can be done with the `floor()` builtin function. I
+Drawing a check pattern can be done with the `floor(v)` builtin function. I
 already talk about it in the last section of this tutorial. This allow us
-to split UV coordinates system into squares thanks to its integer part. To
-draw squares with alternating colors we need to check `S` the sum of the two
-axis of the truncated UV. If the result is even it could be white. To check
-the mathematic parity of the result, we can use the `mod(v, b)` builtin
-function on where `v` parameter is `S` and `b` parameter is `2.0`. If
-`mod(S, 2.0)` is less than `1.0`, `S` is even, so the current pixel is white:
+to split UV coordinates system into squares because this function returns the
+integer part of its parameter `v`. To draw squares with alternating colors we
+need to check `S` the sum of the two axis of the truncated UV. If the result
+is even the current pixel will be brighter otherwise it will be darker. To
+check the mathematic parity of the result, we can use the `mod(v, b)` builtin
+function which returns `v` modulo `b` (where `v` is `S` and `b` is `2.0`. If
+`mod(S, 2.0)` is less than `1.0`, `S` is even, so the current pixel is
+brighter otherwise its odd and the pixel is darker:
 
 ```glsl
 void mainImage(out vec4 fragColor, in vec2 fragCoord)
@@ -36,10 +38,10 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord)
   vec2 truncated_UV = floor(UV * squares);
 
   // Check mathematic parity of the sum of the 2 axis of the truncated UV
-  bool is_white = mod(truncated_UV.x + truncated_UV.y, 2.0) < 1.0;
+  bool is_brighter = mod(truncated_UV.x + truncated_UV.y, 2.0) < 1.0;
 
   // If sum is odd, color is darker
-  fragColor = vec4(vec3(0.2 + 0.2 * float(is_white)), 1.0);
+  fragColor = vec4(vec3(0.2 + (is_brighter ? 0.2 : 0.0)), 1.0);
 }
 ```
 
@@ -51,7 +53,7 @@ This is the first version of our check pattern:
 To improve this check pattern, we also want to display alternating colors for
 squares' diagonals. To achieve this task, we are going to draw another check
 pattern above the first one with a 45° rotation. A common way to make a
-[vectorial rotation](https://en.wikipedia.org/wiki/Rotation_(mathematics)#Two_dimensions)
+[2D vectorial rotation](https://en.wikipedia.org/wiki/Rotation_(mathematics)#Two_dimensions)
 is to define this function (`angle` parameter is in radians not in degrees):
 
 ```glsl
@@ -63,36 +65,40 @@ vec2 rotation(vec2 UV, float angle)
 ```
 
 Secondly, we need to find the number of squares with a size equal to the
-diagonal length of a square in the first check pattern. Before computing this,
-we need to find the size of a square in the second check pattern. Thanks to
-the **Synchronize our viewports** part from the [0. Setup](0_setup.md) section
-of this tutorial, we know that the diagonal of the square we are searching is
-equal to `1.0`:
+diagonal length of a square from the first check pattern. Before computing
+this, we need to find the size of a square from the second check pattern.
+Thanks to the **Synchronize our viewports** part from the
+[0. Setup](0_setup.md) section of this tutorial, we know that the viewport
+vertical axis is equal to `1.0`. Hopefully for us the diagonal of the square
+we are searching is equal this vertical axis (so it is equal to `1.0`):
 
 |![](media/diag_check.png)|
 |:--:|
 
-Now we only need to apply Pythagorean theorem on `ABD` isoceles right-angled
-triangle:
+Thanks to this information, now we should be able to compute the size of a
+square from the second check pattern. For this we only need to apply
+Pythagorean theorem on `ABD` isoceles right-angled triangle:
 
 ![](media/maths1.png)
 
-We know that: ![](media/maths4.png)
+Because we know that: ![](media/maths4.png)
+We can symplify this equation like this:
 
 ![](media/maths2.png)
 
-We know that: ![](media/maths5.png)
+And because we know that: ![](media/maths5.png)
+We can symplify this equation like this:
 
 ![](media/maths3.png)
 
 Then, we are going to divide the vertical size of our viewport (which is
-`1.0`) by the size of a square in the second check pattern and we should
-find the number of squares with a size equal to the diagonal length of a
-square in the first check pattern:
+`1.0`) by the size of a square from the second check pattern. We should find
+the number of squares with a size equal to the diagonal length of a square
+from the first check pattern:
 
 ![](media/maths6.png)
 
-Finally we use this to draw the second check pattern:
+Finally we use this number to draw the second check pattern:
 
 ```glsl
 void mainImage(out vec4 fragColor, in vec2 fragCoord)
@@ -102,17 +108,17 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord)
   // 45° rotation
   UV = rotation(UV, 0.7853);
 
-  // Number of squares with a size equal to the diagonal length of a square in the first check pattern
+  // Number of squares with a size equal to the diagonal length of a square from the first check pattern
   float squares = sqrt(2.0);
 
   // Split UV cordinates system into squares
   vec2 truncated_UV = floor(UV * squares);
 
   // Check mathematic parity of the sum of the 2 axis of the truncated UV
-  bool is_white = mod(truncated_UV.x + truncated_UV.y, 2.0) < 1.0;
+  bool is_brighter = mod(truncated_UV.x + truncated_UV.y, 2.0) < 1.0;
 
   // If sum is odd, color is darker
-  fragColor = vec4(vec3(0.2 + 0.2 * float(is_white)), 1.0);
+  fragColor = vec4(vec3(0.2 + (is_brighter ? 0.2 : 0.0)), 1.0);
 }
 ```
 
@@ -121,7 +127,7 @@ And we have this result:
 |![](media/check45.png)|
 |:--:|
 
-Now we have to mix the two check patterns we previously drawn:
+Now we have to merge the two check patterns we previously drawn:
 
 ```glsl
 void mainImage(out vec4 fragColor, in vec2 fragCoord)
@@ -131,16 +137,16 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord)
   // First check pattern
   float squares = 2.0;
   vec2 truncated_UV = floor(UV * squares);
-  bool is_white = mod(truncated_UV.x + truncated_UV.y, 2.0) < 1.0;
+  bool is_brighter = mod(truncated_UV.x + truncated_UV.y, 2.0) < 1.0;
 
   // Second ckeck pattern
   squares = sqrt(2.0);
   UV = rotation(UV, 0.7853);
   truncated_UV = floor(UV * squares);
-  bool is_white2 = mod(truncated_UV.x + truncated_UV.y, 2.0) < 1.0;
+  bool is_brighter2 = mod(truncated_UV.x + truncated_UV.y, 2.0) < 1.0;
 
   // If sum1 is even OR sum2 is even, color is brighter
-  fragColor = vec4(vec3(0.2 + 0.2 * float(is_white || is_white2)), 1.0);
+  fragColor = vec4(vec3(0.2 + (is_brighter || is_brighter2 ? 0.2 : 0.0)), 1.0);
 }
 ```
 
@@ -149,22 +155,23 @@ But that is not really what we expected:
 |![](media/check_error.png)|
 |:--:|
 
-This is happening because we used OR boolean operator. The OR operator allows
-us to draw white if the intersection of the two check patterns are white. That
-is not what we want. We only want to display white if only one of the two
-check patterns is white. To achieve this we need to use the XOR boolean
-operator. You need to replace those lines:
+This is happening because we are using OR boolean operator. When the two check
+patterns are brighter, their intersection is also brighter. Because we want to
+display alternating colors, this is not the behavior we are expecting. We only
+want to display white if only one of the two check patterns is white. To
+achieve this we need to use the XOR boolean operator.You need to replace those
+lines:
 
 ```glsl
   // If sum1 is even OR sum2 is even, color is brighter
-  fragColor = vec4(vec3(0.2 + 0.2 * float(is_white || is_white2)), 1.0);
+  fragColor = vec4(vec3(0.2 + (is_brighter || is_brighter2 ? 0.2 : 0.0)), 1.0);
 ```
 
-by those lines:
+with those lines:
 
 ```glsl
   // If sum1 is even XOR sum2 is even, color is brighter
-  fragColor = vec4(vec3(0.2 + 0.2 * float(is_white ^^ is_white2)), 1.0);
+  fragColor = vec4(vec3(0.2 + (is_brighter ^^ is_brighter2 ? 0.2 : 0.0)), 1.0);
 ```
 
 And here we are, our check pattern is done:

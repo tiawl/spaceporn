@@ -34,16 +34,17 @@ display our swirl. For `angle`, we have to give it the swirl angle, but how to
 find it ? It depends of the shape of our swirl. Here we want to display a
 circled swirl. So we are going to use the `length(v)` builtin function we used
 before to draw circles (if you want an other shape for your swirl, you can use
-any other signed distance function used in this article and adapt the script
-we are writting). Because we want that the nearer is a point from the swirl's
-center, the more displaced it is, we have to revert the `length(v)` returned
-value. But now the returned value is between `0.0` and `-∞`. We have to add a
-value to increase the maximum returned value (which is `0.0` right now). The
-greater will be this value, the greater will be the swirl radius. Then we have
-to take care about negative values of the `length(v)` returned value because
-an angle can be negative. For this we are going to use the `max(x, y)` builtin
-function to keep the returned value to `0.0` when a pixel is outside of the
-swirl. This is what the script looks:
+any other
+[signed distance function](https://iquilezles.org/articles/distfunctions2d/)
+and adapt the script we are writting). Because we want that the nearer is a
+point from the swirl's center, the more displaced it is, we have to revert the
+`length(v)` returned value. But now the returned value is between `0.0` and
+`-∞`. We have to add a value to increase the maximum returned value (which is
+`0.0` right now). The greater will be this value, the greater will be the
+swirl radius. Then we have to take care about negative values of the
+`length(v)` returned value because an angle can be negative. For this we are
+going to use the `max(x, y)` builtin function to keep the returned value to
+`0.0` when a pixel is outside of the swirl. This is what the script looks:
 
 ```glsl
 void mainImage(out vec4 fragColor, in vec2 fragCoord)

@@ -102,11 +102,12 @@ keep `v`. For `a`, this is `0.0` (this is why we used `max()` function
 before). For `b`, this is `radius` (because this is maximum value for `v`).
 
 Here what our current swirl rotation function looks and what it looks with
-`smoothstep(a, b, v)` function:
+`smoothstep(a, b, v)` function. On those plots, X-axis is
+`radius - length(UV)`):
 
 |![](media/swirl_func_rotation.png)|![](media/smooth_swirl_func_rotation.png)|
 |:--:|:--:|
-|with `max(radius - length(UV), 0.0)`|with `smoothstep(0.0, radius, radius - length(UV))`|
+|with Y-axis: `max(radius - length(UV), 0.0)`|with Y-axis: `smoothstep(0.0, radius, radius - length(UV))`|
 
 Here, the adapted version of our script:
 

@@ -31,8 +31,8 @@ pub fn build(builder: *std.build.Builder) !void
     &[_][]const u8{ "glslc", "--target-env=vulkan1.2" },
     "-o",
   );
-  shaders.add("triangle_vert", "shaders/vertex.glsl", .{});
-  shaders.add("triangle_frag", "shaders/fragment.glsl", .{});
+  shaders.add("triangle_vert", "shaders/vertex/main.glsl", .{});
+  shaders.add("triangle_frag", "shaders/fragment/main.glsl", .{});
   exe.addModule("resources", shaders.getModule());
 
   const run_cmd = builder.addRunArtifact(exe);

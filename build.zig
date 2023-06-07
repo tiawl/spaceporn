@@ -10,7 +10,7 @@ pub fn build(builder: *std.build.Builder) !void
   const mode = builder.standardOptimizeOption(.{});
 
   const exe = builder.addExecutable(.{
-    .name = "spaceporn",
+    .name = "spacedream",
     .root_source_file = .{ .path = "src/main.zig" },
     .target = target,
     .optimize = mode,

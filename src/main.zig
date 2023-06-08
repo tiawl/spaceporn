@@ -1,6 +1,7 @@
-const std  = @import("std");
-const vk   = @import("vulkan");
-const glfw = @import("glfw");
+const std   = @import("std");
+const vk    = @import("vulkan");
+const glfw  = @import("glfw");
+const build = @import("build_options");
 
 const print = std.debug.print;
 
@@ -28,6 +29,10 @@ fn cleanup () MainError!void
 
 pub fn main () u8
 {
+  if (build.DEV)
+  {
+    print("You are running a dev build\n", .{});
+  }
   init () catch
   {
     print("Init error\n", .{});

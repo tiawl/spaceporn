@@ -6,6 +6,9 @@ const zigvulkan = @import("libs/vulkan-zig/build.zig");
 
 pub fn build(builder: *std.build.Builder) !void
 {
+  const build_options = builder.addOptions();
+  build_options.addOption(bool, "DEV", builder.option(bool, "DEV", "Build spacedream in dev mode") orelse false);
+
   const target = builder.standardTargetOptions(.{});
   const mode = builder.standardOptimizeOption(.{});
 
@@ -15,6 +18,8 @@ pub fn build(builder: *std.build.Builder) !void
     .target = target,
     .optimize = mode,
   });
+
+  exe.addOptions("build_options", build_options);
 
   // Init a new install artifact step that will copy exe into destination directory
   const install_exe = builder.addInstallArtifact(exe);
@@ -36,8 +41,8 @@ pub fn build(builder: *std.build.Builder) !void
     &[_][]const u8{ "glslc", "--target-env=vulkan1.2" },
     "-o",
   );
-  shaders.add("triangle_vert", "shaders/vertex/main.glsl", .{});
-  shaders.add("triangle_frag", "shaders/fragment/main.glsl", .{});
+  shaders.add("triangle_vert", "shaders/main.vert", .{});
+  shaders.add("triangle_frag", "shaders/main.frag", .{});
   exe.addModule("resources", shaders.getModule());
 
   // Init a new run artifact step that will run exe (invisible for user)

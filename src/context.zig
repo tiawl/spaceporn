@@ -2,56 +2,51 @@ const std   = @import("std");
 const vk    = @import("context_vulkan.zig");
 const glfw  = @import("context_glfw.zig");
 
-const build = @import("build_options");
+const utils = @import("utils.zig");
+const Error = utils.SpacedreamError;
+const debug = utils.debug;
 
-const ContextError = error
-{
-  InitError,
-  LoopError,
-  CleanupError,
-};
-
-pub fn init () ContextError!void
+pub fn init () Error!void
 {
   glfw.init () catch
   {
     std.log.err("Init Glfw error", .{});
-    return ContextError.InitError;
+    return Error.InitError;
   };
   vk.init () catch
   {
     std.log.err("Init Vulkan error", .{});
-    return ContextError.InitError;
+    return Error.InitError;
   };
-  if (build.DEV) std.log.debug("Init OK", .{});
+  debug("Init OK", .{});
 }
 
-pub fn loop () ContextError!void
+pub fn loop () Error!void
 {
   glfw.loop () catch
   {
     std.log.err("Loop Glfw error", .{});
-    return ContextError.LoopError;
+    return Error.LoopError;
   };
   vk.loop () catch
   {
     std.log.err("Loop Vulkan error", .{});
-    return ContextError.LoopError;
+    return Error.LoopError;
   };
-  if (build.DEV) std.log.debug("Loop OK", .{});
+  debug("Loop OK", .{});
 }
 
-pub fn cleanup () ContextError!void
+pub fn cleanup () Error!void
 {
   glfw.cleanup () catch
   {
     std.log.err("Clean Up Glfw error", .{});
-    return ContextError.CleanupError;
+    return Error.CleanupError;
   };
   vk.cleanup () catch
   {
     std.log.err("Clean Up Vulkan error", .{});
-    return ContextError.CleanupError;
+    return Error.CleanupError;
   };
-  if (build.DEV) std.log.debug("Clean Up OK", .{});
+  debug("Clean Up OK", .{});
 }

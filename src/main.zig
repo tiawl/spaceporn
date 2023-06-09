@@ -1,23 +1,20 @@
 const std   = @import("std");
-const build = @import("build_options");
 
 const context = @import("context.zig");
 
-const MainError = error
-{
-  InitError,
-  LoopError,
-};
+const utils = @import("utils.zig");
+const Error = utils.SpacedreamError;
+const debug = utils.debug;
 
-pub fn main () MainError!void
+pub fn main () Error!void
 {
-  if (build.DEV) std.log.debug("You are running a dev build", .{});
+  debug("You are running a dev build", .{});
   {
     errdefer std.process.exit(1);
     context.init () catch
     {
       std.log.err("Init error", .{});
-      return MainError.InitError;
+      return Error.InitError;
     };
     defer context.cleanup () catch
     {
@@ -26,7 +23,7 @@ pub fn main () MainError!void
     context.loop () catch
     {
       std.log.err("Loop error", .{});
-      return MainError.LoopError;
+      return Error.LoopError;
     };
   }
 

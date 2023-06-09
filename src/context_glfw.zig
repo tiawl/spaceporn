@@ -1,26 +1,20 @@
-const std   = @import("std");
 const glfw  = @import("glfw");
 
-const build = @import("build_options");
+const utils = @import("utils.zig");
+const Error = utils.SpacedreamError;
+const debug = utils.debug;
 
-const ContextGlfwError = error
+pub fn init () Error!void
 {
-  InitError,
-  LoopError,
-  CleanupError,
-};
-
-pub fn init () ContextGlfwError!void
-{
-  if (build.DEV) std.log.debug("Init Glfw OK", .{});
+  debug("Init Glfw OK", .{});
 }
 
-pub fn loop () ContextGlfwError!void
+pub fn loop () Error!void
 {
-  if (build.DEV) std.log.debug("Loop Glfw OK", .{});
+  debug("Loop Glfw OK", .{});
 }
 
-pub fn cleanup () ContextGlfwError!void
+pub fn cleanup () Error!void
 {
-  if (build.DEV) std.log.debug("Clean Up Glfw OK", .{});
+  debug("Clean Up Glfw OK", .{});
 }

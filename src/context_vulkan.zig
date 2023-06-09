@@ -1,26 +1,20 @@
-const std = @import("std");
 const vk  = @import("vulkan");
 
-const build = @import("build_options");
+const utils = @import("utils.zig");
+const Error = utils.SpacedreamError;
+const debug = utils.debug;
 
-const ContextVulkanError = error
+pub fn init () Error!void
 {
-  InitError,
-  LoopError,
-  CleanupError,
-};
-
-pub fn init () ContextVulkanError!void
-{
-  if (build.DEV) std.log.debug("Init Vulkan OK", .{});
+  debug("Init Vulkan OK", .{});
 }
 
-pub fn loop () ContextVulkanError!void
+pub fn loop () Error!void
 {
-  if (build.DEV) std.log.debug("Loop Vulkan OK", .{});
+  debug("Loop Vulkan OK", .{});
 }
 
-pub fn cleanup () ContextVulkanError!void
+pub fn cleanup () Error!void
 {
-  if (build.DEV) std.log.debug("Clean Up Vulkan OK", .{});
+  debug("Clean Up Vulkan OK", .{});
 }

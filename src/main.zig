@@ -1,53 +1,34 @@
 const std   = @import("std");
-const vk    = @import("vulkan");
-const glfw  = @import("glfw");
 const build = @import("build_options");
 
-const print = std.debug.print;
+const context = @import("context.zig");
 
 const MainError = error
 {
   InitError,
   LoopError,
-  CleanupError,
 };
 
-fn init () MainError!void
+pub fn main () MainError!void
 {
-  print("Init OK\n", .{});
-}
-
-fn loop () MainError!void
-{
-  print("Loop OK\n", .{});
-}
-
-fn cleanup () MainError!void
-{
-  print("Clean Up OK\n", .{});
-}
-
-pub fn main () u8
-{
-  if (build.DEV)
+  if (build.DEV) std.log.debug("You are running a dev build", .{});
   {
-    print("You are running a dev build\n", .{});
+    errdefer std.process.exit(1);
+    context.init () catch
+    {
+      std.log.err("Init error", .{});
+      return MainError.InitError;
+    };
+    defer context.cleanup () catch
+    {
+      std.log.err("Clean Up error", .{});
+    };
+    context.loop () catch
+    {
+      std.log.err("Loop error", .{});
+      return MainError.LoopError;
+    };
   }
-  init () catch
-  {
-    print("Init error\n", .{});
-    return 1;
-  };
-  loop () catch
-  {
-    print("Loop error\n", .{});
-    return 1;
-  };
-  cleanup () catch
-  {
-    print("Cleanup error\n", .{});
-    return 1;
-  };
 
-  return 0;
+  std.process.exit(0);
 }

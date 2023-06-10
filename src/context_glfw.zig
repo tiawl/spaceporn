@@ -1,4 +1,4 @@
-const std   = @import("std");
+const std   = @import ("std");
 const glfw  = @import ("glfw");
 
 const utils = @import ("utils.zig");
@@ -8,7 +8,8 @@ const exe   = utils.exe;
 
 pub const context_glfw_t = struct
 {
-  window: ?glfw.Window = null,
+  window:     ?glfw.Window      = null,
+  extensions: ?[][*:0] const u8 = null,
 };
 
 fn callback (code: glfw.ErrorCode, description: [:0]const u8) void
@@ -26,6 +27,8 @@ pub fn init (context: *context_glfw_t) Error!void
   }
   errdefer glfw.terminate ();
 
+  // TODO: Hint
+
   context.window = glfw.Window.create (800, 600, exe, null, null, .{
     .client_api = .no_api,
   }) orelse {
@@ -34,11 +37,17 @@ pub fn init (context: *context_glfw_t) Error!void
   };
   errdefer context.window.?.destroy ();
 
+  context.extensions = glfw.getRequiredInstanceExtensions ();
+
   debug ("Init Glfw OK", .{});
 }
 
-pub fn loop () Error!void
+pub fn loop (context: *context_glfw_t) Error!void
 {
+  while (!context.window.?.shouldClose ())
+  {
+    glfw.pollEvents ();
+  }
   debug ("Loop Glfw OK", .{});
 }
 

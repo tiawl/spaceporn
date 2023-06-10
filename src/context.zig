@@ -2,13 +2,22 @@ const std   = @import("std");
 const vk    = @import("context_vulkan.zig");
 const glfw  = @import("context_glfw.zig");
 
+const context_glfw_t = @import("context_glfw.zig").context_glfw_t;
+
 const utils = @import("utils.zig");
 const Error = utils.SpacedreamError;
 const debug = utils.debug;
 
-pub fn init () Error!void
+pub const context_t = struct
 {
-  glfw.init () catch
+  glfw: ?context_glfw_t = null,
+  //vk: *context_vulkan,
+};
+
+pub fn init (context: *context_t) Error!void
+{
+  context.glfw = context_glfw_t{};
+  glfw.init (&(context.glfw orelse unreachable)) catch
   {
     std.log.err("Init Glfw error", .{});
     return Error.InitError;
@@ -36,9 +45,9 @@ pub fn loop () Error!void
   debug("Loop OK", .{});
 }
 
-pub fn cleanup () Error!void
+pub fn cleanup (context: *context_t) Error!void
 {
-  glfw.cleanup () catch
+  glfw.cleanup (&(context.glfw orelse unreachable)) catch
   {
     std.log.err("Clean Up Glfw error", .{});
     return Error.CleanupError;

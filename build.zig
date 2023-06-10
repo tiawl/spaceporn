@@ -6,14 +6,16 @@ const zigvulkan = @import("libs/vulkan-zig/build.zig");
 
 pub fn build(builder: *std.build.Builder) !void
 {
+  const exe_name = "spacedream";
   const build_options = builder.addOptions();
   build_options.addOption(bool, "DEV", builder.option(bool, "DEV", "Build spacedream in dev mode") orelse false);
+  build_options.addOption([] const u8, "EXE", exe_name);
 
   const target = builder.standardTargetOptions(.{});
   const mode = builder.standardOptimizeOption(.{});
 
   const exe = builder.addExecutable(.{
-    .name = "spacedream",
+    .name = exe_name,
     .root_source_file = .{ .path = "src/main.zig" },
     .target = target,
     .optimize = mode,

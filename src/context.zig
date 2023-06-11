@@ -1,9 +1,10 @@
 const std   = @import ("std");
-const vk    = @import ("context_vulkan.zig");
-const glfw  = @import ("context_glfw.zig");
 
-const context_glfw_t = @import ("context_glfw.zig").context_glfw_t;
-const context_vk_t   = @import ("context_vk.zig").context_vk_t;
+const vk           = @import ("context_vulkan.zig");
+const context_vk_t = vk.context_vk_t;
+
+const glfw           = @import ("context_glfw.zig");
+const context_glfw_t = glfw.context_glfw_t;
 
 const utils = @import ("utils.zig");
 const Error = utils.SpacedreamError;
@@ -23,7 +24,11 @@ pub fn init (context: *context_t) Error!void
     std.log.err ("Init Glfw error", .{});
     return Error.InitError;
   };
-  context.vk = context_vk_t{ .extensions = context.glfw.extensions, };
+  context.vk = context_vk_t
+               {
+                 .extensions         = context.glfw.?.extensions,
+                 .instance_proc_addr = context.glfw.?.instance_proc_addr,
+               };
   vk.init (&(context.vk.?)) catch
   {
     std.log.err ("Init Vulkan error", .{});

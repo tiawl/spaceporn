@@ -8,8 +8,9 @@ const exe   = utils.exe;
 
 pub const context_glfw_t = struct
 {
-  window:     ?glfw.Window      = null,
-  extensions: ?[][*:0] const u8 = null,
+  window:             ?glfw.Window      = null,
+  extensions:         ?[][*:0] const u8 = null,
+  instance_proc_addr: ?glfw.VKProc      = null,
 };
 
 fn callback (code: glfw.ErrorCode, description: [:0]const u8) void
@@ -17,7 +18,7 @@ fn callback (code: glfw.ErrorCode, description: [:0]const u8) void
   std.log.err ("glfw: {}: {s}", .{ code, description });
 }
 
-pub fn init (context: *context_glfw_t) Error!void
+pub fn init (context: *context_glfw_t) !void
 {
   glfw.setErrorCallback (callback);
   if (!glfw.init (.{}))
@@ -37,7 +38,13 @@ pub fn init (context: *context_glfw_t) Error!void
   };
   errdefer context.window.?.destroy ();
 
-  context.extensions = glfw.getRequiredInstanceExtensions ();
+  context.extensions = glfw.getRequiredInstanceExtensions () orelse return blk:
+  {
+    const err = glfw.mustGetError();
+    std.log.err("failed to get required vulkan instance extensions: error={s}", .{err.description});
+    break :blk error.code;
+  };
+  context.instance_proc_addr = glfw.getInstanceProcAddress;
 
   debug ("Init Glfw OK", .{});
 }

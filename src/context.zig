@@ -18,18 +18,12 @@ pub const context_t = struct
 
 pub fn init (context: *context_t) Error!void
 {
-  context.glfw = context_glfw_t{};
-  glfw.init (&(context.glfw.?)) catch
+  context.glfw = context_glfw_t.init () catch
   {
     std.log.err ("Init Glfw error", .{});
     return Error.InitError;
   };
-  context.vk = context_vk_t
-               {
-                 .extensions         = context.glfw.?.extensions,
-                 .instance_proc_addr = context.glfw.?.instance_proc_addr,
-               };
-  vk.init (&(context.vk.?)) catch
+  context.vk = context_vk_t.init (&context.glfw.?.extensions, &context.glfw.?.instance_proc_addr) catch
   {
     std.log.err ("Init Vulkan error", .{});
     return Error.InitError;

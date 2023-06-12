@@ -1,5 +1,5 @@
-const std   = @import ("std");
-const glfw  = @import ("glfw");
+const std  = @import ("std");
+const glfw = @import ("glfw");
 
 const utils = @import ("utils.zig");
 const debug = utils.debug;
@@ -16,9 +16,11 @@ pub const context_glfw = struct
   extensions:         [][*:0] const u8,
   instance_proc_addr: *const fn (?*anyopaque, [*:0] const u8) callconv (.C) ?*const fn () callconv (.C) void,
 
-  pub fn init () !context_glfw
+  const Self = @This ();
+
+  pub fn init () !Self
   {
-    var self: context_glfw = undefined;
+    var self: Self = undefined;
 
     glfw.setErrorCallback (callback);
     if (!glfw.init (.{}))
@@ -28,17 +30,21 @@ pub const context_glfw = struct
     }
     errdefer glfw.terminate ();
 
-    // TODO: Hint
+    const hints = glfw.Window.Hints
+                  {
+                    .client_api = .no_api,
+                    .resizable  = true,
+                  };
 
-    self.window = glfw.Window.create (800, 600, exe, null, null, .{
-      .client_api = .no_api,
-    }) orelse {
+    self.window = glfw.Window.create (800, 600, exe, null, null, hints) orelse
+    {
       std.log.err ("failed to initialize GLFW window: {?s}", .{ glfw.getErrorString () });
       std.process.exit (1);
     };
     errdefer self.window.destroy ();
 
-    self.extensions = glfw.getRequiredInstanceExtensions () orelse {
+    self.extensions = glfw.getRequiredInstanceExtensions () orelse
+    {
       const err = glfw.mustGetError();
       std.log.err("failed to get required vulkan instance extensions: error={s}", .{err.description});
       std.process.exit (1);
@@ -50,7 +56,7 @@ pub const context_glfw = struct
     return self;
   }
 
-  pub fn loop (self: context_glfw) !void
+  pub fn loop (self: Self) !void
   {
     while (!self.window.shouldClose ())
     {
@@ -59,7 +65,7 @@ pub const context_glfw = struct
     debug ("Loop Glfw OK", .{});
   }
 
-  pub fn cleanup (self: context_glfw) !void
+  pub fn cleanup (self: Self) !void
   {
     self.window.destroy ();
     glfw.terminate ();

@@ -11,9 +11,11 @@ pub const context = struct
   glfw: context_glfw,
   vk:   context_vk,
 
-  pub fn init () !context
+  const Self = @This ();
+
+  pub fn init () !Self
   {
-    var self: context = undefined;
+    var self: Self = undefined;
 
     self.glfw = context_glfw.init () catch |err|
     {
@@ -29,7 +31,7 @@ pub const context = struct
     return self;
   }
 
-  pub fn loop (self: context) !void
+  pub fn loop (self: Self) !void
   {
     self.glfw.loop () catch |err|
     {
@@ -44,7 +46,7 @@ pub const context = struct
     debug ("Loop OK", .{});
   }
 
-  pub fn cleanup (self: context) !void
+  pub fn cleanup (self: Self) !void
   {
     self.vk.cleanup () catch |err|
     {

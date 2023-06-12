@@ -1,62 +1,61 @@
-const std   = @import ("std");
+const std = @import ("std");
 
-const vk           = @import ("context_vulkan.zig");
-const context_vk_t = vk.context_vk_t;
-
-const glfw           = @import ("context_glfw.zig");
-const context_glfw_t = glfw.context_glfw_t;
+const context_vk   = @import ("context_vk.zig").context_vk;
+const context_glfw = @import ("context_glfw.zig").context_glfw;
 
 const utils = @import ("utils.zig");
-const Error = utils.SpacedreamError;
 const debug = utils.debug;
 
-pub const context_t = struct
+pub const context = struct
 {
-  glfw: ?context_glfw_t = null,
-  vk:   ?context_vk_t   = null,
+  glfw: context_glfw,
+  vk:   context_vk,
+
+  pub fn init () !context
+  {
+    var self: context = undefined;
+
+    self.glfw = context_glfw.init () catch |err|
+    {
+      std.log.err ("Init Glfw error", .{});
+      return err;
+    };
+    self.vk = context_vk.init (&self.glfw.extensions, self.glfw.instance_proc_addr) catch |err|
+    {
+      std.log.err ("Init Vulkan error", .{});
+      return err;
+    };
+    debug ("Init OK", .{});
+    return self;
+  }
+
+  pub fn loop (self: context) !void
+  {
+    self.glfw.loop () catch |err|
+    {
+      std.log.err ("Loop Glfw error", .{});
+      return err;
+    };
+    self.vk.loop () catch |err|
+    {
+      std.log.err ("Loop Vulkan error", .{});
+      return err;
+    };
+    debug ("Loop OK", .{});
+  }
+
+  pub fn cleanup (self: context) !void
+  {
+    self.vk.cleanup () catch |err|
+    {
+      std.log.err ("Clean Up Vulkan error", .{});
+      return err;
+    };
+    self.glfw.cleanup () catch |err|
+    {
+      std.log.err ("Clean Up Glfw error", .{});
+      return err;
+    };
+    debug ("Clean Up OK", .{});
+  }
 };
-
-pub fn init (context: *context_t) Error!void
-{
-  context.glfw = context_glfw_t.init () catch
-  {
-    std.log.err ("Init Glfw error", .{});
-    return Error.InitError;
-  };
-  context.vk = context_vk_t.init (&context.glfw.?.extensions, &context.glfw.?.instance_proc_addr) catch
-  {
-    std.log.err ("Init Vulkan error", .{});
-    return Error.InitError;
-  };
-  debug ("Init OK", .{});
-}
-
-pub fn loop (context: *context_t) Error!void
-{
-  glfw.loop (&(context.glfw.?)) catch
-  {
-    std.log.err ("Loop Glfw error", .{});
-    return Error.LoopError;
-  };
-  vk.loop () catch
-  {
-    std.log.err ("Loop Vulkan error", .{});
-    return Error.LoopError;
-  };
-  debug ("Loop OK", .{});
-}
-
-pub fn cleanup (context: *context_t) Error!void
-{
-  glfw.cleanup (&(context.glfw.?)) catch
-  {
-    std.log.err ("Clean Up Glfw error", .{});
-    return Error.CleanupError;
-  };
-  vk.cleanup (&(context.vk.?)) catch
-  {
-    std.log.err ("Clean Up Vulkan error", .{});
-    return Error.CleanupError;
-  };
-  debug ("Clean Up OK", .{});
-}

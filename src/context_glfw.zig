@@ -2,7 +2,6 @@ const std   = @import ("std");
 const glfw  = @import ("glfw");
 
 const utils = @import ("utils.zig");
-const Error = utils.SpacedreamError;
 const debug = utils.debug;
 const exe   = utils.exe;
 
@@ -11,15 +10,15 @@ fn callback (code: glfw.ErrorCode, description: [:0] const u8) void
   std.log.err ("glfw: {}: {s}", .{ code, description });
 }
 
-pub const context_glfw_t = struct
+pub const context_glfw = struct
 {
   window:             glfw.Window,
   extensions:         [][*:0] const u8,
-  instance_proc_addr: fn (?*anyopaque, [*:0] const u8) callconv (.C) ?*const fn () callconv (.C) void,
+  instance_proc_addr: *const fn (?*anyopaque, [*:0] const u8) callconv (.C) ?*const fn () callconv (.C) void,
 
-  pub fn init () Error!context_glfw_t
+  pub fn init () !context_glfw
   {
-    var self: context_glfw_t = undefined;
+    var self: context_glfw = undefined;
 
     glfw.setErrorCallback (callback);
     if (!glfw.init (.{}))
@@ -50,20 +49,20 @@ pub const context_glfw_t = struct
 
     return self;
   }
-};
 
-pub fn loop (context: *context_glfw_t) Error!void
-{
-  while (!context.window.shouldClose ())
+  pub fn loop (self: context_glfw) !void
   {
-    glfw.pollEvents ();
+    while (!self.window.shouldClose ())
+    {
+      glfw.pollEvents ();
+    }
+    debug ("Loop Glfw OK", .{});
   }
-  debug ("Loop Glfw OK", .{});
-}
 
-pub fn cleanup (context: *context_glfw_t) Error!void
-{
-  context.window.destroy ();
-  glfw.terminate ();
-  debug ("Clean Up Glfw OK", .{});
-}
+  pub fn cleanup (self: context_glfw) !void
+  {
+    self.window.destroy ();
+    glfw.terminate ();
+    debug ("Clean Up Glfw OK", .{});
+  }
+};

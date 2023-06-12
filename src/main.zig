@@ -1,32 +1,29 @@
 const std   = @import ("std");
 
-const context = @import ("context.zig");
-const context_t = context.context_t;
+const context = @import ("context.zig").context;
 
 const utils = @import ("utils.zig");
-const Error = utils.SpacedreamError;
 const debug = utils.debug;
 
-pub fn main () Error!void
+pub fn main () !void
 {
   debug ("You are running a dev build", .{});
 
-  var spacedream = context_t{};
   {
     errdefer std.process.exit (1);
-    context.init (&spacedream) catch
+    var spacedream = context.init () catch |err|
     {
       std.log.err ("Init error", .{});
-      return Error.InitError;
+      return err;
     };
-    defer context.cleanup (&spacedream) catch
+    defer spacedream.cleanup () catch
     {
       std.log.err ("Clean Up error", .{});
     };
-    context.loop (&spacedream) catch
+    spacedream.loop () catch |err|
     {
       std.log.err ("Loop error", .{});
-      return Error.LoopError;
+      return err;
     };
   }
 

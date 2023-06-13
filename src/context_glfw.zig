@@ -1,14 +1,9 @@
 const std  = @import ("std");
 const glfw = @import ("glfw");
 
-const utils = @import ("utils.zig");
-const debug = utils.debug;
-const exe   = utils.exe;
-
-fn callback (code: glfw.ErrorCode, description: [:0] const u8) void
-{
-  std.log.err ("glfw: {}: {s}", .{ code, description });
-}
+const utils            = @import ("utils.zig");
+const debug_spacedream = utils.debug_spacedream;
+const exe              = utils.exe;
 
 pub const context_glfw = struct
 {
@@ -17,6 +12,11 @@ pub const context_glfw = struct
   instance_proc_addr: *const fn (?*anyopaque, [*:0] const u8) callconv (.C) ?*const fn () callconv (.C) void,
 
   const Self = @This ();
+
+  fn callback (code: glfw.ErrorCode, description: [:0] const u8) void
+  {
+    std.log.err ("glfw: {}: {s}", .{ code, description });
+  }
 
   pub fn init () !Self
   {
@@ -51,7 +51,7 @@ pub const context_glfw = struct
     };
     self.instance_proc_addr = &(glfw.getInstanceProcAddress);
 
-    debug ("Init Glfw OK", .{});
+    try debug_spacedream ("Init Glfw OK", .{});
 
     return self;
   }
@@ -62,13 +62,13 @@ pub const context_glfw = struct
     {
       glfw.pollEvents ();
     }
-    debug ("Loop Glfw OK", .{});
+    try debug_spacedream ("Loop Glfw OK", .{});
   }
 
   pub fn cleanup (self: Self) !void
   {
     self.window.destroy ();
     glfw.terminate ();
-    debug ("Clean Up Glfw OK", .{});
+    try debug_spacedream ("Clean Up Glfw OK", .{});
   }
 };

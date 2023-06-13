@@ -3,8 +3,8 @@ const std = @import ("std");
 const context_vk   = @import ("context_vk.zig").context_vk;
 const context_glfw = @import ("context_glfw.zig").context_glfw;
 
-const utils = @import ("utils.zig");
-const debug = utils.debug;
+const utils            = @import ("utils.zig");
+const debug_spacedream = utils.debug_spacedream;
 
 pub const context = struct
 {
@@ -22,12 +22,14 @@ pub const context = struct
       std.log.err ("Init Glfw error", .{});
       return err;
     };
+
     self.vk = context_vk.init (&self.glfw.extensions, self.glfw.instance_proc_addr) catch |err|
     {
       std.log.err ("Init Vulkan error", .{});
       return err;
     };
-    debug ("Init OK", .{});
+
+    try debug_spacedream ("Init OK", .{});
     return self;
   }
 
@@ -38,12 +40,14 @@ pub const context = struct
       std.log.err ("Loop Glfw error", .{});
       return err;
     };
+
     self.vk.loop () catch |err|
     {
       std.log.err ("Loop Vulkan error", .{});
       return err;
     };
-    debug ("Loop OK", .{});
+
+    try debug_spacedream ("Loop OK", .{});
   }
 
   pub fn cleanup (self: Self) !void
@@ -53,11 +57,13 @@ pub const context = struct
       std.log.err ("Clean Up Vulkan error", .{});
       return err;
     };
+
     self.glfw.cleanup () catch |err|
     {
       std.log.err ("Clean Up Glfw error", .{});
       return err;
     };
-    debug ("Clean Up OK", .{});
+
+    try debug_spacedream ("Clean Up OK", .{});
   }
 };

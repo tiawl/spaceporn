@@ -4,7 +4,7 @@ const build = @import ("build_options");
 
 pub const exe: [*:0] const u8 = build.EXE.ptr[0..build.EXE.len :0];
 
-pub fn debug_vk (comptime format: [] const u8, args: anytype) !void
+pub fn debug_vk (comptime format: [] const u8, severity: [] const u8, _type: [] const u8, args: anytype) !void
 {
   if (build.DEV)
   {
@@ -19,7 +19,7 @@ pub fn debug_vk (comptime format: [] const u8, args: anytype) !void
     };
     defer allocator.free(expanded_format);
 
-    std.log.debug ("[vulkan] {s}", .{ expanded_format });
+    std.log.debug ("[vulkan {s} {s}] {s}", .{ severity, _type, expanded_format });
   }
 }
 

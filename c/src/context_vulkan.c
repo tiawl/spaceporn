@@ -151,20 +151,6 @@ DO
 #if BUILD == DEV_BUILD
   check_vk_func(vk);
 
-  VkExtensionProperties* prop;
-  uint32_t prop_count;
-
-  CALL vkEnumerateInstanceExtensionProperties WITH NULL, &prop_count, NULL ENDCALL;
-
-  MALLOC(prop, prop_count * sizeof(VkExtensionProperties));
-
-  CALL vkEnumerateInstanceExtensionProperties WITH NULL, &prop_count, prop ENDCALL;
-
-  FOR uint32_t i = 0; i < prop_count; i++
-  DO
-    CALL debug WITH "'%s' extension available", prop[i].extensionName ENDCALL;
-  DONE
-
   MALLOC(vk->debug_messenger, sizeof(VkDebugUtilsMessengerEXT));
   MALLOC(vk->debug_info, sizeof(VkDebugUtilsMessengerCreateInfoEXT));
 

@@ -1,20 +1,22 @@
 const std   = @import ("std");
 const builtin = @import ("builtin");
 
+const build = @import ("build_options");
+
 const vk = @import ("vulkan");
 
 const BaseDispatch = vk.BaseWrapper(.{
   .createInstance                       = true,
-  .enumerateInstanceExtensionProperties = true,
-  .enumerateInstanceLayerProperties     = true,
+  .enumerateInstanceLayerProperties     = build.DEV,
+  .enumerateInstanceExtensionProperties = build.DEV,
   .getInstanceProcAddr                  = true,
 });
 
 const InstanceDispatch = vk.InstanceWrapper(.{
-  .destroyInstance = true,
+  .destroyInstance               = true,
+  .createDebugUtilsMessengerEXT  = build.DEV,
+  .destroyDebugUtilsMessengerEXT = build.DEV,
 });
-
-const build = @import ("build_options");
 
 const utils            = @import ("utils.zig");
 const debug_spacedream = utils.debug_spacedream;
@@ -30,6 +32,8 @@ pub const context_vk = struct
   create_info:        vk.InstanceCreateInfo,
   extensions:         [][*:0] const u8,
   instance_proc_addr: *const fn (?*anyopaque, [*:0] const u8) callconv (.C) ?*const fn () callconv (.C) void,
+  debug_messenger:    vk.DebugUtilsMessengerEXT,
+  debug_info:         vk.DebugUtilsMessengerCreateInfoEXT,
 
   const Self = @This ();
 
@@ -38,8 +42,15 @@ pub const context_vk = struct
     "VK_LAYER_KHRONOS_validation",
   };
 
+  const required_extensions = [_][*:0] const u8
+  {
+    vk.extension_info.ext_debug_report.name,
+    vk.extension_info.ext_debug_utils.name,
+  };
+
   const ContextVkError = error
   {
+    ExtensionNotSupported,
     LayerNotAvailable,
   };
 
@@ -74,7 +85,7 @@ pub const context_vk = struct
       _type = "PERFORMANCE";
     }
 
-    debug_vk ("<{s} {s}> {s}", .{ severity, _type, p_callback_data.?.p_message }) catch
+    debug_vk ("{s}", severity, _type, .{ p_callback_data.?.p_message }) catch
     {
       return false;
     };
@@ -112,8 +123,6 @@ pub const context_vk = struct
         return err;
       };
 
-      try debug_spacedream ("  Available layers:", .{});
-
       var i: usize = 0;
       var found: bool = undefined;
       var flag = false;
@@ -124,13 +133,14 @@ pub const context_vk = struct
 
         while (i < available_layers_count)
         {
-          if (!flag) try debug_spacedream ("  - {s}", .{ available_layers[i].layer_name[0..layer.len] });
           if (std.mem.eql (u8, layer, available_layers[i].layer_name[0..layer.len])) found = true;
           i += 1;
         }
 
-        if (!found)
+        if (found)
         {
+          try debug_spacedream ("{s} layer available", .{ layer });
+        } else {
           std.log.err ("{s} layer not available", .{ layer });
           return ContextVkError.LayerNotAvailable;
         }
@@ -167,11 +177,41 @@ pub const context_vk = struct
         return err;
       };
 
-      extensions.append(vk.extension_info.ext_debug_utils.name) catch |err|
+      var supported_extensions_count: u32 = undefined;
+
+      _ = self.base_dispatch.enumerateInstanceExtensionProperties (null, &supported_extensions_count, null) catch |err|
       {
-        std.log.err ("ArrayList extensions append VK_EXT_DEBUG_UTILS_EXTENSION_NAME error", .{});
+        std.log.err ("Enumerate Instance Extension Properties counting supported extension error", .{});
         return err;
       };
+
+      var supported_extensions = try allocator.alloc (vk.ExtensionProperties, supported_extensions_count);
+      defer allocator.free (supported_extensions);
+
+      _ = self.base_dispatch.enumerateInstanceExtensionProperties (null, &supported_extensions_count, supported_extensions.ptr) catch |err|
+      {
+        std.log.err ("Enumerate Instance Extension Properties supported extension error", .{});
+        return err;
+      };
+
+      for (required_extensions) |required_ext|
+      {
+        for (supported_extensions) |supported_ext|
+        {
+          if (std.mem.eql (u8, supported_ext.extension_name[0..std.mem.indexOfScalar (u8, &(supported_ext.extension_name), 0).?], std.mem.span (required_ext)))
+          {
+            extensions.append (@ptrCast ([*:0] const u8, required_ext)) catch |err|
+            {
+              std.log.err ("ArrayList extensions append VK_EXT_DEBUG_UTILS_EXTENSION_NAME error", .{});
+              return err;
+            };
+            try debug_spacedream ("{s} extension supported", .{ required_ext });
+            break;
+          }
+        }
+      }
+
+      self.extensions = extensions.items;
 
       const debug_info = vk.DebugUtilsMessengerCreateInfoEXT
                          {
@@ -192,27 +232,39 @@ pub const context_vk = struct
       self.create_info = vk.InstanceCreateInfo
                          {
                            .enabled_layer_count        = required_layers.len,
-                           .pp_enabled_layer_names     = @ptrCast ([*] const [*:0] const u8, required_layers[0..required_layers.len].ptr),
+                           .pp_enabled_layer_names     = @ptrCast ([*] const [*:0] const u8, required_layers[0..required_layers.len]),
                            .p_next                     = &debug_info,
                            .p_application_info         = &(self.app_info),
                            .enabled_extension_count    = @intCast (u32, self.extensions.len),
                            .pp_enabled_extension_names = @ptrCast ([*] const [*:0] const u8, self.extensions),
                          };
+
+      self.instance = self.base_dispatch.createInstance (&self.create_info, null) catch |err|
+      {
+        std.log.err ("Create Vulkan Instance error", .{});
+        return err;
+      };
     } else {
       self.create_info = vk.InstanceCreateInfo
                          {
                            .enabled_layer_count        = 0,
+                           .pp_enabled_layer_names     = undefined,
                            .p_application_info         = &(self.app_info),
                            .enabled_extension_count    = @intCast (u32, self.extensions.len),
                            .pp_enabled_extension_names = @ptrCast ([*] const [*:0] const u8, self.extensions),
                          };
+
+      self.instance = self.base_dispatch.createInstance (&self.create_info, null) catch |err|
+      {
+        std.log.err ("Create Vulkan Instance error", .{});
+        return err;
+      };
     }
 
-    self.instance = self.base_dispatch.createInstance (&self.create_info, null) catch |err|
-    {
-      std.log.err ("Create Vulkan Instance error", .{});
-      return err;
-    };
+    //if (build.DEV)
+    //{
+    //  TODO
+    //}
 
     self.instance_dispatch = InstanceDispatch.load (self.instance, self.base_dispatch.dispatch.vkGetInstanceProcAddr) catch |err|
     {
@@ -220,10 +272,6 @@ pub const context_vk = struct
       return err;
     };
     errdefer self.instance_dispatch.destroyInstance (self.instance, null);
-
-    //if (build.DEV)
-    //{
-    //}
 
     try debug_spacedream ("Init Vulkan Instance OK", .{});
   }
@@ -254,6 +302,10 @@ pub const context_vk = struct
 
   pub fn cleanup (self: Self) !void
   {
+    //if (build.DEV)
+    //{
+    //  TODO
+    //}
     self.instance_dispatch.destroyInstance (self.instance, null);
     try debug_spacedream ("Clean Up Vulkan OK", .{});
   }

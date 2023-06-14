@@ -17,33 +17,12 @@ pub fn build (builder: *std.build.Builder) !void
     std.process.exit (1);
   }
 
-  var LOGDIR: [] const u8 = undefined;
-
   if (DEV)
   {
-    var buffer: [std.fs.MAX_PATH_BYTES] u8 = undefined;
-    const cwd = try std.os.getcwd (&buffer);
-
-    var gpa = std.heap.GeneralPurposeAllocator (.{}){};
-    defer _ = gpa.deinit ();
-    const allocator = gpa.allocator ();
-
-    var log = try std.ArrayList (u8).initCapacity (allocator, cwd.len + 4);
-    defer log.deinit ();
-
-    try log.appendSlice (cwd);
-    try log.appendSlice ("/log");
-
-    var log_help = try std.ArrayList (u8).initCapacity (allocator, cwd.len + 55);
-    defer log_help.deinit ();
-
-    try log_help.appendSlice ("Specify log directory (must be absolute). Default: ");
-    try log_help.appendSlice (log.items);
-
-    LOGDIR = builder.option ([] const u8, "LOG", log_help.items) orelse log.items;
+    const LOGDIR = "./log";
     build_options.addOption ([] const u8, "LOGDIR", LOGDIR);
 
-    std.fs.makeDirAbsolute (LOGDIR) catch |err|
+    std.fs.cwd ().makeDir (LOGDIR) catch |err|
     {
       if (err != std.fs.File.OpenError.PathAlreadyExists)
       {
@@ -52,16 +31,20 @@ pub fn build (builder: *std.build.Builder) !void
     };
   } else if (!TURBO) {
     const default_LOGDIR = "/var/log/" ++ EXE;
-    LOGDIR = builder.option ([] const u8, "LOG", "Specify log directory (must be absolute). Default: " ++ default_LOGDIR) orelse default_LOGDIR;
+    const LOGDIR = builder.option ([] const u8, "LOG", "Specify log directory. Default: " ++ default_LOGDIR) orelse default_LOGDIR;
     build_options.addOption ([] const u8, "LOGDIR", LOGDIR);
 
-    std.fs.makeDirAbsolute (LOGDIR) catch |err|
+    var file = std.fs.cwd ().openDir (LOGDIR, .{}) catch |err|
     {
-      if (err != std.fs.File.OpenError.PathAlreadyExists)
+      if (err == std.fs.File.OpenError.FileNotFound)
       {
-        return err;
+        std.log.err ("{s} does not exist", .{ LOGDIR });
+        std.process.exit (1);
       }
+      return err;
     };
+
+    defer file.close ();
   }
 
   build_options.addOption ([] const u8, "EXE", EXE);

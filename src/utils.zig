@@ -2,8 +2,7 @@ const std = @import ("std");
 
 const build = @import ("build_options");
 pub const exe: [*:0] const u8 = build.EXE.ptr[0..build.EXE.len :0];
-
-pub const log_file = exe ++ ".log";
+pub const log_file = build.LOGDIR ++ "/" ++ exe ++ ".log";
 
 pub const profile = enum
 {

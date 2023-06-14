@@ -8,6 +8,7 @@ const build = @import ("build_options");
 const utils            = @import ("utils.zig");
 const debug_spacedream = utils.debug_spacedream;
 const log_file         = utils.log_file;
+const profile          = utils.profile;
 
 pub const context = struct
 {
@@ -18,23 +19,26 @@ pub const context = struct
 
   fn init_logfile () !void
   {
-    const file = std.fs.openFileAbsolute (build.LOGDIR ++ "/" ++ log_file, .{}) catch |open_err| blk:
+    if (build.LOG_LEVEL > @enumToInt(profile.TURBO))
     {
-      if (open_err != std.fs.File.OpenError.FileNotFound)
+      const file = std.fs.cwd ().openFile (log_file, .{}) catch |open_err| blk:
       {
-        std.log.err ("Open File Absolute Log File error", .{});
-        return open_err;
-      } else {
-        const cfile = std.fs.createFileAbsolute (build.LOGDIR ++ "/" ++ log_file, .{}) catch |create_err|
+        if (open_err != std.fs.File.OpenError.FileNotFound)
         {
-          std.log.err ("Create File Absolute Log File error", .{});
-          return create_err;
-        };
-        break :blk cfile;
-      }
-    };
+          std.log.err ("Open File Log File error", .{});
+          return open_err;
+        } else {
+          const cfile = std.fs.cwd ().createFile (log_file, .{}) catch |create_err|
+          {
+            std.log.err ("Create File Log File error", .{});
+            return create_err;
+          };
+          break :blk cfile;
+        }
+      };
 
-    defer file.close ();
+      defer file.close ();
+    }
   }
 
   pub fn init () !Self

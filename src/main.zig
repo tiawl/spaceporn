@@ -7,8 +7,6 @@ const debug_spacedream = utils.debug_spacedream;
 
 pub fn main () !void
 {
-  try debug_spacedream ("You are running a dev build", .{});
-
   {
     errdefer std.process.exit (1);
 

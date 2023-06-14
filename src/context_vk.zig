@@ -5,23 +5,24 @@ const build = @import ("build_options");
 
 const vk = @import ("vulkan");
 
+const utils            = @import ("utils.zig");
+const debug_spacedream = utils.debug_spacedream;
+const debug_vk         = utils.debug_vk;
+const exe              = utils.exe;
+const profile          = utils.profile;
+
 const BaseDispatch = vk.BaseWrapper(.{
   .createInstance                       = true,
-  .enumerateInstanceLayerProperties     = build.DEV,
-  .enumerateInstanceExtensionProperties = build.DEV,
+  .enumerateInstanceLayerProperties     = (build.LOG_LEVEL > @enumToInt(profile.TURBO)),
+  .enumerateInstanceExtensionProperties = (build.LOG_LEVEL > @enumToInt(profile.TURBO)),
   .getInstanceProcAddr                  = true,
 });
 
 const InstanceDispatch = vk.InstanceWrapper(.{
   .destroyInstance               = true,
-  .createDebugUtilsMessengerEXT  = build.DEV,
-  .destroyDebugUtilsMessengerEXT = build.DEV,
+  .createDebugUtilsMessengerEXT  = (build.LOG_LEVEL > @enumToInt(profile.TURBO)),
+  .destroyDebugUtilsMessengerEXT = (build.LOG_LEVEL > @enumToInt(profile.TURBO)),
 });
-
-const utils            = @import ("utils.zig");
-const debug_spacedream = utils.debug_spacedream;
-const debug_vk         = utils.debug_vk;
-const exe              = utils.exe;
 
 pub const context_vk = struct
 {
@@ -146,15 +147,15 @@ pub const context_vk = struct
     debug_info.* = vk.DebugUtilsMessengerCreateInfoEXT
                    {
                      .message_severity = .{
-                                            .verbose_bit_ext = true,
-                                            .info_bit_ext    = true,
+                                            .verbose_bit_ext = (build.LOG_LEVEL > @enumToInt(profile.DEFAULT)),
+                                            .info_bit_ext    = (build.LOG_LEVEL > @enumToInt(profile.DEFAULT)),
                                             .warning_bit_ext = true,
                                             .error_bit_ext   = true,
                                           },
                      .message_type = .{
                                         .general_bit_ext     = true,
                                         .validation_bit_ext  = true,
-                                        .performance_bit_ext = true,
+                                        .performance_bit_ext = (build.LOG_LEVEL > @enumToInt(profile.DEFAULT)),
                                       },
                      .pfn_user_callback = @ptrCast (vk.PfnDebugUtilsMessengerCallbackEXT, &debug_callback),
                    };
@@ -243,7 +244,7 @@ pub const context_vk = struct
       return err;
     };
 
-    if (build.DEV)
+    if (build.LOG_LEVEL > @enumToInt(profile.TURBO))
     {
       try check_layer_properties (self);
     }
@@ -257,7 +258,7 @@ pub const context_vk = struct
                       .api_version         = vk.API_VERSION_1_2,
                     };
 
-    if (build.DEV)
+    if (build.LOG_LEVEL > @enumToInt(profile.TURBO))
     {
       try check_extension_properties (self);
     } else {
@@ -284,7 +285,7 @@ pub const context_vk = struct
     };
     errdefer self.instance_dispatch.destroyInstance (self.instance, null);
 
-    if (build.DEV)
+    if (build.LOG_LEVEL > @enumToInt(profile.TURBO))
     {
       init_debug_info (&(self.debug_info));
       self.debug_messenger = self.instance_dispatch.createDebugUtilsMessengerEXT (self.instance, &(self.debug_info), null) catch |err|
@@ -325,7 +326,7 @@ pub const context_vk = struct
 
   pub fn cleanup (self: Self) !void
   {
-    if (build.DEV)
+    if (build.LOG_LEVEL > @enumToInt(profile.TURBO))
     {
       self.instance_dispatch.destroyDebugUtilsMessengerEXT (self.instance, self.debug_messenger, null);
     }

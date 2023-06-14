@@ -3,8 +3,11 @@ const std = @import ("std");
 const context_vk   = @import ("context_vk.zig").context_vk;
 const context_glfw = @import ("context_glfw.zig").context_glfw;
 
+const build = @import ("build_options");
+
 const utils            = @import ("utils.zig");
 const debug_spacedream = utils.debug_spacedream;
+const log_file         = utils.log_file;
 
 pub const context = struct
 {
@@ -13,8 +16,35 @@ pub const context = struct
 
   const Self = @This ();
 
+  fn init_logfile () !void
+  {
+    const file = std.fs.openFileAbsolute (build.LOGDIR ++ "/" ++ log_file, .{}) catch |open_err| blk:
+    {
+      if (open_err != std.fs.File.OpenError.FileNotFound)
+      {
+        std.log.err ("Open File Absolute Log File error", .{});
+        return open_err;
+      } else {
+        const cfile = std.fs.createFileAbsolute (build.LOGDIR ++ "/" ++ log_file, .{}) catch |create_err|
+        {
+          std.log.err ("Create File Absolute Log File error", .{});
+          return create_err;
+        };
+        break :blk cfile;
+      }
+    };
+
+    defer file.close ();
+  }
+
   pub fn init () !Self
   {
+    init_logfile () catch |err|
+    {
+      std.log.err ("Init Log File error", .{});
+      return err;
+    };
+
     var self: Self = undefined;
 
     self.glfw = context_glfw.init () catch |err|

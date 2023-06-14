@@ -1,10 +1,16 @@
 const std = @import ("std");
 
 const build = @import ("build_options");
-
 pub const exe: [*:0] const u8 = build.EXE.ptr[0..build.EXE.len :0];
 
-const log = build.LOGDIR ++ "/" ++ exe ++ ".log";
+pub const log_file = exe ++ ".log";
+
+pub const profile = enum
+{
+  TURBO,
+  DEFAULT,
+  DEV,
+};
 
 const UtilsError = error
 {
@@ -32,7 +38,7 @@ fn debug (function: [] const u8, expanded: anytype, date: *[] const u8,
 
   var stdout = std.ArrayList (u8).init (expanded.allocator.*);
   var stderr = std.ArrayList (u8).init (expanded.allocator.*);
-  errdefer
+  defer
   {
       stdout.deinit ();
       stderr.deinit ();
@@ -73,26 +79,26 @@ fn debug (function: [] const u8, expanded: anytype, date: *[] const u8,
 
 pub fn debug_vk (comptime format: [] const u8, severity: [] const u8, _type: [] const u8, args: anytype) !void
 {
-  if (build.DEV)
+  if (build.LOG_LEVEL > @enumToInt(profile.TURBO))
   {
     var allocator: std.mem.Allocator = undefined;
     var expanded_format: [] const u8 = undefined;
     var date: [] const u8 = undefined;
     try debug ("debug_vk", .{ .format = &expanded_format, .allocator = &allocator }, &date, format, args);
     defer allocator.free (expanded_format);
-    std.log.debug ("[{s}: vulkan {s} {s}] {s}", .{ date, severity, _type, expanded_format });
+    std.debug.print ("[{s}: vulkan {s} {s}] {s}\n", .{ date, severity, _type, expanded_format });
   }
 }
 
 pub fn debug_spacedream (comptime format: [] const u8, args: anytype) !void
 {
-  if (build.DEV)
+  if (build.LOG_LEVEL > @enumToInt(profile.DEFAULT))
   {
     var allocator: std.mem.Allocator = undefined;
     var expanded_format: [] const u8 = undefined;
     var date: [] const u8 = undefined;
     try debug ("debug_spacedream", .{ .format = &expanded_format, .allocator = &allocator }, &date, format, args);
     defer allocator.free (expanded_format);
-    std.log.debug ("[{s}: spacedream] {s}", .{ date, expanded_format });
+    std.debug.print ("[{s}: spacedream] {s}\n", .{ date, expanded_format });
   }
 }

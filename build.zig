@@ -6,16 +6,28 @@ const zigvulkan = @import("libs/vulkan-zig/build.zig");
 
 pub fn build(builder: *std.build.Builder) !void
 {
-  const exe_name = "spacedream";
   const build_options = builder.addOptions();
-  build_options.addOption(bool, "DEV", builder.option(bool, "DEV", "Build spacedream in dev mode") orelse false);
-  build_options.addOption([] const u8, "EXE", exe_name);
+  const EXE = "spacedream";
+  const DEV = builder.option(bool, "DEV", "Build " ++ EXE ++ " in dev mode") orelse false;
+  const default_LOGDIR = "/var/log/" ++ EXE;
+  const LOGDIR = builder.option([] const u8, "LOG", "Specify log directory. Default: " ++ default_LOGDIR) orelse blk:
+  {
+    if (DEV)
+    {
+      break :blk ".";
+    } else {
+      break :blk default_LOGDIR;
+    }
+  };
+  build_options.addOption([] const u8, "EXE", EXE);
+  build_options.addOption(bool, "DEV", DEV);
+  build_options.addOption([] const u8, "LOGDIR", LOGDIR);
 
   const target = builder.standardTargetOptions(.{});
   const mode = builder.standardOptimizeOption(.{});
 
   const exe = builder.addExecutable(.{
-    .name = exe_name,
+    .name = EXE,
     .root_source_file = .{ .path = "src/main.zig" },
     .target = target,
     .optimize = mode,

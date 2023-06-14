@@ -93,6 +93,148 @@ pub const context_vk = struct
     return true;
   }
 
+  fn check_layer_properties (self: *Self) !void
+  {
+    var available_layers_count: u32 = undefined;
+
+    _ = self.base_dispatch.enumerateInstanceLayerProperties (&available_layers_count, null) catch |err|
+    {
+      std.log.err ("Enumerate Instance Layer Properties counting available layers error", .{});
+      return err;
+    };
+
+    var gpa = std.heap.GeneralPurposeAllocator (.{}){};
+    defer _ = gpa.deinit ();
+    const allocator = gpa.allocator ();
+    var available_layers = try allocator.alloc (vk.LayerProperties, available_layers_count);
+    defer allocator.free (available_layers);
+
+    _ = self.base_dispatch.enumerateInstanceLayerProperties (&available_layers_count, available_layers.ptr) catch |err|
+    {
+      std.log.err ("Enumerate Instance Layer Properties available layers error", .{});
+      return err;
+    };
+
+    var i: usize = 0;
+    var found: bool = undefined;
+    var flag = false;
+
+    for (required_layers) |layer|
+    {
+      found = false;
+
+      while (i < available_layers_count)
+      {
+        if (std.mem.eql (u8, layer, available_layers[i].layer_name[0..layer.len])) found = true;
+        i += 1;
+      }
+
+      if (found)
+      {
+        try debug_spacedream ("{s} layer available", .{ layer });
+      } else {
+        std.log.err ("{s} layer not available", .{ layer });
+        return ContextVkError.LayerNotAvailable;
+      }
+
+      flag = false;
+    }
+  }
+
+  fn init_debug_info (debug_info: *vk.DebugUtilsMessengerCreateInfoEXT) void
+  {
+    debug_info.* = vk.DebugUtilsMessengerCreateInfoEXT
+                   {
+                     .message_severity = .{
+                                            .verbose_bit_ext = true,
+                                            .info_bit_ext    = true,
+                                            .warning_bit_ext = true,
+                                            .error_bit_ext   = true,
+                                          },
+                     .message_type = .{
+                                        .general_bit_ext     = true,
+                                        .validation_bit_ext  = true,
+                                        .performance_bit_ext = true,
+                                      },
+                     .pfn_user_callback = @ptrCast (vk.PfnDebugUtilsMessengerCallbackEXT, &debug_callback),
+                   };
+  }
+
+  fn check_extension_properties (self: *Self) !void
+  {
+    var gpa = std.heap.GeneralPurposeAllocator (.{}){};
+    defer _ = gpa.deinit ();
+    const allocator = gpa.allocator ();
+
+    var extensions = std.ArrayList ([*:0] const u8).initCapacity (allocator, self.extensions.len + 1) catch |err|
+    {
+      std.log.err ("Init ArrayList extensions error", .{});
+      return err;
+    };
+    defer extensions.deinit ();
+
+    extensions.appendSlice(self.extensions) catch |err|
+    {
+      std.log.err ("ArrayList extensions appendSlice error", .{});
+      return err;
+    };
+
+    var supported_extensions_count: u32 = undefined;
+
+    _ = self.base_dispatch.enumerateInstanceExtensionProperties (null, &supported_extensions_count, null) catch |err|
+    {
+      std.log.err ("Enumerate Instance Extension Properties counting supported extension error", .{});
+      return err;
+    };
+
+    var supported_extensions = try allocator.alloc (vk.ExtensionProperties, supported_extensions_count);
+    defer allocator.free (supported_extensions);
+
+    _ = self.base_dispatch.enumerateInstanceExtensionProperties (null, &supported_extensions_count, supported_extensions.ptr) catch |err|
+    {
+      std.log.err ("Enumerate Instance Extension Properties supported extension error", .{});
+      return err;
+    };
+
+    for (required_extensions) |required_ext|
+    {
+      for (supported_extensions) |supported_ext|
+      {
+        if (std.mem.eql (u8, supported_ext.extension_name[0..std.mem.indexOfScalar (u8, &(supported_ext.extension_name), 0).?], std.mem.span (required_ext)))
+        {
+          extensions.append (@ptrCast ([*:0] const u8, required_ext)) catch |err|
+          {
+            std.log.err ("ArrayList extensions append VK_EXT_DEBUG_UTILS_EXTENSION_NAME error", .{});
+            return err;
+          };
+          try debug_spacedream ("{s} extension supported", .{ required_ext });
+          break;
+        }
+      }
+    }
+
+    self.extensions = extensions.items;
+
+    var debug_info: vk.DebugUtilsMessengerCreateInfoEXT = undefined;
+    init_debug_info (&debug_info);
+
+    self.create_info = vk.InstanceCreateInfo
+                       {
+                         .enabled_layer_count        = required_layers.len,
+                         .pp_enabled_layer_names     = @ptrCast ([*] const [*:0] const u8, required_layers[0..required_layers.len]),
+                         .p_next                     = &debug_info,
+                         .p_application_info         = &(self.app_info),
+                         .enabled_extension_count    = @intCast (u32, self.extensions.len),
+                         .pp_enabled_extension_names = @ptrCast ([*] const [*:0] const u8, self.extensions),
+                       };
+
+    self.instance = self.base_dispatch.createInstance (&self.create_info, null) catch |err|
+    {
+      std.log.err ("Create Vulkan Instance error", .{});
+      return err;
+    };
+  }
+
   fn init_instance (self: *Self) !void
   {
     self.base_dispatch = BaseDispatch.load (@ptrCast (vk.PfnGetInstanceProcAddr, self.instance_proc_addr)) catch |err|
@@ -103,50 +245,7 @@ pub const context_vk = struct
 
     if (build.DEV)
     {
-      var available_layers_count: u32 = undefined;
-
-      _ = self.base_dispatch.enumerateInstanceLayerProperties (&available_layers_count, null) catch |err|
-      {
-        std.log.err ("Enumerate Instance Layer Properties counting available layers error", .{});
-        return err;
-      };
-
-      var gpa = std.heap.GeneralPurposeAllocator (.{}){};
-      defer _ = gpa.deinit ();
-      const allocator = gpa.allocator ();
-      var available_layers = try allocator.alloc (vk.LayerProperties, available_layers_count);
-      defer allocator.free (available_layers);
-
-      _ = self.base_dispatch.enumerateInstanceLayerProperties (&available_layers_count, available_layers.ptr) catch |err|
-      {
-        std.log.err ("Enumerate Instance Layer Properties available layers error", .{});
-        return err;
-      };
-
-      var i: usize = 0;
-      var found: bool = undefined;
-      var flag = false;
-
-      for (required_layers) |layer|
-      {
-        found = false;
-
-        while (i < available_layers_count)
-        {
-          if (std.mem.eql (u8, layer, available_layers[i].layer_name[0..layer.len])) found = true;
-          i += 1;
-        }
-
-        if (found)
-        {
-          try debug_spacedream ("{s} layer available", .{ layer });
-        } else {
-          std.log.err ("{s} layer not available", .{ layer });
-          return ContextVkError.LayerNotAvailable;
-        }
-
-        flag = false;
-      }
+      try check_layer_properties (self);
     }
 
     self.app_info = vk.ApplicationInfo
@@ -160,90 +259,7 @@ pub const context_vk = struct
 
     if (build.DEV)
     {
-      var gpa = std.heap.GeneralPurposeAllocator (.{}){};
-      defer _ = gpa.deinit ();
-      const allocator = gpa.allocator ();
-
-      var extensions = std.ArrayList ([*:0] const u8).initCapacity (allocator, self.extensions.len + 1) catch |err|
-      {
-        std.log.err ("Init ArrayList extensions error", .{});
-        return err;
-      };
-      defer extensions.deinit ();
-
-      extensions.appendSlice(self.extensions) catch |err|
-      {
-        std.log.err ("ArrayList extensions appendSlice error", .{});
-        return err;
-      };
-
-      var supported_extensions_count: u32 = undefined;
-
-      _ = self.base_dispatch.enumerateInstanceExtensionProperties (null, &supported_extensions_count, null) catch |err|
-      {
-        std.log.err ("Enumerate Instance Extension Properties counting supported extension error", .{});
-        return err;
-      };
-
-      var supported_extensions = try allocator.alloc (vk.ExtensionProperties, supported_extensions_count);
-      defer allocator.free (supported_extensions);
-
-      _ = self.base_dispatch.enumerateInstanceExtensionProperties (null, &supported_extensions_count, supported_extensions.ptr) catch |err|
-      {
-        std.log.err ("Enumerate Instance Extension Properties supported extension error", .{});
-        return err;
-      };
-
-      for (required_extensions) |required_ext|
-      {
-        for (supported_extensions) |supported_ext|
-        {
-          if (std.mem.eql (u8, supported_ext.extension_name[0..std.mem.indexOfScalar (u8, &(supported_ext.extension_name), 0).?], std.mem.span (required_ext)))
-          {
-            extensions.append (@ptrCast ([*:0] const u8, required_ext)) catch |err|
-            {
-              std.log.err ("ArrayList extensions append VK_EXT_DEBUG_UTILS_EXTENSION_NAME error", .{});
-              return err;
-            };
-            try debug_spacedream ("{s} extension supported", .{ required_ext });
-            break;
-          }
-        }
-      }
-
-      self.extensions = extensions.items;
-
-      const debug_info = vk.DebugUtilsMessengerCreateInfoEXT
-                         {
-                           .message_severity = .{
-                                                  .verbose_bit_ext = true,
-                                                  .info_bit_ext    = true,
-                                                  .warning_bit_ext = true,
-                                                  .error_bit_ext   = true,
-                                                },
-                           .message_type = .{
-                                              .general_bit_ext     = true,
-                                              .validation_bit_ext  = true,
-                                              .performance_bit_ext = true,
-                                            },
-                           .pfn_user_callback = @ptrCast (vk.PfnDebugUtilsMessengerCallbackEXT, &debug_callback),
-                         };
-
-      self.create_info = vk.InstanceCreateInfo
-                         {
-                           .enabled_layer_count        = required_layers.len,
-                           .pp_enabled_layer_names     = @ptrCast ([*] const [*:0] const u8, required_layers[0..required_layers.len]),
-                           .p_next                     = &debug_info,
-                           .p_application_info         = &(self.app_info),
-                           .enabled_extension_count    = @intCast (u32, self.extensions.len),
-                           .pp_enabled_extension_names = @ptrCast ([*] const [*:0] const u8, self.extensions),
-                         };
-
-      self.instance = self.base_dispatch.createInstance (&self.create_info, null) catch |err|
-      {
-        std.log.err ("Create Vulkan Instance error", .{});
-        return err;
-      };
+      try check_extension_properties (self);
     } else {
       self.create_info = vk.InstanceCreateInfo
                          {
@@ -261,17 +277,24 @@ pub const context_vk = struct
       };
     }
 
-    //if (build.DEV)
-    //{
-    //  TODO
-    //}
-
     self.instance_dispatch = InstanceDispatch.load (self.instance, self.base_dispatch.dispatch.vkGetInstanceProcAddr) catch |err|
     {
       std.log.err ("Load Vulkan Instance Dispath error", .{});
       return err;
     };
     errdefer self.instance_dispatch.destroyInstance (self.instance, null);
+
+    if (build.DEV)
+    {
+      init_debug_info (&(self.debug_info));
+      self.debug_messenger = self.instance_dispatch.createDebugUtilsMessengerEXT (self.instance, &(self.debug_info), null) catch |err|
+      {
+        std.log.err ("Create Debug Utils Messenger EXT error", .{});
+        return err;
+      };
+
+      errdefer self.instance_dispatch.destroyDebugUtilsMessengerEXT (self.instance, self.debug_messenger, null);
+    }
 
     try debug_spacedream ("Init Vulkan Instance OK", .{});
   }
@@ -302,10 +325,10 @@ pub const context_vk = struct
 
   pub fn cleanup (self: Self) !void
   {
-    //if (build.DEV)
-    //{
-    //  TODO
-    //}
+    if (build.DEV)
+    {
+      self.instance_dispatch.destroyDebugUtilsMessengerEXT (self.instance, self.debug_messenger, null);
+    }
     self.instance_dispatch.destroyInstance (self.instance, null);
     try debug_spacedream ("Clean Up Vulkan OK", .{});
   }

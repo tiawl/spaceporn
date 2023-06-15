@@ -8,8 +8,8 @@ pub fn build (builder: *std.build.Builder) !void
 {
   const build_options = builder.addOptions ();
   const EXE = "spacedream";
-  const DEV = builder.option (bool, "DEV", "Build " ++ EXE ++ " in dev mode") orelse false;
-  const TURBO = builder.option (bool, "TURBO", "Build " ++ EXE ++ " without logging feature") orelse false;
+  const DEV = builder.option (bool, "DEV", "Build " ++ EXE ++ " in verbose mode.") orelse false;
+  const TURBO = builder.option (bool, "TURBO", "Build " ++ EXE ++ " without logging feature. LOG build option is ignored.") orelse false;
 
   if (TURBO and DEV)
   {
@@ -17,49 +17,53 @@ pub fn build (builder: *std.build.Builder) !void
     std.process.exit (1);
   }
 
-  if (DEV)
-  {
-    const LOGDIR = "./log";
-    build_options.addOption ([] const u8, "LOGDIR", LOGDIR);
+  build_options.addOption ([] const u8, "EXE", EXE);
 
-    std.fs.cwd ().makeDir (LOGDIR) catch |err|
+  var mode: std.builtin.Mode = undefined;
+
+  // Turbo profile
+  if (TURBO)
+  {
+
+    // No logging
+    mode = std.builtin.Mode.ReleaseFast;
+    build_options.addOption ([] const u8, "LOG_DIR", "");
+    build_options.addOption (u8, "LOG_LEVEL", 0);
+
+  // Dev profile
+  } else if (DEV) {
+    const LOG_DIR = "./log";
+
+    // Make log directory if not present
+    std.fs.cwd ().makeDir (LOG_DIR) catch |err|
     {
+
+      // Do not return error if log directory already exists
       if (err != std.fs.File.OpenError.PathAlreadyExists)
       {
+        std.log.err ("filed to build {s}", .{ LOG_DIR });
         return err;
       }
     };
-  } else if (!TURBO) {
-    const default_LOGDIR = "/var/log/" ++ EXE;
-    const LOGDIR = builder.option ([] const u8, "LOG", "Specify log directory. Default: " ++ default_LOGDIR) orelse default_LOGDIR;
-    build_options.addOption ([] const u8, "LOGDIR", LOGDIR);
 
-    var file = std.fs.cwd ().openDir (LOGDIR, .{}) catch |err|
-    {
-      if (err == std.fs.File.OpenError.FileNotFound)
-      {
-        std.log.err ("{s} does not exist", .{ LOGDIR });
-        std.process.exit (1);
-      }
-      return err;
-    };
-
-    defer file.close ();
-  }
-
-  build_options.addOption ([] const u8, "EXE", EXE);
-
-  if (DEV)
-  {
+    // Full logging
+    mode = std.builtin.Mode.Debug;
+    build_options.addOption ([] const u8, "LOG_DIR", LOG_DIR);
     build_options.addOption (u8, "LOG_LEVEL", 2);
-  } else if (TURBO) {
-    build_options.addOption (u8, "LOG_LEVEL", 0);
+
+  // Default profile
   } else {
+
+    // No logfile by default except if user specify it
+    const LOG_DIR = builder.option ([] const u8, "LOG", "Log directory. If not specified, log are not registered in a file.") orelse "";
+
+    build_options.addOption ([] const u8, "LOG_DIR", LOG_DIR);
     build_options.addOption (u8, "LOG_LEVEL", 1);
+
+    mode = builder.standardOptimizeOption (.{});
   }
 
   const target = builder.standardTargetOptions (.{});
-  const mode = builder.standardOptimizeOption (.{});
 
   const exe = builder.addExecutable (.{
     .name = EXE,

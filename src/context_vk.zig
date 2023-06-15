@@ -5,24 +5,24 @@ const build = @import ("build_options");
 
 const vk = @import ("vulkan");
 
-const utils            = @import ("utils.zig");
-const debug_spacedream = utils.debug_spacedream;
-const debug_vk         = utils.debug_vk;
-const exe              = utils.exe;
-const profile          = utils.profile;
-const severity         = utils.severity;
+const utils    = @import ("utils.zig");
+const log_app  = utils.log_app;
+const log_vk   = utils.log_vk;
+const exe      = utils.exe;
+const profile  = utils.profile;
+const severity = utils.severity;
 
 const BaseDispatch = vk.BaseWrapper(.{
   .createInstance                       = true,
-  .enumerateInstanceLayerProperties     = (build.LOG_LEVEL > @enumToInt(profile.TURBO)),
-  .enumerateInstanceExtensionProperties = (build.LOG_LEVEL > @enumToInt(profile.TURBO)),
+  .enumerateInstanceLayerProperties     = (build.LOG_LEVEL > @enumToInt (profile.TURBO)),
+  .enumerateInstanceExtensionProperties = (build.LOG_LEVEL > @enumToInt (profile.TURBO)),
   .getInstanceProcAddr                  = true,
 });
 
 const InstanceDispatch = vk.InstanceWrapper(.{
   .destroyInstance               = true,
-  .createDebugUtilsMessengerEXT  = (build.LOG_LEVEL > @enumToInt(profile.TURBO)),
-  .destroyDebugUtilsMessengerEXT = (build.LOG_LEVEL > @enumToInt(profile.TURBO)),
+  .createDebugUtilsMessengerEXT  = (build.LOG_LEVEL > @enumToInt (profile.TURBO)),
+  .destroyDebugUtilsMessengerEXT = (build.LOG_LEVEL > @enumToInt (profile.TURBO)),
 });
 
 pub const context_vk = struct
@@ -87,7 +87,7 @@ pub const context_vk = struct
       _type = " PERFORMANCE";
     }
 
-    debug_vk ("{s}", sev, _type, .{ p_callback_data.?.p_message }) catch
+    log_vk ("{s}", sev, _type, .{ p_callback_data.?.p_message }) catch
     {
       return false;
     };
@@ -101,7 +101,7 @@ pub const context_vk = struct
 
     _ = self.base_dispatch.enumerateInstanceLayerProperties (&available_layers_count, null) catch |err|
     {
-      try debug_spacedream ("failed to enumerate instance layer properties to count available layers", severity.ERROR, .{});
+      try log_app ("failed to enumerate instance layer properties to count available layers", severity.ERROR, .{});
       return err;
     };
 
@@ -113,7 +113,7 @@ pub const context_vk = struct
 
     _ = self.base_dispatch.enumerateInstanceLayerProperties (&available_layers_count, available_layers.ptr) catch |err|
     {
-      try debug_spacedream ("failed to enumerate instance layer properties to list available layers", severity.ERROR, .{});
+      try log_app ("failed to enumerate instance layer properties to list available layers", severity.ERROR, .{});
       return err;
     };
 
@@ -133,9 +133,9 @@ pub const context_vk = struct
 
       if (found)
       {
-        try debug_spacedream ("{s} layer available", severity.DEBUG, .{ layer });
+        try log_app ("{s} layer available", severity.DEBUG, .{ layer });
       } else {
-        try debug_spacedream ("{s} layer not available", severity.ERROR, .{ layer });
+        try log_app ("{s} layer not available", severity.ERROR, .{ layer });
         return ContextVkError.LayerNotAvailable;
       }
 
@@ -148,15 +148,15 @@ pub const context_vk = struct
     debug_info.* = vk.DebugUtilsMessengerCreateInfoEXT
                    {
                      .message_severity = .{
-                                            .verbose_bit_ext = (build.LOG_LEVEL > @enumToInt(profile.DEFAULT)),
-                                            .info_bit_ext    = (build.LOG_LEVEL > @enumToInt(profile.DEFAULT)),
+                                            .verbose_bit_ext = (build.LOG_LEVEL > @enumToInt (profile.DEFAULT)),
+                                            .info_bit_ext    = (build.LOG_LEVEL > @enumToInt (profile.DEFAULT)),
                                             .warning_bit_ext = true,
                                             .error_bit_ext   = true,
                                           },
                      .message_type = .{
                                         .general_bit_ext     = true,
                                         .validation_bit_ext  = true,
-                                        .performance_bit_ext = (build.LOG_LEVEL > @enumToInt(profile.DEFAULT)),
+                                        .performance_bit_ext = (build.LOG_LEVEL > @enumToInt (profile.DEFAULT)),
                                       },
                      .pfn_user_callback = @ptrCast (vk.PfnDebugUtilsMessengerCallbackEXT, &debug_callback),
                    };
@@ -170,14 +170,14 @@ pub const context_vk = struct
 
     var extensions = std.ArrayList ([*:0] const u8).initCapacity (allocator, self.extensions.len + 1) catch |err|
     {
-      try debug_spacedream ("failed to init ArrayList for extensions variable", severity.ERROR, .{});
+      try log_app ("failed to init ArrayList for extensions variable", severity.ERROR, .{});
       return err;
     };
     defer extensions.deinit ();
 
     extensions.appendSlice(self.extensions) catch |err|
     {
-      try debug_spacedream ("failed to appendSlice into ArrayList extensions variable", severity.ERROR, .{});
+      try log_app ("failed to appendSlice into ArrayList extensions variable", severity.ERROR, .{});
       return err;
     };
 
@@ -185,7 +185,7 @@ pub const context_vk = struct
 
     _ = self.base_dispatch.enumerateInstanceExtensionProperties (null, &supported_extensions_count, null) catch |err|
     {
-      try debug_spacedream ("failed to enumerate instance extension properties to count supported extension", severity.ERROR, .{});
+      try log_app ("failed to enumerate instance extension properties to count supported extension", severity.ERROR, .{});
       return err;
     };
 
@@ -194,7 +194,7 @@ pub const context_vk = struct
 
     _ = self.base_dispatch.enumerateInstanceExtensionProperties (null, &supported_extensions_count, supported_extensions.ptr) catch |err|
     {
-      try debug_spacedream ("failed to enumerate instance extension properties to list supported extension", severity.ERROR, .{});
+      try log_app ("failed to enumerate instance extension properties to list supported extension", severity.ERROR, .{});
       return err;
     };
 
@@ -206,10 +206,10 @@ pub const context_vk = struct
         {
           extensions.append (@ptrCast ([*:0] const u8, required_ext)) catch |err|
           {
-            try debug_spacedream ("failed to append VK_EXT_DEBUG_UTILS_EXTENSION_NAME into ArrayList extensions variable", severity.ERROR, .{});
+            try log_app ("failed to append VK_EXT_DEBUG_UTILS_EXTENSION_NAME into ArrayList extensions variable", severity.ERROR, .{});
             return err;
           };
-          try debug_spacedream ("{s} extension supported", severity.DEBUG, .{ required_ext });
+          try log_app ("{s} extension supported", severity.DEBUG, .{ required_ext });
           break;
         }
       }
@@ -232,7 +232,7 @@ pub const context_vk = struct
 
     self.instance = self.base_dispatch.createInstance (&self.create_info, null) catch |err|
     {
-      try debug_spacedream ("failed to create Vulkan instance", severity.ERROR, .{});
+      try log_app ("failed to create Vulkan instance", severity.ERROR, .{});
       return err;
     };
   }
@@ -241,11 +241,11 @@ pub const context_vk = struct
   {
     self.base_dispatch = BaseDispatch.load (@ptrCast (vk.PfnGetInstanceProcAddr, self.instance_proc_addr)) catch |err|
     {
-      try debug_spacedream ("failed to load Vulkan-zig base dispatch", severity.ERROR, .{});
+      try log_app ("failed to load Vulkan-zig base dispatch", severity.ERROR, .{});
       return err;
     };
 
-    if (build.LOG_LEVEL > @enumToInt(profile.TURBO))
+    if (build.LOG_LEVEL > @enumToInt (profile.TURBO))
     {
       try check_layer_properties (self);
     }
@@ -259,7 +259,7 @@ pub const context_vk = struct
                       .api_version         = vk.API_VERSION_1_2,
                     };
 
-    if (build.LOG_LEVEL > @enumToInt(profile.TURBO))
+    if (build.LOG_LEVEL > @enumToInt (profile.TURBO))
     {
       try check_extension_properties (self);
     } else {
@@ -274,31 +274,31 @@ pub const context_vk = struct
 
       self.instance = self.base_dispatch.createInstance (&self.create_info, null) catch |err|
       {
-        try debug_spacedream ("failed to create Vulkan instance", severity.ERROR, .{});
+        try log_app ("failed to create Vulkan instance", severity.ERROR, .{});
         return err;
       };
     }
 
     self.instance_dispatch = InstanceDispatch.load (self.instance, self.base_dispatch.dispatch.vkGetInstanceProcAddr) catch |err|
     {
-      try debug_spacedream ("failed to load Vulkan-zig instance dispath", severity.ERROR, .{});
+      try log_app ("failed to load Vulkan-zig instance dispath", severity.ERROR, .{});
       return err;
     };
     errdefer self.instance_dispatch.destroyInstance (self.instance, null);
 
-    if (build.LOG_LEVEL > @enumToInt(profile.TURBO))
+    if (build.LOG_LEVEL > @enumToInt (profile.TURBO))
     {
       init_debug_info (&(self.debug_info));
       self.debug_messenger = self.instance_dispatch.createDebugUtilsMessengerEXT (self.instance, &(self.debug_info), null) catch |err|
       {
-        try debug_spacedream ("failed to create DebugUtilsMessengerEXT struct", severity.ERROR, .{});
+        try log_app ("failed to create DebugUtilsMessengerEXT struct", severity.ERROR, .{});
         return err;
       };
 
       errdefer self.instance_dispatch.destroyDebugUtilsMessengerEXT (self.instance, self.debug_messenger, null);
     }
 
-    try debug_spacedream ("Init Vulkan Instance OK", severity.DEBUG, .{});
+    try log_app ("Init Vulkan Instance OK", severity.DEBUG, .{});
   }
 
   pub fn init (extensions: *[][*:0] const u8,
@@ -311,27 +311,27 @@ pub const context_vk = struct
 
     init_instance (&self) catch |err|
     {
-      try debug_spacedream ("failed to init Vulkan instance", severity.ERROR, .{});
+      try log_app ("failed to init Vulkan instance", severity.ERROR, .{});
       return err;
     };
 
-    try debug_spacedream ("Init Vulkan OK", severity.DEBUG, .{});
+    try log_app ("Init Vulkan OK", severity.DEBUG, .{});
     return self;
   }
 
   pub fn loop (self: Self) !void
   {
     _ = self;
-    try debug_spacedream ("Loop Vulkan OK", severity.DEBUG, .{});
+    try log_app ("Loop Vulkan OK", severity.DEBUG, .{});
   }
 
   pub fn cleanup (self: Self) !void
   {
-    if (build.LOG_LEVEL > @enumToInt(profile.TURBO))
+    if (build.LOG_LEVEL > @enumToInt (profile.TURBO))
     {
       self.instance_dispatch.destroyDebugUtilsMessengerEXT (self.instance, self.debug_messenger, null);
     }
     self.instance_dispatch.destroyInstance (self.instance, null);
-    try debug_spacedream ("Cleanup Vulkan OK", severity.DEBUG, .{});
+    try log_app ("Cleanup Vulkan OK", severity.DEBUG, .{});
   }
 };

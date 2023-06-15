@@ -5,11 +5,12 @@ const context_glfw = @import ("context_glfw.zig").context_glfw;
 
 const build = @import ("build_options");
 
-const utils            = @import ("utils.zig");
-const debug_spacedream = utils.debug_spacedream;
-const log_file         = utils.log_file;
-const profile          = utils.profile;
-const severity         = utils.severity;
+const utils    = @import ("utils.zig");
+const log_app  = utils.log_app;
+const log_file = utils.log_file;
+const LOG_DIR  = utils.LOG_DIR;
+const profile  = utils.profile;
+const severity = utils.severity;
 
 pub const context = struct
 {
@@ -20,18 +21,29 @@ pub const context = struct
 
   fn init_logfile () !void
   {
-    if (build.LOG_LEVEL > @enumToInt(profile.TURBO))
+    if ((build.LOG_LEVEL > @enumToInt (profile.TURBO)) and LOG_DIR.len > 0)
     {
+      var dir = std.fs.cwd ().openDir (LOG_DIR, .{}) catch |err|
+      {
+        if (err == std.fs.File.OpenError.FileNotFound)
+        {
+          try log_app ("{s} does not exist, impossible to log execution.", .{ LOG_DIR, utils.exe });
+        }
+        return err;
+      };
+
+      defer dir.close ();
+
       const file = std.fs.cwd ().openFile (log_file, .{}) catch |open_err| blk:
       {
         if (open_err != std.fs.File.OpenError.FileNotFound)
         {
-          try debug_spacedream ("failed to open log file", severity.ERROR, .{});
+          try log_app ("failed to open log file", severity.ERROR, .{});
           return open_err;
         } else {
           const cfile = std.fs.cwd ().createFile (log_file, .{}) catch |create_err|
           {
-            try debug_spacedream ("failed to create log file", severity.ERROR, .{});
+            try log_app ("failed to create log file", severity.ERROR, .{});
             return create_err;
           };
           break :blk cfile;
@@ -46,7 +58,7 @@ pub const context = struct
   {
     init_logfile () catch |err|
     {
-      try debug_spacedream ("failed to init log file", severity.ERROR, .{});
+      try log_app ("failed to init log file", severity.ERROR, .{});
       return err;
     };
 
@@ -54,17 +66,17 @@ pub const context = struct
 
     self.glfw = context_glfw.init () catch |err|
     {
-      try debug_spacedream ("failed to init GLFW", severity.ERROR, .{});
+      try log_app ("failed to init GLFW", severity.ERROR, .{});
       return err;
     };
 
     self.vk = context_vk.init (&self.glfw.extensions, self.glfw.instance_proc_addr) catch |err|
     {
-      try debug_spacedream ("failed to init Vulkan", severity.ERROR, .{});
+      try log_app ("failed to init Vulkan", severity.ERROR, .{});
       return err;
     };
 
-    try debug_spacedream ("Init OK", severity.DEBUG, .{});
+    try log_app ("Init OK", severity.DEBUG, .{});
     return self;
   }
 
@@ -72,33 +84,33 @@ pub const context = struct
   {
     self.glfw.loop () catch |err|
     {
-      try debug_spacedream ("failed to loop on GLFW context", severity.ERROR, .{});
+      try log_app ("failed to loop on GLFW context", severity.ERROR, .{});
       return err;
     };
 
     self.vk.loop () catch |err|
     {
-      try debug_spacedream ("failed to loop on Vulkan context", severity.ERROR, .{});
+      try log_app ("failed to loop on Vulkan context", severity.ERROR, .{});
       return err;
     };
 
-    try debug_spacedream ("Loop OK", severity.DEBUG, .{});
+    try log_app ("Loop OK", severity.DEBUG, .{});
   }
 
   pub fn cleanup (self: Self) !void
   {
     self.vk.cleanup () catch |err|
     {
-      try debug_spacedream ("failed to cleanup Vulkan", severity.ERROR, .{});
+      try log_app ("failed to cleanup Vulkan", severity.ERROR, .{});
       return err;
     };
 
     self.glfw.cleanup () catch |err|
     {
-      try debug_spacedream ("failed to cleanup GLFW", severity.ERROR, .{});
+      try log_app ("failed to cleanup GLFW", severity.ERROR, .{});
       return err;
     };
 
-    try debug_spacedream ("Cleanup OK", severity.DEBUG, .{});
+    try log_app ("Cleanup OK", severity.DEBUG, .{});
   }
 };

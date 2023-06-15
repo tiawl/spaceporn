@@ -4,7 +4,7 @@ const stderr = std.debug;
 
 const build = @import ("build_options");
 pub const exe: [*:0] const u8 = build.EXE.ptr[0..build.EXE.len :0];
-pub const log_file = build.LOGDIR ++ "/" ++ exe ++ ".log";
+pub const log_file = build.LOG_DIR ++ "/" ++ exe ++ ".log";
 
 pub const profile = enum
 {
@@ -20,14 +20,16 @@ pub const severity = enum
   WARNING,
   ERROR,
 
-  pub fn print (self: severity, args: anytype) !void
+  const Self = @This ();
+
+  pub fn print (self: Self, args: anytype) !void
   {
     switch (self)
     {
-      severity.DEBUG => { try stdout.print ("[{s}{s} DEBUG{s}] {s}\n", args); },
-      severity.INFO => { try stdout.print ("[{s}{s} INFO{s}] {s}\n", args); },
-      severity.WARNING => { stderr.print ("[{s}{s} WARNING{s}] {s}\n", args); },
-      severity.ERROR => { stderr.print ("[{s}{s} ERROR{s}] {s}\n", args); },
+      Self.DEBUG => { try stdout.print ("[{s}{s} DEBUG{s}] {s}\n", args); },
+      Self.INFO => { try stdout.print ("[{s}{s} INFO{s}] {s}\n", args); },
+      Self.WARNING => { stderr.print ("[{s}{s} WARNING{s}] {s}\n", args); },
+      Self.ERROR => { stderr.print ("[{s}{s} ERROR{s}] {s}\n", args); },
     }
   }
 };
@@ -37,7 +39,7 @@ const UtilsError = error
   DateProcessError,
 };
 
-fn debug (function: [] const u8, expanded: anytype, date: *[] const u8,
+fn log (function: [] const u8, expanded: anytype, date: *[] const u8,
           comptime format: [] const u8, args: anytype) !void
 {
   var buffer: [4096] u8 = undefined;
@@ -50,7 +52,7 @@ fn debug (function: [] const u8, expanded: anytype, date: *[] const u8,
     return err;
   };
 
-  if (build.LOG_LEVEL > @enumToInt(profile.DEFAULT))
+  if (build.LOG_LEVEL > @enumToInt (profile.DEFAULT))
   {
     const command = [_][] const u8 { "date", "+%F %T.%3N: " };
     var child = std.process.Child.init(&command, expanded.allocator.*);
@@ -99,27 +101,27 @@ fn debug (function: [] const u8, expanded: anytype, date: *[] const u8,
   }
 }
 
-pub fn debug_vk (comptime format: [] const u8, sev: severity, _type: [] const u8, args: anytype) !void
+pub fn log_vk (comptime format: [] const u8, sev: severity, _type: [] const u8, args: anytype) !void
 {
-  if (build.LOG_LEVEL > @enumToInt(profile.TURBO))
+  if (build.LOG_LEVEL > @enumToInt (profile.TURBO))
   {
     var allocator: std.mem.Allocator = undefined;
     var expanded_format: [] const u8 = undefined;
     var date: [] const u8 = undefined;
-    try debug ("debug_vk", .{ .format = &expanded_format, .allocator = &allocator }, &date, format, args);
+    try log ("log_vk", .{ .format = &expanded_format, .allocator = &allocator }, &date, format, args);
     defer allocator.free (expanded_format);
     try sev.print (.{ date, "vulkan", _type, expanded_format });
   }
 }
 
-pub fn debug_spacedream (comptime format: [] const u8, sev: severity, args: anytype) !void
+pub fn log_app (comptime format: [] const u8, sev: severity, args: anytype) !void
 {
-  if (build.LOG_LEVEL > @enumToInt(profile.DEFAULT))
+  if (build.LOG_LEVEL > @enumToInt (profile.DEFAULT))
   {
     var allocator: std.mem.Allocator = undefined;
     var expanded_format: [] const u8 = undefined;
     var date: [] const u8 = undefined;
-    try debug ("debug_spacedream", .{ .format = &expanded_format, .allocator = &allocator }, &date, format, args);
+    try log ("log_app", .{ .format = &expanded_format, .allocator = &allocator }, &date, format, args);
     defer allocator.free (expanded_format);
     try sev.print (.{ date, "spacedream", "", expanded_format });
   }

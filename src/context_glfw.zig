@@ -1,10 +1,10 @@
 const std  = @import ("std");
 const glfw = @import ("glfw");
 
-const utils            = @import ("utils.zig");
-const debug_spacedream = utils.debug_spacedream;
-const exe              = utils.exe;
-const severity         = utils.severity;
+const utils    = @import ("utils.zig");
+const log_app  = utils.log_app;
+const exe      = utils.exe;
+const severity = utils.severity;
 
 pub const context_glfw = struct
 {
@@ -16,7 +16,7 @@ pub const context_glfw = struct
 
   fn callback (code: glfw.ErrorCode, description: [:0] const u8) void
   {
-    debug_spacedream ("glfw: {}: {s}", severity.ERROR, .{ code, description }) catch
+    log_app ("glfw: {}: {s}", severity.ERROR, .{ code, description }) catch
     {
       std.process.exit (1);
     };
@@ -29,7 +29,7 @@ pub const context_glfw = struct
     glfw.setErrorCallback (callback);
     if (!glfw.init (.{}))
     {
-      try debug_spacedream ("failed to initialize GLFW: {?s}", severity.ERROR, .{ glfw.getErrorString () });
+      try log_app ("failed to initialize GLFW: {?s}", severity.ERROR, .{ glfw.getErrorString () });
       std.process.exit (1);
     }
     errdefer glfw.terminate ();
@@ -42,7 +42,7 @@ pub const context_glfw = struct
 
     self.window = glfw.Window.create (800, 600, exe, null, null, hints) orelse
     {
-      try debug_spacedream ("failed to initialize GLFW window: {?s}", severity.ERROR, .{ glfw.getErrorString () });
+      try log_app ("failed to initialize GLFW window: {?s}", severity.ERROR, .{ glfw.getErrorString () });
       std.process.exit (1);
     };
     errdefer self.window.destroy ();
@@ -50,12 +50,12 @@ pub const context_glfw = struct
     self.extensions = glfw.getRequiredInstanceExtensions () orelse
     {
       const err = glfw.mustGetError();
-      try debug_spacedream ("failed to get required vulkan instance extensions: error={s}", severity.ERROR, .{err.description});
+      try log_app ("failed to get required vulkan instance extensions: error={s}", severity.ERROR, .{err.description});
       std.process.exit (1);
     };
     self.instance_proc_addr = &(glfw.getInstanceProcAddress);
 
-    try debug_spacedream ("Init GLFW OK", severity.DEBUG, .{});
+    try log_app ("Init GLFW OK", severity.DEBUG, .{});
 
     return self;
   }
@@ -66,13 +66,13 @@ pub const context_glfw = struct
     {
       glfw.pollEvents ();
     }
-    try debug_spacedream ("Loop GLFW OK", severity.DEBUG, .{});
+    try log_app ("Loop GLFW OK", severity.DEBUG, .{});
   }
 
   pub fn cleanup (self: Self) !void
   {
     self.window.destroy ();
     glfw.terminate ();
-    try debug_spacedream ("Cleanup GLFW OK", severity.DEBUG, .{});
+    try log_app ("Cleanup GLFW OK", severity.DEBUG, .{});
   }
 };

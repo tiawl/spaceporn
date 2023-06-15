@@ -10,6 +10,7 @@ const debug_spacedream = utils.debug_spacedream;
 const debug_vk         = utils.debug_vk;
 const exe              = utils.exe;
 const profile          = utils.profile;
+const severity         = utils.severity;
 
 const BaseDispatch = vk.BaseWrapper(.{
   .createInstance                       = true,
@@ -63,30 +64,30 @@ pub const context_vk = struct
   {
     _ = p_user_data;
 
-    var severity: [] const u8 = undefined;
+    var sev: severity = undefined;
     var _type: [] const u8 = undefined;
 
     if (message_severity.verbose_bit_ext)
     {
-      severity = "VERBOSE";
+      sev = severity.DEBUG;
     } else if (message_severity.info_bit_ext) {
-      severity = "INFO";
+      sev = severity.INFO;
     } else if (message_severity.warning_bit_ext) {
-      severity = "WARNING";
+      sev = severity.WARNING;
     } else if (message_severity.error_bit_ext) {
-      severity = "ERROR";
+      sev = severity.ERROR;
     }
 
     if (message_type.general_bit_ext)
     {
-      _type = "GENERAL";
+      _type = " GENERAL";
     } else if (message_type.validation_bit_ext) {
-      _type = "VALIDATION";
+      _type = " VALIDATION";
     } else if (message_type.performance_bit_ext) {
-      _type = "PERFORMANCE";
+      _type = " PERFORMANCE";
     }
 
-    debug_vk ("{s}", severity, _type, .{ p_callback_data.?.p_message }) catch
+    debug_vk ("{s}", sev, _type, .{ p_callback_data.?.p_message }) catch
     {
       return false;
     };
@@ -100,7 +101,7 @@ pub const context_vk = struct
 
     _ = self.base_dispatch.enumerateInstanceLayerProperties (&available_layers_count, null) catch |err|
     {
-      std.log.err ("Enumerate Instance Layer Properties counting available layers error", .{});
+      try debug_spacedream ("failed to enumerate instance layer properties to count available layers", severity.ERROR, .{});
       return err;
     };
 
@@ -112,7 +113,7 @@ pub const context_vk = struct
 
     _ = self.base_dispatch.enumerateInstanceLayerProperties (&available_layers_count, available_layers.ptr) catch |err|
     {
-      std.log.err ("Enumerate Instance Layer Properties available layers error", .{});
+      try debug_spacedream ("failed to enumerate instance layer properties to list available layers", severity.ERROR, .{});
       return err;
     };
 
@@ -132,9 +133,9 @@ pub const context_vk = struct
 
       if (found)
       {
-        try debug_spacedream ("{s} layer available", .{ layer });
+        try debug_spacedream ("{s} layer available", severity.DEBUG, .{ layer });
       } else {
-        std.log.err ("{s} layer not available", .{ layer });
+        try debug_spacedream ("{s} layer not available", severity.ERROR, .{ layer });
         return ContextVkError.LayerNotAvailable;
       }
 
@@ -169,14 +170,14 @@ pub const context_vk = struct
 
     var extensions = std.ArrayList ([*:0] const u8).initCapacity (allocator, self.extensions.len + 1) catch |err|
     {
-      std.log.err ("Init ArrayList extensions error", .{});
+      try debug_spacedream ("failed to init ArrayList for extensions variable", severity.ERROR, .{});
       return err;
     };
     defer extensions.deinit ();
 
     extensions.appendSlice(self.extensions) catch |err|
     {
-      std.log.err ("ArrayList extensions appendSlice error", .{});
+      try debug_spacedream ("failed to appendSlice into ArrayList extensions variable", severity.ERROR, .{});
       return err;
     };
 
@@ -184,7 +185,7 @@ pub const context_vk = struct
 
     _ = self.base_dispatch.enumerateInstanceExtensionProperties (null, &supported_extensions_count, null) catch |err|
     {
-      std.log.err ("Enumerate Instance Extension Properties counting supported extension error", .{});
+      try debug_spacedream ("failed to enumerate instance extension properties to count supported extension", severity.ERROR, .{});
       return err;
     };
 
@@ -193,7 +194,7 @@ pub const context_vk = struct
 
     _ = self.base_dispatch.enumerateInstanceExtensionProperties (null, &supported_extensions_count, supported_extensions.ptr) catch |err|
     {
-      std.log.err ("Enumerate Instance Extension Properties supported extension error", .{});
+      try debug_spacedream ("failed to enumerate instance extension properties to list supported extension", severity.ERROR, .{});
       return err;
     };
 
@@ -205,10 +206,10 @@ pub const context_vk = struct
         {
           extensions.append (@ptrCast ([*:0] const u8, required_ext)) catch |err|
           {
-            std.log.err ("ArrayList extensions append VK_EXT_DEBUG_UTILS_EXTENSION_NAME error", .{});
+            try debug_spacedream ("failed to append VK_EXT_DEBUG_UTILS_EXTENSION_NAME into ArrayList extensions variable", severity.ERROR, .{});
             return err;
           };
-          try debug_spacedream ("{s} extension supported", .{ required_ext });
+          try debug_spacedream ("{s} extension supported", severity.DEBUG, .{ required_ext });
           break;
         }
       }
@@ -231,7 +232,7 @@ pub const context_vk = struct
 
     self.instance = self.base_dispatch.createInstance (&self.create_info, null) catch |err|
     {
-      std.log.err ("Create Vulkan Instance error", .{});
+      try debug_spacedream ("failed to create Vulkan instance", severity.ERROR, .{});
       return err;
     };
   }
@@ -240,7 +241,7 @@ pub const context_vk = struct
   {
     self.base_dispatch = BaseDispatch.load (@ptrCast (vk.PfnGetInstanceProcAddr, self.instance_proc_addr)) catch |err|
     {
-      std.log.err ("Load Vulkan Base Dispath error", .{});
+      try debug_spacedream ("failed to load Vulkan-zig base dispatch", severity.ERROR, .{});
       return err;
     };
 
@@ -273,14 +274,14 @@ pub const context_vk = struct
 
       self.instance = self.base_dispatch.createInstance (&self.create_info, null) catch |err|
       {
-        std.log.err ("Create Vulkan Instance error", .{});
+        try debug_spacedream ("failed to create Vulkan instance", severity.ERROR, .{});
         return err;
       };
     }
 
     self.instance_dispatch = InstanceDispatch.load (self.instance, self.base_dispatch.dispatch.vkGetInstanceProcAddr) catch |err|
     {
-      std.log.err ("Load Vulkan Instance Dispath error", .{});
+      try debug_spacedream ("failed to load Vulkan-zig instance dispath", severity.ERROR, .{});
       return err;
     };
     errdefer self.instance_dispatch.destroyInstance (self.instance, null);
@@ -290,14 +291,14 @@ pub const context_vk = struct
       init_debug_info (&(self.debug_info));
       self.debug_messenger = self.instance_dispatch.createDebugUtilsMessengerEXT (self.instance, &(self.debug_info), null) catch |err|
       {
-        std.log.err ("Create Debug Utils Messenger EXT error", .{});
+        try debug_spacedream ("failed to create DebugUtilsMessengerEXT struct", severity.ERROR, .{});
         return err;
       };
 
       errdefer self.instance_dispatch.destroyDebugUtilsMessengerEXT (self.instance, self.debug_messenger, null);
     }
 
-    try debug_spacedream ("Init Vulkan Instance OK", .{});
+    try debug_spacedream ("Init Vulkan Instance OK", severity.DEBUG, .{});
   }
 
   pub fn init (extensions: *[][*:0] const u8,
@@ -310,18 +311,18 @@ pub const context_vk = struct
 
     init_instance (&self) catch |err|
     {
-      std.log.err ("Init Vulkan Instance error", .{});
+      try debug_spacedream ("failed to init Vulkan instance", severity.ERROR, .{});
       return err;
     };
 
-    try debug_spacedream ("Init Vulkan OK", .{});
+    try debug_spacedream ("Init Vulkan OK", severity.DEBUG, .{});
     return self;
   }
 
   pub fn loop (self: Self) !void
   {
     _ = self;
-    try debug_spacedream ("Loop Vulkan OK", .{});
+    try debug_spacedream ("Loop Vulkan OK", severity.DEBUG, .{});
   }
 
   pub fn cleanup (self: Self) !void
@@ -331,6 +332,6 @@ pub const context_vk = struct
       self.instance_dispatch.destroyDebugUtilsMessengerEXT (self.instance, self.debug_messenger, null);
     }
     self.instance_dispatch.destroyInstance (self.instance, null);
-    try debug_spacedream ("Clean Up Vulkan OK", .{});
+    try debug_spacedream ("Cleanup Vulkan OK", severity.DEBUG, .{});
   }
 };

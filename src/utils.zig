@@ -1,4 +1,6 @@
 const std = @import ("std");
+const stdout = std.io.getStdOut ().writer ();
+const stderr = std.debug;
 
 const build = @import ("build_options");
 pub const exe: [*:0] const u8 = build.EXE.ptr[0..build.EXE.len :0];
@@ -9,6 +11,25 @@ pub const profile = enum
   TURBO,
   DEFAULT,
   DEV,
+};
+
+pub const severity = enum
+{
+  DEBUG,
+  INFO,
+  WARNING,
+  ERROR,
+
+  pub fn print (self: severity, args: anytype) !void
+  {
+    switch (self)
+    {
+      severity.DEBUG => { try stdout.print ("[{s}{s} DEBUG{s}] {s}\n", args); },
+      severity.INFO => { try stdout.print ("[{s}{s} INFO{s}] {s}\n", args); },
+      severity.WARNING => { stderr.print ("[{s}{s} WARNING{s}] {s}\n", args); },
+      severity.ERROR => { stderr.print ("[{s}{s} ERROR{s}] {s}\n", args); },
+    }
+  }
 };
 
 const UtilsError = error
@@ -22,61 +43,63 @@ fn debug (function: [] const u8, expanded: anytype, date: *[] const u8,
   var buffer: [4096] u8 = undefined;
   var fba = std.heap.FixedBufferAllocator.init (&buffer);
   expanded.allocator.* = fba.allocator ();
-  const command = [_][] const u8 { "date", "+%F %T.%3N" };
 
   expanded.format.* = std.fmt.allocPrint(expanded.allocator.*, format, args) catch |err|
   {
-    std.log.err ("{s} expanded format allocPrint error", .{ function });
+    stderr.print ("[spacedream ERROR] {s} expanded format allocPrint error\n", .{ function });
     return err;
   };
 
-  var child = std.process.Child.init(&command, expanded.allocator.*);
-  child.stdin_behavior = .Ignore;
-  child.stdout_behavior = .Pipe;
-  child.stderr_behavior = .Pipe;
-
-  var stdout = std.ArrayList (u8).init (expanded.allocator.*);
-  var stderr = std.ArrayList (u8).init (expanded.allocator.*);
-  defer
+  if (build.LOG_LEVEL > @enumToInt(profile.DEFAULT))
   {
-      stdout.deinit ();
-      stderr.deinit ();
+    const command = [_][] const u8 { "date", "+%F %T.%3N: " };
+    var child = std.process.Child.init(&command, expanded.allocator.*);
+    child.stdin_behavior = .Ignore;
+    child.stdout_behavior = .Pipe;
+    child.stderr_behavior = .Pipe;
+
+    var out = std.ArrayList (u8).init (expanded.allocator.*);
+    defer out.deinit ();
+    var _err = std.ArrayList (u8).init (expanded.allocator.*);
+    defer _err.deinit ();
+
+    child.spawn () catch |err|
+    {
+      stderr.print ("[spacedream ERROR] {s} child spawn error\n", .{ function });
+      return err;
+    };
+
+    child.collectOutput (&out, &_err, 4096) catch |err|
+    {
+      stderr.print ("[spacedream ERROR] {s} child collect output error\n", .{ function });
+      return err;
+    };
+
+    const status = child.wait () catch |err|
+    {
+      stderr.print ("[spacedream ERROR] {s} child wait error\n", .{ function });
+      return err;
+    };
+
+    if (status.Exited != 0)
+    {
+      stderr.print ("[spacedream ERROR] {s} {s} command exit code is {}\n", .{ function, command, status });
+      return UtilsError.DateProcessError;
+    }
+
+    date.* = out.toOwnedSlice () catch |err|
+    {
+      stderr.print ("[spacedream ERROR] {s} stdout to owned slice error\n", .{ function });
+      return err;
+    };
+
+    date.* = date.*[0..date.len - 1];
+  } else {
+    date.* = "";
   }
-
-  child.spawn () catch |err|
-  {
-    std.log.err ("{s} child spawn error", .{ function });
-    return err;
-  };
-
-  child.collectOutput (&stdout, &stderr, 4096) catch |err|
-  {
-    std.log.err ("{s} child collect output error", .{ function });
-    return err;
-  };
-
-  const status = child.wait () catch |err|
-  {
-    std.log.err ("{s} child wait error", .{ function });
-    return err;
-  };
-
-  if (status.Exited != 0)
-  {
-    std.log.err ("{s} {s} command exit code is {}", .{ function, command, status });
-    return UtilsError.DateProcessError;
-  }
-
-  date.* = stdout.toOwnedSlice () catch |err|
-  {
-    std.log.err ("{s} stdout to owned slice error", .{ function });
-    return err;
-  };
-
-  date.* = date.*[0..date.len - 1];
 }
 
-pub fn debug_vk (comptime format: [] const u8, severity: [] const u8, _type: [] const u8, args: anytype) !void
+pub fn debug_vk (comptime format: [] const u8, sev: severity, _type: [] const u8, args: anytype) !void
 {
   if (build.LOG_LEVEL > @enumToInt(profile.TURBO))
   {
@@ -85,11 +108,11 @@ pub fn debug_vk (comptime format: [] const u8, severity: [] const u8, _type: [] 
     var date: [] const u8 = undefined;
     try debug ("debug_vk", .{ .format = &expanded_format, .allocator = &allocator }, &date, format, args);
     defer allocator.free (expanded_format);
-    std.debug.print ("[{s}: vulkan {s} {s}] {s}\n", .{ date, severity, _type, expanded_format });
+    try sev.print (.{ date, "vulkan", _type, expanded_format });
   }
 }
 
-pub fn debug_spacedream (comptime format: [] const u8, args: anytype) !void
+pub fn debug_spacedream (comptime format: [] const u8, sev: severity, args: anytype) !void
 {
   if (build.LOG_LEVEL > @enumToInt(profile.DEFAULT))
   {
@@ -98,6 +121,6 @@ pub fn debug_spacedream (comptime format: [] const u8, args: anytype) !void
     var date: [] const u8 = undefined;
     try debug ("debug_spacedream", .{ .format = &expanded_format, .allocator = &allocator }, &date, format, args);
     defer allocator.free (expanded_format);
-    std.debug.print ("[{s}: spacedream] {s}\n", .{ date, expanded_format });
+    try sev.print (.{ date, "spacedream", "", expanded_format });
   }
 }

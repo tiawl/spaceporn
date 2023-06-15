@@ -4,6 +4,7 @@ const context = @import ("context.zig").context;
 
 const utils            = @import ("utils.zig");
 const debug_spacedream = utils.debug_spacedream;
+const severity         = utils.severity;
 
 pub fn main () !void
 {
@@ -12,18 +13,18 @@ pub fn main () !void
 
     var spacedream = context.init () catch |err|
     {
-      std.log.err ("Init error", .{});
+      try debug_spacedream ("failed to init {s} context", severity.ERROR, .{ utils.exe });
       return err;
     };
 
     defer spacedream.cleanup () catch
     {
-      std.log.err ("Clean Up error", .{});
+      debug_spacedream ("failed to cleanup {s} context", severity.ERROR, .{ utils.exe }) catch {};
     };
 
     spacedream.loop () catch |err|
     {
-      std.log.err ("Loop error", .{});
+      try debug_spacedream ("failed to loop", severity.ERROR, .{});
       return err;
     };
   }

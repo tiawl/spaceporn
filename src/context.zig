@@ -9,6 +9,7 @@ const utils            = @import ("utils.zig");
 const debug_spacedream = utils.debug_spacedream;
 const log_file         = utils.log_file;
 const profile          = utils.profile;
+const severity         = utils.severity;
 
 pub const context = struct
 {
@@ -25,12 +26,12 @@ pub const context = struct
       {
         if (open_err != std.fs.File.OpenError.FileNotFound)
         {
-          std.log.err ("Open File Log File error", .{});
+          try debug_spacedream ("failed to open log file", severity.ERROR, .{});
           return open_err;
         } else {
           const cfile = std.fs.cwd ().createFile (log_file, .{}) catch |create_err|
           {
-            std.log.err ("Create File Log File error", .{});
+            try debug_spacedream ("failed to create log file", severity.ERROR, .{});
             return create_err;
           };
           break :blk cfile;
@@ -45,7 +46,7 @@ pub const context = struct
   {
     init_logfile () catch |err|
     {
-      std.log.err ("Init Log File error", .{});
+      try debug_spacedream ("failed to init log file", severity.ERROR, .{});
       return err;
     };
 
@@ -53,17 +54,17 @@ pub const context = struct
 
     self.glfw = context_glfw.init () catch |err|
     {
-      std.log.err ("Init Glfw error", .{});
+      try debug_spacedream ("failed to init GLFW", severity.ERROR, .{});
       return err;
     };
 
     self.vk = context_vk.init (&self.glfw.extensions, self.glfw.instance_proc_addr) catch |err|
     {
-      std.log.err ("Init Vulkan error", .{});
+      try debug_spacedream ("failed to init Vulkan", severity.ERROR, .{});
       return err;
     };
 
-    try debug_spacedream ("Init OK", .{});
+    try debug_spacedream ("Init OK", severity.DEBUG, .{});
     return self;
   }
 
@@ -71,33 +72,33 @@ pub const context = struct
   {
     self.glfw.loop () catch |err|
     {
-      std.log.err ("Loop Glfw error", .{});
+      try debug_spacedream ("failed to loop on GLFW context", severity.ERROR, .{});
       return err;
     };
 
     self.vk.loop () catch |err|
     {
-      std.log.err ("Loop Vulkan error", .{});
+      try debug_spacedream ("failed to loop on Vulkan context", severity.ERROR, .{});
       return err;
     };
 
-    try debug_spacedream ("Loop OK", .{});
+    try debug_spacedream ("Loop OK", severity.DEBUG, .{});
   }
 
   pub fn cleanup (self: Self) !void
   {
     self.vk.cleanup () catch |err|
     {
-      std.log.err ("Clean Up Vulkan error", .{});
+      try debug_spacedream ("failed to cleanup Vulkan", severity.ERROR, .{});
       return err;
     };
 
     self.glfw.cleanup () catch |err|
     {
-      std.log.err ("Clean Up Glfw error", .{});
+      try debug_spacedream ("failed to cleanup GLFW", severity.ERROR, .{});
       return err;
     };
 
-    try debug_spacedream ("Clean Up OK", .{});
+    try debug_spacedream ("Cleanup OK", severity.DEBUG, .{});
   }
 };

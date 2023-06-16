@@ -22,14 +22,23 @@ pub const severity = enum
 
   const Self = @This ();
 
-  pub fn print (self: Self, args: anytype) !void
+  pub fn expand (self: Self, expanded: anytype, args: anytype) !void
   {
     switch (self)
     {
-      Self.DEBUG => { try stdout.print ("[{s}{s} DEBUG{s}] {s}\n", args); },
-      Self.INFO => { try stdout.print ("[{s}{s} INFO{s}] {s}\n", args); },
-      Self.WARNING => { stderr.print ("[{s}{s} WARNING{s}] {s}\n", args); },
-      Self.ERROR => { stderr.print ("[{s}{s} ERROR{s}] {s}\n", args); },
+      Self.DEBUG => { expanded.format.* = try std.fmt.allocPrint(expanded.allocator.*, "[{s}{s} DEBUG{s}] {s}\n", args); },
+      Self.INFO => { expanded.format.* = try std.fmt.allocPrint(expanded.allocator.*, "[{s}{s} INFO{s}] {s}\n", args); },
+      Self.WARNING => { expanded.format.* = try std.fmt.allocPrint(expanded.allocator.*, "[{s}{s} WARNING{s}] {s}\n", args); },
+      Self.ERROR => { expanded.format.* = try std.fmt.allocPrint(expanded.allocator.*, "[{s}{s} ERROR{s}] {s}\n", args); },
+    }
+  }
+
+  pub fn print (self: Self, to_print: [] const u8) !void
+  {
+    switch (self)
+    {
+      Self.DEBUG,Self.INFO => { try stdout.print ("{s}", .{ to_print }); },
+      Self.WARNING,Self.ERROR => { stderr.print ("{s}", .{ to_print }); },
     }
   }
 };
@@ -39,18 +48,10 @@ const UtilsError = error
   ProcessFailed,
 };
 
-fn log (function: [] const u8, expanded: anytype, date: *[] const u8,
-          comptime format: [] const u8, args: anytype) !void
+fn sys_date (expanded: anytype, date: *[] const u8,
+             comptime format: [] const u8, args: anytype) !void
 {
-  var buffer: [4096] u8 = undefined;
-  var fba = std.heap.FixedBufferAllocator.init (&buffer);
-  expanded.allocator.* = fba.allocator ();
-
-  expanded.format.* = std.fmt.allocPrint(expanded.allocator.*, format, args) catch |err|
-  {
-    stderr.print ("[spacedream ERROR] {s} expanded format allocPrint error\n", .{ function });
-    return err;
-  };
+  expanded.format.* = try std.fmt.allocPrint(expanded.allocator.*, format, args);
 
   if (build.LOG_LEVEL > @enumToInt (profile.DEFAULT))
   {
@@ -65,36 +66,17 @@ fn log (function: [] const u8, expanded: anytype, date: *[] const u8,
     var _err = std.ArrayList (u8).init (expanded.allocator.*);
     defer _err.deinit ();
 
-    child.spawn () catch |err|
-    {
-      stderr.print ("[spacedream ERROR] {s} child spawn error\n", .{ function });
-      return err;
-    };
-
-    child.collectOutput (&out, &_err, 4096) catch |err|
-    {
-      stderr.print ("[spacedream ERROR] {s} child collect output error\n", .{ function });
-      return err;
-    };
-
-    const status = child.wait () catch |err|
-    {
-      stderr.print ("[spacedream ERROR] {s} child wait error\n", .{ function });
-      return err;
-    };
+    try child.spawn ();
+    try child.collectOutput (&out, &_err, 4096);
+    const status = try child.wait ();
 
     if (status.Exited != 0)
     {
-      stderr.print ("[spacedream ERROR] {s} {s} command exit code is {}\n", .{ function, command, status });
+      stderr.print ("[spacedream ERROR] {s} command exit code is {}\n", .{ command, status });
       return UtilsError.ProcessFailed;
     }
 
-    date.* = out.toOwnedSlice () catch |err|
-    {
-      stderr.print ("[spacedream ERROR] {s} stdout to owned slice error\n", .{ function });
-      return err;
-    };
-
+    date.* = try out.toOwnedSlice ();
     date.* = date.*[0..date.len - 1];
   } else {
     date.* = "";
@@ -107,28 +89,48 @@ pub fn is_logging (sev: severity) bool
            ( (build.LOG_LEVEL == @enumToInt (profile.DEFAULT)) and (@enumToInt (sev) > @enumToInt (severity.DEBUG)) ) );
 }
 
-pub fn log_vk (comptime format: [] const u8, sev: severity, _type: [] const u8, args: anytype) !void
+pub fn log (comptime format: [] const u8, id: [] const u8, sev: severity, _type: [] const u8, args: anytype) !void
 {
   if (is_logging (sev))
   {
-    var allocator: std.mem.Allocator = undefined;
     var expanded_format: [] const u8 = undefined;
     var date: [] const u8 = undefined;
-    try log ("log_vk", .{ .format = &expanded_format, .allocator = &allocator }, &date, format, args);
+
+    var buffer: [4096] u8 = undefined;
+    var fba = std.heap.FixedBufferAllocator.init (&buffer);
+    const allocator = fba.allocator ();
+
+    try sys_date (.{ .format = &expanded_format, .allocator = &allocator }, &date, format, args);
     defer allocator.free (expanded_format);
-    try sev.print (.{ date, "vulkan", _type, expanded_format });
+
+    var full_expanded_format: [] const u8 = undefined;
+
+    var gpa = std.heap.GeneralPurposeAllocator (.{}){};
+    defer _ = gpa.deinit ();
+    const full_allocator = gpa.allocator ();
+
+    try sev.expand (.{ .format = &full_expanded_format, .allocator = &full_allocator }, .{ date, id, _type, expanded_format });
+    defer full_allocator.free (full_expanded_format);
+
+    try sev.print (full_expanded_format);
+
+    if (build.LOG_DIR.len > 0)
+    {
+      var file = try std.fs.cwd ().openFile (log_file, .{ .mode = std.fs.File.OpenMode.write_only });
+      defer file.close ();
+
+      try file.seekFromEnd (0);
+      _ = try file.writeAll (full_expanded_format);
+    }
   }
+}
+
+pub fn log_vk (comptime format: [] const u8, sev: severity, _type: [] const u8, args: anytype) !void
+{
+  try log (format, "vulkan", sev, _type, args);
 }
 
 pub fn log_app (comptime format: [] const u8, sev: severity, args: anytype) !void
 {
-  if (is_logging (sev))
-  {
-    var allocator: std.mem.Allocator = undefined;
-    var expanded_format: [] const u8 = undefined;
-    var date: [] const u8 = undefined;
-    try log ("log_app", .{ .format = &expanded_format, .allocator = &allocator }, &date, format, args);
-    defer allocator.free (expanded_format);
-    try sev.print (.{ date, "spacedream", "", expanded_format });
-  }
+  try log (format, "spacedream", sev, "", args);
 }

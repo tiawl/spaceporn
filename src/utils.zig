@@ -36,7 +36,7 @@ pub const severity = enum
 
 const UtilsError = error
 {
-  DateProcessError,
+  ProcessFailed,
 };
 
 fn log (function: [] const u8, expanded: anytype, date: *[] const u8,
@@ -86,7 +86,7 @@ fn log (function: [] const u8, expanded: anytype, date: *[] const u8,
     if (status.Exited != 0)
     {
       stderr.print ("[spacedream ERROR] {s} {s} command exit code is {}\n", .{ function, command, status });
-      return UtilsError.DateProcessError;
+      return UtilsError.ProcessFailed;
     }
 
     date.* = out.toOwnedSlice () catch |err|
@@ -101,9 +101,15 @@ fn log (function: [] const u8, expanded: anytype, date: *[] const u8,
   }
 }
 
+pub fn is_logging (sev: severity) bool
+{
+  return (   (build.LOG_LEVEL == @enumToInt (profile.DEV)) or
+           ( (build.LOG_LEVEL == @enumToInt (profile.DEFAULT)) and (@enumToInt (sev) > @enumToInt (severity.DEBUG)) ) );
+}
+
 pub fn log_vk (comptime format: [] const u8, sev: severity, _type: [] const u8, args: anytype) !void
 {
-  if (build.LOG_LEVEL > @enumToInt (profile.TURBO))
+  if (is_logging (sev))
   {
     var allocator: std.mem.Allocator = undefined;
     var expanded_format: [] const u8 = undefined;
@@ -116,7 +122,7 @@ pub fn log_vk (comptime format: [] const u8, sev: severity, _type: [] const u8, 
 
 pub fn log_app (comptime format: [] const u8, sev: severity, args: anytype) !void
 {
-  if (build.LOG_LEVEL > @enumToInt (profile.DEFAULT))
+  if (is_logging (sev))
   {
     var allocator: std.mem.Allocator = undefined;
     var expanded_format: [] const u8 = undefined;

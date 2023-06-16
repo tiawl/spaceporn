@@ -3,14 +3,14 @@ const std = @import ("std");
 const context_vk   = @import ("context_vk.zig").context_vk;
 const context_glfw = @import ("context_glfw.zig").context_glfw;
 
-const build = @import ("build_options");
+const build   = @import ("build_options");
+const LOG_DIR = build.LOG_DIR;
 
-const utils    = @import ("utils.zig");
-const log_app  = utils.log_app;
-const log_file = utils.log_file;
-const LOG_DIR  = utils.LOG_DIR;
-const profile  = utils.profile;
-const severity = utils.severity;
+const utils      = @import ("utils.zig");
+const log_app    = utils.log_app;
+const log_file   = utils.log_file;
+const is_logging = utils.is_logging;
+const severity   = utils.severity;
 
 pub const context = struct
 {
@@ -21,13 +21,13 @@ pub const context = struct
 
   fn init_logfile () !void
   {
-    if ((build.LOG_LEVEL > @enumToInt (profile.TURBO)) and LOG_DIR.len > 0)
+    if (is_logging (severity.INFO) and (build.LOG_DIR.len > 0))
     {
       var dir = std.fs.cwd ().openDir (LOG_DIR, .{}) catch |err|
       {
         if (err == std.fs.File.OpenError.FileNotFound)
         {
-          try log_app ("{s} does not exist, impossible to log execution.", .{ LOG_DIR, utils.exe });
+          try log_app ("{s} does not exist, impossible to log execution.", severity.ERROR, .{ LOG_DIR });
         }
         return err;
       };
@@ -56,25 +56,13 @@ pub const context = struct
 
   pub fn init () !Self
   {
-    init_logfile () catch |err|
-    {
-      try log_app ("failed to init log file", severity.ERROR, .{});
-      return err;
-    };
+    try init_logfile ();
 
     var self: Self = undefined;
 
-    self.glfw = context_glfw.init () catch |err|
-    {
-      try log_app ("failed to init GLFW", severity.ERROR, .{});
-      return err;
-    };
+    self.glfw = try context_glfw.init ();
 
-    self.vk = context_vk.init (&self.glfw.extensions, self.glfw.instance_proc_addr) catch |err|
-    {
-      try log_app ("failed to init Vulkan", severity.ERROR, .{});
-      return err;
-    };
+    self.vk = try context_vk.init (&self.glfw.extensions, self.glfw.instance_proc_addr);
 
     try log_app ("Init OK", severity.DEBUG, .{});
     return self;
@@ -82,35 +70,15 @@ pub const context = struct
 
   pub fn loop (self: Self) !void
   {
-    self.glfw.loop () catch |err|
-    {
-      try log_app ("failed to loop on GLFW context", severity.ERROR, .{});
-      return err;
-    };
-
-    self.vk.loop () catch |err|
-    {
-      try log_app ("failed to loop on Vulkan context", severity.ERROR, .{});
-      return err;
-    };
-
+    try self.glfw.loop ();
+    try self.vk.loop ();
     try log_app ("Loop OK", severity.DEBUG, .{});
   }
 
   pub fn cleanup (self: Self) !void
   {
-    self.vk.cleanup () catch |err|
-    {
-      try log_app ("failed to cleanup Vulkan", severity.ERROR, .{});
-      return err;
-    };
-
-    self.glfw.cleanup () catch |err|
-    {
-      try log_app ("failed to cleanup GLFW", severity.ERROR, .{});
-      return err;
-    };
-
+    try self.vk.cleanup ();
+    try self.glfw.cleanup ();
     try log_app ("Cleanup OK", severity.DEBUG, .{});
   }
 };

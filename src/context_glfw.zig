@@ -6,6 +6,13 @@ const log_app  = utils.log_app;
 const exe      = utils.exe;
 const severity = utils.severity;
 
+const GlfwError = error
+{
+  ContextInitFailed,
+  WindowInitFailed,
+  RequiredInstanceExtensionsFailed,
+};
+
 pub const context_glfw = struct
 {
   window:             glfw.Window,
@@ -30,7 +37,7 @@ pub const context_glfw = struct
     if (!glfw.init (.{}))
     {
       try log_app ("failed to initialize GLFW: {?s}", severity.ERROR, .{ glfw.getErrorString () });
-      std.process.exit (1);
+      return GlfwError.ContextInitFailed;
     }
     errdefer glfw.terminate ();
 
@@ -43,7 +50,7 @@ pub const context_glfw = struct
     self.window = glfw.Window.create (800, 600, exe, null, null, hints) orelse
     {
       try log_app ("failed to initialize GLFW window: {?s}", severity.ERROR, .{ glfw.getErrorString () });
-      std.process.exit (1);
+      return GlfwError.WindowInitFailed;
     };
     errdefer self.window.destroy ();
 
@@ -51,7 +58,7 @@ pub const context_glfw = struct
     {
       const err = glfw.mustGetError();
       try log_app ("failed to get required vulkan instance extensions: error={s}", severity.ERROR, .{err.description});
-      std.process.exit (1);
+      return GlfwError.RequiredInstanceExtensionsFailed;
     };
     self.instance_proc_addr = &(glfw.getInstanceProcAddress);
 

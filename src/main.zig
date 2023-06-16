@@ -8,26 +8,19 @@ const severity = utils.severity;
 
 pub fn main () !void
 {
+  var status: u2 = 0;
   {
-    errdefer std.process.exit (1);
+    errdefer status = 1;
 
-    var spacedream = context.init () catch |err|
-    {
-      try log_app ("failed to init {s} context", severity.ERROR, .{ utils.exe });
-      return err;
-    };
+    var spacedream = try context.init ();
 
     defer spacedream.cleanup () catch
     {
       log_app ("failed to cleanup {s} context", severity.ERROR, .{ utils.exe }) catch {};
     };
 
-    spacedream.loop () catch |err|
-    {
-      try log_app ("failed to loop", severity.ERROR, .{});
-      return err;
-    };
+    try spacedream.loop ();
   }
 
-  std.process.exit (0);
+  std.process.exit (status);
 }

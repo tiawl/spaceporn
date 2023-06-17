@@ -23,6 +23,12 @@ const InstanceDispatch = vk.InstanceWrapper(.{
   .destroyDebugUtilsMessengerEXT = true,
 });
 
+const ext_vk = struct
+{
+  name: [*:0] const u8,
+  supported: bool = false,
+};
+
 pub const init_vk = struct
 {
   base_dispatch:      BaseDispatch,
@@ -46,6 +52,13 @@ pub const init_vk = struct
   {
     vk.extension_info.ext_debug_report.name,
     vk.extension_info.ext_debug_utils.name,
+  };
+
+  var optional_extensions = [_] ext_vk
+  {
+    .{
+       .name = vk.extension_info.ext_device_address_binding_report.name,
+     },
   };
 
   const InitVkError = error
@@ -83,6 +96,8 @@ pub const init_vk = struct
       _type = " VALIDATION";
     } else if (message_type.performance_bit_ext) {
       _type = " PERFORMANCE";
+    } else if (message_type.device_address_binding_bit_ext) {
+      _type = " DEVICE ADDR BINDING";
     }
 
     log_vk ("{s}", sev, _type, .{ p_callback_data.?.p_message }) catch
@@ -123,9 +138,9 @@ pub const init_vk = struct
 
       if (found)
       {
-        try log_app ("{s} layer available", severity.DEBUG, .{ layer });
+        try log_app ("{s} required layer is available", severity.DEBUG, .{ layer });
       } else {
-        try log_app ("{s} layer not available", severity.ERROR, .{ layer });
+        try log_app ("{s} required layer is not available", severity.ERROR, .{ layer });
         return InitVkError.LayerNotAvailable;
       }
 
@@ -144,9 +159,20 @@ pub const init_vk = struct
                                             .error_bit_ext   = true,
                                           },
                      .message_type = .{
-                                        .general_bit_ext     = true,
-                                        .validation_bit_ext  = true,
-                                        .performance_bit_ext = (build.LOG_LEVEL > @enumToInt (profile.DEFAULT)),
+                                        .general_bit_ext                = true,
+                                        .validation_bit_ext             = true,
+                                        .device_address_binding_bit_ext = blk:
+                                                                          {
+                                                                            for (optional_extensions) |ext|
+                                                                            {
+                                                                              if ((ext.name == vk.extension_info.ext_device_address_binding_report.name.ptr) and ext.supported)
+                                                                              {
+                                                                                break :blk true;
+                                                                              }
+                                                                            }
+                                                                            break :blk false;
+                                                                          },
+                                        .performance_bit_ext            = (build.LOG_LEVEL > @enumToInt (profile.DEFAULT)),
                                       },
                      .pfn_user_callback = @ptrCast (vk.PfnDebugUtilsMessengerCallbackEXT, &debug_callback),
                    };
@@ -158,7 +184,7 @@ pub const init_vk = struct
     defer _ = gpa.deinit ();
     const allocator = gpa.allocator ();
 
-    var extensions = try std.ArrayList ([*:0] const u8).initCapacity (allocator, self.extensions.len + 1);
+    var extensions = try std.ArrayList ([*:0] const u8).initCapacity (allocator, self.extensions.len + required_extensions.len + optional_extensions.len);
     defer extensions.deinit ();
 
     try extensions.appendSlice(self.extensions);
@@ -182,15 +208,33 @@ pub const init_vk = struct
         if (std.mem.eql (u8, supported_ext.extension_name[0..std.mem.indexOfScalar (u8, &(supported_ext.extension_name), 0).?], std.mem.span (required_ext)))
         {
           try extensions.append (@ptrCast ([*:0] const u8, required_ext));
-          try log_app ("{s} extension supported", severity.DEBUG, .{ required_ext });
+          try log_app ("{s} required extension is supported", severity.DEBUG, .{ required_ext });
           supported = true;
           break;
         }
       }
       if (!supported)
       {
-        try log_app ("{s} extension not supported", severity.DEBUG, .{ required_ext });
+        try log_app ("{s} required extension is not supported", severity.ERROR, .{ required_ext });
         return InitVkError.ExtensionNotSupported;
+      }
+    }
+
+    for (&optional_extensions) |*optional_ext|
+    {
+      for (supported_extensions) |supported_ext|
+      {
+        if (std.mem.eql (u8, supported_ext.extension_name[0..std.mem.indexOfScalar (u8, &(supported_ext.extension_name), 0).?], std.mem.span (optional_ext.name)))
+        {
+          try extensions.append (@ptrCast ([*:0] const u8, optional_ext.name));
+          try log_app ("{s} optional extension is supported", severity.DEBUG, .{ optional_ext.name });
+          optional_ext.supported = true;
+          break;
+        }
+      }
+      if (!optional_ext.supported)
+      {
+        try log_app ("{s} optional extension is not supported", severity.WARNING, .{ optional_ext.name });
       }
     }
 

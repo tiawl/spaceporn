@@ -3,25 +3,16 @@ const build = @import ("build_options");
 
 const vk = @import ("vulkan");
 
-const utils    = @import ("utils.zig");
+const utils    = @import ("../utils.zig");
 const log_app  = utils.log_app;
 const log_vk   = utils.log_vk;
 const exe      = utils.exe;
 const profile  = utils.profile;
 const severity = utils.severity;
 
-const BaseDispatch = vk.BaseWrapper(.{
-  .createInstance                       = true,
-  .enumerateInstanceLayerProperties     = true,
-  .enumerateInstanceExtensionProperties = true,
-  .getInstanceProcAddr                  = true,
-});
-
-const InstanceDispatch = vk.InstanceWrapper(.{
-  .destroyInstance               = true,
-  .createDebugUtilsMessengerEXT  = true,
-  .destroyDebugUtilsMessengerEXT = true,
-});
+const dispatch         = @import ("dispatch.zig");
+const BaseDispatch     = dispatch.BaseDispatch;
+const InstanceDispatch = dispatch.InstanceDispatch;
 
 const ext_vk = struct
 {
@@ -256,8 +247,8 @@ pub const init_vk = struct
     self.instance = try self.base_dispatch.createInstance (&self.create_info, null);
   }
 
-  pub fn init (extensions: *[][*:0] const u8,
-               instance_proc_addr: *const fn (?*anyopaque, [*:0] const u8) callconv (.C) ?*const fn () callconv (.C) void) !Self
+  pub fn init_instance (extensions: *[][*:0] const u8,
+    instance_proc_addr: *const fn (?*anyopaque, [*:0] const u8) callconv (.C) ?*const fn () callconv (.C) void) !Self
   {
     var self: Self = undefined;
 

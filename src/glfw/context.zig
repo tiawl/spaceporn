@@ -1,7 +1,7 @@
 const std  = @import ("std");
 const glfw = @import ("glfw");
 
-const utils    = @import ("utils.zig");
+const utils    = @import ("../utils.zig");
 const log_app  = utils.log_app;
 const exe      = utils.exe;
 const severity = utils.severity;

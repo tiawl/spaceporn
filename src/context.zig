@@ -1,7 +1,7 @@
 const std = @import ("std");
 
-const context_vk   = @import ("context_vk.zig").context_vk;
-const context_glfw = @import ("context_glfw.zig").context_glfw;
+const context_vk   = @import ("vk/context.zig").context_vk;
+const context_glfw = @import ("glfw/context.zig").context_glfw;
 
 const build   = @import ("build_options");
 const LOG_DIR = build.LOG_DIR;

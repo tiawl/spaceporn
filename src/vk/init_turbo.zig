@@ -1,18 +1,13 @@
 const vk = @import ("vulkan");
 
-const utils      = @import ("utils.zig");
+const utils      = @import ("../utils.zig");
 const log_app    = utils.log_app;
 const exe        = utils.exe;
 const severity   = utils.severity;
 
-const BaseDispatch = vk.BaseWrapper(.{
-  .createInstance      = true,
-  .getInstanceProcAddr = true,
-});
-
-const InstanceDispatch = vk.InstanceWrapper(.{
-  .destroyInstance = true,
-});
+const dispatch         = @import ("dispatch.zig");
+const BaseDispatch     = dispatch.BaseDispatch;
+const InstanceDispatch = dispatch.InstanceDispatch;
 
 pub const init_vk = struct
 {
@@ -26,8 +21,8 @@ pub const init_vk = struct
 
   const Self = @This ();
 
-  pub fn init (extensions: *[][*:0] const u8,
-               instance_proc_addr: *const fn (?*anyopaque, [*:0] const u8) callconv (.C) ?*const fn () callconv (.C) void) !Self
+  pub fn init_instance (extensions: *[][*:0] const u8,
+    instance_proc_addr: *const fn (?*anyopaque, [*:0] const u8) callconv (.C) ?*const fn () callconv (.C) void) !Self
   {
     var self: Self = undefined;
 

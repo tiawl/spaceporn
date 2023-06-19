@@ -1,4 +1,4 @@
-const vk = @import ("vulkan");
+pub const vk = @import ("vulkan");
 
 const utils      = @import ("../utils.zig");
 const log_app    = utils.log_app;

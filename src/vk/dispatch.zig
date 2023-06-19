@@ -15,5 +15,8 @@ pub const InstanceDispatch = vk.InstanceWrapper(.{
   .destroyInstance               = true,
   .createDebugUtilsMessengerEXT  = is_logging (severity.INFO),
   .destroyDebugUtilsMessengerEXT = is_logging (severity.INFO),
+  .enumeratePhysicalDevices      = true,
+  .getPhysicalDeviceProperties   = true,
+  .getPhysicalDeviceFeatures     = true,
 });
 

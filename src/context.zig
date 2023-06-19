@@ -6,11 +6,11 @@ const context_glfw = @import ("glfw/context.zig").context_glfw;
 const build   = @import ("build_options");
 const LOG_DIR = build.LOG_DIR;
 
-const utils      = @import ("utils.zig");
-const log_app    = utils.log_app;
-const log_file   = utils.log_file;
-const is_logging = utils.is_logging;
-const severity   = utils.severity;
+const utils    = @import ("utils.zig");
+const log_app  = utils.log_app;
+const log_file = utils.log_file;
+const profile  = utils.profile;
+const severity = utils.severity;
 
 pub const context = struct
 {
@@ -21,7 +21,7 @@ pub const context = struct
 
   fn init_logfile () !void
   {
-    if (is_logging (severity.INFO) and build.LOG_DIR.len > 0)
+    if (build.LOG_LEVEL > @enumToInt (profile.TURBO) and build.LOG_DIR.len > 0)
     {
       var dir = std.fs.cwd ().openDir (LOG_DIR, .{}) catch |err|
       {

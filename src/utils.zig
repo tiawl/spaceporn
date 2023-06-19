@@ -83,15 +83,15 @@ fn sys_date (expanded: anytype, date: *[] const u8,
   }
 }
 
-pub fn is_logging (sev: severity) bool
+fn is_logging (sev: severity, min_sev: severity) bool
 {
   return (   build.LOG_LEVEL == @enumToInt (profile.DEV) or
-           ( build.LOG_LEVEL == @enumToInt (profile.DEFAULT) and @enumToInt (sev) > @enumToInt (severity.DEBUG) ) );
+           ( build.LOG_LEVEL == @enumToInt (profile.DEFAULT) and @enumToInt (sev) >= @enumToInt (min_sev) ) );
 }
 
-pub fn log (comptime format: [] const u8, id: [] const u8, sev: severity, _type: [] const u8, args: anytype) !void
+pub fn log (comptime format: [] const u8, id: [*:0] const u8, sev: severity, min_sev: severity,  _type: [] const u8, args: anytype) !void
 {
-  if (is_logging (sev))
+  if (is_logging (sev, min_sev))
   {
     var expanded_format: [] const u8 = undefined;
     var date: [] const u8 = undefined;
@@ -127,10 +127,10 @@ pub fn log (comptime format: [] const u8, id: [] const u8, sev: severity, _type:
 
 pub fn log_vk (comptime format: [] const u8, sev: severity, _type: [] const u8, args: anytype) !void
 {
-  try log (format, "vulkan", sev, _type, args);
+  try log (format, "vulkan", sev, severity.WARNING, _type, args);
 }
 
 pub fn log_app (comptime format: [] const u8, sev: severity, args: anytype) !void
 {
-  try log (format, exe, sev, "", args);
+  try log (format, exe, sev, severity.INFO, "", args);
 }

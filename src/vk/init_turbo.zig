@@ -21,6 +21,8 @@ pub const init_vk = struct
 
   const Self = @This ();
 
+  pub const required_layers = [_][] const u8 {};
+
   pub fn init_instance (extensions: *[][*:0] const u8,
     instance_proc_addr: *const fn (?*anyopaque, [*:0] const u8) callconv (.C) ?*const fn () callconv (.C) void) !Self
   {
@@ -49,7 +51,7 @@ pub const init_vk = struct
                          .pp_enabled_extension_names = @ptrCast ([*] const [*:0] const u8, self.extensions),
                        };
 
-    self.instance = try self.base_dispatch.createInstance (&self.create_info, null);
+    self.instance = try self.base_dispatch.createInstance (&(self.create_info), null);
 
     self.instance_dispatch = try InstanceDispatch.load (self.instance, self.base_dispatch.dispatch.vkGetInstanceProcAddr);
     errdefer self.instance_dispatch.destroyInstance (self.instance, null);

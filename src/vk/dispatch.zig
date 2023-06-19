@@ -21,4 +21,11 @@ pub const InstanceDispatch = vk.InstanceWrapper (
   .getPhysicalDeviceProperties            = true,
   .getPhysicalDeviceFeatures              = true,
   .getPhysicalDeviceQueueFamilyProperties = true,
+  .createDevice                           = true,
+  .getDeviceProcAddr                      = true,
+});
+
+pub const DeviceDispatch = vk.DeviceWrapper(
+.{
+  .destroyDevice = true,
 });

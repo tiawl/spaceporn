@@ -34,7 +34,7 @@ pub const init_vk = struct
 
   const Self = @This ();
 
-  const required_layers = [_][] const u8
+  pub const required_layers = [_][] const u8
   {
     "VK_LAYER_KHRONOS_validation",
   };
@@ -236,6 +236,7 @@ pub const init_vk = struct
 
     self.create_info = vk.InstanceCreateInfo
                        {
+                         .flags = .{},
                          .enabled_layer_count        = required_layers.len,
                          .pp_enabled_layer_names     = @ptrCast ([*] const [*:0] const u8, required_layers[0..required_layers.len]),
                          .p_next                     = &debug_info,
@@ -244,7 +245,7 @@ pub const init_vk = struct
                          .pp_enabled_extension_names = @ptrCast ([*] const [*:0] const u8, self.extensions),
                        };
 
-    self.instance = try self.base_dispatch.createInstance (&self.create_info, null);
+    self.instance = try self.base_dispatch.createInstance (&(self.create_info), null);
   }
 
   pub fn init_instance (extensions: *[][*:0] const u8,

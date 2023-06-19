@@ -12,14 +12,14 @@ pub fn main () !void
   {
     errdefer status = 1;
 
-    var spacedream = try context.init ();
+    var app = try context.init ();
 
-    defer spacedream.cleanup () catch
+    defer app.cleanup () catch
     {
       log_app ("failed to cleanup {s} context", severity.ERROR, .{ utils.exe }) catch {};
     };
 
-    try spacedream.loop ();
+    try app.loop ();
   }
 
   std.process.exit (status);

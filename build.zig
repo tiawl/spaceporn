@@ -7,7 +7,7 @@ const zigvulkan = @import ("libs/vulkan-zig/build.zig");
 pub fn build (builder: *std.build.Builder) !void
 {
   const build_options = builder.addOptions ();
-  const EXE = "spacedream";
+  const EXE = "spaceporn";
   const DEV = builder.option (bool, "DEV", "Build " ++ EXE ++ " in verbose mode.") orelse false;
   const TURBO = builder.option (bool, "TURBO", "Build " ++ EXE ++ " without logging feature. LOG build option is ignored.") orelse false;
 

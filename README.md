@@ -1,3 +1,3 @@
 # dev branch
 
-This branch is the development branch for **spacedream-cli**.
+This branch is the development branch for **spaceporn-cli**.

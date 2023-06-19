@@ -72,7 +72,7 @@ fn sys_date (expanded: anytype, date: *[] const u8,
 
     if (status.Exited != 0)
     {
-      stderr.print ("[spacedream ERROR] {s} command exit code is {}\n", .{ command, status });
+      stderr.print ("[{s} ERROR] {s} command exit code is {}\n", .{ exe, command, status });
       return UtilsError.ProcessFailed;
     }
 
@@ -132,5 +132,5 @@ pub fn log_vk (comptime format: [] const u8, sev: severity, _type: [] const u8, 
 
 pub fn log_app (comptime format: [] const u8, sev: severity, args: anytype) !void
 {
-  try log (format, "spacedream", sev, "", args);
+  try log (format, exe, sev, "", args);
 }

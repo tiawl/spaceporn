@@ -104,12 +104,13 @@ pub const context_vk = struct
 
   fn init_logical_device (self: *Self, allocator: std.mem.Allocator) !void
   {
+    const indices = if (try self.find_queue_family (self.physical_device.?, allocator)) |value| value else unreachable;
     const priority = [_] f32 {1};
     self.queue_create_info = [_] vk.DeviceQueueCreateInfo
                              {
                                .{
                                  .flags              = .{},
-                                 .queue_family_index = if (try self.find_queue_family (self.physical_device.?, allocator)) |value| value else unreachable,
+                                 .queue_family_index = indices,
                                  .queue_count        = 1,
                                  .p_queue_priorities = &priority,
                                },
@@ -131,6 +132,8 @@ pub const context_vk = struct
 
     self.device_dispatch = try DeviceDispatch.load (self.logical_device, self.initializer.instance_dispatch.dispatch.vkGetDeviceProcAddr);
     errdefer self.device_dispatch.destroyDevice (self.logical_device, null);
+
+    _ = self.device_dispatch.getDeviceQueue (self.logical_device, indices, 0);
   }
 
   pub fn init (extensions: *[][*:0] const u8,

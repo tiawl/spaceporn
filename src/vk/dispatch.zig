@@ -27,5 +27,6 @@ pub const InstanceDispatch = vk.InstanceWrapper (
 
 pub const DeviceDispatch = vk.DeviceWrapper(
 .{
-  .destroyDevice = true,
+  .destroyDevice  = true,
+  .getDeviceQueue = true,
 });

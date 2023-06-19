@@ -85,8 +85,8 @@ fn sys_date (expanded: anytype, date: *[] const u8,
 
 pub fn is_logging (sev: severity) bool
 {
-  return (   (build.LOG_LEVEL == @enumToInt (profile.DEV)) or
-           ( (build.LOG_LEVEL == @enumToInt (profile.DEFAULT)) and (@enumToInt (sev) > @enumToInt (severity.DEBUG)) ) );
+  return (   build.LOG_LEVEL == @enumToInt (profile.DEV) or
+           ( build.LOG_LEVEL == @enumToInt (profile.DEFAULT) and @enumToInt (sev) > @enumToInt (severity.DEBUG) ) );
 }
 
 pub fn log (comptime format: [] const u8, id: [] const u8, sev: severity, _type: [] const u8, args: anytype) !void

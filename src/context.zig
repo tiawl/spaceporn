@@ -21,7 +21,7 @@ pub const context = struct
 
   fn init_logfile () !void
   {
-    if (is_logging (severity.INFO) and (build.LOG_DIR.len > 0))
+    if (is_logging (severity.INFO) and build.LOG_DIR.len > 0)
     {
       var dir = std.fs.cwd ().openDir (LOG_DIR, .{}) catch |err|
       {

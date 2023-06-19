@@ -22,16 +22,44 @@ pub const context_vk = struct
     NoSuitableDevice,
   };
 
-  fn is_device_suitable (self: *Self, device: vk.PhysicalDevice) bool
+  fn find_queue_family (self: *Self, device: vk.PhysicalDevice, allocator: std.mem.Allocator) !bool
+  {
+    var queue_family_count: u32 = undefined;
+
+    self.initializer.instance_dispatch.getPhysicalDeviceQueueFamilyProperties (device, &queue_family_count, null);
+
+    var queue_families = try allocator.alloc (vk.QueueFamilyProperties, queue_family_count);
+    defer allocator.free (queue_families);
+
+    self.initializer.instance_dispatch.getPhysicalDeviceQueueFamilyProperties (device, &queue_family_count, queue_families.ptr);
+
+    var graphics_family: ?u32 = null;
+
+    for (queue_families, 0..) |properties, index|
+    {
+      const family = @intCast(u32, index);
+
+      if (graphics_family == null and properties.queue_flags.graphics_bit)
+      {
+        graphics_family = family;
+        break;
+      }
+    }
+
+    return if (graphics_family) |_| true else false;
+  }
+
+  fn is_suitable (self: *Self, device: vk.PhysicalDevice, allocator: std.mem.Allocator) !bool
   {
     const device_prop = self.initializer.instance_dispatch.getPhysicalDeviceProperties (device);
     const device_feat = self.initializer.instance_dispatch.getPhysicalDeviceFeatures (device);
 
-    // TODO: improve this
+    // TODO: issue #52
+
     _ = device_prop;
     _ = device_feat;
 
-    return true;
+    return try self.find_queue_family (device, allocator);
   }
 
   fn pick_physical_devices (self: *Self) !void
@@ -57,17 +85,15 @@ pub const context_vk = struct
 
     for (devices) |device|
     {
-      if (self.is_device_suitable (device))
+      if (try self.is_suitable (device, allocator))
       {
         physical_device = device;
         break;
       }
     }
 
-    if (physical_device) |unwrapped_device|
+    if (physical_device == null)
     {
-      _ = unwrapped_device;
-    } else {
       return ContextError.NoSuitableDevice;
     }
   }

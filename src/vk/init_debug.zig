@@ -156,7 +156,7 @@ pub const init_vk = struct
                                                                           {
                                                                             for (optional_extensions) |ext|
                                                                             {
-                                                                              if ((ext.name == vk.extension_info.ext_device_address_binding_report.name.ptr) and ext.supported)
+                                                                              if (ext.name == vk.extension_info.ext_device_address_binding_report.name.ptr and ext.supported)
                                                                               {
                                                                                 break :blk true;
                                                                               }

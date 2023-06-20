@@ -9,7 +9,9 @@ const severity = utils.severity;
 const GlfwError = error
 {
   ContextInitFailed,
+  VulkanNotSupported,
   WindowInitFailed,
+  SurfaceInitFailed,
   RequiredInstanceExtensionsFailed,
 };
 
@@ -41,6 +43,11 @@ pub const context_glfw = struct
     }
     errdefer glfw.terminate ();
 
+    if (!glfw.vulkanSupported ())
+    {
+      return GlfwError.VulkanNotSupported;
+    }
+
     const hints = glfw.Window.Hints
                   {
                     .client_api = .no_api,
@@ -65,6 +72,16 @@ pub const context_glfw = struct
     try log_app ("Init GLFW OK", severity.DEBUG, .{});
 
     return self;
+  }
+
+  pub fn init_surface (self: Self, instance: anytype, surface: anytype, success: i32) !void
+  {
+    if (glfw.createWindowSurface (instance, self.window, null, surface) != success)
+    {
+      return GlfwError.SurfaceInitFailed;
+    }
+
+    try log_app ("Init GLFW Surface OK", severity.DEBUG, .{});
   }
 
   pub fn loop (self: Self) !void

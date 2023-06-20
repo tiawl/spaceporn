@@ -52,6 +52,7 @@ pub const context = struct
 
       defer file.close ();
     }
+    try log_app ("Log File Init OK", severity.DEBUG, .{});
   }
 
   pub fn init () !Self
@@ -62,7 +63,13 @@ pub const context = struct
 
     self.glfw = try context_glfw.init ();
 
-    self.vk = try context_vk.init (&self.glfw.extensions, self.glfw.instance_proc_addr);
+    self.vk = try context_vk.init_instance (&self.glfw.extensions, self.glfw.instance_proc_addr);
+
+    var wrapper = self.vk.get_surface ();
+    try self.glfw.init_surface (wrapper.instance, &wrapper.surface, wrapper.success);
+    self.vk.set_surface (&wrapper.surface);
+
+    try self.vk.init_devices ();
 
     try log_app ("Init OK", severity.DEBUG, .{});
     return self;

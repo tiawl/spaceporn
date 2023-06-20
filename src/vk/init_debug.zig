@@ -25,12 +25,9 @@ pub const init_vk = struct
   base_dispatch:      BaseDispatch,
   instance_dispatch:  InstanceDispatch,
   instance:           vk.Instance,
-  app_info:           vk.ApplicationInfo,
-  create_info:        vk.InstanceCreateInfo,
   extensions:         [][*:0] const u8,
   instance_proc_addr: *const fn (?*anyopaque, [*:0] const u8) callconv (.C) ?*const fn () callconv (.C) void,
   debug_messenger:    vk.DebugUtilsMessengerEXT,
-  debug_info:         vk.DebugUtilsMessengerCreateInfoEXT,
 
   const Self = @This ();
 
@@ -137,6 +134,8 @@ pub const init_vk = struct
 
       flag = false;
     }
+
+    try log_app ("Check Layer Properties Vulkan Initializer OK", severity.DEBUG, .{});
   }
 
   fn init_debug_info (debug_info: *vk.DebugUtilsMessengerCreateInfoEXT) void
@@ -169,7 +168,7 @@ pub const init_vk = struct
                    };
   }
 
-  fn check_extension_properties (self: *Self) !void
+  fn check_extension_properties (self: *Self, debug_info: *vk.DebugUtilsMessengerCreateInfoEXT) !void
   {
     var gpa = std.heap.GeneralPurposeAllocator (.{}){};
     defer _ = gpa.deinit ();
@@ -231,52 +230,55 @@ pub const init_vk = struct
 
     self.extensions = extensions.items;
 
-    var debug_info: vk.DebugUtilsMessengerCreateInfoEXT = undefined;
-    init_debug_info (&debug_info);
+    init_debug_info (debug_info);
 
-    self.create_info = vk.InstanceCreateInfo
-                       {
-                         .flags = .{},
-                         .enabled_layer_count        = required_layers.len,
-                         .pp_enabled_layer_names     = @ptrCast ([*] const [*:0] const u8, required_layers[0..required_layers.len]),
-                         .p_next                     = &debug_info,
-                         .p_application_info         = &(self.app_info),
-                         .enabled_extension_count    = @intCast (u32, self.extensions.len),
-                         .pp_enabled_extension_names = @ptrCast ([*] const [*:0] const u8, self.extensions),
-                       };
+    const app_info = vk.ApplicationInfo
+                     {
+                       .p_application_name  = exe,
+                       .application_version = vk.makeApiVersion (0, 1, 2, 0),
+                       .p_engine_name       = "No Engine",
+                       .engine_version      = vk.makeApiVersion (0, 1, 2, 0),
+                       .api_version         = vk.API_VERSION_1_2,
+                     };
 
-    self.instance = try self.base_dispatch.createInstance (&(self.create_info), null);
+    const create_info = vk.InstanceCreateInfo
+                        {
+                          .flags = .{},
+                          .enabled_layer_count        = required_layers.len,
+                          .pp_enabled_layer_names     = @ptrCast ([*] const [*:0] const u8, required_layers[0..required_layers.len]),
+                          .p_next                     = debug_info,
+                          .p_application_info         = &app_info,
+                          .enabled_extension_count    = @intCast (u32, self.extensions.len),
+                          .pp_enabled_extension_names = @ptrCast ([*] const [*:0] const u8, self.extensions),
+                        };
+
+    self.instance = try self.base_dispatch.createInstance (&create_info, null);
+
+    try log_app ("Check Extension Properties Vulkan Initializer OK", severity.DEBUG, .{});
   }
 
   pub fn init_instance (extensions: *[][*:0] const u8,
     instance_proc_addr: *const fn (?*anyopaque, [*:0] const u8) callconv (.C) ?*const fn () callconv (.C) void) !Self
   {
     var self: Self = undefined;
+    var debug_info: vk.DebugUtilsMessengerCreateInfoEXT = undefined;
 
     self.extensions = extensions.*;
     self.instance_proc_addr = instance_proc_addr;
 
     self.base_dispatch = try BaseDispatch.load (@ptrCast (vk.PfnGetInstanceProcAddr, self.instance_proc_addr));
 
-    self.app_info = vk.ApplicationInfo
-                    {
-                      .p_application_name  = exe,
-                      .application_version = vk.makeApiVersion (0, 1, 2, 0),
-                      .p_engine_name       = "No Engine",
-                      .engine_version      = vk.makeApiVersion (0, 1, 2, 0),
-                      .api_version         = vk.API_VERSION_1_2,
-                    };
-
     try check_layer_properties (&self);
-    try check_extension_properties (&self);
+    try check_extension_properties (&self, &debug_info);
 
     self.instance_dispatch = try InstanceDispatch.load (self.instance, self.base_dispatch.dispatch.vkGetInstanceProcAddr);
     errdefer self.instance_dispatch.destroyInstance (self.instance, null);
 
-    init_debug_info (&(self.debug_info));
-    self.debug_messenger = try self.instance_dispatch.createDebugUtilsMessengerEXT (self.instance, &(self.debug_info), null);
+    init_debug_info (&debug_info);
+    self.debug_messenger = try self.instance_dispatch.createDebugUtilsMessengerEXT (self.instance, &debug_info, null);
     errdefer self.instance_dispatch.destroyDebugUtilsMessengerEXT (self.instance, self.debug_messenger, null);
 
+    try log_app ("Init Vulkan Initializer Instance OK", severity.DEBUG, .{});
     return self;
   }
 
@@ -284,5 +286,7 @@ pub const init_vk = struct
   {
     self.instance_dispatch.destroyDebugUtilsMessengerEXT (self.instance, self.debug_messenger, null);
     self.instance_dispatch.destroyInstance (self.instance, null);
+
+    try log_app ("Cleanup Vulkan Initializer OK", severity.DEBUG, .{});
   }
 };

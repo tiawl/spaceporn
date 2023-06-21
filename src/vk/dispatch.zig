@@ -16,18 +16,21 @@ pub const BaseDispatch = vk.BaseWrapper (
 
 pub const InstanceDispatch = vk.InstanceWrapper (
 .{
-  .destroyInstance                        = true,
-  .createDebugUtilsMessengerEXT           = build.LOG_LEVEL > @enumToInt (profile.TURBO),
-  .destroyDebugUtilsMessengerEXT          = build.LOG_LEVEL > @enumToInt (profile.TURBO),
-  .destroySurfaceKHR                      = true,
-  .getPhysicalDeviceSurfaceSupportKHR     = true,
-  .enumeratePhysicalDevices               = true,
-  .getPhysicalDeviceProperties            = true,
-  .getPhysicalDeviceFeatures              = true,
-  .getPhysicalDeviceQueueFamilyProperties = true,
-  .createDevice                           = true,
-  .getDeviceProcAddr                      = true,
-  .enumerateDeviceExtensionProperties     = true,
+  .destroyInstance                         = true,
+  .createDebugUtilsMessengerEXT            = build.LOG_LEVEL > @enumToInt (profile.TURBO),
+  .destroyDebugUtilsMessengerEXT           = build.LOG_LEVEL > @enumToInt (profile.TURBO),
+  .destroySurfaceKHR                       = true,
+  .getPhysicalDeviceSurfaceSupportKHR      = true,
+  .getPhysicalDeviceSurfaceCapabilitiesKHR = true,
+  .getPhysicalDeviceSurfaceFormatsKHR      = true,
+  .getPhysicalDeviceSurfacePresentModesKHR = true,
+  .enumeratePhysicalDevices                = true,
+  .getPhysicalDeviceProperties             = true,
+  .getPhysicalDeviceFeatures               = true,
+  .getPhysicalDeviceQueueFamilyProperties  = true,
+  .createDevice                            = true,
+  .getDeviceProcAddr                       = true,
+  .enumerateDeviceExtensionProperties      = true,
 });
 
 pub const DeviceDispatch = vk.DeviceWrapper(

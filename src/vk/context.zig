@@ -39,7 +39,7 @@ pub const context_vk = struct
     NoSuitableDevice,
   };
 
-  fn find_queue_families (self: *Self, device: vk.PhysicalDevice, allocator: std.mem.Allocator) !?struct { graphics_family: u32, present_family: u32, }
+  fn find_queue_families (self: Self, device: vk.PhysicalDevice, allocator: std.mem.Allocator) !?struct { graphics_family: u32, present_family: u32, }
   {
     var queue_family_count: u32 = undefined;
 
@@ -81,7 +81,7 @@ pub const context_vk = struct
     return null;
   }
 
-  fn check_device_extension_support (self: *Self, device: vk.PhysicalDevice, allocator: std.mem.Allocator) !?std.ArrayList ([*:0] const u8)
+  fn check_device_extension_support (self: Self, device: vk.PhysicalDevice, allocator: std.mem.Allocator) !?std.ArrayList ([*:0] const u8)
   {
     var supported_device_extensions_count: u32 = undefined;
 
@@ -115,7 +115,44 @@ pub const context_vk = struct
     return device_extensions;
   }
 
-  fn is_suitable (self: *Self, device: vk.PhysicalDevice, allocator: std.mem.Allocator) !?struct { graphics_family: u32, present_family: u32, extensions: std.ArrayList ([*:0] const u8), }
+  fn query_swapchain_support (self: Self, device: vk.PhysicalDevice, allocator: std.mem.Allocator) !struct { capabilities: vk.SurfaceCapabilitiesKHR, formats: [] vk.SurfaceFormatKHR, present_modes: [] vk.PresentModeKHR, }
+  {
+    var capabilities = try self.initializer.instance_dispatch.getPhysicalDeviceSurfaceCapabilitiesKHR (device, self.surface);
+
+    var format_count: u32 = undefined;
+    var formats: [] vk.SurfaceFormatKHR = undefined;
+
+    _ = try self.initializer.instance_dispatch.getPhysicalDeviceSurfaceFormatsKHR (device, self.surface, &format_count, null);
+
+    if (format_count == 0)
+    {
+      formats = try allocator.alloc (vk.SurfaceFormatKHR, format_count);
+      errdefer allocator.free (formats);
+
+      _ = try self.initializer.instance_dispatch.getPhysicalDeviceSurfaceFormatsKHR (device, self.surface, &format_count, formats.ptr);
+    }
+
+    var present_mode_count: u32 = undefined;
+    var present_modes: [] vk.PresentModeKHR = undefined;
+
+    _ = try self.initializer.instance_dispatch.getPhysicalDeviceSurfacePresentModesKHR (device, self.surface, &present_mode_count, null);
+
+    if (present_mode_count == 0)
+    {
+      present_modes = try allocator.alloc (vk.PresentModeKHR, present_mode_count);
+      errdefer allocator.free (present_modes);
+
+      _ = try self.initializer.instance_dispatch.getPhysicalDeviceSurfacePresentModesKHR (device, self.surface, &present_mode_count, present_modes.ptr);
+    }
+
+    return .{
+              .capabilities  = capabilities,
+              .formats       = formats,
+              .present_modes = present_modes,
+            };
+  }
+
+  fn is_suitable (self: Self, device: vk.PhysicalDevice, allocator: std.mem.Allocator) !?struct { graphics_family: u32, present_family: u32, extensions: std.ArrayList ([*:0] const u8), }
   {
     const device_prop = self.initializer.instance_dispatch.getPhysicalDeviceProperties (device);
     const device_feat = self.initializer.instance_dispatch.getPhysicalDeviceFeatures (device);
@@ -134,14 +171,19 @@ pub const context_vk = struct
       return null;
     }
 
-    if (try self.find_queue_families (device, allocator)) |candidate|
+    var swapchain_support = try self.query_swapchain_support (device, allocator);
+
+    if (swapchain_support.formats.len > 0 and swapchain_support.present_modes.len > 0)
     {
-      try log_app ("Device Is Suitable Vulkan OK", severity.DEBUG, .{});
-      return .{
-                .graphics_family = candidate.graphics_family,
-                .present_family  = candidate.present_family,
-                .extensions      = device_extensions,
-              };
+      if (try self.find_queue_families (device, allocator)) |candidate|
+      {
+        try log_app ("Device Is Suitable Vulkan OK", severity.DEBUG, .{});
+        return .{
+                  .graphics_family = candidate.graphics_family,
+                  .present_family  = candidate.present_family,
+                  .extensions      = device_extensions,
+                };
+      }
     }
 
     try log_app ("Device Is Suitable Vulkan failed", severity.ERROR, .{});

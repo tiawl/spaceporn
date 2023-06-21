@@ -25,6 +25,9 @@ pub const context_vk = struct
   logical_device:     vk.Device,
   graphics_queue:     vk.Queue,
   present_queue:      vk.Queue,
+  capabilities:       vk.SurfaceCapabilitiesKHR,
+  formats:            [] vk.SurfaceFormatKHR,
+  present_modes:      [] vk.PresentModeKHR,
 
   const Self = @This ();
 
@@ -39,7 +42,7 @@ pub const context_vk = struct
     NoSuitableDevice,
   };
 
-  fn find_queue_families (self: Self, device: vk.PhysicalDevice, allocator: std.mem.Allocator) !?struct { graphics_family: u32, present_family: u32, }
+  fn find_queue_families (self: *Self, device: vk.PhysicalDevice, allocator: std.mem.Allocator) !bool
   {
     var queue_family_count: u32 = undefined;
 
@@ -70,18 +73,17 @@ pub const context_vk = struct
 
     if (graphics_family != null and present_family != null)
     {
-      try log_app ("Find Queue Families Vulkan OK", severity.DEBUG, .{});
-      return .{
-                .graphics_family = graphics_family.?,
-                .present_family = present_family.?,
-              };
+      try log_app ("Find Vulkan Queue Families OK", severity.DEBUG, .{});
+      self.candidate.graphics_family = graphics_family.?;
+      self.candidate.present_family = present_family.?;
+      return true;
     }
 
-    try log_app ("Find Queue Families Vulkan failed", severity.ERROR, .{});
-    return null;
+    try log_app ("Find Vulkan Queue Families failed", severity.ERROR, .{});
+    return false;
   }
 
-  fn check_device_extension_support (self: Self, device: vk.PhysicalDevice, allocator: std.mem.Allocator) !?std.ArrayList ([*:0] const u8)
+  fn check_device_extension_support (self: *Self, device: vk.PhysicalDevice, allocator: std.mem.Allocator) !bool
   {
     var supported_device_extensions_count: u32 = undefined;
 
@@ -103,56 +105,51 @@ pub const context_vk = struct
         }
       } else {
         try log_app ("{s} required device extension is not supported", severity.ERROR, .{ required_ext });
-        return null;
+        return false;
       }
     }
 
-    var device_extensions = try std.ArrayList ([*:0] const u8).initCapacity (allocator, required_device_extensions.len);
-    errdefer device_extensions.deinit ();
+    self.candidate.extensions = try std.ArrayList ([*:0] const u8).initCapacity (allocator, required_device_extensions.len);
+    errdefer self.candidate.extensions.deinit ();
 
-    try device_extensions.appendSlice (required_device_extensions [0..required_device_extensions.len]);
+    try self.candidate.extensions.appendSlice (required_device_extensions [0..required_device_extensions.len]);
 
-    return device_extensions;
+    try log_app ("Check Vulkan Device Extension Support OK", severity.DEBUG, .{});
+    return true;
   }
 
-  fn query_swapchain_support (self: Self, device: vk.PhysicalDevice, allocator: std.mem.Allocator) !struct { capabilities: vk.SurfaceCapabilitiesKHR, formats: [] vk.SurfaceFormatKHR, present_modes: [] vk.PresentModeKHR, }
+  fn query_swapchain_support (self: *Self, device: vk.PhysicalDevice, allocator: std.mem.Allocator) !void
   {
-    var capabilities = try self.initializer.instance_dispatch.getPhysicalDeviceSurfaceCapabilitiesKHR (device, self.surface);
+    self.capabilities = try self.initializer.instance_dispatch.getPhysicalDeviceSurfaceCapabilitiesKHR (device, self.surface);
 
     var format_count: u32 = undefined;
-    var formats: [] vk.SurfaceFormatKHR = undefined;
 
     _ = try self.initializer.instance_dispatch.getPhysicalDeviceSurfaceFormatsKHR (device, self.surface, &format_count, null);
 
-    if (format_count == 0)
+    if (format_count > 0)
     {
-      formats = try allocator.alloc (vk.SurfaceFormatKHR, format_count);
-      errdefer allocator.free (formats);
+      self.formats = try allocator.alloc (vk.SurfaceFormatKHR, format_count);
+      errdefer allocator.free (self.formats);
 
-      _ = try self.initializer.instance_dispatch.getPhysicalDeviceSurfaceFormatsKHR (device, self.surface, &format_count, formats.ptr);
+      _ = try self.initializer.instance_dispatch.getPhysicalDeviceSurfaceFormatsKHR (device, self.surface, &format_count, self.formats.ptr);
     }
 
     var present_mode_count: u32 = undefined;
-    var present_modes: [] vk.PresentModeKHR = undefined;
 
     _ = try self.initializer.instance_dispatch.getPhysicalDeviceSurfacePresentModesKHR (device, self.surface, &present_mode_count, null);
 
-    if (present_mode_count == 0)
+    if (present_mode_count > 0)
     {
-      present_modes = try allocator.alloc (vk.PresentModeKHR, present_mode_count);
-      errdefer allocator.free (present_modes);
+      self.present_modes = try allocator.alloc (vk.PresentModeKHR, present_mode_count);
+      errdefer allocator.free (self.present_modes);
 
-      _ = try self.initializer.instance_dispatch.getPhysicalDeviceSurfacePresentModesKHR (device, self.surface, &present_mode_count, present_modes.ptr);
+      _ = try self.initializer.instance_dispatch.getPhysicalDeviceSurfacePresentModesKHR (device, self.surface, &present_mode_count, self.present_modes.ptr);
     }
 
-    return .{
-              .capabilities  = capabilities,
-              .formats       = formats,
-              .present_modes = present_modes,
-            };
+    try log_app ("Query Vulkan Swapchain Support OK", severity.DEBUG, .{});
   }
 
-  fn is_suitable (self: Self, device: vk.PhysicalDevice, allocator: std.mem.Allocator) !?struct { graphics_family: u32, present_family: u32, extensions: std.ArrayList ([*:0] const u8), }
+  fn is_suitable (self: *Self, device: vk.PhysicalDevice, allocator: std.mem.Allocator) !bool
   {
     const device_prop = self.initializer.instance_dispatch.getPhysicalDeviceProperties (device);
     const device_feat = self.initializer.instance_dispatch.getPhysicalDeviceFeatures (device);
@@ -162,35 +159,27 @@ pub const context_vk = struct
     _ = device_prop;
     _ = device_feat;
 
-    var device_extensions: std.ArrayList ([*:0] const u8) = undefined;
-
-    if (try self.check_device_extension_support (device, allocator)) |extensions|
+    if (!try self.check_device_extension_support (device, allocator))
     {
-      device_extensions = extensions;
-    } else {
-      return null;
+      return false;
     }
 
-    var swapchain_support = try self.query_swapchain_support (device, allocator);
+    try self.query_swapchain_support (device, allocator);
 
-    if (swapchain_support.formats.len > 0 and swapchain_support.present_modes.len > 0)
+    if (self.formats.len > 0 and self.present_modes.len > 0)
     {
-      if (try self.find_queue_families (device, allocator)) |candidate|
+      if (try self.find_queue_families (device, allocator))
       {
-        try log_app ("Device Is Suitable Vulkan OK", severity.DEBUG, .{});
-        return .{
-                  .graphics_family = candidate.graphics_family,
-                  .present_family  = candidate.present_family,
-                  .extensions      = device_extensions,
-                };
+        try log_app ("Is Vulkan Device Suitable OK", severity.DEBUG, .{});
+        return true;
       }
     }
 
-    try log_app ("Device Is Suitable Vulkan failed", severity.ERROR, .{});
-    return null;
+    try log_app ("Is Vulkan Device Suitable failed", severity.ERROR, .{});
+    return false;
   }
 
-  fn pick_physical_device (self: *Self) !void
+  fn pick_physical_device (self: *Self, allocator: std.mem.Allocator) !void
   {
     var device_count: u32 = undefined;
 
@@ -201,10 +190,6 @@ pub const context_vk = struct
       return ContextError.NoDevice;
     }
 
-    var gpa = std.heap.GeneralPurposeAllocator (.{}){};
-    defer _ = gpa.deinit ();
-    const allocator = gpa.allocator ();
-
     var devices = try allocator.alloc (vk.PhysicalDevice, device_count);
     defer allocator.free (devices);
 
@@ -212,14 +197,9 @@ pub const context_vk = struct
 
     for (devices) |device|
     {
-      if (try self.is_suitable (device, allocator)) |candidate|
+      if (try self.is_suitable (device, allocator))
       {
         self.physical_device = device;
-        self.candidate = .{
-                            .graphics_family = candidate.graphics_family,
-                            .present_family  = candidate.present_family,
-                            .extensions      = candidate.extensions,
-                          };
         break;
       }
     }
@@ -229,7 +209,7 @@ pub const context_vk = struct
       return ContextError.NoSuitableDevice;
     }
 
-    try log_app ("Pick Physical Device Vulkan OK", severity.DEBUG, .{});
+    try log_app ("Pick Vulkan Physical Device OK", severity.DEBUG, .{});
   }
 
   fn init_logical_device (self: *Self) !void
@@ -265,6 +245,7 @@ pub const context_vk = struct
                                  .pp_enabled_extension_names = @ptrCast([*] const [*:0] const u8, self.candidate.extensions.items),
                                  .p_enabled_features      = &device_feat,
                                };
+    defer self.candidate.extensions.deinit ();
 
     self.logical_device = try self.initializer.instance_dispatch.createDevice (self.physical_device.?, &device_create_info, null);
 
@@ -274,7 +255,56 @@ pub const context_vk = struct
     self.graphics_queue = self.device_dispatch.getDeviceQueue (self.logical_device, self.candidate.graphics_family, 0);
     self.present_queue = self.device_dispatch.getDeviceQueue (self.logical_device, self.candidate.present_family, 0);
 
-    try log_app ("Init Logical Device Vulkan OK", severity.DEBUG, .{});
+    try log_app ("Init Vulkan Logical Device OK", severity.DEBUG, .{});
+  }
+
+  fn choose_swap_support_format (self: Self) vk.SurfaceFormatKHR
+  {
+    for (self.formats) |format|
+    {
+      if (format.format == vk.Format.b8g8r8a8_srgb and format.color_space == vk.ColorSpaceKHR.srgb_nonlinear_khr)
+      {
+        return format;
+      }
+    }
+
+    return self.formats [0];
+  }
+
+  fn choose_swap_present_mode (self: Self) vk.PresentModeKHR
+  {
+    for (self.present_modes) |present_mode|
+    {
+      if (present_mode == vk.PresentModeKHR.mailbox_khr)
+      {
+        return present_mode;
+      }
+    }
+
+    return vk.PresentModeKHR.fifo_khr;
+  }
+
+  fn choose_swap_extent (self: Self, framebuffer: struct { width: u32, height: u32, }) vk.Extent2D
+  {
+    if (self.capabilities.current_extent.width != std.math.maxInt (u32))
+    {
+      return self.capabilities.current_extent;
+    } else {
+      return vk.Extent2D
+             {
+               .width  = std.math.clamp (framebuffer.width, self.capabilities.min_image_extent.width, self.capabilities.max_image_extent.width),
+               .height = std.math.clamp (framebuffer.height, self.capabilities.min_image_extent.height, self.capabilities.max_image_extent.height),
+             };
+    }
+  }
+
+  fn init_swapchain (self: Self, framebuffer: struct { width: u32, height: u32, }) !void
+  {
+    _ = self.choose_swap_support_format ();
+    _ = self.choose_swap_present_mode ();
+    _ = self.choose_swap_extent (.{ .width = framebuffer.width, .height = framebuffer.height, });
+
+    try log_app ("Init Vulkan Swapchain OK", severity.DEBUG, .{});
   }
 
   pub fn get_surface (self: Self) struct { instance: vk.Instance, surface: vk.SurfaceKHR, success: i32, }
@@ -301,10 +331,18 @@ pub const context_vk = struct
     return self;
   }
 
-  pub fn init_devices (self: *Self) !void
+  pub fn init_devices (self: *Self, framebuffer: struct { width: u32, height: u32, }) !void
   {
-    try self.pick_physical_device ();
+    var gpa = std.heap.GeneralPurposeAllocator (.{}){};
+    defer _ = gpa.deinit ();
+    const allocator = gpa.allocator ();
+
+    try self.pick_physical_device (allocator);
+    defer allocator.free (self.formats);
+    defer allocator.free (self.present_modes);
+
     try self.init_logical_device ();
+    try self.init_swapchain (.{ .width = framebuffer.width, .height = framebuffer.height, });
 
     try log_app ("Init Vulkan Devices OK", severity.DEBUG, .{});
   }

@@ -84,6 +84,15 @@ pub const context_glfw = struct
     try log_app ("Init GLFW Surface OK", severity.DEBUG, .{});
   }
 
+  pub fn get_framebuffer_size (self: Self) struct { width: u32, height: u32, }
+  {
+    const size = self.window.getFramebufferSize ();
+    return .{
+              .width  = size.width,
+              .height = size.height,
+            };
+  }
+
   pub fn loop (self: Self) !void
   {
     while (!self.window.shouldClose ())

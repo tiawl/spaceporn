@@ -135,7 +135,7 @@ pub const init_vk = struct
       flag = false;
     }
 
-    try log_app ("Check Layer Properties Vulkan Initializer OK", severity.DEBUG, .{});
+    try log_app ("Check Vulkan Layer Properties Initializer OK", severity.DEBUG, .{});
   }
 
   fn init_debug_info (debug_info: *vk.DebugUtilsMessengerCreateInfoEXT) void
@@ -254,7 +254,7 @@ pub const init_vk = struct
 
     self.instance = try self.base_dispatch.createInstance (&create_info, null);
 
-    try log_app ("Check Extension Properties Vulkan Initializer OK", severity.DEBUG, .{});
+    try log_app ("Check Vulkan Extension Properties Initializer OK", severity.DEBUG, .{});
   }
 
   pub fn init_instance (extensions: *[][*:0] const u8,

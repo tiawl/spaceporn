@@ -69,7 +69,8 @@ pub const context = struct
     try self.glfw.init_surface (wrapper.instance, &wrapper.surface, wrapper.success);
     self.vk.set_surface (&wrapper.surface);
 
-    try self.vk.init_devices ();
+    const framebuffer = self.glfw.get_framebuffer_size ();
+    try self.vk.init_devices (.{ .width = framebuffer.width, .height = framebuffer.height, });
 
     try log_app ("Init OK", severity.DEBUG, .{});
     return self;

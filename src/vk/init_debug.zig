@@ -195,7 +195,7 @@ pub const init_vk = struct
       supported = false;
       for (supported_extensions) |supported_ext|
       {
-        if (std.mem.eql (u8, supported_ext.extension_name[0..std.mem.indexOfScalar (u8, &(supported_ext.extension_name), 0).?], std.mem.span (required_ext)))
+        if (std.mem.eql (u8, supported_ext.extension_name [0..std.mem.indexOfScalar (u8, &(supported_ext.extension_name), 0).?], std.mem.span (required_ext)))
         {
           try extensions.append (@ptrCast ([*:0] const u8, required_ext));
           try log_app ("{s} required extension is supported", severity.DEBUG, .{ required_ext });

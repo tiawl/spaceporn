@@ -21,12 +21,17 @@ pub const context_vk = struct
   surface:            vk.SurfaceKHR      = undefined,
   device_dispatch:    DeviceDispatch,
   physical_device:    ?vk.PhysicalDevice = null,
-  candidate:          struct { graphics_family: u32, present_family: u32, },
+  candidate:          struct { graphics_family: u32, present_family: u32, extensions: std.ArrayList ([*:0] const u8), },
   logical_device:     vk.Device,
   graphics_queue:     vk.Queue,
   present_queue:      vk.Queue,
 
   const Self = @This ();
+
+  const required_device_extensions = [_][*:0] const u8
+  {
+    vk.extension_info.khr_swapchain.name,
+  };
 
   const ContextError = error
   {
@@ -76,7 +81,41 @@ pub const context_vk = struct
     return null;
   }
 
-  fn is_suitable (self: *Self, device: vk.PhysicalDevice, allocator: std.mem.Allocator) !?struct { graphics_family: u32, present_family: u32, }
+  fn check_device_extension_support (self: *Self, device: vk.PhysicalDevice, allocator: std.mem.Allocator) !?std.ArrayList ([*:0] const u8)
+  {
+    var supported_device_extensions_count: u32 = undefined;
+
+    _ = try self.initializer.instance_dispatch.enumerateDeviceExtensionProperties (device, null, &supported_device_extensions_count, null);
+
+    var supported_device_extensions = try allocator.alloc (vk.ExtensionProperties, supported_device_extensions_count);
+    defer allocator.free (supported_device_extensions);
+
+    _ = try self.initializer.instance_dispatch.enumerateDeviceExtensionProperties (device, null, &supported_device_extensions_count, supported_device_extensions.ptr);
+
+    for (required_device_extensions) |required_ext|
+    {
+      for (supported_device_extensions) |supported_ext|
+      {
+        if (std.mem.eql (u8, std.mem.span (required_ext), supported_ext.extension_name [0..std.mem.indexOfScalar (u8, &(supported_ext.extension_name), 0).?]))
+        {
+          try log_app ("{s} required device extension is supported", severity.DEBUG, .{ required_ext });
+          break;
+        }
+      } else {
+        try log_app ("{s} required device extension is not supported", severity.ERROR, .{ required_ext });
+        return null;
+      }
+    }
+
+    var device_extensions = try std.ArrayList ([*:0] const u8).initCapacity (allocator, required_device_extensions.len);
+    errdefer device_extensions.deinit ();
+
+    try device_extensions.appendSlice (required_device_extensions [0..required_device_extensions.len]);
+
+    return device_extensions;
+  }
+
+  fn is_suitable (self: *Self, device: vk.PhysicalDevice, allocator: std.mem.Allocator) !?struct { graphics_family: u32, present_family: u32, extensions: std.ArrayList ([*:0] const u8), }
   {
     const device_prop = self.initializer.instance_dispatch.getPhysicalDeviceProperties (device);
     const device_feat = self.initializer.instance_dispatch.getPhysicalDeviceFeatures (device);
@@ -86,12 +125,22 @@ pub const context_vk = struct
     _ = device_prop;
     _ = device_feat;
 
+    var device_extensions: std.ArrayList ([*:0] const u8) = undefined;
+
+    if (try self.check_device_extension_support (device, allocator)) |extensions|
+    {
+      device_extensions = extensions;
+    } else {
+      return null;
+    }
+
     if (try self.find_queue_families (device, allocator)) |candidate|
     {
       try log_app ("Device Is Suitable Vulkan OK", severity.DEBUG, .{});
       return .{
                 .graphics_family = candidate.graphics_family,
-                .present_family = candidate.present_family,
+                .present_family  = candidate.present_family,
+                .extensions      = device_extensions,
               };
     }
 
@@ -126,7 +175,8 @@ pub const context_vk = struct
         self.physical_device = device;
         self.candidate = .{
                             .graphics_family = candidate.graphics_family,
-                            .present_family = candidate.present_family,
+                            .present_family  = candidate.present_family,
+                            .extensions      = candidate.extensions,
                           };
         break;
       }
@@ -169,6 +219,8 @@ pub const context_vk = struct
                                  .queue_create_info_count = queue_count,
                                  .enabled_layer_count     = required_layers.len,
                                  .pp_enabled_layer_names  = if (required_layers.len > 0) @ptrCast ([*] const [*:0] const u8, required_layers[0..required_layers.len]) else undefined,
+                                 .enabled_extension_count = @intCast(u32, self.candidate.extensions.items.len),
+                                 .pp_enabled_extension_names = @ptrCast([*] const [*:0] const u8, self.candidate.extensions.items),
                                  .p_enabled_features      = &device_feat,
                                };
 

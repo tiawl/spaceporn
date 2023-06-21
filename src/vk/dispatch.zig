@@ -27,6 +27,7 @@ pub const InstanceDispatch = vk.InstanceWrapper (
   .getPhysicalDeviceQueueFamilyProperties = true,
   .createDevice                           = true,
   .getDeviceProcAddr                      = true,
+  .enumerateDeviceExtensionProperties     = true,
 });
 
 pub const DeviceDispatch = vk.DeviceWrapper(

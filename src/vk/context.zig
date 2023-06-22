@@ -1,5 +1,6 @@
-const std   = @import ("std");
-const build = @import ("build_options");
+const std       = @import ("std");
+const build     = @import ("build_options");
+const resources = @import ("resources");
 
 const utils    = @import ("../utils.zig");
 const log_app  = utils.log_app;
@@ -118,7 +119,7 @@ pub const context_vk = struct
     self.candidate.extensions = try std.ArrayList ([*:0] const u8).initCapacity (self.allocator, required_device_extensions.len);
     errdefer self.candidate.extensions.deinit ();
 
-    try self.candidate.extensions.appendSlice (required_device_extensions [0..required_device_extensions.len]);
+    try self.candidate.extensions.appendSlice (required_device_extensions [0..]);
 
     try log_app ("Check Vulkan Device Extension Support OK", severity.DEBUG, .{});
     return true;
@@ -246,7 +247,7 @@ pub const context_vk = struct
                                  .p_queue_create_infos    = &queue_create_info,
                                  .queue_create_info_count = queue_count,
                                  .enabled_layer_count     = required_layers.len,
-                                 .pp_enabled_layer_names  = if (required_layers.len > 0) @ptrCast ([*] const [*:0] const u8, required_layers[0..required_layers.len]) else undefined,
+                                 .pp_enabled_layer_names  = if (required_layers.len > 0) @ptrCast ([*] const [*:0] const u8, required_layers[0..]) else undefined,
                                  .enabled_extension_count = @intCast(u32, self.candidate.extensions.items.len),
                                  .pp_enabled_extension_names = @ptrCast([*] const [*:0] const u8, self.candidate.extensions.items),
                                  .p_enabled_features      = &device_feat,
@@ -401,6 +402,49 @@ pub const context_vk = struct
     try log_app ("Init Vulkan Swapchain Image Views OK", severity.DEBUG, .{});
   }
 
+  fn init_shader_module (self: Self, resource: [] const u8) !vk.ShaderModule
+  {
+    const create_info = vk.ShaderModuleCreateInfo
+                        {
+                          .flags     = .{},
+                          .code_size = resource.len,
+                          .p_code    = @ptrCast ([*] const u32, @alignCast (@alignOf(u32), resource.ptr)),
+                        };
+
+    return try self.device_dispatch.createShaderModule (self.logical_device, &create_info, null);
+
+  }
+
+  fn init_graphics_pipeline (self: Self) !void
+  {
+    const vertex = try self.init_shader_module (resources.vert [0..]);
+    defer self.device_dispatch.destroyShaderModule (self.logical_device, vertex, null);
+    const fragment = try self.init_shader_module (resources.frag [0..]);
+    defer self.device_dispatch.destroyShaderModule (self.logical_device, fragment, null);
+
+    const create_info = [_] vk.PipelineShaderStageCreateInfo
+                        {
+                          .{
+                             .flags                 = .{},
+                             .stage                 = .{ .vertex_bit = true },
+                             .module                = vertex,
+                             .p_name                = "main",
+                             .p_specialization_info = null,
+                           },
+                          .{
+                             .flags                 = .{},
+                             .stage                 = .{ .fragment_bit = true },
+                             .module                = fragment,
+                             .p_name                = "main",
+                             .p_specialization_info = null,
+                           },
+                        };
+
+    _ = create_info;
+
+    try log_app ("Init Vulkan Graphics Pipeline OK", severity.DEBUG, .{});
+  }
+
   pub fn get_surface (self: Self) struct { instance: vk.Instance, surface: vk.SurfaceKHR, success: i32, }
   {
     return .{
@@ -440,6 +484,8 @@ pub const context_vk = struct
     errdefer self.allocator.free (self.image_views);
 
     try self.init_image_views ();
+
+    try self.init_graphics_pipeline ();
 
     try log_app ("Init Vulkan Devices OK", severity.DEBUG, .{});
   }

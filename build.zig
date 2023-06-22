@@ -89,13 +89,9 @@ pub fn build (builder: *std.build.Builder) !void
   try glfw.link (builder, exe, .{});
 
   // shader resources, to be compiled using glslc
-  const shaders = vkgen.ShaderCompileStep.create (
-    builder,
-    &[_][] const u8 { "glslc", "--target-env=vulkan1.2" },
-    "-o",
-  );
-  shaders.add ("triangle_vert", "shaders/main.vert", .{});
-  shaders.add ("triangle_frag", "shaders/main.frag", .{});
+  const shaders = vkgen.ShaderCompileStep.create (builder, &[_][] const u8 { "glslc", "--target-env=vulkan1.2" }, "-o");
+  shaders.add ("vert", "shaders/main.vert", .{});
+  shaders.add ("frag", "shaders/main.frag", .{});
   exe.addModule ("resources", shaders.getModule ());
 
   // Init a new run artifact step that will run exe (invisible for user)

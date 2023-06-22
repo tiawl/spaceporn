@@ -239,7 +239,7 @@ pub const init_vk = struct
                         {
                           .flags = .{},
                           .enabled_layer_count        = required_layers.len,
-                          .pp_enabled_layer_names     = @ptrCast ([*] const [*:0] const u8, required_layers[0..required_layers.len]),
+                          .pp_enabled_layer_names     = @ptrCast ([*] const [*:0] const u8, required_layers[0..]),
                           .p_next                     = debug_info,
                           .p_application_info         = &app_info,
                           .enabled_extension_count    = @intCast (u32, self.extensions.len),

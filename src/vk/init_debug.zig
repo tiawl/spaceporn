@@ -22,6 +22,7 @@ const ext_vk = struct
 
 pub const init_vk = struct
 {
+  allocator:          std.mem.Allocator,
   base_dispatch:      BaseDispatch,
   instance_dispatch:  InstanceDispatch,
   instance:           vk.Instance,
@@ -102,11 +103,8 @@ pub const init_vk = struct
 
     _ = try self.base_dispatch.enumerateInstanceLayerProperties (&available_layers_count, null);
 
-    var gpa = std.heap.GeneralPurposeAllocator (.{}){};
-    defer _ = gpa.deinit ();
-    const allocator = gpa.allocator ();
-    var available_layers = try allocator.alloc (vk.LayerProperties, available_layers_count);
-    defer allocator.free (available_layers);
+    var available_layers = try self.allocator.alloc (vk.LayerProperties, available_layers_count);
+    defer self.allocator.free (available_layers);
 
     _ = try self.base_dispatch.enumerateInstanceLayerProperties (&available_layers_count, available_layers.ptr);
 
@@ -170,11 +168,7 @@ pub const init_vk = struct
 
   fn check_extension_properties (self: *Self, debug_info: *vk.DebugUtilsMessengerCreateInfoEXT) !void
   {
-    var gpa = std.heap.GeneralPurposeAllocator (.{}){};
-    defer _ = gpa.deinit ();
-    const allocator = gpa.allocator ();
-
-    var extensions = try std.ArrayList ([*:0] const u8).initCapacity (allocator, self.extensions.len + required_extensions.len + optional_extensions.len);
+    var extensions = try std.ArrayList ([*:0] const u8).initCapacity (self.allocator, self.extensions.len + required_extensions.len + optional_extensions.len);
     defer extensions.deinit ();
 
     try extensions.appendSlice(self.extensions);
@@ -183,8 +177,8 @@ pub const init_vk = struct
 
     _ = try self.base_dispatch.enumerateInstanceExtensionProperties (null, &supported_extensions_count, null);
 
-    var supported_extensions = try allocator.alloc (vk.ExtensionProperties, supported_extensions_count);
-    defer allocator.free (supported_extensions);
+    var supported_extensions = try self.allocator.alloc (vk.ExtensionProperties, supported_extensions_count);
+    defer self.allocator.free (supported_extensions);
 
     _ = try self.base_dispatch.enumerateInstanceExtensionProperties (null, &supported_extensions_count, supported_extensions.ptr);
 
@@ -258,13 +252,15 @@ pub const init_vk = struct
   }
 
   pub fn init_instance (extensions: *[][*:0] const u8,
-    instance_proc_addr: *const fn (?*anyopaque, [*:0] const u8) callconv (.C) ?*const fn () callconv (.C) void) !Self
+    instance_proc_addr: *const fn (?*anyopaque, [*:0] const u8) callconv (.C) ?*const fn () callconv (.C) void,
+    allocator: std.mem.Allocator) !Self
   {
     var self: Self = undefined;
     var debug_info: vk.DebugUtilsMessengerCreateInfoEXT = undefined;
 
     self.extensions = extensions.*;
     self.instance_proc_addr = instance_proc_addr;
+    self.allocator = allocator;
 
     self.base_dispatch = try BaseDispatch.load (@ptrCast (vk.PfnGetInstanceProcAddr, self.instance_proc_addr));
 

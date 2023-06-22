@@ -17,6 +17,7 @@ const required_layers = init_vk.required_layers;
 
 pub const context_vk = struct
 {
+  allocator:          std.mem.Allocator,
   initializer:        init_vk,
   surface:            vk.SurfaceKHR      = undefined,
   device_dispatch:    DeviceDispatch,
@@ -32,6 +33,7 @@ pub const context_vk = struct
   extent:             vk.Extent2D,
   swapchain:          vk.SwapchainKHR,
   images:             [] vk.Image,
+  image_views:        [] vk.ImageView,
 
   const Self = @This ();
 
@@ -46,14 +48,14 @@ pub const context_vk = struct
     NoSuitableDevice,
   };
 
-  fn find_queue_families (self: *Self, device: vk.PhysicalDevice, allocator: std.mem.Allocator) !bool
+  fn find_queue_families (self: *Self, device: vk.PhysicalDevice) !bool
   {
     var queue_family_count: u32 = undefined;
 
     self.initializer.instance_dispatch.getPhysicalDeviceQueueFamilyProperties (device, &queue_family_count, null);
 
-    var queue_families = try allocator.alloc (vk.QueueFamilyProperties, queue_family_count);
-    defer allocator.free (queue_families);
+    var queue_families = try self.allocator.alloc (vk.QueueFamilyProperties, queue_family_count);
+    defer self.allocator.free (queue_families);
 
     self.initializer.instance_dispatch.getPhysicalDeviceQueueFamilyProperties (device, &queue_family_count, queue_families.ptr);
 
@@ -87,14 +89,14 @@ pub const context_vk = struct
     return false;
   }
 
-  fn check_device_extension_support (self: *Self, device: vk.PhysicalDevice, allocator: std.mem.Allocator) !bool
+  fn check_device_extension_support (self: *Self, device: vk.PhysicalDevice) !bool
   {
     var supported_device_extensions_count: u32 = undefined;
 
     _ = try self.initializer.instance_dispatch.enumerateDeviceExtensionProperties (device, null, &supported_device_extensions_count, null);
 
-    var supported_device_extensions = try allocator.alloc (vk.ExtensionProperties, supported_device_extensions_count);
-    defer allocator.free (supported_device_extensions);
+    var supported_device_extensions = try self.allocator.alloc (vk.ExtensionProperties, supported_device_extensions_count);
+    defer self.allocator.free (supported_device_extensions);
 
     _ = try self.initializer.instance_dispatch.enumerateDeviceExtensionProperties (device, null, &supported_device_extensions_count, supported_device_extensions.ptr);
 
@@ -113,7 +115,7 @@ pub const context_vk = struct
       }
     }
 
-    self.candidate.extensions = try std.ArrayList ([*:0] const u8).initCapacity (allocator, required_device_extensions.len);
+    self.candidate.extensions = try std.ArrayList ([*:0] const u8).initCapacity (self.allocator, required_device_extensions.len);
     errdefer self.candidate.extensions.deinit ();
 
     try self.candidate.extensions.appendSlice (required_device_extensions [0..required_device_extensions.len]);
@@ -122,7 +124,7 @@ pub const context_vk = struct
     return true;
   }
 
-  fn query_swapchain_support (self: *Self, device: vk.PhysicalDevice, allocator: std.mem.Allocator) !void
+  fn query_swapchain_support (self: *Self, device: vk.PhysicalDevice) !void
   {
     self.capabilities = try self.initializer.instance_dispatch.getPhysicalDeviceSurfaceCapabilitiesKHR (device, self.surface);
 
@@ -132,8 +134,8 @@ pub const context_vk = struct
 
     if (format_count > 0)
     {
-      self.formats = try allocator.alloc (vk.SurfaceFormatKHR, format_count);
-      errdefer allocator.free (self.formats);
+      self.formats = try self.allocator.alloc (vk.SurfaceFormatKHR, format_count);
+      errdefer self.allocator.free (self.formats);
 
       _ = try self.initializer.instance_dispatch.getPhysicalDeviceSurfaceFormatsKHR (device, self.surface, &format_count, self.formats.ptr);
     }
@@ -144,8 +146,8 @@ pub const context_vk = struct
 
     if (present_mode_count > 0)
     {
-      self.present_modes = try allocator.alloc (vk.PresentModeKHR, present_mode_count);
-      errdefer allocator.free (self.present_modes);
+      self.present_modes = try self.allocator.alloc (vk.PresentModeKHR, present_mode_count);
+      errdefer self.allocator.free (self.present_modes);
 
       _ = try self.initializer.instance_dispatch.getPhysicalDeviceSurfacePresentModesKHR (device, self.surface, &present_mode_count, self.present_modes.ptr);
     }
@@ -153,7 +155,7 @@ pub const context_vk = struct
     try log_app ("Query Vulkan Swapchain Support OK", severity.DEBUG, .{});
   }
 
-  fn is_suitable (self: *Self, device: vk.PhysicalDevice, allocator: std.mem.Allocator) !bool
+  fn is_suitable (self: *Self, device: vk.PhysicalDevice) !bool
   {
     const device_prop = self.initializer.instance_dispatch.getPhysicalDeviceProperties (device);
     const device_feat = self.initializer.instance_dispatch.getPhysicalDeviceFeatures (device);
@@ -163,16 +165,16 @@ pub const context_vk = struct
     _ = device_prop;
     _ = device_feat;
 
-    if (!try self.check_device_extension_support (device, allocator))
+    if (!try self.check_device_extension_support (device))
     {
       return false;
     }
 
-    try self.query_swapchain_support (device, allocator);
+    try self.query_swapchain_support (device);
 
     if (self.formats.len > 0 and self.present_modes.len > 0)
     {
-      if (try self.find_queue_families (device, allocator))
+      if (try self.find_queue_families (device))
       {
         try log_app ("Is Vulkan Device Suitable OK", severity.DEBUG, .{});
         return true;
@@ -183,7 +185,7 @@ pub const context_vk = struct
     return false;
   }
 
-  fn pick_physical_device (self: *Self, allocator: std.mem.Allocator) !void
+  fn pick_physical_device (self: *Self) !void
   {
     var device_count: u32 = undefined;
 
@@ -194,14 +196,14 @@ pub const context_vk = struct
       return ContextError.NoDevice;
     }
 
-    var devices = try allocator.alloc (vk.PhysicalDevice, device_count);
-    defer allocator.free (devices);
+    var devices = try self.allocator.alloc (vk.PhysicalDevice, device_count);
+    defer self.allocator.free (devices);
 
     _ = try self.initializer.instance_dispatch.enumeratePhysicalDevices (self.initializer.instance, &device_count, devices.ptr);
 
     for (devices) |device|
     {
-      if (try self.is_suitable (device, allocator))
+      if (try self.is_suitable (device))
       {
         self.physical_device = device;
         break;
@@ -302,19 +304,24 @@ pub const context_vk = struct
     }
   }
 
-  fn init_swapchain_images (self: *Self, allocator: std.mem.Allocator) !void
+  fn init_swapchain_images (self: *Self) !void
   {
     var image_count: u32 = undefined;
 
     _ = try self.device_dispatch.getSwapchainImagesKHR (self.logical_device, self.swapchain, &image_count, null);
 
-    self.images = try allocator.alloc (vk.Image, image_count);
-    errdefer allocator.free (self.images);
+    self.images = try self.allocator.alloc (vk.Image, image_count);
+    errdefer self.allocator.free (self.images);
+
+    self.image_views = try self.allocator.alloc (vk.ImageView, image_count);
+    errdefer self.allocator.free (self.image_views);
 
     _ = try self.device_dispatch.getSwapchainImagesKHR (self.logical_device, self.swapchain, &image_count, self.images.ptr);
+
+    try log_app ("Init Vulkan Swapchain Images OK", severity.DEBUG, .{});
   }
 
-  fn init_swapchain (self: *Self, framebuffer: struct { width: u32, height: u32, }, allocator: std.mem.Allocator) !void
+  fn init_swapchain (self: *Self, framebuffer: struct { width: u32, height: u32, }) !void
   {
     self.choose_swap_support_format ();
     const present_mode = self.choose_swap_present_mode ();
@@ -355,9 +362,43 @@ pub const context_vk = struct
     self.swapchain = try self.device_dispatch.createSwapchainKHR (self.logical_device, &create_info, null);
     errdefer self.device_dispatch.destroySwapchainKHR (self.logical_device, self.swapchain, null);
 
-    try self.init_swapchain_images (allocator);
+    try self.init_swapchain_images ();
 
     try log_app ("Init Vulkan Swapchain OK", severity.DEBUG, .{});
+  }
+
+  fn init_image_views (self: *Self) !void
+  {
+    var create_info: vk.ImageViewCreateInfo = undefined;
+
+    for (self.images, 0..) |image, index|
+    {
+      create_info = vk.ImageViewCreateInfo
+                    {
+                      .flags             = .{},
+                      .image             = image,
+                      .view_type         = .@"2d",
+                      .format            = self.surface_format.format,
+                      .components        = .{
+                                              .r = .identity,
+                                              .g = .identity,
+                                              .b = .identity,
+                                              .a = .identity,
+                                            },
+                      .subresource_range = .{
+                                              .aspect_mask      = .{ .color_bit = true },
+                                              .base_mip_level   = 0,
+                                              .level_count      = 1,
+                                              .base_array_layer = 0,
+                                              .layer_count      = 1,
+                                            },
+                    };
+
+      self.image_views [index] = try self.device_dispatch.createImageView (self.logical_device, &create_info, null);
+      errdefer self.device_dispatch.destroyImageView (self.logical_device, self.image_views [index], null);
+    }
+
+    try log_app ("Init Vulkan Swapchain Image Views OK", severity.DEBUG, .{});
   }
 
   pub fn get_surface (self: Self) struct { instance: vk.Instance, surface: vk.SurfaceKHR, success: i32, }
@@ -378,7 +419,10 @@ pub const context_vk = struct
     instance_proc_addr: *const fn (?*anyopaque, [*:0] const u8) callconv (.C) ?*const fn () callconv (.C) void) !Self
   {
     var self: Self = undefined;
-    self.initializer = try init_vk.init_instance (extensions, instance_proc_addr);
+
+    self.allocator = std.heap.page_allocator;
+
+    self.initializer = try init_vk.init_instance (extensions, instance_proc_addr, self.allocator);
 
     try log_app ("Init Vulkan Instance OK", severity.DEBUG, .{});
     return self;
@@ -386,17 +430,16 @@ pub const context_vk = struct
 
   pub fn init_devices (self: *Self, framebuffer: struct { width: u32, height: u32, }) !void
   {
-    var gpa = std.heap.GeneralPurposeAllocator (.{}){};
-    defer _ = gpa.deinit ();
-    const allocator = gpa.allocator ();
-
-    try self.pick_physical_device (allocator);
-    defer allocator.free (self.formats);
-    defer allocator.free (self.present_modes);
+    try self.pick_physical_device ();
+    defer self.allocator.free (self.formats);
+    defer self.allocator.free (self.present_modes);
 
     try self.init_logical_device ();
-    try self.init_swapchain (.{ .width = framebuffer.width, .height = framebuffer.height, }, allocator);
-    defer allocator.free (self.images);
+    try self.init_swapchain (.{ .width = framebuffer.width, .height = framebuffer.height, });
+    defer self.allocator.free (self.images);
+    errdefer self.allocator.free (self.image_views);
+
+    try self.init_image_views ();
 
     try log_app ("Init Vulkan Devices OK", severity.DEBUG, .{});
   }
@@ -409,6 +452,11 @@ pub const context_vk = struct
 
   pub fn cleanup (self: Self) !void
   {
+    for (self.image_views) |image_view|
+    {
+      self.device_dispatch.destroyImageView (self.logical_device, image_view, null);
+    }
+    self.allocator.free (self.image_views);
     self.device_dispatch.destroySwapchainKHR (self.logical_device, self.swapchain, null);
     self.device_dispatch.destroyDevice (self.logical_device, null);
     self.initializer.instance_dispatch.destroySurfaceKHR (self.initializer.instance, self.surface, null);

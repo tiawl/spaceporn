@@ -1,3 +1,4 @@
+const std    = @import ("std");
 pub const vk = @import ("vulkan");
 
 const utils      = @import ("../utils.zig");
@@ -22,8 +23,11 @@ pub const init_vk = struct
   pub const required_layers = [_][] const u8 {};
 
   pub fn init_instance (extensions: *[][*:0] const u8,
-    instance_proc_addr: *const fn (?*anyopaque, [*:0] const u8) callconv (.C) ?*const fn () callconv (.C) void) !Self
+    instance_proc_addr: *const fn (?*anyopaque, [*:0] const u8) callconv (.C) ?*const fn () callconv (.C) void,
+    allocator: std.mem.Allocator) !Self
   {
+    _ = allocator;
+
     var self: Self = undefined;
 
     self.extensions = extensions.*;

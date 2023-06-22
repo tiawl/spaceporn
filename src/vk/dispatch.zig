@@ -40,4 +40,6 @@ pub const DeviceDispatch = vk.DeviceWrapper (
   .createSwapchainKHR    = true,
   .destroySwapchainKHR   = true,
   .getSwapchainImagesKHR = true,
+  .createImageView       = true,
+  .destroyImageView      = true,
 });

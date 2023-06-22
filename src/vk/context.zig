@@ -35,6 +35,7 @@ pub const context_vk = struct
   swapchain:          vk.SwapchainKHR,
   images:             [] vk.Image,
   image_views:        [] vk.ImageView,
+  pipeline_layout:    vk.PipelineLayout,
 
   const Self = @This ();
 
@@ -415,32 +416,158 @@ pub const context_vk = struct
 
   }
 
-  fn init_graphics_pipeline (self: Self) !void
+  fn init_graphics_pipeline (self: *Self) !void
   {
     const vertex = try self.init_shader_module (resources.vert [0..]);
     defer self.device_dispatch.destroyShaderModule (self.logical_device, vertex, null);
     const fragment = try self.init_shader_module (resources.frag [0..]);
     defer self.device_dispatch.destroyShaderModule (self.logical_device, fragment, null);
 
-    const create_info = [_] vk.PipelineShaderStageCreateInfo
+    const shader_stage = [_] vk.PipelineShaderStageCreateInfo
+                         {
+                           .{
+                              .flags                 = .{},
+                              .stage                 = .{ .vertex_bit = true },
+                              .module                = vertex,
+                              .p_name                = "main",
+                              .p_specialization_info = null,
+                            },
+                           .{
+                              .flags                 = .{},
+                              .stage                 = .{ .fragment_bit = true },
+                              .module                = fragment,
+                              .p_name                = "main",
+                              .p_specialization_info = null,
+                            },
+                         };
+
+    const dynamic_states = [_] vk.DynamicState { .viewport, .scissor };
+
+    const dynamic_state = vk.PipelineDynamicStateCreateInfo
+                          {
+                            .flags               = .{},
+                            .dynamic_state_count = dynamic_states.len,
+                            .p_dynamic_states    = &dynamic_states,
+                          };
+
+    const vertex_input_state = vk.PipelineVertexInputStateCreateInfo
+                               {
+                                 .flags                              = .{},
+                                 .vertex_binding_description_count   = 0,
+                                 .p_vertex_binding_descriptions      = null,
+                                 .vertex_attribute_description_count = 0,
+                                 .p_vertex_attribute_descriptions    = null,
+                               };
+
+    const input_assembly = vk.PipelineInputAssemblyStateCreateInfo
+                           {
+                             .flags                    = .{},
+                             .topology                 = .triangle_list,
+                             .primitive_restart_enable = vk.FALSE,
+                           };
+
+    const viewport = [_] vk.Viewport
+                     {
+                       .{
+                         .x         = 0,
+                         .y         = 0,
+                         .width     = @intToFloat(f32, self.extent.width),
+                         .height    = @intToFloat(f32, self.extent.height),
+                         .min_depth = 0,
+                         .max_depth = 1,
+                        },
+                     };
+
+    const scissor = [_] vk.Rect2D
+                    {
+                      .{
+                        .offset = .{ .x = 0, .y = 0 },
+                        .extent = self.extent,
+                       },
+                    };
+
+    const viewport_state = vk.PipelineViewportStateCreateInfo
+                           {
+                             .flags          = .{},
+                             .viewport_count = 1,
+                             .p_viewports    = &viewport,
+                             .scissor_count  = 1,
+                             .p_scissors     = &scissor,
+                           };
+
+    const rasterizer = vk.PipelineRasterizationStateCreateInfo
+                       {
+                         .flags                      = .{},
+                         .depth_clamp_enable         = vk.FALSE,
+                         .rasterizer_discard_enable  = vk.FALSE,
+                         .polygon_mode               = .fill,
+                         .line_width                 = 1,
+                         .cull_mode                  = .{ .back_bit = true },
+                         .front_face                 = .clockwise,
+                         .depth_bias_enable          = vk.FALSE,
+                         .depth_bias_constant_factor = 0,
+                         .depth_bias_clamp           = 0,
+                         .depth_bias_slope_factor    = 0,
+                       };
+
+    const multisampling = vk.PipelineMultisampleStateCreateInfo
+                          {
+                            .flags                    = .{},
+                            .sample_shading_enable    = vk.FALSE,
+                            .rasterization_samples    = .{ .@"1_bit" = true },
+                            .min_sample_shading       = 1,
+                            .p_sample_mask            = null,
+                            .alpha_to_coverage_enable = vk.FALSE,
+                            .alpha_to_one_enable      = vk.FALSE,
+                          };
+
+    const blend_attachment = vk.PipelineColorBlendAttachmentState
+                             {
+                               .color_write_mask       = .{
+                                                            .r_bit = true,
+                                                            .g_bit = true,
+                                                            .b_bit = true,
+                                                            .a_bit = true,
+                                                          },
+                               .blend_enable           = vk.FALSE,
+                               .src_color_blend_factor = .one,
+                               .dst_color_blend_factor = .zero,
+                               .color_blend_op         = .add,
+                               .src_alpha_blend_factor = .one,
+                               .dst_alpha_blend_factor = .zero,
+                               .alpha_blend_op         = .add,
+                             };
+
+    const blend_state = vk.PipelineColorBlendStateCreateInfo
                         {
-                          .{
-                             .flags                 = .{},
-                             .stage                 = .{ .vertex_bit = true },
-                             .module                = vertex,
-                             .p_name                = "main",
-                             .p_specialization_info = null,
-                           },
-                          .{
-                             .flags                 = .{},
-                             .stage                 = .{ .fragment_bit = true },
-                             .module                = fragment,
-                             .p_name                = "main",
-                             .p_specialization_info = null,
-                           },
+                          .flags            = .{},
+                          .logic_op_enable  = vk.FALSE,
+                          .logic_op         = .copy,
+                          .attachment_count = 1,
+                          .p_attachments    = @ptrCast ([*] const vk.PipelineColorBlendAttachmentState, &blend_attachment),
+                          .blend_constants  = [_] f32 { 0, 0, 0, 0 },
                         };
 
-    _ = create_info;
+    const create_info = vk.PipelineLayoutCreateInfo
+                        {
+                          .flags                     = .{},
+                          .set_layout_count          = 0,
+                          .p_set_layouts             = undefined,
+                          .push_constant_range_count = 0,
+                          .p_push_constant_ranges    = undefined,
+                        };
+
+    self.pipeline_layout = try self.device_dispatch.createPipelineLayout (self.logical_device, &create_info, null);
+    errdefer self.device_dispatch.destroyPipelineLayout (self.logical_device, self.pipeline_layout, null);
+
+    _ = shader_stage;
+    _ = dynamic_state;
+    _ = vertex_input_state;
+    _ = input_assembly;
+    _ = viewport_state;
+    _ = rasterizer;
+    _ = multisampling;
+    _ = blend_state;
 
     try log_app ("Init Vulkan Graphics Pipeline OK", severity.DEBUG, .{});
   }
@@ -498,6 +625,7 @@ pub const context_vk = struct
 
   pub fn cleanup (self: Self) !void
   {
+    self.device_dispatch.destroyPipelineLayout (self.logical_device, self.pipeline_layout, null);
     for (self.image_views) |image_view|
     {
       self.device_dispatch.destroyImageView (self.logical_device, image_view, null);

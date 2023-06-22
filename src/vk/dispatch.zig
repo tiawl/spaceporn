@@ -44,4 +44,6 @@ pub const DeviceDispatch = vk.DeviceWrapper (
   .destroyImageView      = true,
   .createShaderModule    = true,
   .destroyShaderModule   = true,
+  .createPipelineLayout  = true,
+  .destroyPipelineLayout = true,
 });

@@ -28,6 +28,10 @@ pub const context_vk = struct
   capabilities:       vk.SurfaceCapabilitiesKHR,
   formats:            [] vk.SurfaceFormatKHR,
   present_modes:      [] vk.PresentModeKHR,
+  surface_format:     vk.SurfaceFormatKHR,
+  extent:             vk.Extent2D,
+  swapchain:          vk.SwapchainKHR,
+  images:             [] vk.Image,
 
   const Self = @This ();
 
@@ -258,17 +262,17 @@ pub const context_vk = struct
     try log_app ("Init Vulkan Logical Device OK", severity.DEBUG, .{});
   }
 
-  fn choose_swap_support_format (self: Self) vk.SurfaceFormatKHR
+  fn choose_swap_support_format (self: *Self) void
   {
     for (self.formats) |format|
     {
       if (format.format == vk.Format.b8g8r8a8_srgb and format.color_space == vk.ColorSpaceKHR.srgb_nonlinear_khr)
       {
-        return format;
+        self.surface_format = format;
       }
     }
 
-    return self.formats [0];
+    self.surface_format = self.formats [0];
   }
 
   fn choose_swap_present_mode (self: Self) vk.PresentModeKHR
@@ -284,25 +288,74 @@ pub const context_vk = struct
     return vk.PresentModeKHR.fifo_khr;
   }
 
-  fn choose_swap_extent (self: Self, framebuffer: struct { width: u32, height: u32, }) vk.Extent2D
+  fn choose_swap_extent (self: *Self, framebuffer: struct { width: u32, height: u32, }) void
   {
     if (self.capabilities.current_extent.width != std.math.maxInt (u32))
     {
-      return self.capabilities.current_extent;
+      self.extent = self.capabilities.current_extent;
     } else {
-      return vk.Extent2D
-             {
-               .width  = std.math.clamp (framebuffer.width, self.capabilities.min_image_extent.width, self.capabilities.max_image_extent.width),
-               .height = std.math.clamp (framebuffer.height, self.capabilities.min_image_extent.height, self.capabilities.max_image_extent.height),
-             };
+      self.extent = vk.Extent2D
+                    {
+                      .width  = std.math.clamp (framebuffer.width, self.capabilities.min_image_extent.width, self.capabilities.max_image_extent.width),
+                      .height = std.math.clamp (framebuffer.height, self.capabilities.min_image_extent.height, self.capabilities.max_image_extent.height),
+                    };
     }
   }
 
-  fn init_swapchain (self: Self, framebuffer: struct { width: u32, height: u32, }) !void
+  fn init_swapchain_images (self: *Self, allocator: std.mem.Allocator) !void
   {
-    _ = self.choose_swap_support_format ();
-    _ = self.choose_swap_present_mode ();
-    _ = self.choose_swap_extent (.{ .width = framebuffer.width, .height = framebuffer.height, });
+    var image_count: u32 = undefined;
+
+    _ = try self.device_dispatch.getSwapchainImagesKHR (self.logical_device, self.swapchain, &image_count, null);
+
+    self.images = try allocator.alloc (vk.Image, image_count);
+    errdefer allocator.free (self.images);
+
+    _ = try self.device_dispatch.getSwapchainImagesKHR (self.logical_device, self.swapchain, &image_count, self.images.ptr);
+  }
+
+  fn init_swapchain (self: *Self, framebuffer: struct { width: u32, height: u32, }, allocator: std.mem.Allocator) !void
+  {
+    self.choose_swap_support_format ();
+    const present_mode = self.choose_swap_present_mode ();
+    self.choose_swap_extent (.{ .width = framebuffer.width, .height = framebuffer.height, });
+
+    var image_count = self.capabilities.min_image_count + 1;
+
+    if (self.capabilities.max_image_count > 0 and image_count > self.capabilities.max_image_count)
+    {
+      image_count = self.capabilities.max_image_count;
+    }
+
+    const queue_family_indices = [_] u32 {
+                                           self.candidate.graphics_family,
+                                           self.candidate.present_family,
+                                         };
+
+    const create_info = vk.SwapchainCreateInfoKHR
+                        {
+                          .flags                    = .{},
+                          .surface                  = self.surface,
+                          .min_image_count          = image_count,
+                          .image_format             = self.surface_format.format,
+                          .image_color_space        = self.surface_format.color_space,
+                          .image_extent             = self.extent,
+                          .image_array_layers       = 1,
+                          .image_usage              = .{ .color_attachment_bit = true, .transfer_dst_bit = true },
+                          .image_sharing_mode       = if (self.candidate.graphics_family != self.candidate.present_family) .concurrent else .exclusive,
+                          .queue_family_index_count = if (self.candidate.graphics_family != self.candidate.present_family) queue_family_indices.len else 0,
+                          .p_queue_family_indices   = if (self.candidate.graphics_family != self.candidate.present_family) &queue_family_indices else null,
+                          .pre_transform            = self.capabilities.current_transform,
+                          .composite_alpha          = .{ .opaque_bit_khr = true },
+                          .present_mode             = present_mode,
+                          .clipped                  = vk.TRUE,
+                          // .old_swapchain            = null,
+                        };
+
+    self.swapchain = try self.device_dispatch.createSwapchainKHR (self.logical_device, &create_info, null);
+    errdefer self.device_dispatch.destroySwapchainKHR (self.logical_device, self.swapchain, null);
+
+    try self.init_swapchain_images (allocator);
 
     try log_app ("Init Vulkan Swapchain OK", severity.DEBUG, .{});
   }
@@ -342,7 +395,8 @@ pub const context_vk = struct
     defer allocator.free (self.present_modes);
 
     try self.init_logical_device ();
-    try self.init_swapchain (.{ .width = framebuffer.width, .height = framebuffer.height, });
+    try self.init_swapchain (.{ .width = framebuffer.width, .height = framebuffer.height, }, allocator);
+    defer allocator.free (self.images);
 
     try log_app ("Init Vulkan Devices OK", severity.DEBUG, .{});
   }
@@ -355,6 +409,7 @@ pub const context_vk = struct
 
   pub fn cleanup (self: Self) !void
   {
+    self.device_dispatch.destroySwapchainKHR (self.logical_device, self.swapchain, null);
     self.device_dispatch.destroyDevice (self.logical_device, null);
     self.initializer.instance_dispatch.destroySurfaceKHR (self.initializer.instance, self.surface, null);
     try self.initializer.cleanup ();

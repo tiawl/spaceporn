@@ -33,8 +33,11 @@ pub const InstanceDispatch = vk.InstanceWrapper (
   .enumerateDeviceExtensionProperties      = true,
 });
 
-pub const DeviceDispatch = vk.DeviceWrapper(
+pub const DeviceDispatch = vk.DeviceWrapper (
 .{
-  .destroyDevice  = true,
-  .getDeviceQueue = true,
+  .destroyDevice         = true,
+  .getDeviceQueue        = true,
+  .createSwapchainKHR    = true,
+  .destroySwapchainKHR   = true,
+  .getSwapchainImagesKHR = true,
 });

@@ -76,7 +76,7 @@ pub const context = struct
     return self;
   }
 
-  pub fn loop (self: Self) !void
+  pub fn loop (self: *Self) !void
   {
     while (self.glfw.looping ())
     {

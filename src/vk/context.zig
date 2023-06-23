@@ -18,36 +18,39 @@ const required_layers = init_vk.required_layers;
 
 pub const context_vk = struct
 {
-  allocator:                   std.mem.Allocator,
-  initializer:                 init_vk,
-  surface:                     vk.SurfaceKHR      = undefined,
-  device_dispatch:             DeviceDispatch,
-  physical_device:             ?vk.PhysicalDevice = null,
-  candidate:                   struct { graphics_family: u32, present_family: u32, extensions: std.ArrayList ([*:0] const u8), },
-  logical_device:              vk.Device,
-  graphics_queue:              vk.Queue,
-  present_queue:               vk.Queue,
-  capabilities:                vk.SurfaceCapabilitiesKHR,
-  formats:                     [] vk.SurfaceFormatKHR,
-  present_modes:               [] vk.PresentModeKHR,
-  surface_format:              vk.SurfaceFormatKHR,
-  extent:                      vk.Extent2D,
-  swapchain:                   vk.SwapchainKHR,
-  images:                      [] vk.Image,
-  views:                       [] vk.ImageView,
-  viewport:                    [1] vk.Viewport,
-  scissor:                     [1] vk.Rect2D,
-  render_pass:                 vk.RenderPass,
-  pipeline_layout:             vk.PipelineLayout,
-  pipeline:                    vk.Pipeline,
-  framebuffers:                [] vk.Framebuffer,
-  command_pool:                vk.CommandPool,
-  command_buffer:              vk.CommandBuffer,
-  image_available_semaphore:   vk.Semaphore,
-  render_finished_semaphore:   vk.Semaphore,
-  in_flight_fence:             vk.Fence,
+  allocator:                    std.mem.Allocator,
+  initializer:                  init_vk,
+  surface:                      vk.SurfaceKHR      = undefined,
+  device_dispatch:              DeviceDispatch,
+  physical_device:              ?vk.PhysicalDevice = null,
+  candidate:                    struct { graphics_family: u32, present_family: u32, extensions: std.ArrayList ([*:0] const u8), },
+  logical_device:               vk.Device,
+  graphics_queue:               vk.Queue,
+  present_queue:                vk.Queue,
+  capabilities:                 vk.SurfaceCapabilitiesKHR,
+  formats:                      [] vk.SurfaceFormatKHR,
+  present_modes:                [] vk.PresentModeKHR,
+  surface_format:               vk.SurfaceFormatKHR,
+  extent:                       vk.Extent2D,
+  swapchain:                    vk.SwapchainKHR,
+  images:                       [] vk.Image,
+  views:                        [] vk.ImageView,
+  viewport:                     [1] vk.Viewport,
+  scissor:                      [1] vk.Rect2D,
+  render_pass:                  vk.RenderPass,
+  pipeline_layout:              vk.PipelineLayout,
+  pipeline:                     vk.Pipeline,
+  framebuffers:                 [] vk.Framebuffer,
+  command_pool:                 vk.CommandPool,
+  command_buffers:              [] vk.CommandBuffer,
+  image_available_semaphores:   [] vk.Semaphore,
+  render_finished_semaphores:   [] vk.Semaphore,
+  in_flight_fences:             [] vk.Fence,
+  current_frame:                u8,
 
   const Self = @This ();
+
+  const MAX_FRAMES_IN_FLIGHT = 2;
 
   const required_device_extensions = [_][*:0] const u8
   {
@@ -711,29 +714,47 @@ pub const context_vk = struct
     try log_app ("Init Vulkan Command Pool OK", severity.DEBUG, .{});
   }
 
-  fn init_command_buffer (self: *Self) !void
+  fn init_command_buffers (self: *Self) !void
   {
+    self.command_buffers = try self.allocator.alloc (vk.CommandBuffer, MAX_FRAMES_IN_FLIGHT);
+    errdefer self.allocator.free (self.command_buffers);
+
     const alloc_info = vk.CommandBufferAllocateInfo
                        {
                          .command_pool         = self.command_pool,
                          .level                = vk.CommandBufferLevel.primary,
-                         .command_buffer_count = 1,
+                         .command_buffer_count = MAX_FRAMES_IN_FLIGHT,
                        };
 
-    try self.device_dispatch.allocateCommandBuffers (self.logical_device, &alloc_info, @ptrCast ([*] vk.CommandBuffer, &(self.command_buffer)));
-    errdefer self.device_dispatch.freeCommandBuffers (self.logical_device, self.command_pool, 1, @ptrCast ([*] const vk.CommandBuffer, &(self.command_buffer)));
+    try self.device_dispatch.allocateCommandBuffers (self.logical_device, &alloc_info, @ptrCast ([*] vk.CommandBuffer, self.command_buffers.ptr));
+    errdefer self.device_dispatch.freeCommandBuffers (self.logical_device, self.command_pool, 1, @ptrCast ([*] const vk.CommandBuffer, self.command_buffers));
 
     try log_app ("Init Vulkan Command Buffer OK", severity.DEBUG, .{});
   }
 
   fn init_sync_objects (self: *Self) !void
   {
-    self.image_available_semaphore = try self.device_dispatch.createSemaphore (self.logical_device, &vk.SemaphoreCreateInfo { .flags = vk.SemaphoreCreateFlags {} }, null);
-    errdefer self.device_dispatch.destroySemaphore (self.logical_device, self.image_available_semaphore, null);
-    self.render_finished_semaphore = try self.device_dispatch.createSemaphore (self.logical_device, &vk.SemaphoreCreateInfo { .flags = vk.SemaphoreCreateFlags {} }, null);
-    errdefer self.device_dispatch.destroySemaphore (self.logical_device, self.render_finished_semaphore, null);
-    self.in_flight_fence = try self.device_dispatch.createFence(self.logical_device, &vk.FenceCreateInfo { .flags = vk.FenceCreateFlags { .signaled_bit = true } }, null);
-    errdefer self.device_dispatch.destroyFence (self.logical_device, self.in_flight_fence, null);
+    self.image_available_semaphores = try self.allocator.alloc (vk.Semaphore, MAX_FRAMES_IN_FLIGHT);
+    errdefer self.allocator.free (self.image_available_semaphores);
+    self.render_finished_semaphores = try self.allocator.alloc (vk.Semaphore, MAX_FRAMES_IN_FLIGHT);
+    errdefer self.allocator.free (self.render_finished_semaphores);
+    self.in_flight_fences = try self.allocator.alloc (vk.Fence, MAX_FRAMES_IN_FLIGHT);
+    errdefer self.allocator.free (self.in_flight_fences);
+
+    var index: u32 = 0;
+
+    while (index < MAX_FRAMES_IN_FLIGHT)
+    {
+      self.image_available_semaphores [index] = try self.device_dispatch.createSemaphore (self.logical_device, &vk.SemaphoreCreateInfo { .flags = vk.SemaphoreCreateFlags {} }, null);
+      errdefer self.device_dispatch.destroySemaphore (self.logical_device, self.image_available_semaphores [index], null);
+      self.render_finished_semaphores [index] = try self.device_dispatch.createSemaphore (self.logical_device, &vk.SemaphoreCreateInfo { .flags = vk.SemaphoreCreateFlags {} }, null);
+      errdefer self.device_dispatch.destroySemaphore (self.logical_device, self.render_finished_semaphores [index], null);
+      self.in_flight_fences [index] = try self.device_dispatch.createFence(self.logical_device, &vk.FenceCreateInfo { .flags = vk.FenceCreateFlags { .signaled_bit = true } }, null);
+      errdefer self.device_dispatch.destroyFence (self.logical_device, self.in_flight_fences [index], null);
+      index += 1;
+    }
+
+    self.current_frame = 0;
 
     try log_app ("Init Vulkan Semaphores & Fence OK", severity.DEBUG, .{});
   }
@@ -783,7 +804,7 @@ pub const context_vk = struct
     errdefer self.allocator.free (self.framebuffers);
 
     try self.init_command_pool ();
-    try self.init_command_buffer ();
+    try self.init_command_buffers ();
     try self.init_sync_objects ();
 
     try log_app ("Init Vulkan OK", severity.DEBUG, .{});
@@ -826,23 +847,24 @@ pub const context_vk = struct
     self.device_dispatch.cmdDraw (command_buffer, 3, 1, 0, 0);
 
     self.device_dispatch.cmdEndRenderPass (command_buffer);
+
     try self.device_dispatch.endCommandBuffer (command_buffer);
   }
 
-  fn draw_frame (self: Self) !void
+  fn draw_frame (self: *Self) !void
   {
-    _ = try self.device_dispatch.waitForFences (self.logical_device, 1, @ptrCast ([*] const vk.Fence, &(self.in_flight_fence)), vk.TRUE, std.math.maxInt (u64));
-    _ = try self.device_dispatch.resetFences (self.logical_device, 1, @ptrCast ([*] const vk.Fence, &(self.in_flight_fence)));
+    _ = try self.device_dispatch.waitForFences (self.logical_device, 1, @ptrCast ([*] const vk.Fence, &(self.in_flight_fences [self.current_frame])), vk.TRUE, std.math.maxInt (u64));
+    _ = try self.device_dispatch.resetFences (self.logical_device, 1, @ptrCast ([*] const vk.Fence, &(self.in_flight_fences [self.current_frame])));
 
-    const result = try self.device_dispatch.acquireNextImageKHR (self.logical_device, self.swapchain, std.math.maxInt(u64), self.image_available_semaphore, .null_handle);
+    const result = try self.device_dispatch.acquireNextImageKHR (self.logical_device, self.swapchain, std.math.maxInt(u64), self.image_available_semaphores [self.current_frame], .null_handle);
 
     if (result.result != vk.Result.success)
     {
       return ContextError.ImageAcquireFailed;
     }
 
-    try self.device_dispatch.resetCommandBuffer (self.command_buffer, vk.CommandBufferResetFlags {});
-    try self.record_command_buffer(self.command_buffer, result.image_index);
+    try self.device_dispatch.resetCommandBuffer (self.command_buffers [self.current_frame], vk.CommandBufferResetFlags {});
+    try self.record_command_buffer(self.command_buffers [self.current_frame], result.image_index);
 
     const wait_stage = [_] vk.PipelineStageFlags
                        {
@@ -852,20 +874,20 @@ pub const context_vk = struct
     const submit_info = vk.SubmitInfo
                         {
                           .wait_semaphore_count   = 1,
-                          .p_wait_semaphores      = @ptrCast ([*] const vk.Semaphore, &(self.image_available_semaphore)),
+                          .p_wait_semaphores      = @ptrCast ([*] const vk.Semaphore, &(self.image_available_semaphores [self.current_frame])),
                           .p_wait_dst_stage_mask  = &wait_stage,
                           .command_buffer_count   = 1,
-                          .p_command_buffers      = @ptrCast ([*] const vk.CommandBuffer, &(self.command_buffer)),
+                          .p_command_buffers      = @ptrCast ([*] const vk.CommandBuffer, &(self.command_buffers [self.current_frame])),
                           .signal_semaphore_count = 1,
-                          .p_signal_semaphores    = @ptrCast ([*] const vk.Semaphore, &(self.render_finished_semaphore)),
+                          .p_signal_semaphores    = @ptrCast ([*] const vk.Semaphore, &(self.render_finished_semaphores [self.current_frame])),
                         };
 
-    try self.device_dispatch.queueSubmit (self.graphics_queue, 1, @ptrCast ([*] const vk.SubmitInfo, &submit_info), self.in_flight_fence);
+    try self.device_dispatch.queueSubmit (self.graphics_queue, 1, @ptrCast ([*] const vk.SubmitInfo, &submit_info), self.in_flight_fences [self.current_frame]);
 
     const present_info = vk.PresentInfoKHR
                          {
                            .wait_semaphore_count = 1,
-                           .p_wait_semaphores    = @ptrCast ([*] const vk.Semaphore, &(self.render_finished_semaphore)),
+                           .p_wait_semaphores    = @ptrCast ([*] const vk.Semaphore, &(self.render_finished_semaphores [self.current_frame])),
                            .swapchain_count      = 1,
                            .p_swapchains         = @ptrCast ([*] const vk.SwapchainKHR, &(self.swapchain)),
                            .p_image_indices      = @ptrCast ([*] const u32, &(result.image_index)),
@@ -873,9 +895,11 @@ pub const context_vk = struct
                          };
 
     _ = try self.device_dispatch.queuePresentKHR(self.present_queue, &present_info);
+
+    self.current_frame = (self.current_frame + 1) % MAX_FRAMES_IN_FLIGHT;
   }
 
-  pub fn loop (self: Self) !void
+  pub fn loop (self: *Self) !void
   {
     try self.draw_frame ();
     try log_app ("Loop Vulkan OK", severity.DEBUG, .{});
@@ -885,9 +909,15 @@ pub const context_vk = struct
   {
     try self.device_dispatch.deviceWaitIdle (self.logical_device);
 
-    self.device_dispatch.destroyFence (self.logical_device, self.in_flight_fence, null);
-    self.device_dispatch.destroySemaphore (self.logical_device, self.image_available_semaphore, null);
-    self.device_dispatch.destroySemaphore (self.logical_device, self.render_finished_semaphore, null);
+    var index: u32 = 0;
+
+    while (index < MAX_FRAMES_IN_FLIGHT)
+    {
+      self.device_dispatch.destroyFence (self.logical_device, self.in_flight_fences [index], null);
+      self.device_dispatch.destroySemaphore (self.logical_device, self.image_available_semaphores [index], null);
+      self.device_dispatch.destroySemaphore (self.logical_device, self.render_finished_semaphores [index], null);
+      index += 1;
+    }
 
     self.device_dispatch.destroyCommandPool (self.logical_device, self.command_pool, null);
 

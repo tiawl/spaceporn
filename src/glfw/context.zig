@@ -93,12 +93,16 @@ pub const context_glfw = struct
             };
   }
 
+  pub fn looping (self: Self) bool
+  {
+    const close_window = self.window.shouldClose ();
+    return !close_window;
+  }
+
   pub fn loop (self: Self) !void
   {
-    while (!self.window.shouldClose ())
-    {
-      glfw.pollEvents ();
-    }
+    _ = self;
+    glfw.pollEvents ();
     try log_app ("Loop GLFW OK", severity.DEBUG, .{});
   }
 

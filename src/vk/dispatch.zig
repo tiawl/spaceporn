@@ -64,4 +64,8 @@ pub const DeviceDispatch = vk.DeviceWrapper (
   .cmdDraw                 = true,
   .cmdEndRenderPass        = true,
   .endCommandBuffer        = true,
+  .createSemaphore         = true,
+  .destroySemaphore        = true,
+  .createFence             = true,
+  .destroyFence            = true,
 });

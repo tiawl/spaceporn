@@ -78,8 +78,11 @@ pub const context = struct
 
   pub fn loop (self: Self) !void
   {
-    try self.glfw.loop ();
-    try self.vk.loop ();
+    while (self.glfw.looping ())
+    {
+      try self.glfw.loop ();
+      try self.vk.loop ();
+    }
     try log_app ("Loop OK", severity.DEBUG, .{});
   }
 

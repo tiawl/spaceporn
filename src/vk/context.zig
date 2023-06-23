@@ -18,31 +18,34 @@ const required_layers = init_vk.required_layers;
 
 pub const context_vk = struct
 {
-  allocator:          std.mem.Allocator,
-  initializer:        init_vk,
-  surface:            vk.SurfaceKHR      = undefined,
-  device_dispatch:    DeviceDispatch,
-  physical_device:    ?vk.PhysicalDevice = null,
-  candidate:          struct { graphics_family: u32, present_family: u32, extensions: std.ArrayList ([*:0] const u8), },
-  logical_device:     vk.Device,
-  graphics_queue:     vk.Queue,
-  present_queue:      vk.Queue,
-  capabilities:       vk.SurfaceCapabilitiesKHR,
-  formats:            [] vk.SurfaceFormatKHR,
-  present_modes:      [] vk.PresentModeKHR,
-  surface_format:     vk.SurfaceFormatKHR,
-  extent:             vk.Extent2D,
-  swapchain:          vk.SwapchainKHR,
-  images:             [] vk.Image,
-  views:              [] vk.ImageView,
-  viewport:           [1] vk.Viewport,
-  scissor:            [1] vk.Rect2D,
-  render_pass:        vk.RenderPass,
-  pipeline_layout:    vk.PipelineLayout,
-  pipeline:           vk.Pipeline,
-  framebuffers:       [] vk.Framebuffer,
-  command_pool:       vk.CommandPool,
-  command_buffer:     vk.CommandBuffer,
+  allocator:                   std.mem.Allocator,
+  initializer:                 init_vk,
+  surface:                     vk.SurfaceKHR      = undefined,
+  device_dispatch:             DeviceDispatch,
+  physical_device:             ?vk.PhysicalDevice = null,
+  candidate:                   struct { graphics_family: u32, present_family: u32, extensions: std.ArrayList ([*:0] const u8), },
+  logical_device:              vk.Device,
+  graphics_queue:              vk.Queue,
+  present_queue:               vk.Queue,
+  capabilities:                vk.SurfaceCapabilitiesKHR,
+  formats:                     [] vk.SurfaceFormatKHR,
+  present_modes:               [] vk.PresentModeKHR,
+  surface_format:              vk.SurfaceFormatKHR,
+  extent:                      vk.Extent2D,
+  swapchain:                   vk.SwapchainKHR,
+  images:                      [] vk.Image,
+  views:                       [] vk.ImageView,
+  viewport:                    [1] vk.Viewport,
+  scissor:                     [1] vk.Rect2D,
+  render_pass:                 vk.RenderPass,
+  pipeline_layout:             vk.PipelineLayout,
+  pipeline:                    vk.Pipeline,
+  framebuffers:                [] vk.Framebuffer,
+  command_pool:                vk.CommandPool,
+  command_buffer:              vk.CommandBuffer,
+  image_available_semaphore:   vk.Semaphore,
+  render_finished_semaphore:   vk.Semaphore,
+  in_flight_fence:             vk.Fence,
 
   const Self = @This ();
 
@@ -641,7 +644,7 @@ pub const context_vk = struct
   fn init_framebuffers (self: *Self) !void
   {
     self.framebuffers = try self.allocator.alloc (vk.Framebuffer, self.views.len);
-    errdefer self.allocator.free (self.views);
+    errdefer self.allocator.free (self.framebuffers);
 
     var index: usize = 0;
     var create_info: vk.FramebufferCreateInfo = undefined;
@@ -697,44 +700,16 @@ pub const context_vk = struct
     try log_app ("Init Vulkan Command Buffer OK", severity.DEBUG, .{});
   }
 
-  fn record_commandbuffer (self: Self, command_buffer: vk.CommandBuffer, image_index: u32) !void
+  fn init_sync_objects (self: *Self) !void
   {
-    const commandbuffer_begin_info = vk.CommandBufferBeginInfo
-                                     {
-                                       .flags              = .{},
-                                       .p_inheritance_info = null,
-                                     };
+    self.image_available_semaphore = try self.device_dispatch.createSemaphore (self.logical_device, &.{ .flags = .{} }, null);
+    errdefer self.device_dispatch.destroySemaphore (self.logical_device, self.image_available_semaphore, null);
+    self.render_finished_semaphore = try self.device_dispatch.createSemaphore (self.logical_device, &.{ .flags = .{} }, null);
+    errdefer self.device_dispatch.destroySemaphore (self.logical_device, self.render_finished_semaphore, null);
+    self.in_flight_fence = try self.device_dispatch.createFence(self.logical_device, &.{ .flags = .{} }, null);
+    errdefer self.device_dispatch.destroyFence (self.logical_device, self.in_flight_fence, null);
 
-    try self.device_dispatch.beginCommandBuffer (command_buffer, &commandbuffer_begin_info);
-
-    const clear = vk.ClearValue
-                  {
-                    .color = .{ .float_32 = .{ 0, 0, 0, 1 } },
-                  };
-
-    const renderpass_begin_info = vk.RenderPassBeginInfo
-                                  {
-                                    .render_pass       = self.render_pass,
-                                    .framebuffer       = self.framebuffers [image_index],
-                                    .render_area       = vk.Rect2D
-                                                         {
-                                                           .offset = .{ .x = 0, .y = 0 },
-                                                           .extent = self.extent,
-                                                         },
-                                    .clear_value_count = 1,
-                                    .p_clear_values    = @ptrCast([*] const vk.ClearValue, &clear),
-                                  };
-
-    self.device_dispatch.cmdBeginRenderPass (command_buffer, &renderpass_begin_info, .@"inline");
-    self.device_dispatch.cmdBindPipeline (command_buffer, .graphics, self.pipeline);
-
-    self.device_dispatch.cmdSetViewport (command_buffer, 0, 1, self.viewport.ptr);
-    self.device_dispatch.cmdSetScissor (command_buffer, 0, 1, self.scissor.ptr);
-
-    self.device_dispatch.cmdDraw (command_buffer, 3, 1, 0, 0);
-
-    self.device_dispatch.cmdEndCommandBuffer (command_buffer);
-    try self.device_dispatch.endCommandBuffer (command_buffer);
+    try log_app ("Init Vulkan Semaphores & Fence OK", severity.DEBUG, .{});
   }
 
   pub fn get_surface (self: Self) struct { instance: vk.Instance, surface: vk.SurfaceKHR, success: i32, }
@@ -779,26 +754,80 @@ pub const context_vk = struct
     try self.init_render_pass ();
     try self.init_graphics_pipeline ();
     try self.init_framebuffers ();
+    errdefer self.allocator.free (self.framebuffers);
+
     try self.init_commandpool ();
     try self.init_commandbuffer ();
+    try self.init_sync_objects ();
 
     try log_app ("Init Vulkan OK", severity.DEBUG, .{});
   }
 
-  pub fn loop (self: Self) !void
+  fn record_commandbuffer (self: Self, command_buffer: vk.CommandBuffer, image_index: u32) !void
+  {
+    const commandbuffer_begin_info = vk.CommandBufferBeginInfo
+                                     {
+                                       .flags              = .{},
+                                       .p_inheritance_info = null,
+                                     };
+
+    try self.device_dispatch.beginCommandBuffer (command_buffer, &commandbuffer_begin_info);
+
+    const clear = vk.ClearValue
+                  {
+                    .color = .{ .float_32 = .{ 0, 0, 0, 1 } },
+                  };
+
+    const renderpass_begin_info = vk.RenderPassBeginInfo
+                                  {
+                                    .render_pass       = self.render_pass,
+                                    .framebuffer       = self.framebuffers [image_index],
+                                    .render_area       = vk.Rect2D
+                                                         {
+                                                           .offset = .{ .x = 0, .y = 0 },
+                                                           .extent = self.extent,
+                                                         },
+                                    .clear_value_count = 1,
+                                    .p_clear_values    = @ptrCast([*] const vk.ClearValue, &clear),
+                                  };
+
+    self.device_dispatch.cmdBeginRenderPass (command_buffer, &renderpass_begin_info, .@"inline");
+    self.device_dispatch.cmdBindPipeline (command_buffer, .graphics, self.pipeline);
+
+    self.device_dispatch.cmdSetViewport (command_buffer, 0, 1, self.viewport.ptr);
+    self.device_dispatch.cmdSetScissor (command_buffer, 0, 1, self.scissor.ptr);
+
+    self.device_dispatch.cmdDraw (command_buffer, 3, 1, 0, 0);
+
+    self.device_dispatch.cmdEndCommandBuffer (command_buffer);
+    try self.device_dispatch.endCommandBuffer (command_buffer);
+  }
+
+  fn draw_frame (self: Self) void
   {
     _ = self;
+  }
+
+  pub fn loop (self: Self) !void
+  {
+    self.draw_frame ();
     try log_app ("Loop Vulkan OK", severity.DEBUG, .{});
   }
 
   pub fn cleanup (self: Self) !void
   {
+    self.device_dispatch.destroyFence (self.logical_device, self.in_flight_fence, null);
+    self.device_dispatch.destroySemaphore (self.logical_device, self.image_available_semaphore, null);
+    self.device_dispatch.destroySemaphore (self.logical_device, self.render_finished_semaphore, null);
+
     self.device_dispatch.destroyCommandPool (self.logical_device, self.command_pool, null);
 
     for (self.framebuffers) |framebuffer|
     {
       self.device_dispatch.destroyFramebuffer (self.logical_device, framebuffer, null);
     }
+
+    self.allocator.free (self.framebuffers);
 
     self.device_dispatch.destroyPipeline (self.logical_device, self.pipeline, null);
     self.device_dispatch.destroyPipelineLayout (self.logical_device, self.pipeline_layout, null);

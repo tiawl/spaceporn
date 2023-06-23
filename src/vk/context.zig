@@ -35,10 +35,14 @@ pub const context_vk = struct
   swapchain:          vk.SwapchainKHR,
   images:             [] vk.Image,
   views:              [] vk.ImageView,
+  viewport:           [1] vk.Viewport,
+  scissor:            [1] vk.Rect2D,
   render_pass:        vk.RenderPass,
   pipeline_layout:    vk.PipelineLayout,
   pipeline:           vk.Pipeline,
   framebuffers:       [] vk.Framebuffer,
+  command_pool:       vk.CommandPool,
+  command_buffer:     vk.CommandBuffer,
 
   const Self = @This ();
 
@@ -513,33 +517,33 @@ pub const context_vk = struct
                              .primitive_restart_enable = vk.FALSE,
                            };
 
-    const viewport = [_] vk.Viewport
-                     {
-                       .{
-                         .x         = 0,
-                         .y         = 0,
-                         .width     = @intToFloat(f32, self.extent.width),
-                         .height    = @intToFloat(f32, self.extent.height),
-                         .min_depth = 0,
-                         .max_depth = 1,
-                        },
-                     };
-
-    const scissor = [_] vk.Rect2D
+    self.viewport = [_] vk.Viewport
                     {
                       .{
-                        .offset = .{ .x = 0, .y = 0 },
-                        .extent = self.extent,
+                        .x         = 0,
+                        .y         = 0,
+                        .width     = @intToFloat(f32, self.extent.width),
+                        .height    = @intToFloat(f32, self.extent.height),
+                        .min_depth = 0,
+                        .max_depth = 1,
                        },
                     };
+
+    self.scissor = [_] vk.Rect2D
+                   {
+                     .{
+                       .offset = .{ .x = 0, .y = 0 },
+                       .extent = self.extent,
+                      },
+                   };
 
     const viewport_state = vk.PipelineViewportStateCreateInfo
                            {
                              .flags          = .{},
                              .viewport_count = 1,
-                             .p_viewports    = &viewport,
+                             .p_viewports    = &(self.viewport),
                              .scissor_count  = 1,
-                             .p_scissors     = &scissor,
+                             .p_scissors     = &(self.scissor),
                            };
 
     const rasterizer = vk.PipelineRasterizationStateCreateInfo
@@ -664,6 +668,75 @@ pub const context_vk = struct
     try log_app ("Init Vulkan Framebuffers OK", severity.DEBUG, .{});
   }
 
+  fn init_commandpool (self: *Self) !void
+  {
+    const create_info = vk.CommandPoolCreateInfo
+                        {
+                          .flags              = .{},
+                          .queue_family_index = self.candidate.graphics_family,
+                        };
+
+    self.command_pool = try self.device_dispatch.createCommandPool (self.logical_device, &create_info, null);
+    errdefer self.device_dispatch.destroyCommandPool (self.logical_device, self.command_pool, null);
+
+    try log_app ("Init Vulkan Command Pool OK", severity.DEBUG, .{});
+  }
+
+  fn init_commandbuffer (self: *Self) !void
+  {
+    const alloc_info = vk.CommandBufferAllocateInfo
+                       {
+                         .command_pool         = self.command_pool,
+                         .level                = .primary,
+                         .command_buffer_count = 1,
+                       };
+
+    try self.device_dispatch.allocateCommandBuffers (self.logical_device, &alloc_info, @ptrCast ([*] vk.CommandBuffer, &(self.command_buffer)));
+    errdefer self.device_dispatch.freeCommandBuffers (self.logical_device, self.command_pool, 1, @ptrCast ([*] const vk.CommandBuffer, &(self.command_buffer)));
+
+    try log_app ("Init Vulkan Command Buffer OK", severity.DEBUG, .{});
+  }
+
+  fn record_commandbuffer (self: Self, command_buffer: vk.CommandBuffer, image_index: u32) !void
+  {
+    const commandbuffer_begin_info = vk.CommandBufferBeginInfo
+                                     {
+                                       .flags              = .{},
+                                       .p_inheritance_info = null,
+                                     };
+
+    try self.device_dispatch.beginCommandBuffer (command_buffer, &commandbuffer_begin_info);
+
+    const clear = vk.ClearValue
+                  {
+                    .color = .{ .float_32 = .{ 0, 0, 0, 1 } },
+                  };
+
+    const renderpass_begin_info = vk.RenderPassBeginInfo
+                                  {
+                                    .render_pass       = self.render_pass,
+                                    .framebuffer       = self.framebuffers [image_index],
+                                    .render_area       = vk.Rect2D
+                                                         {
+                                                           .offset = .{ .x = 0, .y = 0 },
+                                                           .extent = self.extent,
+                                                         },
+                                    .clear_value_count = 1,
+                                    .p_clear_values    = @ptrCast([*] const vk.ClearValue, &clear),
+                                  };
+
+    self.device_dispatch.cmdBeginRenderPass (command_buffer, &renderpass_begin_info, .@"inline");
+    self.device_dispatch.cmdBindPipeline (command_buffer, .graphics, self.pipeline);
+
+    self.device_dispatch.cmdSetViewport (command_buffer, 0, 1, self.viewport.ptr);
+    self.device_dispatch.cmdSetScissor (command_buffer, 0, 1, self.scissor.ptr);
+
+    self.device_dispatch.cmdDraw (command_buffer, 3, 1, 0, 0);
+
+    self.device_dispatch.cmdEndCommandBuffer (command_buffer);
+    try self.device_dispatch.endCommandBuffer (command_buffer);
+  }
+
   pub fn get_surface (self: Self) struct { instance: vk.Instance, surface: vk.SurfaceKHR, success: i32, }
   {
     return .{
@@ -706,6 +779,8 @@ pub const context_vk = struct
     try self.init_render_pass ();
     try self.init_graphics_pipeline ();
     try self.init_framebuffers ();
+    try self.init_commandpool ();
+    try self.init_commandbuffer ();
 
     try log_app ("Init Vulkan OK", severity.DEBUG, .{});
   }
@@ -718,6 +793,8 @@ pub const context_vk = struct
 
   pub fn cleanup (self: Self) !void
   {
+    self.device_dispatch.destroyCommandPool (self.logical_device, self.command_pool, null);
+
     for (self.framebuffers) |framebuffer|
     {
       self.device_dispatch.destroyFramebuffer (self.logical_device, framebuffer, null);
@@ -725,6 +802,7 @@ pub const context_vk = struct
 
     self.device_dispatch.destroyPipeline (self.logical_device, self.pipeline, null);
     self.device_dispatch.destroyPipelineLayout (self.logical_device, self.pipeline_layout, null);
+    self.device_dispatch.destroyRenderPass (self.logical_device, self.render_pass, null);
 
     for (self.views) |image_view|
     {
@@ -733,7 +811,6 @@ pub const context_vk = struct
 
     self.allocator.free (self.views);
     self.device_dispatch.destroySwapchainKHR (self.logical_device, self.swapchain, null);
-    self.device_dispatch.destroyRenderPass (self.logical_device, self.render_pass, null);
     self.device_dispatch.destroyDevice (self.logical_device, null);
     self.initializer.instance_dispatch.destroySurfaceKHR (self.initializer.instance, self.surface, null);
     try self.initializer.cleanup ();

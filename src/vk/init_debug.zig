@@ -58,9 +58,9 @@ pub const init_vk = struct
 
   fn debug_callback (
     message_severity: vk.DebugUtilsMessageSeverityFlagsEXT,
-    message_type: vk.DebugUtilsMessageTypeFlagsEXT,
-    p_callback_data: ?*const vk.DebugUtilsMessengerCallbackDataEXT,
-    p_user_data: ?*anyopaque) bool
+    message_type:     vk.DebugUtilsMessageTypeFlagsEXT,
+    p_callback_data:  ?*const vk.DebugUtilsMessengerCallbackDataEXT,
+    p_user_data:      ?*anyopaque) bool
   {
     _ = p_user_data;
 
@@ -140,28 +140,30 @@ pub const init_vk = struct
   {
     debug_info.* = vk.DebugUtilsMessengerCreateInfoEXT
                    {
-                     .message_severity = .{
-                                            .verbose_bit_ext = (build.LOG_LEVEL > @enumToInt (profile.DEFAULT)),
-                                            .info_bit_ext    = true,
-                                            .warning_bit_ext = true,
-                                            .error_bit_ext   = true,
-                                          },
-                     .message_type = .{
-                                        .general_bit_ext                = true,
-                                        .validation_bit_ext             = true,
-                                        .device_address_binding_bit_ext = blk:
-                                                                          {
-                                                                            for (optional_extensions) |ext|
-                                                                            {
-                                                                              if (ext.name == vk.extension_info.ext_device_address_binding_report.name.ptr and ext.supported)
-                                                                              {
-                                                                                break :blk true;
-                                                                              }
-                                                                            }
-                                                                            break :blk false;
-                                                                          },
-                                        .performance_bit_ext            = (build.LOG_LEVEL > @enumToInt (profile.DEFAULT)),
-                                      },
+                     .message_severity = vk.DebugUtilsMessageSeverityFlagsEXT
+                                         {
+                                           .verbose_bit_ext = (build.LOG_LEVEL > @enumToInt (profile.DEFAULT)),
+                                           .info_bit_ext    = true,
+                                           .warning_bit_ext = true,
+                                           .error_bit_ext   = true,
+                                         },
+                     .message_type = vk.DebugUtilsMessageTypeFlagsEXT
+                                     {
+                                       .general_bit_ext                = true,
+                                       .validation_bit_ext             = true,
+                                       .device_address_binding_bit_ext = blk:
+                                                                         {
+                                                                           for (optional_extensions) |ext|
+                                                                           {
+                                                                             if (ext.name == vk.extension_info.ext_device_address_binding_report.name.ptr and ext.supported)
+                                                                             {
+                                                                               break :blk true;
+                                                                             }
+                                                                           }
+                                                                           break :blk false;
+                                                                         },
+                                       .performance_bit_ext            = (build.LOG_LEVEL > @enumToInt (profile.DEFAULT)),
+                                     },
                      .pfn_user_callback = @ptrCast (vk.PfnDebugUtilsMessengerCallbackEXT, &debug_callback),
                    };
   }
@@ -237,7 +239,7 @@ pub const init_vk = struct
 
     const create_info = vk.InstanceCreateInfo
                         {
-                          .flags = .{},
+                          .flags                      = vk.InstanceCreateFlags {},
                           .enabled_layer_count        = required_layers.len,
                           .pp_enabled_layer_names     = @ptrCast ([*] const [*:0] const u8, required_layers[0..]),
                           .p_next                     = debug_info,

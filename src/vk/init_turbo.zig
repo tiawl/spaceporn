@@ -46,6 +46,7 @@ pub const init_vk = struct
 
     const create_info = vk.InstanceCreateInfo
                         {
+                          .flags                      = vk.InstanceCreateFlags {},
                           .enabled_layer_count        = 0,
                           .pp_enabled_layer_names     = undefined,
                           .p_application_info         = &app_info,

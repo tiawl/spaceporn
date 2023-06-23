@@ -58,6 +58,7 @@ pub const context_vk = struct
   {
     NoDevice,
     NoSuitableDevice,
+    ImageAcquireFailed,
   };
 
   fn find_queue_families (self: *Self, device: vk.PhysicalDevice) !bool
@@ -235,18 +236,20 @@ pub const context_vk = struct
     const priority = [_] f32 {1};
     const queue_create_info = [_] vk.DeviceQueueCreateInfo
                               {
-                                .{
-                                  .flags              = .{},
+                                vk.DeviceQueueCreateInfo
+                                {
+                                  .flags              = vk.DeviceQueueCreateFlags {},
                                   .queue_family_index = self.candidate.graphics_family,
                                   .queue_count        = 1,
                                   .p_queue_priorities = &priority,
-                                 },
-                                .{
-                                  .flags              = .{},
+                                },
+                                vk.DeviceQueueCreateInfo
+                                {
+                                  .flags              = vk.DeviceQueueCreateFlags {},
                                   .queue_family_index = self.candidate.present_family,
                                   .queue_count        = 1,
                                   .p_queue_priorities = &priority,
-                                 },
+                                },
                               };
     const queue_count: u32 = if (self.candidate.graphics_family == self.candidate.present_family) 1 else 2;
 
@@ -254,7 +257,7 @@ pub const context_vk = struct
 
     const device_create_info = vk.DeviceCreateInfo
                                {
-                                 .flags                   = .{},
+                                 .flags                   = vk.DeviceCreateFlags {},
                                  .p_queue_create_infos    = &queue_create_info,
                                  .queue_create_info_count = queue_count,
                                  .enabled_layer_count     = required_layers.len,
@@ -353,22 +356,25 @@ pub const context_vk = struct
 
     const create_info = vk.SwapchainCreateInfoKHR
                         {
-                          .flags                    = .{},
+                          .flags                    = vk.SwapchainCreateFlagsKHR {},
                           .surface                  = self.surface,
                           .min_image_count          = image_count,
                           .image_format             = self.surface_format.format,
                           .image_color_space        = self.surface_format.color_space,
                           .image_extent             = self.extent,
                           .image_array_layers       = 1,
-                          .image_usage              = .{ .color_attachment_bit = true, .transfer_dst_bit = true },
+                          .image_usage              = vk.ImageUsageFlags
+                                                      {
+                                                        .color_attachment_bit = true,
+                                                        .transfer_dst_bit     = true
+                                                      },
                           .image_sharing_mode       = if (self.candidate.graphics_family != self.candidate.present_family) .concurrent else .exclusive,
                           .queue_family_index_count = if (self.candidate.graphics_family != self.candidate.present_family) queue_family_indices.len else 0,
                           .p_queue_family_indices   = if (self.candidate.graphics_family != self.candidate.present_family) &queue_family_indices else null,
                           .pre_transform            = self.capabilities.current_transform,
-                          .composite_alpha          = .{ .opaque_bit_khr = true },
+                          .composite_alpha          = vk.CompositeAlphaFlagsKHR { .opaque_bit_khr = true },
                           .present_mode             = present_mode,
                           .clipped                  = vk.TRUE,
-                          // .old_swapchain            = null,
                         };
 
     self.swapchain = try self.device_dispatch.createSwapchainKHR (self.logical_device, &create_info, null);
@@ -387,23 +393,25 @@ pub const context_vk = struct
     {
       create_info = vk.ImageViewCreateInfo
                     {
-                      .flags             = .{},
+                      .flags             = vk.ImageViewCreateFlags {},
                       .image             = image,
-                      .view_type         = .@"2d",
+                      .view_type         = vk.ImageViewType.@"2d",
                       .format            = self.surface_format.format,
-                      .components        = .{
-                                              .r = .identity,
-                                              .g = .identity,
-                                              .b = .identity,
-                                              .a = .identity,
-                                            },
-                      .subresource_range = .{
-                                              .aspect_mask      = .{ .color_bit = true },
-                                              .base_mip_level   = 0,
-                                              .level_count      = 1,
-                                              .base_array_layer = 0,
-                                              .layer_count      = 1,
-                                            },
+                      .components        = vk.ComponentMapping
+                                           {
+                                             .r = vk.ComponentSwizzle.identity,
+                                             .g = vk.ComponentSwizzle.identity,
+                                             .b = vk.ComponentSwizzle.identity,
+                                             .a = vk.ComponentSwizzle.identity,
+                                           },
+                      .subresource_range = vk.ImageSubresourceRange
+                                           {
+                                             .aspect_mask      = vk.ImageAspectFlags { .color_bit = true },
+                                             .base_mip_level   = 0,
+                                             .level_count      = 1,
+                                             .base_array_layer = 0,
+                                             .layer_count      = 1,
+                                           },
                     };
 
       self.views [index] = try self.device_dispatch.createImageView (self.logical_device, &create_info, null);
@@ -417,38 +425,50 @@ pub const context_vk = struct
   {
     const attachment_desc = vk.AttachmentDescription
                             {
-                              .flags            = .{},
+                              .flags            = vk.AttachmentDescriptionFlags {},
                               .format           = self.surface_format.format,
-                              .samples          = .{ .@"1_bit" = true },
-                              .load_op          = .clear,
-                              .store_op         = .store,
-                              .stencil_load_op  = .dont_care,
-                              .stencil_store_op = .dont_care,
-                              .initial_layout   = .undefined,
-                              .final_layout     = .present_src_khr,
+                              .samples          = vk.SampleCountFlags { .@"1_bit" = true },
+                              .load_op          = vk.AttachmentLoadOp.clear,
+                              .store_op         = vk.AttachmentStoreOp.store,
+                              .stencil_load_op  = vk.AttachmentLoadOp.dont_care,
+                              .stencil_store_op = vk.AttachmentStoreOp.dont_care,
+                              .initial_layout   = vk.ImageLayout.undefined,
+                              .final_layout     = vk.ImageLayout.present_src_khr,
                             };
 
     const attachment_ref = vk.AttachmentReference
                            {
                              .attachment = 0,
-                             .layout     = .color_attachment_optimal,
+                             .layout     = vk.ImageLayout.color_attachment_optimal,
                            };
 
     const subpass = vk.SubpassDescription
                     {
-                      .flags                  = .{},
-                      .pipeline_bind_point    = .graphics,
+                      .flags                  = vk.SubpassDescriptionFlags {},
+                      .pipeline_bind_point    = vk.PipelineBindPoint.graphics,
                       .color_attachment_count = 1,
                       .p_color_attachments    = @ptrCast ([*] const vk.AttachmentReference, &attachment_ref),
                     };
 
+    const dependency = vk.SubpassDependency
+                       {
+                         .src_subpass     = vk.SUBPASS_EXTERNAL,
+                         .dst_subpass     = 0,
+                         .src_stage_mask  = vk.PipelineStageFlags { .color_attachment_output_bit = true },
+                         .src_access_mask = vk.AccessFlags {},
+                         .dst_stage_mask  = vk.PipelineStageFlags { .color_attachment_output_bit = true },
+                         .dst_access_mask = vk.AccessFlags {},
+                       };
+
     const create_info = vk.RenderPassCreateInfo
                         {
-                          .flags            = .{},
+                          .flags            = vk.RenderPassCreateFlags {},
                           .attachment_count = 1,
                           .p_attachments    = @ptrCast([*] const vk.AttachmentDescription, &attachment_desc),
                           .subpass_count    = 1,
                           .p_subpasses      = @ptrCast([*] const vk.SubpassDescription, &subpass),
+                          .dependency_count = 1,
+                          .p_dependencies   = @ptrCast([*] const vk.SubpassDependency, &dependency),
                         };
 
     self.render_pass = try self.device_dispatch.createRenderPass (self.logical_device, &create_info, null);
@@ -461,7 +481,7 @@ pub const context_vk = struct
   {
     const create_info = vk.ShaderModuleCreateInfo
                         {
-                          .flags     = .{},
+                          .flags     = vk.ShaderModuleCreateFlags {},
                           .code_size = resource.len,
                           .p_code    = @ptrCast ([*] const u32, @alignCast (@alignOf(u32), resource.ptr)),
                         };
@@ -479,16 +499,18 @@ pub const context_vk = struct
 
     const shader_stage = [_] vk.PipelineShaderStageCreateInfo
                          {
-                           .{
-                              .flags                 = .{},
-                              .stage                 = .{ .vertex_bit = true },
+                           vk.PipelineShaderStageCreateInfo
+                           {
+                              .flags                 = vk.PipelineShaderStageCreateFlags {},
+                              .stage                 = vk.ShaderStageFlags { .vertex_bit = true },
                               .module                = vertex,
                               .p_name                = "main",
                               .p_specialization_info = null,
                             },
-                           .{
-                              .flags                 = .{},
-                              .stage                 = .{ .fragment_bit = true },
+                           vk.PipelineShaderStageCreateInfo
+                           {
+                              .flags                 = vk.PipelineShaderStageCreateFlags {},
+                              .stage                 = vk.ShaderStageFlags { .fragment_bit = true },
                               .module                = fragment,
                               .p_name                = "main",
                               .p_specialization_info = null,
@@ -499,14 +521,14 @@ pub const context_vk = struct
 
     const dynamic_state = vk.PipelineDynamicStateCreateInfo
                           {
-                            .flags               = .{},
+                            .flags               = vk.PipelineDynamicStateCreateFlags {},
                             .dynamic_state_count = dynamic_states.len,
                             .p_dynamic_states    = &dynamic_states,
                           };
 
     const vertex_input_state = vk.PipelineVertexInputStateCreateInfo
                                {
-                                 .flags                              = .{},
+                                 .flags                              = vk.PipelineVertexInputStateCreateFlags {},
                                  .vertex_binding_description_count   = 0,
                                  .p_vertex_binding_descriptions      = null,
                                  .vertex_attribute_description_count = 0,
@@ -515,34 +537,36 @@ pub const context_vk = struct
 
     const input_assembly = vk.PipelineInputAssemblyStateCreateInfo
                            {
-                             .flags                    = .{},
-                             .topology                 = .triangle_list,
+                             .flags                    = vk.PipelineInputAssemblyStateCreateFlags {},
+                             .topology                 = vk.PrimitiveTopology.triangle_list,
                              .primitive_restart_enable = vk.FALSE,
                            };
 
     self.viewport = [_] vk.Viewport
                     {
-                      .{
+                      vk.Viewport
+                      {
                         .x         = 0,
                         .y         = 0,
                         .width     = @intToFloat(f32, self.extent.width),
                         .height    = @intToFloat(f32, self.extent.height),
                         .min_depth = 0,
                         .max_depth = 1,
-                       },
+                      },
                     };
 
     self.scissor = [_] vk.Rect2D
                    {
-                     .{
-                       .offset = .{ .x = 0, .y = 0 },
+                     vk.Rect2D
+                     {
+                       .offset = vk.Offset2D { .x = 0, .y = 0 },
                        .extent = self.extent,
-                      },
+                     },
                    };
 
     const viewport_state = vk.PipelineViewportStateCreateInfo
                            {
-                             .flags          = .{},
+                             .flags          = vk.PipelineViewportStateCreateFlags {},
                              .viewport_count = 1,
                              .p_viewports    = &(self.viewport),
                              .scissor_count  = 1,
@@ -551,13 +575,13 @@ pub const context_vk = struct
 
     const rasterizer = vk.PipelineRasterizationStateCreateInfo
                        {
-                         .flags                      = .{},
+                         .flags                      = vk.PipelineRasterizationStateCreateFlags {},
                          .depth_clamp_enable         = vk.FALSE,
                          .rasterizer_discard_enable  = vk.FALSE,
-                         .polygon_mode               = .fill,
+                         .polygon_mode               = vk.PolygonMode.fill,
                          .line_width                 = 1,
-                         .cull_mode                  = .{ .back_bit = true },
-                         .front_face                 = .clockwise,
+                         .cull_mode                  = vk.CullModeFlags { .back_bit = true },
+                         .front_face                 = vk.FrontFace.clockwise,
                          .depth_bias_enable          = vk.FALSE,
                          .depth_bias_constant_factor = 0,
                          .depth_bias_clamp           = 0,
@@ -566,9 +590,9 @@ pub const context_vk = struct
 
     const multisampling = vk.PipelineMultisampleStateCreateInfo
                           {
-                            .flags                    = .{},
+                            .flags                    = vk.PipelineMultisampleStateCreateFlags {},
                             .sample_shading_enable    = vk.FALSE,
-                            .rasterization_samples    = .{ .@"1_bit" = true },
+                            .rasterization_samples    = vk.SampleCountFlags { .@"1_bit" = true },
                             .min_sample_shading       = 1,
                             .p_sample_mask            = null,
                             .alpha_to_coverage_enable = vk.FALSE,
@@ -577,26 +601,27 @@ pub const context_vk = struct
 
     const blend_attachment = vk.PipelineColorBlendAttachmentState
                              {
-                               .color_write_mask       = .{
-                                                            .r_bit = true,
-                                                            .g_bit = true,
-                                                            .b_bit = true,
-                                                            .a_bit = true,
-                                                          },
+                               .color_write_mask       = vk.ColorComponentFlags
+                                                         {
+                                                           .r_bit = true,
+                                                           .g_bit = true,
+                                                           .b_bit = true,
+                                                           .a_bit = true,
+                                                         },
                                .blend_enable           = vk.FALSE,
-                               .src_color_blend_factor = .one,
-                               .dst_color_blend_factor = .zero,
-                               .color_blend_op         = .add,
-                               .src_alpha_blend_factor = .one,
-                               .dst_alpha_blend_factor = .zero,
-                               .alpha_blend_op         = .add,
+                               .src_color_blend_factor = vk.BlendFactor.one,
+                               .dst_color_blend_factor = vk.BlendFactor.zero,
+                               .color_blend_op         = vk.BlendOp.add,
+                               .src_alpha_blend_factor = vk.BlendFactor.one,
+                               .dst_alpha_blend_factor = vk.BlendFactor.zero,
+                               .alpha_blend_op         = vk.BlendOp.add,
                              };
 
     const blend_state = vk.PipelineColorBlendStateCreateInfo
                         {
-                          .flags            = .{},
+                          .flags            = vk.PipelineColorBlendStateCreateFlags {},
                           .logic_op_enable  = vk.FALSE,
-                          .logic_op         = .copy,
+                          .logic_op         = vk.LogicOp.copy,
                           .attachment_count = 1,
                           .p_attachments    = @ptrCast ([*] const vk.PipelineColorBlendAttachmentState, &blend_attachment),
                           .blend_constants  = [_] f32 { 0, 0, 0, 0 },
@@ -604,7 +629,8 @@ pub const context_vk = struct
 
     const layout_create_info = vk.PipelineLayoutCreateInfo
                                {
-                                 .flags                     = .{},
+                                 .flags                     = vk.PipelineLayoutCreateFlags {},
+
                                  .set_layout_count          = 0,
                                  .p_set_layouts             = undefined,
                                  .push_constant_range_count = 0,
@@ -616,7 +642,7 @@ pub const context_vk = struct
 
     const pipeline_create_info = vk.GraphicsPipelineCreateInfo
                                   {
-                                    .flags                  = .{},
+                                    .flags                  = vk.PipelineCreateFlags {},
                                     .stage_count            = 2,
                                     .p_stages               = &shader_stage,
                                     .p_vertex_input_state   = &vertex_input_state,
@@ -631,7 +657,7 @@ pub const context_vk = struct
                                     .layout                 = self.pipeline_layout,
                                     .render_pass            = self.render_pass,
                                     .subpass                = 0,
-                                    .base_pipeline_handle   = .null_handle,
+                                    .base_pipeline_handle   = vk.Pipeline.null_handle,
                                     .base_pipeline_index    = -1,
                                   };
 
@@ -653,7 +679,7 @@ pub const context_vk = struct
     {
       create_info = vk.FramebufferCreateInfo
                     {
-                      .flags            = .{},
+                      .flags            = vk.FramebufferCreateFlags {},
                       .render_pass      = self.render_pass,
                       .attachment_count = 1,
                       .p_attachments    = @ptrCast ([*] const vk.ImageView, &(self.views [index])),
@@ -671,11 +697,11 @@ pub const context_vk = struct
     try log_app ("Init Vulkan Framebuffers OK", severity.DEBUG, .{});
   }
 
-  fn init_commandpool (self: *Self) !void
+  fn init_command_pool (self: *Self) !void
   {
     const create_info = vk.CommandPoolCreateInfo
                         {
-                          .flags              = .{},
+                          .flags              = vk.CommandPoolCreateFlags { .reset_command_buffer_bit = true, },
                           .queue_family_index = self.candidate.graphics_family,
                         };
 
@@ -685,12 +711,12 @@ pub const context_vk = struct
     try log_app ("Init Vulkan Command Pool OK", severity.DEBUG, .{});
   }
 
-  fn init_commandbuffer (self: *Self) !void
+  fn init_command_buffer (self: *Self) !void
   {
     const alloc_info = vk.CommandBufferAllocateInfo
                        {
                          .command_pool         = self.command_pool,
-                         .level                = .primary,
+                         .level                = vk.CommandBufferLevel.primary,
                          .command_buffer_count = 1,
                        };
 
@@ -702,11 +728,11 @@ pub const context_vk = struct
 
   fn init_sync_objects (self: *Self) !void
   {
-    self.image_available_semaphore = try self.device_dispatch.createSemaphore (self.logical_device, &.{ .flags = .{} }, null);
+    self.image_available_semaphore = try self.device_dispatch.createSemaphore (self.logical_device, &vk.SemaphoreCreateInfo { .flags = vk.SemaphoreCreateFlags {} }, null);
     errdefer self.device_dispatch.destroySemaphore (self.logical_device, self.image_available_semaphore, null);
-    self.render_finished_semaphore = try self.device_dispatch.createSemaphore (self.logical_device, &.{ .flags = .{} }, null);
+    self.render_finished_semaphore = try self.device_dispatch.createSemaphore (self.logical_device, &vk.SemaphoreCreateInfo { .flags = vk.SemaphoreCreateFlags {} }, null);
     errdefer self.device_dispatch.destroySemaphore (self.logical_device, self.render_finished_semaphore, null);
-    self.in_flight_fence = try self.device_dispatch.createFence(self.logical_device, &.{ .flags = .{} }, null);
+    self.in_flight_fence = try self.device_dispatch.createFence(self.logical_device, &vk.FenceCreateInfo { .flags = vk.FenceCreateFlags { .signaled_bit = true } }, null);
     errdefer self.device_dispatch.destroyFence (self.logical_device, self.in_flight_fence, null);
 
     try log_app ("Init Vulkan Semaphores & Fence OK", severity.DEBUG, .{});
@@ -756,66 +782,109 @@ pub const context_vk = struct
     try self.init_framebuffers ();
     errdefer self.allocator.free (self.framebuffers);
 
-    try self.init_commandpool ();
-    try self.init_commandbuffer ();
+    try self.init_command_pool ();
+    try self.init_command_buffer ();
     try self.init_sync_objects ();
 
     try log_app ("Init Vulkan OK", severity.DEBUG, .{});
   }
 
-  fn record_commandbuffer (self: Self, command_buffer: vk.CommandBuffer, image_index: u32) !void
+  fn record_command_buffer (self: Self, command_buffer: vk.CommandBuffer, image_index: u32) !void
   {
-    const commandbuffer_begin_info = vk.CommandBufferBeginInfo
-                                     {
-                                       .flags              = .{},
-                                       .p_inheritance_info = null,
-                                     };
+    const command_buffer_begin_info = vk.CommandBufferBeginInfo
+                                      {
+                                        .flags              = vk.CommandBufferUsageFlags {},
+                                        .p_inheritance_info = null,
+                                      };
 
-    try self.device_dispatch.beginCommandBuffer (command_buffer, &commandbuffer_begin_info);
+    try self.device_dispatch.beginCommandBuffer (command_buffer, &command_buffer_begin_info);
 
     const clear = vk.ClearValue
                   {
-                    .color = .{ .float_32 = .{ 0, 0, 0, 1 } },
+                    .color = vk.ClearColorValue { .float_32 = [4] f32 { 0, 0, 0, 1 } },
                   };
 
-    const renderpass_begin_info = vk.RenderPassBeginInfo
-                                  {
-                                    .render_pass       = self.render_pass,
-                                    .framebuffer       = self.framebuffers [image_index],
-                                    .render_area       = vk.Rect2D
-                                                         {
-                                                           .offset = .{ .x = 0, .y = 0 },
-                                                           .extent = self.extent,
-                                                         },
-                                    .clear_value_count = 1,
-                                    .p_clear_values    = @ptrCast([*] const vk.ClearValue, &clear),
-                                  };
+    const render_pass_begin_info = vk.RenderPassBeginInfo
+                                   {
+                                     .render_pass       = self.render_pass,
+                                     .framebuffer       = self.framebuffers [image_index],
+                                     .render_area       = vk.Rect2D
+                                                          {
+                                                            .offset = vk.Offset2D { .x = 0, .y = 0 },
+                                                            .extent = self.extent,
+                                                          },
+                                     .clear_value_count = 1,
+                                     .p_clear_values    = @ptrCast([*] const vk.ClearValue, &clear),
+                                   };
 
-    self.device_dispatch.cmdBeginRenderPass (command_buffer, &renderpass_begin_info, .@"inline");
+    self.device_dispatch.cmdBeginRenderPass (command_buffer, &render_pass_begin_info, .@"inline");
     self.device_dispatch.cmdBindPipeline (command_buffer, .graphics, self.pipeline);
 
-    self.device_dispatch.cmdSetViewport (command_buffer, 0, 1, self.viewport.ptr);
-    self.device_dispatch.cmdSetScissor (command_buffer, 0, 1, self.scissor.ptr);
+    self.device_dispatch.cmdSetViewport (command_buffer, 0, 1, self.viewport [0..].ptr);
+    self.device_dispatch.cmdSetScissor (command_buffer, 0, 1, self.scissor [0..].ptr);
 
     self.device_dispatch.cmdDraw (command_buffer, 3, 1, 0, 0);
 
-    self.device_dispatch.cmdEndCommandBuffer (command_buffer);
+    self.device_dispatch.cmdEndRenderPass (command_buffer);
     try self.device_dispatch.endCommandBuffer (command_buffer);
   }
 
-  fn draw_frame (self: Self) void
+  fn draw_frame (self: Self) !void
   {
-    _ = self;
+    _ = try self.device_dispatch.waitForFences (self.logical_device, 1, @ptrCast ([*] const vk.Fence, &(self.in_flight_fence)), vk.TRUE, std.math.maxInt (u64));
+    _ = try self.device_dispatch.resetFences (self.logical_device, 1, @ptrCast ([*] const vk.Fence, &(self.in_flight_fence)));
+
+    const result = try self.device_dispatch.acquireNextImageKHR (self.logical_device, self.swapchain, std.math.maxInt(u64), self.image_available_semaphore, .null_handle);
+
+    if (result.result != vk.Result.success)
+    {
+      return ContextError.ImageAcquireFailed;
+    }
+
+    try self.device_dispatch.resetCommandBuffer (self.command_buffer, vk.CommandBufferResetFlags {});
+    try self.record_command_buffer(self.command_buffer, result.image_index);
+
+    const wait_stage = [_] vk.PipelineStageFlags
+                       {
+                         vk.PipelineStageFlags { .color_attachment_output_bit = true },
+                       };
+
+    const submit_info = vk.SubmitInfo
+                        {
+                          .wait_semaphore_count   = 1,
+                          .p_wait_semaphores      = @ptrCast ([*] const vk.Semaphore, &(self.image_available_semaphore)),
+                          .p_wait_dst_stage_mask  = &wait_stage,
+                          .command_buffer_count   = 1,
+                          .p_command_buffers      = @ptrCast ([*] const vk.CommandBuffer, &(self.command_buffer)),
+                          .signal_semaphore_count = 1,
+                          .p_signal_semaphores    = @ptrCast ([*] const vk.Semaphore, &(self.render_finished_semaphore)),
+                        };
+
+    try self.device_dispatch.queueSubmit (self.graphics_queue, 1, @ptrCast ([*] const vk.SubmitInfo, &submit_info), self.in_flight_fence);
+
+    const present_info = vk.PresentInfoKHR
+                         {
+                           .wait_semaphore_count = 1,
+                           .p_wait_semaphores    = @ptrCast ([*] const vk.Semaphore, &(self.render_finished_semaphore)),
+                           .swapchain_count      = 1,
+                           .p_swapchains         = @ptrCast ([*] const vk.SwapchainKHR, &(self.swapchain)),
+                           .p_image_indices      = @ptrCast ([*] const u32, &(result.image_index)),
+                           .p_results            = null,
+                         };
+
+    _ = try self.device_dispatch.queuePresentKHR(self.present_queue, &present_info);
   }
 
   pub fn loop (self: Self) !void
   {
-    self.draw_frame ();
+    try self.draw_frame ();
     try log_app ("Loop Vulkan OK", severity.DEBUG, .{});
   }
 
   pub fn cleanup (self: Self) !void
   {
+    try self.device_dispatch.deviceWaitIdle (self.logical_device);
+
     self.device_dispatch.destroyFence (self.logical_device, self.in_flight_fence, null);
     self.device_dispatch.destroySemaphore (self.logical_device, self.image_available_semaphore, null);
     self.device_dispatch.destroySemaphore (self.logical_device, self.render_finished_semaphore, null);

@@ -68,4 +68,11 @@ pub const DeviceDispatch = vk.DeviceWrapper (
   .destroySemaphore        = true,
   .createFence             = true,
   .destroyFence            = true,
+  .waitForFences           = true,
+  .resetFences             = true,
+  .acquireNextImageKHR     = true,
+  .resetCommandBuffer      = true,
+  .queueSubmit             = true,
+  .queuePresentKHR         = true,
+  .deviceWaitIdle          = true,
 });

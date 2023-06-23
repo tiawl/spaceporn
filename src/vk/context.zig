@@ -790,7 +790,6 @@ pub const context_vk = struct
   {
     try self.pick_physical_device ();
     defer self.allocator.free (self.formats);
-    defer self.allocator.free (self.present_modes);
 
     try self.init_logical_device ();
     try self.init_swapchain (.{ .width = framebuffer.width, .height = framebuffer.height, });
@@ -851,20 +850,62 @@ pub const context_vk = struct
     try self.device_dispatch.endCommandBuffer (command_buffer);
   }
 
-  fn draw_frame (self: *Self) !void
+  fn cleanup_swapchain (self: Self) void
+  {
+    for (self.framebuffers) |framebuffer|
+    {
+      self.device_dispatch.destroyFramebuffer (self.logical_device, framebuffer, null);
+    }
+
+    self.allocator.free (self.framebuffers);
+
+    for (self.views) |image_view|
+    {
+      self.device_dispatch.destroyImageView (self.logical_device, image_view, null);
+    }
+
+    self.allocator.free (self.views);
+    self.device_dispatch.destroySwapchainKHR (self.logical_device, self.swapchain, null);
+  }
+
+  fn rebuild_swapchain (self: *Self, framebuffer: struct { width: u32, height: u32, }) !void
+  {
+    try self.device_dispatch.deviceWaitIdle (self.logical_device);
+
+    self.cleanup_swapchain ();
+
+    try self.query_swapchain_support (self.physical_device.?);
+    try self.init_swapchain (.{ .width = framebuffer.width, .height = framebuffer.height, });
+    defer self.allocator.free (self.images);
+    errdefer self.allocator.free (self.views);
+
+    try self.init_image_views ();
+    try self.init_framebuffers ();
+    errdefer self.allocator.free (self.framebuffers);
+  }
+
+  fn draw_frame (self: *Self, framebuffer: struct { resized: bool, width: u32, height: u32, }) !void
   {
     _ = try self.device_dispatch.waitForFences (self.logical_device, 1, @ptrCast ([*] const vk.Fence, &(self.in_flight_fences [self.current_frame])), vk.TRUE, std.math.maxInt (u64));
+
+    const acquire_result = self.device_dispatch.acquireNextImageKHR (self.logical_device, self.swapchain, std.math.maxInt(u64), self.image_available_semaphores [self.current_frame], .null_handle) catch |err| switch (err)
+                           {
+                             error.OutOfDateKHR => {
+                                                     try self.rebuild_swapchain (.{ .width = framebuffer.width, .height = framebuffer.height, });
+                                                     return;
+                                                   },
+                             else               => return err,
+                           };
+
     _ = try self.device_dispatch.resetFences (self.logical_device, 1, @ptrCast ([*] const vk.Fence, &(self.in_flight_fences [self.current_frame])));
 
-    const result = try self.device_dispatch.acquireNextImageKHR (self.logical_device, self.swapchain, std.math.maxInt(u64), self.image_available_semaphores [self.current_frame], .null_handle);
-
-    if (result.result != vk.Result.success)
+    if (acquire_result.result != vk.Result.success and acquire_result.result != vk.Result.suboptimal_khr)
     {
       return ContextError.ImageAcquireFailed;
     }
 
     try self.device_dispatch.resetCommandBuffer (self.command_buffers [self.current_frame], vk.CommandBufferResetFlags {});
-    try self.record_command_buffer(self.command_buffers [self.current_frame], result.image_index);
+    try self.record_command_buffer(self.command_buffers [self.current_frame], acquire_result.image_index);
 
     const wait_stage = [_] vk.PipelineStageFlags
                        {
@@ -890,24 +931,39 @@ pub const context_vk = struct
                            .p_wait_semaphores    = @ptrCast ([*] const vk.Semaphore, &(self.render_finished_semaphores [self.current_frame])),
                            .swapchain_count      = 1,
                            .p_swapchains         = @ptrCast ([*] const vk.SwapchainKHR, &(self.swapchain)),
-                           .p_image_indices      = @ptrCast ([*] const u32, &(result.image_index)),
+                           .p_image_indices      = @ptrCast ([*] const u32, &(acquire_result.image_index)),
                            .p_results            = null,
                          };
 
-    _ = try self.device_dispatch.queuePresentKHR(self.present_queue, &present_info);
+    const present_result = self.device_dispatch.queuePresentKHR (self.present_queue, &present_info) catch |err| switch (err)
+                           {
+                             error.OutOfDateKHR => vk.Result.suboptimal_khr,
+                             else               => return err,
+                           };
+
+    if (present_result == vk.Result.suboptimal_khr or framebuffer.resized)
+    {
+      try self.rebuild_swapchain (.{ .width = framebuffer.width, .height = framebuffer.height, });
+    }
 
     self.current_frame = (self.current_frame + 1) % MAX_FRAMES_IN_FLIGHT;
   }
 
-  pub fn loop (self: *Self) !void
+  pub fn loop (self: *Self, framebuffer: struct { resized: bool, width: u32, height: u32, }) !void
   {
-    try self.draw_frame ();
+    try self.draw_frame (.{ .resized = framebuffer.resized, .width = framebuffer.width, .height = framebuffer.height, });
     try log_app ("Loop Vulkan OK", severity.DEBUG, .{});
   }
 
   pub fn cleanup (self: Self) !void
   {
     try self.device_dispatch.deviceWaitIdle (self.logical_device);
+
+    self.cleanup_swapchain ();
+
+    self.device_dispatch.destroyPipeline (self.logical_device, self.pipeline, null);
+    self.device_dispatch.destroyPipelineLayout (self.logical_device, self.pipeline_layout, null);
+    self.device_dispatch.destroyRenderPass (self.logical_device, self.render_pass, null);
 
     var index: u32 = 0;
 
@@ -921,24 +977,6 @@ pub const context_vk = struct
 
     self.device_dispatch.destroyCommandPool (self.logical_device, self.command_pool, null);
 
-    for (self.framebuffers) |framebuffer|
-    {
-      self.device_dispatch.destroyFramebuffer (self.logical_device, framebuffer, null);
-    }
-
-    self.allocator.free (self.framebuffers);
-
-    self.device_dispatch.destroyPipeline (self.logical_device, self.pipeline, null);
-    self.device_dispatch.destroyPipelineLayout (self.logical_device, self.pipeline_layout, null);
-    self.device_dispatch.destroyRenderPass (self.logical_device, self.render_pass, null);
-
-    for (self.views) |image_view|
-    {
-      self.device_dispatch.destroyImageView (self.logical_device, image_view, null);
-    }
-
-    self.allocator.free (self.views);
-    self.device_dispatch.destroySwapchainKHR (self.logical_device, self.swapchain, null);
     self.device_dispatch.destroyDevice (self.logical_device, null);
     self.initializer.instance_dispatch.destroySurfaceKHR (self.initializer.instance, self.surface, null);
     try self.initializer.cleanup ();

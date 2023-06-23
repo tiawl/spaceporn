@@ -81,7 +81,8 @@ pub const context = struct
     while (self.glfw.looping ())
     {
       try self.glfw.loop ();
-      try self.vk.loop ();
+      const framebuffer = self.glfw.get_framebuffer_size ();
+      try self.vk.loop (.{ .resized = framebuffer.resized, .width = framebuffer.width, .height = framebuffer.height, });
     }
     try log_app ("Loop OK", severity.DEBUG, .{});
   }

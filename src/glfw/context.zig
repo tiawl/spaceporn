@@ -17,13 +17,14 @@ const GlfwError = error
 
 pub const context_glfw = struct
 {
-  window:             glfw.Window,
-  extensions:         [][*:0] const u8,
-  instance_proc_addr: *const fn (?*anyopaque, [*:0] const u8) callconv (.C) ?*const fn () callconv (.C) void,
+  window:              glfw.Window,
+  extensions:          [][*:0] const u8,
+  instance_proc_addr:  *const fn (?*anyopaque, [*:0] const u8) callconv (.C) ?*const fn () callconv (.C) void,
+  framebuffer_resized: bool,
 
   const Self = @This ();
 
-  fn callback (code: glfw.ErrorCode, description: [:0] const u8) void
+  fn error_callback (code: glfw.ErrorCode, description: [:0] const u8) void
   {
     log_app ("glfw: {}: {s}", severity.ERROR, .{ code, description }) catch
     {
@@ -31,11 +32,20 @@ pub const context_glfw = struct
     };
   }
 
+  fn framebuffer_resize_callback (window: glfw.Window, width: u32, height: u32) void
+  {
+    _ = width;
+    _ = height;
+
+    var self = window.getUserPointer (context_glfw);
+    self.?.framebuffer_resized = true;
+  }
+
   pub fn init () !Self
   {
     var self: Self = undefined;
 
-    glfw.setErrorCallback (callback);
+    glfw.setErrorCallback (error_callback);
     if (!glfw.init (.{}))
     {
       try log_app ("failed to initialize GLFW: {?s}", severity.ERROR, .{ glfw.getErrorString () });
@@ -61,6 +71,10 @@ pub const context_glfw = struct
     };
     errdefer self.window.destroy ();
 
+    self.framebuffer_resized = true;
+    self.window.setUserPointer (&self);
+    self.window.setFramebufferSizeCallback (framebuffer_resize_callback);
+
     self.extensions = glfw.getRequiredInstanceExtensions () orelse
     {
       const err = glfw.mustGetError();
@@ -84,12 +98,21 @@ pub const context_glfw = struct
     try log_app ("Init GLFW Surface OK", severity.DEBUG, .{});
   }
 
-  pub fn get_framebuffer_size (self: Self) struct { width: u32, height: u32, }
+  pub fn get_framebuffer_size (self: *Self) struct { resized: bool, width: u32, height: u32, }
   {
+    const resized = self.framebuffer_resized;
+
+    if (resized)
+    {
+      self.framebuffer_resized = false;
+    }
+
     const size = self.window.getFramebufferSize ();
+
     return .{
-              .width  = size.width,
-              .height = size.height,
+              .resized = resized,
+              .width   = size.width,
+              .height  = size.height,
             };
   }
 

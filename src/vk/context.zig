@@ -35,7 +35,9 @@ pub const context_vk = struct
   swapchain:          vk.SwapchainKHR,
   images:             [] vk.Image,
   image_views:        [] vk.ImageView,
+  render_pass:        vk.RenderPass,
   pipeline_layout:    vk.PipelineLayout,
+  pipeline:           vk.Pipeline,
 
   const Self = @This ();
 
@@ -403,6 +405,50 @@ pub const context_vk = struct
     try log_app ("Init Vulkan Swapchain Image Views OK", severity.DEBUG, .{});
   }
 
+  fn init_render_pass (self: *Self) !void
+  {
+    const attachment_desc = vk.AttachmentDescription
+                            {
+                              .flags            = .{},
+                              .format           = self.surface_format.format,
+                              .samples          = .{ .@"1_bit" = true },
+                              .load_op          = .clear,
+                              .store_op         = .store,
+                              .stencil_load_op  = .dont_care,
+                              .stencil_store_op = .dont_care,
+                              .initial_layout   = .undefined,
+                              .final_layout     = .present_src_khr,
+                            };
+
+    const attachment_ref = vk.AttachmentReference
+                           {
+                             .attachment = 0,
+                             .layout     = .color_attachment_optimal,
+                           };
+
+    const subpass = vk.SubpassDescription
+                    {
+                      .flags                  = .{},
+                      .pipeline_bind_point    = .graphics,
+                      .color_attachment_count = 1,
+                      .p_color_attachments    = @ptrCast ([*] const vk.AttachmentReference, &attachment_ref),
+                    };
+
+    const create_info = vk.RenderPassCreateInfo
+                        {
+                          .flags            = .{},
+                          .attachment_count = 1,
+                          .p_attachments    = @ptrCast([*] const vk.AttachmentDescription, &attachment_desc),
+                          .subpass_count    = 1,
+                          .p_subpasses      = @ptrCast([*] const vk.SubpassDescription, &subpass),
+                        };
+
+    self.render_pass = try self.device_dispatch.createRenderPass (self.logical_device, &create_info, null);
+    errdefer self.device_dispatch.destroyRenderPass (self.logical_device, self.render_pass, null);
+
+    try log_app ("Init Vulkan Render Pass OK", severity.DEBUG, .{});
+  }
+
   fn init_shader_module (self: Self, resource: [] const u8) !vk.ShaderModule
   {
     const create_info = vk.ShaderModuleCreateInfo
@@ -548,26 +594,41 @@ pub const context_vk = struct
                           .blend_constants  = [_] f32 { 0, 0, 0, 0 },
                         };
 
-    const create_info = vk.PipelineLayoutCreateInfo
-                        {
-                          .flags                     = .{},
-                          .set_layout_count          = 0,
-                          .p_set_layouts             = undefined,
-                          .push_constant_range_count = 0,
-                          .p_push_constant_ranges    = undefined,
-                        };
+    const layout_create_info = vk.PipelineLayoutCreateInfo
+                               {
+                                 .flags                     = .{},
+                                 .set_layout_count          = 0,
+                                 .p_set_layouts             = undefined,
+                                 .push_constant_range_count = 0,
+                                 .p_push_constant_ranges    = undefined,
+                               };
 
-    self.pipeline_layout = try self.device_dispatch.createPipelineLayout (self.logical_device, &create_info, null);
+    self.pipeline_layout = try self.device_dispatch.createPipelineLayout (self.logical_device, &layout_create_info, null);
     errdefer self.device_dispatch.destroyPipelineLayout (self.logical_device, self.pipeline_layout, null);
 
-    _ = shader_stage;
-    _ = dynamic_state;
-    _ = vertex_input_state;
-    _ = input_assembly;
-    _ = viewport_state;
-    _ = rasterizer;
-    _ = multisampling;
-    _ = blend_state;
+    const pipeline_create_info = vk.GraphicsPipelineCreateInfo
+                                  {
+                                    .flags                  = .{},
+                                    .stage_count            = 2,
+                                    .p_stages               = &shader_stage,
+                                    .p_vertex_input_state   = &vertex_input_state,
+                                    .p_input_assembly_state = &input_assembly,
+                                    .p_tessellation_state   = null,
+                                    .p_viewport_state       = &viewport_state,
+                                    .p_rasterization_state  = &rasterizer,
+                                    .p_multisample_state    = &multisampling,
+                                    .p_depth_stencil_state  = null,
+                                    .p_color_blend_state    = &blend_state,
+                                    .p_dynamic_state        = &dynamic_state,
+                                    .layout                 = self.pipeline_layout,
+                                    .render_pass            = self.render_pass,
+                                    .subpass                = 0,
+                                    .base_pipeline_handle   = .null_handle,
+                                    .base_pipeline_index    = -1,
+                                  };
+
+    _ = try self.device_dispatch.createGraphicsPipelines (self.logical_device, .null_handle, 1, @ptrCast ([*] const vk.GraphicsPipelineCreateInfo, &pipeline_create_info), null, @ptrCast ([*] vk.Pipeline, &(self.pipeline)));
+    errdefer self.device_dispatch.destroyPipeline (self.logical_device, self.pipeline, null);
 
     try log_app ("Init Vulkan Graphics Pipeline OK", severity.DEBUG, .{});
   }
@@ -611,7 +672,7 @@ pub const context_vk = struct
     errdefer self.allocator.free (self.image_views);
 
     try self.init_image_views ();
-
+    try self.init_render_pass ();
     try self.init_graphics_pipeline ();
 
     try log_app ("Init Vulkan Devices OK", severity.DEBUG, .{});
@@ -625,6 +686,7 @@ pub const context_vk = struct
 
   pub fn cleanup (self: Self) !void
   {
+    self.device_dispatch.destroyPipeline (self.logical_device, self.pipeline, null);
     self.device_dispatch.destroyPipelineLayout (self.logical_device, self.pipeline_layout, null);
     for (self.image_views) |image_view|
     {
@@ -632,6 +694,7 @@ pub const context_vk = struct
     }
     self.allocator.free (self.image_views);
     self.device_dispatch.destroySwapchainKHR (self.logical_device, self.swapchain, null);
+    self.device_dispatch.destroyRenderPass (self.logical_device, self.render_pass, null);
     self.device_dispatch.destroyDevice (self.logical_device, null);
     self.initializer.instance_dispatch.destroySurfaceKHR (self.initializer.instance, self.surface, null);
     try self.initializer.cleanup ();

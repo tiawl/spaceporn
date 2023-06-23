@@ -34,10 +34,11 @@ pub const context_vk = struct
   extent:             vk.Extent2D,
   swapchain:          vk.SwapchainKHR,
   images:             [] vk.Image,
-  image_views:        [] vk.ImageView,
+  views:              [] vk.ImageView,
   render_pass:        vk.RenderPass,
   pipeline_layout:    vk.PipelineLayout,
   pipeline:           vk.Pipeline,
+  framebuffers:       [] vk.Framebuffer,
 
   const Self = @This ();
 
@@ -317,8 +318,8 @@ pub const context_vk = struct
     self.images = try self.allocator.alloc (vk.Image, image_count);
     errdefer self.allocator.free (self.images);
 
-    self.image_views = try self.allocator.alloc (vk.ImageView, image_count);
-    errdefer self.allocator.free (self.image_views);
+    self.views = try self.allocator.alloc (vk.ImageView, image_count);
+    errdefer self.allocator.free (self.views);
 
     _ = try self.device_dispatch.getSwapchainImagesKHR (self.logical_device, self.swapchain, &image_count, self.images.ptr);
 
@@ -398,8 +399,8 @@ pub const context_vk = struct
                                             },
                     };
 
-      self.image_views [index] = try self.device_dispatch.createImageView (self.logical_device, &create_info, null);
-      errdefer self.device_dispatch.destroyImageView (self.logical_device, self.image_views [index], null);
+      self.views [index] = try self.device_dispatch.createImageView (self.logical_device, &create_info, null);
+      errdefer self.device_dispatch.destroyImageView (self.logical_device, self.views [index], null);
     }
 
     try log_app ("Init Vulkan Swapchain Image Views OK", severity.DEBUG, .{});
@@ -633,6 +634,36 @@ pub const context_vk = struct
     try log_app ("Init Vulkan Graphics Pipeline OK", severity.DEBUG, .{});
   }
 
+  fn init_framebuffers (self: *Self) !void
+  {
+    self.framebuffers = try self.allocator.alloc (vk.Framebuffer, self.views.len);
+    errdefer self.allocator.free (self.views);
+
+    var index: usize = 0;
+    var create_info: vk.FramebufferCreateInfo = undefined;
+
+    for (self.framebuffers) |*framebuffer|
+    {
+      create_info = vk.FramebufferCreateInfo
+                    {
+                      .flags            = .{},
+                      .render_pass      = self.render_pass,
+                      .attachment_count = 1,
+                      .p_attachments    = @ptrCast ([*] const vk.ImageView, &(self.views [index])),
+                      .width            = self.extent.width,
+                      .height           = self.extent.height,
+                      .layers           = 1,
+                    };
+
+      framebuffer.* = try self.device_dispatch.createFramebuffer (self.logical_device, &create_info, null);
+      errdefer self.device_dispatch.destroyFramebuffer (self.logical_device, framebuffer.*, null);
+
+      index += 1;
+    }
+
+    try log_app ("Init Vulkan Framebuffers OK", severity.DEBUG, .{});
+  }
+
   pub fn get_surface (self: Self) struct { instance: vk.Instance, surface: vk.SurfaceKHR, success: i32, }
   {
     return .{
@@ -660,7 +691,7 @@ pub const context_vk = struct
     return self;
   }
 
-  pub fn init_devices (self: *Self, framebuffer: struct { width: u32, height: u32, }) !void
+  pub fn init (self: *Self, framebuffer: struct { width: u32, height: u32, }) !void
   {
     try self.pick_physical_device ();
     defer self.allocator.free (self.formats);
@@ -669,13 +700,14 @@ pub const context_vk = struct
     try self.init_logical_device ();
     try self.init_swapchain (.{ .width = framebuffer.width, .height = framebuffer.height, });
     defer self.allocator.free (self.images);
-    errdefer self.allocator.free (self.image_views);
+    errdefer self.allocator.free (self.views);
 
     try self.init_image_views ();
     try self.init_render_pass ();
     try self.init_graphics_pipeline ();
+    try self.init_framebuffers ();
 
-    try log_app ("Init Vulkan Devices OK", severity.DEBUG, .{});
+    try log_app ("Init Vulkan OK", severity.DEBUG, .{});
   }
 
   pub fn loop (self: Self) !void
@@ -686,13 +718,20 @@ pub const context_vk = struct
 
   pub fn cleanup (self: Self) !void
   {
+    for (self.framebuffers) |framebuffer|
+    {
+      self.device_dispatch.destroyFramebuffer (self.logical_device, framebuffer, null);
+    }
+
     self.device_dispatch.destroyPipeline (self.logical_device, self.pipeline, null);
     self.device_dispatch.destroyPipelineLayout (self.logical_device, self.pipeline_layout, null);
-    for (self.image_views) |image_view|
+
+    for (self.views) |image_view|
     {
       self.device_dispatch.destroyImageView (self.logical_device, image_view, null);
     }
-    self.allocator.free (self.image_views);
+
+    self.allocator.free (self.views);
     self.device_dispatch.destroySwapchainKHR (self.logical_device, self.swapchain, null);
     self.device_dispatch.destroyRenderPass (self.logical_device, self.render_pass, null);
     self.device_dispatch.destroyDevice (self.logical_device, null);

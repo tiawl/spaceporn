@@ -70,7 +70,7 @@ pub const context = struct
     self.vk.set_surface (&wrapper.surface);
 
     const framebuffer = self.glfw.get_framebuffer_size ();
-    try self.vk.init_devices (.{ .width = framebuffer.width, .height = framebuffer.height, });
+    try self.vk.init (.{ .width = framebuffer.width, .height = framebuffer.height, });
 
     try log_app ("Init OK", severity.DEBUG, .{});
     return self;

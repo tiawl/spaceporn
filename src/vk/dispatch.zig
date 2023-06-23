@@ -50,4 +50,6 @@ pub const DeviceDispatch = vk.DeviceWrapper (
   .destroyRenderPass       = true,
   .createGraphicsPipelines = true,
   .destroyPipeline         = true,
+  .createFramebuffer       = true,
+  .destroyFramebuffer      = true,
 });

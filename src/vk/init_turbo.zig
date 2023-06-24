@@ -1,5 +1,5 @@
-const std    = @import ("std");
-pub const vk = @import ("vulkan");
+const std = @import ("std");
+const vk  = @import ("vulkan");
 
 const utils      = @import ("../utils.zig");
 const log_app    = utils.log_app;

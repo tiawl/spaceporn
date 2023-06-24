@@ -1,7 +1,6 @@
 const std   = @import ("std");
 const build = @import ("build_options");
-
-pub const vk = @import ("vulkan");
+const vk    = @import ("vulkan");
 
 const utils    = @import ("../utils.zig");
 const log_app  = utils.log_app;

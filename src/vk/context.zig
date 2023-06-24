@@ -1,6 +1,7 @@
 const std       = @import ("std");
 const build     = @import ("build_options");
 const resources = @import ("resources");
+const vk        = @import ("vulkan");
 
 const utils    = @import ("../utils.zig");
 const log_app  = utils.log_app;
@@ -11,9 +12,10 @@ const dispatch         = @import ("dispatch.zig");
 const InstanceDispatch = dispatch.InstanceDispatch;
 const DeviceDispatch   = dispatch.DeviceDispatch;
 
+const vertex_vk = @import ("vertex.zig");
+
 const init            = if (build.LOG_LEVEL == @enumToInt (profile.TURBO)) @import ("init_turbo.zig") else @import ("init_debug.zig");
 const init_vk         = init.init_vk;
-const vk              = init.vk;
 const required_layers = init_vk.required_layers;
 
 pub const context_vk = struct
@@ -51,6 +53,13 @@ pub const context_vk = struct
   const Self = @This ();
 
   const MAX_FRAMES_IN_FLIGHT = 2;
+
+  const vertices = [_] vertex_vk
+                   {
+                     vertex_vk { .pos = {  0.0, -0.5 }, .color = { 1.0, 0.0, 0.0 } };
+                     vertex_vk { .pos = {  0.5,  0.5 }, .color = { 0.0, 1.0, 0.0 } };
+                     vertex_vk { .pos = { -0.5,  0.5 }, .color = { 0.0, 0.0, 1.0 } };
+                   };
 
   const required_device_extensions = [_][*:0] const u8
   {
@@ -532,10 +541,10 @@ pub const context_vk = struct
     const vertex_input_state = vk.PipelineVertexInputStateCreateInfo
                                {
                                  .flags                              = vk.PipelineVertexInputStateCreateFlags {},
-                                 .vertex_binding_description_count   = 0,
-                                 .p_vertex_binding_descriptions      = null,
-                                 .vertex_attribute_description_count = 0,
-                                 .p_vertex_attribute_descriptions    = null,
+                                 .vertex_binding_description_count   = 1,
+                                 .p_vertex_binding_descriptions      = @ptrCast ([*] cont vk.VertexInputBindingDescription, &(vertex_vk.binding_description)),
+                                 .vertex_attribute_description_count = vertex_vk.attribute_description.len,
+                                 .p_vertex_attribute_descriptions    = &(vertex_vk.attribute_description),
                                };
 
     const input_assembly = vk.PipelineInputAssemblyStateCreateInfo

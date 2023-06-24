@@ -107,7 +107,13 @@ pub const context_glfw = struct
       self.framebuffer_resized = false;
     }
 
-    const size = self.window.getFramebufferSize ();
+    var size = self.window.getFramebufferSize ();
+
+    while (size.width == 0 or size.height == 0)
+    {
+      glfw.waitEvents ();
+      size = self.window.getFramebufferSize ();
+    }
 
     return .{
               .resized = resized,

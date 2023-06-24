@@ -51,6 +51,9 @@ pub const context_vk = struct
   current_frame:                u8,
   vertex_buffer:                vk.Buffer,
   vertex_buffer_memory:         vk.DeviceMemory,
+  staging_buffer:               vk.Buffer,
+  staging_buffer_memory:        vk.DeviceMemory,
+  buffers_command_pool:         vk.CommandPool,
 
   const Self = @This ();
 
@@ -712,7 +715,7 @@ pub const context_vk = struct
     try log_app ("Init Vulkan Framebuffers OK", severity.DEBUG, .{});
   }
 
-  fn init_command_pool (self: *Self) !void
+  fn init_command_pools (self: *Self) !void
   {
     const create_info = vk.CommandPoolCreateInfo
                         {
@@ -723,7 +726,16 @@ pub const context_vk = struct
     self.command_pool = try self.device_dispatch.createCommandPool (self.logical_device, &create_info, null);
     errdefer self.device_dispatch.destroyCommandPool (self.logical_device, self.command_pool, null);
 
-    try log_app ("Init Vulkan Command Pool OK", severity.DEBUG, .{});
+    const buffers_create_info = vk.CommandPoolCreateInfo
+                                {
+                                  .flags              = vk.CommandPoolCreateFlags { .reset_command_buffer_bit = true, .transient_bit = true, },
+                                  .queue_family_index = self.candidate.graphics_family,
+                                };
+
+    self.buffers_command_pool = try self.device_dispatch.createCommandPool (self.logical_device, &buffers_create_info, null);
+    errdefer self.device_dispatch.destroyCommandPool (self.logical_device, self.buffers_command_pool, null);
+
+    try log_app ("Init Vulkan Command Pools OK", severity.DEBUG, .{});
   }
 
   fn find_memory_type (self: Self, type_filter: u32, properties: vk.MemoryPropertyFlags) !u32
@@ -741,39 +753,96 @@ pub const context_vk = struct
     return ContextError.NoSuitableMemoryType;
   }
 
-  fn init_vertex_buffer (self: *Self) !void
+  fn init_buffer (self: Self, size: vk.DeviceSize, usage: vk.BufferUsageFlags, properties: vk.MemoryPropertyFlags, buffer: *vk.Buffer, buffer_memory: *vk.DeviceMemory) !void
   {
     const create_info = vk.BufferCreateInfo
                         {
                           .flags        = vk.BufferCreateFlags {},
-                          .size         = @sizeOf (@TypeOf (vertices)),
-                          .usage        = vk.BufferUsageFlags { .vertex_buffer_bit = true },
+                          .size         = size,
+                          .usage        = usage,
                           .sharing_mode = vk.SharingMode.exclusive,
                         };
 
-    self.vertex_buffer = try self.device_dispatch.createBuffer (self.logical_device, &create_info, null);
-    errdefer self.device_dispatch.destroyBuffer (self.logical_device, self.vertex_buffer, null);
+    buffer.* = try self.device_dispatch.createBuffer (self.logical_device, &create_info, null);
+    errdefer self.device_dispatch.destroyBuffer (self.logical_device, buffer.*, null);
 
-    const memory_requirements = self.device_dispatch.getBufferMemoryRequirements (self.logical_device, self.vertex_buffer);
+    const memory_requirements = self.device_dispatch.getBufferMemoryRequirements (self.logical_device, buffer.*);
 
     const alloc_info = vk.MemoryAllocateInfo
                        {
                          .allocation_size   = memory_requirements.size,
-                         .memory_type_index = try self.find_memory_type (memory_requirements.memory_type_bits, vk.MemoryPropertyFlags { .host_visible_bit = true, .host_coherent_bit = true, }),
+                         .memory_type_index = try self.find_memory_type (memory_requirements.memory_type_bits, properties),
                        };
 
-    self.vertex_buffer_memory = try self.device_dispatch.allocateMemory (self.logical_device, &alloc_info, null);
-    errdefer self.device_dispatch.freeMemory (self.logical_device, self.vertex_buffer_memory, null);
+    // TODO: issue #68
+    buffer_memory.* = try self.device_dispatch.allocateMemory (self.logical_device, &alloc_info, null);
+    errdefer self.device_dispatch.freeMemory (self.logical_device, buffer_memory.*, null);
 
-    try self.device_dispatch.bindBufferMemory (self.logical_device, self.vertex_buffer, self.vertex_buffer_memory, 0);
+    try self.device_dispatch.bindBufferMemory (self.logical_device, buffer.*, buffer_memory.*, 0);
+  }
 
-    const data = @ptrCast ([*] vertex_vk, @alignCast (@alignOf (vertex_vk), try self.device_dispatch.mapMemory (self.logical_device, self.vertex_buffer_memory, 0, vk.WHOLE_SIZE, vk.MemoryMapFlags {})));
-    defer self.device_dispatch.unmapMemory (self.logical_device, self.vertex_buffer_memory);
+  fn copy_buffer (self: Self, src_buffer: vk.Buffer, dst_buffer: vk.Buffer, size: vk.DeviceSize) !void
+  {
+    const alloc_info = vk.CommandBufferAllocateInfo
+                       {
+                         .command_pool         = self.buffers_command_pool,
+                         .level                = vk.CommandBufferLevel.primary,
+                         .command_buffer_count = 1,
+                       };
+
+    var command_buffer: vk.CommandBuffer = undefined;
+    try self.device_dispatch.allocateCommandBuffers (self.logical_device, &alloc_info, @ptrCast ([*] vk.CommandBuffer, &command_buffer));
+    errdefer self.device_dispatch.freeCommandBuffers (self.logical_device, self.buffers_command_pool, 1, @ptrCast ([*] const vk.CommandBuffer, &command_buffer));
+
+    const begin_info = vk.CommandBufferBeginInfo
+                       {
+                         .flags = vk.CommandBufferUsageFlags { .one_time_submit_bit = true, },
+                       };
+
+    try self.device_dispatch.beginCommandBuffer (command_buffer, &begin_info);
+
+    const region = vk.BufferCopy
+                   {
+                     .src_offset = 0,
+                     .dst_offset = 0,
+                     .size       = size,
+                   };
+
+    self.device_dispatch.cmdCopyBuffer (command_buffer, src_buffer, dst_buffer, 1, @ptrCast ([*] const vk.BufferCopy, &region));
+    try self.device_dispatch.endCommandBuffer (command_buffer);
+
+    const submit_info = vk.SubmitInfo
+                        {
+                          .command_buffer_count   = 1,
+                          .p_command_buffers      = @ptrCast ([*] const vk.CommandBuffer, &command_buffer),
+                        };
+
+    try self.device_dispatch.queueSubmit (self.graphics_queue, 1, @ptrCast ([*] const vk.SubmitInfo, &submit_info), .null_handle);
+    try self.device_dispatch.queueWaitIdle (self.graphics_queue);
+
+    self.device_dispatch.freeCommandBuffers (self.logical_device, self.buffers_command_pool, 1, @ptrCast ([*] const vk.CommandBuffer, &command_buffer));
+  }
+
+  fn init_vertex_buffer (self: *Self) !void
+  {
+    const size = @sizeOf (@TypeOf (vertices));
+    try self.init_buffer (size, vk.BufferUsageFlags { .transfer_src_bit = true, }, vk.MemoryPropertyFlags { .host_visible_bit = true, .host_coherent_bit = true, }, &(self.staging_buffer), &(self.staging_buffer_memory));
+
+    const data = @ptrCast ([*] vertex_vk, @alignCast (@alignOf (vertex_vk), try self.device_dispatch.mapMemory (self.logical_device, self.staging_buffer_memory, 0, size, vk.MemoryMapFlags {})));
 
     for (vertices, 0..) |vertex, index|
     {
       data [index] = vertex;
     }
+
+    self.device_dispatch.unmapMemory (self.logical_device, self.staging_buffer_memory);
+
+    try self.init_buffer (size, vk.BufferUsageFlags { .transfer_dst_bit = true, .vertex_buffer_bit = true, }, vk.MemoryPropertyFlags { .device_local_bit = true, }, &(self.vertex_buffer), &(self.vertex_buffer_memory));
+
+    try self.copy_buffer(self.staging_buffer, self.vertex_buffer, size);
+
+    self.device_dispatch.destroyBuffer (self.logical_device, self.staging_buffer, null);
+    self.device_dispatch.freeMemory (self.logical_device, self.staging_buffer_memory, null);
 
     try log_app ("Init Vulkan Vertexbuffer OK", severity.DEBUG, .{});
   }
@@ -866,7 +935,7 @@ pub const context_vk = struct
     try self.init_framebuffers ();
     errdefer self.allocator.free (self.framebuffers);
 
-    try self.init_command_pool ();
+    try self.init_command_pools ();
     try self.init_vertex_buffer ();
     try self.init_command_buffers ();
     try self.init_sync_objects ();
@@ -1047,6 +1116,7 @@ pub const context_vk = struct
     }
 
     self.device_dispatch.destroyCommandPool (self.logical_device, self.command_pool, null);
+    self.device_dispatch.destroyCommandPool (self.logical_device, self.buffers_command_pool, null);
 
     self.device_dispatch.destroyDevice (self.logical_device, null);
     self.initializer.instance_dispatch.destroySurfaceKHR (self.initializer.instance, self.surface, null);

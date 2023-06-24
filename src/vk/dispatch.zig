@@ -85,4 +85,6 @@ pub const DeviceDispatch = vk.DeviceWrapper (
   .mapMemory                   = true,
   .unmapMemory                 = true,
   .cmdBindVertexBuffers        = true,
+  .cmdCopyBuffer               = true,
+  .queueWaitIdle               = true,
 });

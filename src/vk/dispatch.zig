@@ -62,7 +62,6 @@ pub const DeviceDispatch = vk.DeviceWrapper (
   .cmdBindPipeline             = true,
   .cmdSetViewport              = true,
   .cmdSetScissor               = true,
-  .cmdDraw                     = true,
   .cmdEndRenderPass            = true,
   .endCommandBuffer            = true,
   .createSemaphore             = true,
@@ -87,4 +86,6 @@ pub const DeviceDispatch = vk.DeviceWrapper (
   .cmdBindVertexBuffers        = true,
   .cmdCopyBuffer               = true,
   .queueWaitIdle               = true,
+  .cmdBindIndexBuffer          = true,
+  .cmdDrawIndexed              = true,
 });

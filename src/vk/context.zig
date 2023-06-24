@@ -51,9 +51,9 @@ pub const context_vk = struct
   current_frame:                u8,
   vertex_buffer:                vk.Buffer,
   vertex_buffer_memory:         vk.DeviceMemory,
-  staging_buffer:               vk.Buffer,
-  staging_buffer_memory:        vk.DeviceMemory,
   buffers_command_pool:         vk.CommandPool,
+  index_buffer:                 vk.Buffer,
+  index_buffer_memory:          vk.DeviceMemory,
 
   const Self = @This ();
 
@@ -61,10 +61,13 @@ pub const context_vk = struct
 
   const vertices = [_] vertex_vk
                    {
-                     vertex_vk { .pos = [_] f32 {  0.0, -0.5, }, .color = [_] f32 { 1.0, 0.0, 0.0, }, },
-                     vertex_vk { .pos = [_] f32 {  0.5,  0.5, }, .color = [_] f32 { 0.0, 1.0, 0.0, }, },
-                     vertex_vk { .pos = [_] f32 { -0.5,  0.5, }, .color = [_] f32 { 0.0, 0.0, 1.0, }, },
+                     vertex_vk { .pos = [_] f32 { -0.5, -0.5, }, .color = [_] f32 { 1.0, 0.0, 0.0, }, },
+                     vertex_vk { .pos = [_] f32 {  0.5, -0.5, }, .color = [_] f32 { 0.0, 1.0, 0.0, }, },
+                     vertex_vk { .pos = [_] f32 {  0.5,  0.5, }, .color = [_] f32 { 0.0, 0.0, 1.0, }, },
+                     vertex_vk { .pos = [_] f32 { -0.5,  0.5, }, .color = [_] f32 { 1.0, 1.0, 1.0, }, },
                    };
+
+  const indices = [_] u32 { 0, 1, 2, 2, 3, 0, };
 
   const required_device_extensions = [_][*:0] const u8
   {
@@ -826,23 +829,51 @@ pub const context_vk = struct
   fn init_vertex_buffer (self: *Self) !void
   {
     const size = @sizeOf (@TypeOf (vertices));
-    try self.init_buffer (size, vk.BufferUsageFlags { .transfer_src_bit = true, }, vk.MemoryPropertyFlags { .host_visible_bit = true, .host_coherent_bit = true, }, &(self.staging_buffer), &(self.staging_buffer_memory));
+    var staging_buffer: vk.Buffer = undefined;
+    var staging_buffer_memory: vk.DeviceMemory = undefined;
+    try self.init_buffer (size, vk.BufferUsageFlags { .transfer_src_bit = true, }, vk.MemoryPropertyFlags { .host_visible_bit = true, .host_coherent_bit = true, }, &staging_buffer, &staging_buffer_memory);
 
-    const data = @ptrCast ([*] vertex_vk, @alignCast (@alignOf (vertex_vk), try self.device_dispatch.mapMemory (self.logical_device, self.staging_buffer_memory, 0, size, vk.MemoryMapFlags {})));
+    const data = @ptrCast ([*] vertex_vk, @alignCast (@alignOf (vertex_vk), try self.device_dispatch.mapMemory (self.logical_device, staging_buffer_memory, 0, size, vk.MemoryMapFlags {})));
 
     for (vertices, 0..) |vertex, index|
     {
       data [index] = vertex;
     }
 
-    self.device_dispatch.unmapMemory (self.logical_device, self.staging_buffer_memory);
+    self.device_dispatch.unmapMemory (self.logical_device, staging_buffer_memory);
 
     try self.init_buffer (size, vk.BufferUsageFlags { .transfer_dst_bit = true, .vertex_buffer_bit = true, }, vk.MemoryPropertyFlags { .device_local_bit = true, }, &(self.vertex_buffer), &(self.vertex_buffer_memory));
 
-    try self.copy_buffer(self.staging_buffer, self.vertex_buffer, size);
+    try self.copy_buffer(staging_buffer, self.vertex_buffer, size);
 
-    self.device_dispatch.destroyBuffer (self.logical_device, self.staging_buffer, null);
-    self.device_dispatch.freeMemory (self.logical_device, self.staging_buffer_memory, null);
+    self.device_dispatch.destroyBuffer (self.logical_device, staging_buffer, null);
+    self.device_dispatch.freeMemory (self.logical_device, staging_buffer_memory, null);
+
+    try log_app ("Init Vulkan Vertexbuffer OK", severity.DEBUG, .{});
+  }
+
+  fn init_index_buffer (self: *Self) !void
+  {
+    const size = @sizeOf (@TypeOf (indices));
+    var staging_buffer: vk.Buffer = undefined;
+    var staging_buffer_memory: vk.DeviceMemory = undefined;
+    try self.init_buffer (size, vk.BufferUsageFlags { .transfer_src_bit = true, }, vk.MemoryPropertyFlags { .host_visible_bit = true, .host_coherent_bit = true, }, &staging_buffer, &staging_buffer_memory);
+
+    const data = @ptrCast ([*] u32, @alignCast (@alignOf (u32), try self.device_dispatch.mapMemory (self.logical_device, staging_buffer_memory, 0, size, vk.MemoryMapFlags {})));
+
+    for (indices, 0..) |vk_index, index|
+    {
+      data [index] = vk_index;
+    }
+
+    self.device_dispatch.unmapMemory (self.logical_device, staging_buffer_memory);
+
+    try self.init_buffer (size, vk.BufferUsageFlags { .transfer_dst_bit = true, .index_buffer_bit = true, }, vk.MemoryPropertyFlags { .device_local_bit = true, }, &(self.index_buffer), &(self.index_buffer_memory));
+
+    try self.copy_buffer(staging_buffer, self.index_buffer, size);
+
+    self.device_dispatch.destroyBuffer (self.logical_device, staging_buffer, null);
+    self.device_dispatch.freeMemory (self.logical_device, staging_buffer_memory, null);
 
     try log_app ("Init Vulkan Vertexbuffer OK", severity.DEBUG, .{});
   }
@@ -937,6 +968,7 @@ pub const context_vk = struct
 
     try self.init_command_pools ();
     try self.init_vertex_buffer ();
+    try self.init_index_buffer ();
     try self.init_command_buffers ();
     try self.init_sync_objects ();
 
@@ -977,10 +1009,12 @@ pub const context_vk = struct
     const offset = [_] vk.DeviceSize {0};
     self.device_dispatch.cmdBindVertexBuffers (command_buffer, 0, 1, @ptrCast ([*] const vk.Buffer, &(self.vertex_buffer)), &offset);
 
+    self.device_dispatch.cmdBindIndexBuffer (command_buffer, self.index_buffer, 0, vk.IndexType.uint32);
+
     self.device_dispatch.cmdSetViewport (command_buffer, 0, 1, self.viewport [0..].ptr);
     self.device_dispatch.cmdSetScissor (command_buffer, 0, 1, self.scissor [0..].ptr);
 
-    self.device_dispatch.cmdDraw (command_buffer, vertices.len, 1, 0, 0);
+    self.device_dispatch.cmdDrawIndexed (command_buffer, indices.len, 1, 0, 0, 0);
 
     self.device_dispatch.cmdEndRenderPass (command_buffer);
 
@@ -1097,6 +1131,9 @@ pub const context_vk = struct
     try self.device_dispatch.deviceWaitIdle (self.logical_device);
 
     self.cleanup_swapchain ();
+
+    self.device_dispatch.destroyBuffer (self.logical_device, self.index_buffer, null);
+    self.device_dispatch.freeMemory (self.logical_device, self.index_buffer_memory, null);
 
     self.device_dispatch.destroyBuffer (self.logical_device, self.vertex_buffer, null);
     self.device_dispatch.freeMemory (self.logical_device, self.vertex_buffer_memory, null);

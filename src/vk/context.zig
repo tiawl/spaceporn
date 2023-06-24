@@ -12,7 +12,7 @@ const dispatch         = @import ("dispatch.zig");
 const InstanceDispatch = dispatch.InstanceDispatch;
 const DeviceDispatch   = dispatch.DeviceDispatch;
 
-const vertex_vk = @import ("vertex.zig");
+const vertex_vk = @import ("vertex.zig").vertex_vk;
 
 const init            = if (build.LOG_LEVEL == @enumToInt (profile.TURBO)) @import ("init_turbo.zig") else @import ("init_debug.zig");
 const init_vk         = init.init_vk;
@@ -49,6 +49,8 @@ pub const context_vk = struct
   render_finished_semaphores:   [] vk.Semaphore,
   in_flight_fences:             [] vk.Fence,
   current_frame:                u8,
+  vertex_buffer:                vk.Buffer,
+  vertex_buffer_memory:         vk.DeviceMemory,
 
   const Self = @This ();
 
@@ -56,9 +58,9 @@ pub const context_vk = struct
 
   const vertices = [_] vertex_vk
                    {
-                     vertex_vk { .pos = {  0.0, -0.5 }, .color = { 1.0, 0.0, 0.0 } };
-                     vertex_vk { .pos = {  0.5,  0.5 }, .color = { 0.0, 1.0, 0.0 } };
-                     vertex_vk { .pos = { -0.5,  0.5 }, .color = { 0.0, 0.0, 1.0 } };
+                     vertex_vk { .pos = [_] f32 {  0.0, -0.5, }, .color = [_] f32 { 1.0, 0.0, 0.0, }, },
+                     vertex_vk { .pos = [_] f32 {  0.5,  0.5, }, .color = [_] f32 { 0.0, 1.0, 0.0, }, },
+                     vertex_vk { .pos = [_] f32 { -0.5,  0.5, }, .color = [_] f32 { 0.0, 0.0, 1.0, }, },
                    };
 
   const required_device_extensions = [_][*:0] const u8
@@ -70,6 +72,7 @@ pub const context_vk = struct
   {
     NoDevice,
     NoSuitableDevice,
+    NoSuitableMemoryType,
     ImageAcquireFailed,
   };
 
@@ -542,7 +545,7 @@ pub const context_vk = struct
                                {
                                  .flags                              = vk.PipelineVertexInputStateCreateFlags {},
                                  .vertex_binding_description_count   = 1,
-                                 .p_vertex_binding_descriptions      = @ptrCast ([*] cont vk.VertexInputBindingDescription, &(vertex_vk.binding_description)),
+                                 .p_vertex_binding_descriptions      = @ptrCast ([*] const vk.VertexInputBindingDescription, &(vertex_vk.binding_description)),
                                  .vertex_attribute_description_count = vertex_vk.attribute_description.len,
                                  .p_vertex_attribute_descriptions    = &(vertex_vk.attribute_description),
                                };
@@ -723,6 +726,58 @@ pub const context_vk = struct
     try log_app ("Init Vulkan Command Pool OK", severity.DEBUG, .{});
   }
 
+  fn find_memory_type (self: Self, type_filter: u32, properties: vk.MemoryPropertyFlags) !u32
+  {
+    const memory_properties = self.initializer.instance_dispatch.getPhysicalDeviceMemoryProperties (self.physical_device.?);
+
+    for (memory_properties.memory_types [0..memory_properties.memory_type_count], 0..) |memory_type, index|
+    {
+      if (type_filter & (@as (u32, 1) << @truncate (u5, index)) != 0 and memory_type.property_flags.contains (properties))
+      {
+        return @truncate (u32, index);
+      }
+    }
+
+    return ContextError.NoSuitableMemoryType;
+  }
+
+  fn init_vertex_buffer (self: *Self) !void
+  {
+    const create_info = vk.BufferCreateInfo
+                        {
+                          .flags        = vk.BufferCreateFlags {},
+                          .size         = @sizeOf (@TypeOf (vertices)),
+                          .usage        = vk.BufferUsageFlags { .vertex_buffer_bit = true },
+                          .sharing_mode = vk.SharingMode.exclusive,
+                        };
+
+    self.vertex_buffer = try self.device_dispatch.createBuffer (self.logical_device, &create_info, null);
+    errdefer self.device_dispatch.destroyBuffer (self.logical_device, self.vertex_buffer, null);
+
+    const memory_requirements = self.device_dispatch.getBufferMemoryRequirements (self.logical_device, self.vertex_buffer);
+
+    const alloc_info = vk.MemoryAllocateInfo
+                       {
+                         .allocation_size   = memory_requirements.size,
+                         .memory_type_index = try self.find_memory_type (memory_requirements.memory_type_bits, vk.MemoryPropertyFlags { .host_visible_bit = true, .host_coherent_bit = true, }),
+                       };
+
+    self.vertex_buffer_memory = try self.device_dispatch.allocateMemory (self.logical_device, &alloc_info, null);
+    errdefer self.device_dispatch.freeMemory (self.logical_device, self.vertex_buffer_memory, null);
+
+    try self.device_dispatch.bindBufferMemory (self.logical_device, self.vertex_buffer, self.vertex_buffer_memory, 0);
+
+    const data = @ptrCast ([*] vertex_vk, @alignCast (@alignOf (vertex_vk), try self.device_dispatch.mapMemory (self.logical_device, self.vertex_buffer_memory, 0, vk.WHOLE_SIZE, vk.MemoryMapFlags {})));
+    defer self.device_dispatch.unmapMemory (self.logical_device, self.vertex_buffer_memory);
+
+    for (vertices, 0..) |vertex, index|
+    {
+      data [index] = vertex;
+    }
+
+    try log_app ("Init Vulkan Vertexbuffer OK", severity.DEBUG, .{});
+  }
+
   fn init_command_buffers (self: *Self) !void
   {
     self.command_buffers = try self.allocator.alloc (vk.CommandBuffer, MAX_FRAMES_IN_FLIGHT);
@@ -812,6 +867,7 @@ pub const context_vk = struct
     errdefer self.allocator.free (self.framebuffers);
 
     try self.init_command_pool ();
+    try self.init_vertex_buffer ();
     try self.init_command_buffers ();
     try self.init_sync_objects ();
 
@@ -849,10 +905,13 @@ pub const context_vk = struct
     self.device_dispatch.cmdBeginRenderPass (command_buffer, &render_pass_begin_info, .@"inline");
     self.device_dispatch.cmdBindPipeline (command_buffer, .graphics, self.pipeline);
 
+    const offset = [_] vk.DeviceSize {0};
+    self.device_dispatch.cmdBindVertexBuffers (command_buffer, 0, 1, @ptrCast ([*] const vk.Buffer, &(self.vertex_buffer)), &offset);
+
     self.device_dispatch.cmdSetViewport (command_buffer, 0, 1, self.viewport [0..].ptr);
     self.device_dispatch.cmdSetScissor (command_buffer, 0, 1, self.scissor [0..].ptr);
 
-    self.device_dispatch.cmdDraw (command_buffer, 3, 1, 0, 0);
+    self.device_dispatch.cmdDraw (command_buffer, vertices.len, 1, 0, 0);
 
     self.device_dispatch.cmdEndRenderPass (command_buffer);
 
@@ -969,6 +1028,9 @@ pub const context_vk = struct
     try self.device_dispatch.deviceWaitIdle (self.logical_device);
 
     self.cleanup_swapchain ();
+
+    self.device_dispatch.destroyBuffer (self.logical_device, self.vertex_buffer, null);
+    self.device_dispatch.freeMemory (self.logical_device, self.vertex_buffer_memory, null);
 
     self.device_dispatch.destroyPipeline (self.logical_device, self.pipeline, null);
     self.device_dispatch.destroyPipelineLayout (self.logical_device, self.pipeline_layout, null);

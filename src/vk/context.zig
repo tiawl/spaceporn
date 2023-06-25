@@ -18,6 +18,11 @@ const init            = if (build.LOG_LEVEL == @enumToInt (profile.TURBO)) @impo
 const init_vk         = init.init_vk;
 const required_layers = init_vk.required_layers;
 
+const uniform_buffer_object_vk = struct
+{
+  time: f64,
+};
+
 pub const context_vk = struct
 {
   allocator:                    std.mem.Allocator,
@@ -40,6 +45,7 @@ pub const context_vk = struct
   viewport:                     [1] vk.Viewport,
   scissor:                      [1] vk.Rect2D,
   render_pass:                  vk.RenderPass,
+  descriptor_set_layout:        vk.DescriptorSetLayout,
   pipeline_layout:              vk.PipelineLayout,
   pipeline:                     vk.Pipeline,
   framebuffers:                 [] vk.Framebuffer,
@@ -54,6 +60,10 @@ pub const context_vk = struct
   buffers_command_pool:         vk.CommandPool,
   index_buffer:                 vk.Buffer,
   index_buffer_memory:          vk.DeviceMemory,
+  uniform_buffers:              [] vk.Buffer,
+  uniform_buffers_memory:       [] vk.DeviceMemory,
+  uniform_buffers_mapped:       [*] uniform_buffer_object_vk,
+  start_time:                   f64,
 
   const Self = @This ();
 
@@ -498,6 +508,29 @@ pub const context_vk = struct
     try log_app ("Init Vulkan Render Pass OK", severity.DEBUG, .{});
   }
 
+  fn init_descriptor_set_layout (self: *Self) !void
+  {
+    const ubo_layout_binding = vk.DescriptorSetLayoutBinding
+                               {
+                                 .binding              = 0,
+                                 .descriptor_type      = vk.DescriptorType.uniform_buffer,
+                                 .descriptor_count     = 1,
+                                 .stage_flags          = vk.ShaderStageFlags { .fragment_bit = true, },
+                                 .p_immutable_samplers = null,
+                               };
+
+    const create_info = vk.DescriptorSetLayoutCreateInfo
+                        {
+                          .binding_count = 1,
+                          .p_bindings    = @ptrCast ([*] const vk.DescriptorSetLayoutBinding, &ubo_layout_binding),
+                        };
+
+    self.descriptor_set_layout = try self.device_dispatch.createDescriptorSetLayout (self.logical_device, &create_info, null);
+    errdefer self.device_dispatch.destroyDescriptorSetLayout (self.logical_device, self.descriptor_set_layout, null);
+
+    try log_app ("Init Vulkan Descriptor Set Layout OK", severity.DEBUG, .{});
+  }
+
   fn init_shader_module (self: Self, resource: [] const u8) !vk.ShaderModule
   {
     const create_info = vk.ShaderModuleCreateInfo
@@ -652,8 +685,8 @@ pub const context_vk = struct
                                {
                                  .flags                     = vk.PipelineLayoutCreateFlags {},
 
-                                 .set_layout_count          = 0,
-                                 .p_set_layouts             = undefined,
+                                 .set_layout_count          = 1,
+                                 .p_set_layouts             = @ptrCast ([*] const vk.DescriptorSetLayout, &(self.descriptor_set_layout)),
                                  .push_constant_range_count = 0,
                                  .p_push_constant_ranges    = undefined,
                                };
@@ -875,7 +908,40 @@ pub const context_vk = struct
     self.device_dispatch.destroyBuffer (self.logical_device, staging_buffer, null);
     self.device_dispatch.freeMemory (self.logical_device, staging_buffer_memory, null);
 
-    try log_app ("Init Vulkan Vertexbuffer OK", severity.DEBUG, .{});
+    try log_app ("Init Vulkan Indexbuffer OK", severity.DEBUG, .{});
+  }
+
+  fn init_uniform_bufers (self: *Self) !void
+  {
+    const size = @sizeOf (uniform_buffer_object_vk);
+    self.uniform_buffers = try self.allocator.alloc (vk.Buffer, MAX_FRAMES_IN_FLIGHT);
+    errdefer self.allocator.free (self.uniform_buffers);
+    self.uniform_buffers_memory = try self.allocator.alloc (vk.DeviceMemory, MAX_FRAMES_IN_FLIGHT);
+    errdefer self.allocator.free (self.uniform_buffers_memory);
+    try log_app ("Init Vulkan Uniform buffers OK", severity.DEBUG, .{});
+
+    var index: u32 = 0;
+
+    while (index < MAX_FRAMES_IN_FLIGHT)
+    {
+      try self.init_buffer (size, vk.BufferUsageFlags { .uniform_buffer_bit = true, }, vk.MemoryPropertyFlags { .host_visible_bit = true, .host_coherent_bit = true, }, &(self.uniform_buffers [index]), &(self.uniform_buffers_memory [index]));
+
+      self.uniform_buffers_mapped = @ptrCast ([*] uniform_buffer_object_vk, @alignCast (@alignOf (uniform_buffer_object_vk), try self.device_dispatch.mapMemory (self.logical_device, self.uniform_buffers_memory [index], 0, size, vk.MemoryMapFlags {})));
+
+      index += 1;
+    }
+
+    errdefer
+    {
+      index = 0;
+
+      while (index < MAX_FRAMES_IN_FLIGHT)
+      {
+        self.device_dispatch.destroyBuffer (self.logical_device, self.uniform_buffers [index], null);
+        self.device_dispatch.freeMemory (self.logical_device, self.uniform_buffers_memory [index], null);
+        index += 1;
+      }
+    }
   }
 
   fn init_command_buffers (self: *Self) !void
@@ -941,6 +1007,7 @@ pub const context_vk = struct
     instance_proc_addr: *const fn (?*anyopaque, [*:0] const u8) callconv (.C) ?*const fn () callconv (.C) void) !Self
   {
     var self: Self = undefined;
+    self.start_time = @intToFloat (f64, std.time.microTimestamp ()) / 1_000_000.0;
 
     self.allocator = std.heap.page_allocator;
 
@@ -962,6 +1029,7 @@ pub const context_vk = struct
 
     try self.init_image_views ();
     try self.init_render_pass ();
+    try self.init_descriptor_set_layout ();
     try self.init_graphics_pipeline ();
     try self.init_framebuffers ();
     errdefer self.allocator.free (self.framebuffers);
@@ -969,6 +1037,7 @@ pub const context_vk = struct
     try self.init_command_pools ();
     try self.init_vertex_buffer ();
     try self.init_index_buffer ();
+    try self.init_uniform_bufers ();
     try self.init_command_buffers ();
     try self.init_sync_objects ();
 
@@ -1055,6 +1124,16 @@ pub const context_vk = struct
     errdefer self.allocator.free (self.framebuffers);
   }
 
+  fn update_uniform_buffer (self: *Self) !void
+  {
+    const ubo = uniform_buffer_object_vk
+                {
+                  .time = self.start_time - @intToFloat (f64, std.time.microTimestamp ()) / 1_000_000.0,
+                };
+
+    self.uniform_buffers_mapped [self.current_frame] = ubo;
+  }
+
   fn draw_frame (self: *Self, framebuffer: struct { resized: bool, width: u32, height: u32, }) !void
   {
     _ = try self.device_dispatch.waitForFences (self.logical_device, 1, @ptrCast ([*] const vk.Fence, &(self.in_flight_fences [self.current_frame])), vk.TRUE, std.math.maxInt (u64));
@@ -1067,6 +1146,8 @@ pub const context_vk = struct
                                                    },
                              else               => return err,
                            };
+
+    try self.update_uniform_buffer ();
 
     _ = try self.device_dispatch.resetFences (self.logical_device, 1, @ptrCast ([*] const vk.Fence, &(self.in_flight_fences [self.current_frame])));
 
@@ -1132,6 +1213,17 @@ pub const context_vk = struct
 
     self.cleanup_swapchain ();
 
+    var index: u32 = 0;
+
+    while (index < MAX_FRAMES_IN_FLIGHT)
+    {
+      self.device_dispatch.destroyBuffer (self.logical_device, self.uniform_buffers [index], null);
+      self.device_dispatch.freeMemory (self.logical_device, self.uniform_buffers_memory [index], null);
+      index += 1;
+    }
+
+    self.device_dispatch.destroyDescriptorSetLayout (self.logical_device, self.descriptor_set_layout, null);
+
     self.device_dispatch.destroyBuffer (self.logical_device, self.index_buffer, null);
     self.device_dispatch.freeMemory (self.logical_device, self.index_buffer_memory, null);
 
@@ -1142,7 +1234,7 @@ pub const context_vk = struct
     self.device_dispatch.destroyPipelineLayout (self.logical_device, self.pipeline_layout, null);
     self.device_dispatch.destroyRenderPass (self.logical_device, self.render_pass, null);
 
-    var index: u32 = 0;
+    index = 0;
 
     while (index < MAX_FRAMES_IN_FLIGHT)
     {

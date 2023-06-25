@@ -88,4 +88,6 @@ pub const DeviceDispatch = vk.DeviceWrapper (
   .queueWaitIdle               = true,
   .cmdBindIndexBuffer          = true,
   .cmdDrawIndexed              = true,
+  .createDescriptorSetLayout   = true,
+  .destroyDescriptorSetLayout  = true,
 });

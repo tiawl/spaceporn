@@ -141,7 +141,7 @@ pub const init_vk = struct
                    {
                      .message_severity = vk.DebugUtilsMessageSeverityFlagsEXT
                                          {
-                                           .verbose_bit_ext = (build.LOG_LEVEL > @enumToInt (profile.DEFAULT)),
+                                           .verbose_bit_ext = (build.LOG_LEVEL > @intFromEnum (profile.DEFAULT)),
                                            .info_bit_ext    = true,
                                            .warning_bit_ext = true,
                                            .error_bit_ext   = true,
@@ -161,7 +161,7 @@ pub const init_vk = struct
                                                                            }
                                                                            break :blk false;
                                                                          },
-                                       .performance_bit_ext            = (build.LOG_LEVEL > @enumToInt (profile.DEFAULT)),
+                                       .performance_bit_ext            = (build.LOG_LEVEL > @intFromEnum (profile.DEFAULT)),
                                      },
                      .pfn_user_callback = @ptrCast (vk.PfnDebugUtilsMessengerCallbackEXT, &debug_callback),
                    };

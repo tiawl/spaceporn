@@ -9,16 +9,16 @@ const severity = utils.severity;
 pub const BaseDispatch = vk.BaseWrapper (
 .{
   .createInstance                       = true,
-  .enumerateInstanceLayerProperties     = build.LOG_LEVEL > @enumToInt (profile.TURBO),
-  .enumerateInstanceExtensionProperties = build.LOG_LEVEL > @enumToInt (profile.TURBO),
+  .enumerateInstanceLayerProperties     = build.LOG_LEVEL > @intFromEnum (profile.TURBO),
+  .enumerateInstanceExtensionProperties = build.LOG_LEVEL > @intFromEnum (profile.TURBO),
   .getInstanceProcAddr                  = true,
 });
 
 pub const InstanceDispatch = vk.InstanceWrapper (
 .{
   .destroyInstance                         = true,
-  .createDebugUtilsMessengerEXT            = build.LOG_LEVEL > @enumToInt (profile.TURBO),
-  .destroyDebugUtilsMessengerEXT           = build.LOG_LEVEL > @enumToInt (profile.TURBO),
+  .createDebugUtilsMessengerEXT            = build.LOG_LEVEL > @intFromEnum (profile.TURBO),
+  .destroyDebugUtilsMessengerEXT           = build.LOG_LEVEL > @intFromEnum (profile.TURBO),
   .destroySurfaceKHR                       = true,
   .getPhysicalDeviceSurfaceSupportKHR      = true,
   .getPhysicalDeviceSurfaceCapabilitiesKHR = true,
@@ -90,4 +90,9 @@ pub const DeviceDispatch = vk.DeviceWrapper (
   .cmdDrawIndexed              = true,
   .createDescriptorSetLayout   = true,
   .destroyDescriptorSetLayout  = true,
+  .createDescriptorPool        = true,
+  .destroyDescriptorPool       = true,
+  .allocateDescriptorSets      = true,
+  .updateDescriptorSets        = true,
+  .cmdBindDescriptorSets       = true,
 });

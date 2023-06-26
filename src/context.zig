@@ -21,7 +21,7 @@ pub const context = struct
 
   fn init_logfile () !void
   {
-    if (build.LOG_LEVEL > @enumToInt (profile.TURBO) and build.LOG_DIR.len > 0)
+    if (build.LOG_LEVEL > @intFromEnum (profile.TURBO) and build.LOG_DIR.len > 0)
     {
       var dir = std.fs.cwd ().openDir (LOG_DIR, .{}) catch |err|
       {

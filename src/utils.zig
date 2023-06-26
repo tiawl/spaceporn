@@ -53,7 +53,7 @@ fn sys_date (expanded: anytype, date: *[] const u8,
 {
   expanded.format.* = try std.fmt.allocPrint(expanded.allocator.*, format, args);
 
-  if (build.LOG_LEVEL > @enumToInt (profile.DEFAULT))
+  if (build.LOG_LEVEL > @intFromEnum (profile.DEFAULT))
   {
     const command = [_][] const u8 { "date", "+%F %T.%3N: " };
     var child = std.process.Child.init(&command, expanded.allocator.*);
@@ -85,8 +85,8 @@ fn sys_date (expanded: anytype, date: *[] const u8,
 
 fn is_logging (sev: severity, min_sev: severity) bool
 {
-  return (   build.LOG_LEVEL == @enumToInt (profile.DEV) or
-           ( build.LOG_LEVEL == @enumToInt (profile.DEFAULT) and @enumToInt (sev) >= @enumToInt (min_sev) ) );
+  return (   build.LOG_LEVEL == @intFromEnum (profile.DEV) or
+           ( build.LOG_LEVEL == @intFromEnum (profile.DEFAULT) and @intFromEnum (sev) >= @intFromEnum (min_sev) ) );
 }
 
 pub fn log (comptime format: [] const u8, id: [*:0] const u8, sev: severity, min_sev: severity,  _type: [] const u8, args: anytype) !void

@@ -7,11 +7,14 @@ pub const vertex_vk = struct
 
   const Self = @This ();
 
-  pub const binding_description = vk.VertexInputBindingDescription
+  pub const binding_description = [_] vk.VertexInputBindingDescription
                                   {
-                                    .binding    = 0,
-                                    .stride     = @sizeOf (Self),
-                                    .input_rate = vk.VertexInputRate.vertex,
+                                    vk.VertexInputBindingDescription
+                                    {
+                                      .binding    = 0,
+                                      .stride     = @sizeOf (Self),
+                                      .input_rate = vk.VertexInputRate.vertex,
+                                    },
                                   };
 
   pub const attribute_description = [_] vk.VertexInputAttributeDescription

@@ -16,15 +16,6 @@ void main ()
   {
     time = 2.0 - time;
   }
-  vec3 color = frag_color;
-  if (frag_color.x > 0.9)
-  {
-    color.y = time;
-  } else if (frag_color.y > 0.9) {
-    color.z = time;
-  } else {
-    color.x = time;
-  }
 
-  out_color = vec4 (color, 1.0);
+  out_color = vec4 (time * (1. - frag_color) + (1. - time) * frag_color, 1.0);
 }

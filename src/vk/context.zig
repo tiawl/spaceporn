@@ -67,6 +67,16 @@ pub const context_vk = struct
   descriptor_pool:              vk.DescriptorPool,
   descriptor_sets:              [] vk.DescriptorSet,
 
+  offscreen_width:              u32,
+  offscreen_height:             u32,
+  offscreen_framebuffer:        vk.Framebuffer,
+  offscreen_image:              vk.Image,
+  offscreen_image_memory:       vk.DeviceMemory,
+  offscreen_view:               vk.ImageView,
+  offscreen_render_pass:        vk.RenderPass,
+  offscreen_sampler:            vk.Sampler,
+  offscreen_descriptor:         vk.DescriptorImageInfo,
+
   const Self = @This ();
 
   const MAX_FRAMES_IN_FLIGHT = 2;
@@ -487,7 +497,7 @@ pub const context_vk = struct
                       {
                         .flags                  = vk.SubpassDescriptionFlags {},
                         .pipeline_bind_point    = vk.PipelineBindPoint.graphics,
-                        .color_attachment_count = 1,
+                        .color_attachment_count = attachment_ref.len,
                         .p_color_attachments    = &attachment_ref,
                       },
                     };
@@ -508,11 +518,11 @@ pub const context_vk = struct
     const create_info = vk.RenderPassCreateInfo
                         {
                           .flags            = vk.RenderPassCreateFlags {},
-                          .attachment_count = 1,
+                          .attachment_count = attachment_desc.len,
                           .p_attachments    = &attachment_desc,
-                          .subpass_count    = 1,
+                          .subpass_count    = subpass.len,
                           .p_subpasses      = &subpass,
-                          .dependency_count = 1,
+                          .dependency_count = dependency.len,
                           .p_dependencies   = &dependency,
                         };
 
@@ -520,6 +530,195 @@ pub const context_vk = struct
     errdefer self.device_dispatch.destroyRenderPass (self.logical_device, self.render_pass, null);
 
     try log_app ("Init Vulkan Render Pass OK", severity.DEBUG, .{});
+  }
+
+  fn init_offscreen (self: *Self) !void
+  {
+    self.offscreen_width  = 512;
+    self.offscreen_height = 512;
+
+    const image_create_info = vk.ImageCreateInfo
+                              {
+                                .image_type     = vk.ImageType.@"2d",
+                                .format         = vk.Format.r8g8b8a8_unorm,
+                                .extent         = vk.Extent3D
+                                                  {
+                                                    .width  = self.offscreen_width,
+                                                    .height = self.offscreen_height,
+                                                    .depth  = 1,
+                                                  },
+                                .mip_levels     = 1,
+                                .array_layers   = 1,
+                                .samples        = vk.SampleCountFlags { .@"1_bit" = true, },
+                                .tiling         = vk.ImageTiling.optimal,
+                                .usage          = vk.ImageUsageFlags
+                                                  {
+                                                    .color_attachment_bit = true,
+                                                    .sampled_bit          = true,
+                                                  },
+                                .sharing_mode   = vk.SharingMode.exclusive,
+                                .initial_layout = vk.ImageLayout.undefined,
+                              };
+
+    self.offscreen_image = try self.device_dispatch.createImage (self.logical_device, &image_create_info, null);
+    errdefer self.device_dispatch.destroyImage (self.logical_device, self.offscreen_image, null);
+
+    const memory_requirements = self.device_dispatch.getImageMemoryRequirements (self.logical_device, self.offscreen_image);
+
+    const alloc_info = vk.MemoryAllocateInfo
+                       {
+                         .allocation_size   = memory_requirements.size,
+                         .memory_type_index = try self.find_memory_type (memory_requirements.memory_type_bits, vk.MemoryPropertyFlags { .device_local_bit = true, }),
+                       };
+
+    self.offscreen_image_memory = try self.device_dispatch.allocateMemory (self.logical_device, &alloc_info, null);
+    errdefer self.device_dispatch.freeMemory (self.logical_device, self.offscreen_image_memory, null);
+
+    try self.device_dispatch.bindImageMemory (self.logical_device, self.offscreen_image, self.offscreen_image_memory, 0);
+
+    const view_create_info = vk.ImageViewCreateInfo
+                             {
+                               .view_type         = vk.ImageViewType.@"2d",
+                               .format            = vk.Format.r8g8b8a8_unorm,
+                               .subresource_range = vk.ImageSubresourceRange
+                                                    {
+                                                      .aspect_mask      = vk.ImageAspectFlags { .color_bit = true },
+                                                      .base_mip_level   = 0,
+                                                      .level_count      = 1,
+                                                      .base_array_layer = 0,
+                                                      .layer_count      = 1,
+                                                    },
+                               .image             = self.offscreen_image,
+                               .components        = vk.ComponentMapping
+                                                    {
+                                                      .r = vk.ComponentSwizzle.identity,
+                                                      .g = vk.ComponentSwizzle.identity,
+                                                      .b = vk.ComponentSwizzle.identity,
+                                                      .a = vk.ComponentSwizzle.identity,
+                                                    },
+                             };
+
+    self.offscreen_view = try self.device_dispatch.createImageView (self.logical_device, &view_create_info, null);
+    errdefer self.device_dispatch.destroyImageView (self.logical_device, self.offscreen_view, null);
+
+    const sampler_create_info = vk.SamplerCreateInfo
+                                {
+                                  .mag_filter               = vk.Filter.linear,
+                                  .min_filter               = vk.Filter.linear,
+                                  .mipmap_mode              = vk.SamplerMipmapMode.linear,
+                                  .address_mode_u           = vk.SamplerAddressMode.clamp_to_border,
+                                  .address_mode_v           = vk.SamplerAddressMode.clamp_to_border,
+                                  .address_mode_w           = vk.SamplerAddressMode.clamp_to_border,
+                                  .mip_lod_bias             = 0,
+                                  .anisotropy_enable        = vk.TRUE,
+                                  .max_anisotropy           = 1,
+                                  .min_lod                  = 0,
+                                  .max_lod                  = 1,
+                                  .border_color             = vk.BorderColor.float_opaque_white ,
+                                  .compare_enable           = vk.FALSE,
+                                  .compare_op               = vk.CompareOp.always,
+                                  .unnormalized_coordinates = vk.FALSE,
+                                };
+
+    self.offscreen_sampler = try self.device_dispatch.createSampler (self.logical_device, &sampler_create_info, null);
+    errdefer self.device_dispatch.destroySampler (self.logical_device, self.offscreen_sampler, null);
+
+    const attachment_desc = [_] vk.AttachmentDescription
+                            {
+                              vk.AttachmentDescription
+                              {
+                                .flags            = vk.AttachmentDescriptionFlags {},
+                                .format           = vk.Format.r8g8b8a8_unorm,
+                                .samples          = vk.SampleCountFlags { .@"1_bit" = true },
+                                .load_op          = vk.AttachmentLoadOp.clear,
+                                .store_op         = vk.AttachmentStoreOp.store,
+                                .stencil_load_op  = vk.AttachmentLoadOp.dont_care,
+                                .stencil_store_op = vk.AttachmentStoreOp.dont_care,
+                                .initial_layout   = vk.ImageLayout.undefined,
+                                .final_layout     = vk.ImageLayout.shader_read_only_optimal,
+                              },
+                            };
+
+    const attachment_ref = [_] vk.AttachmentReference
+                           {
+                             vk.AttachmentReference
+                             {
+                               .attachment = 0,
+                               .layout     = vk.ImageLayout.color_attachment_optimal,
+                             },
+                           };
+
+    const subpass = [_] vk.SubpassDescription
+                    {
+                      vk.SubpassDescription
+                      {
+                        .flags                  = vk.SubpassDescriptionFlags {},
+                        .pipeline_bind_point    = vk.PipelineBindPoint.graphics,
+                        .color_attachment_count = attachment_ref.len,
+                        .p_color_attachments    = &attachment_ref,
+                      },
+                    };
+
+    const dependency = [_] vk.SubpassDependency
+                       {
+                         vk.SubpassDependency
+                         {
+                           .src_subpass      = vk.SUBPASS_EXTERNAL,
+                           .dst_subpass      = 0,
+                           .src_stage_mask   = vk.PipelineStageFlags { .fragment_shader_bit = true },
+                           .dst_stage_mask   = vk.PipelineStageFlags { .color_attachment_output_bit = true },
+                           .src_access_mask  = vk.AccessFlags { .shader_read_bit = true, },
+                           .dst_access_mask  = vk.AccessFlags { .color_attachment_write_bit = true},
+                           .dependency_flags = vk.DependencyFlags { .by_region_bit = true },
+                         },
+                         vk.SubpassDependency
+                         {
+                           .src_subpass      = 0,
+                           .dst_subpass      = vk.SUBPASS_EXTERNAL,
+                           .src_stage_mask   = vk.PipelineStageFlags { .color_attachment_output_bit = true },
+                           .dst_stage_mask   = vk.PipelineStageFlags { .fragment_shader_bit = true },
+                           .src_access_mask  = vk.AccessFlags { .color_attachment_write_bit = true},
+                           .dst_access_mask  = vk.AccessFlags { .shader_read_bit = true, },
+                           .dependency_flags = vk.DependencyFlags { .by_region_bit = true },
+                         },
+                       };
+
+    const create_info = vk.RenderPassCreateInfo
+                        {
+                          .flags            = vk.RenderPassCreateFlags {},
+                          .attachment_count = attachment_desc.len,
+                          .p_attachments    = &attachment_desc,
+                          .subpass_count    = subpass.len,
+                          .p_subpasses      = &subpass,
+                          .dependency_count = dependency.len,
+                          .p_dependencies   = &dependency,
+                        };
+
+    self.render_pass = try self.device_dispatch.createRenderPass (self.logical_device, &create_info, null);
+    errdefer self.device_dispatch.destroyRenderPass (self.logical_device, self.render_pass, null);
+
+    const framebuffer_create_info = vk.FramebufferCreateInfo
+                                    {
+                                      .flags            = vk.FramebufferCreateFlags {},
+                                      .render_pass      = self.offscreen_render_pass,
+                                      .attachment_count = 1,
+                                      .p_attachments    = &[_] vk.ImageView { self.offscreen_view },
+                                      .width            = self.offscreen_width,
+                                      .height           = self.offscreen_height,
+                                      .layers           = 1,
+                                    };
+
+    self.offscreen_framebuffer = try self.device_dispatch.createFramebuffer (self.logical_device, &framebuffer_create_info, null);
+    errdefer self.device_dispatch.destroyFramebuffer (self.logical_device, self.offscreen_framebuffer, null);
+
+    self.offscreen_descriptor = vk.DescriptorImageInfo
+                                {
+                                  .sampler      = self.offscreen_sampler,
+                                  .image_view   = self.offscreen_view,
+                                  .image_layout = vk.ImageLayout.shader_read_only_optimal,
+                                };
+
+    try log_app ("Init Vulkan Offscreen Render Pass OK", severity.DEBUG, .{});
   }
 
   fn init_descriptor_set_layout (self: *Self) !void
@@ -1129,6 +1328,7 @@ pub const context_vk = struct
 
     try self.init_image_views ();
     try self.init_render_pass ();
+    try self.init_offscreen ();
     try self.init_descriptor_set_layout ();
     try self.init_graphics_pipeline ();
     try self.init_framebuffers ();

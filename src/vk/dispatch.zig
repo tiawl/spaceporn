@@ -95,4 +95,10 @@ pub const DeviceDispatch = vk.DeviceWrapper (
   .allocateDescriptorSets      = true,
   .updateDescriptorSets        = true,
   .cmdBindDescriptorSets       = true,
+  .createImage                 = true,
+  .destroyImage                = true,
+  .getImageMemoryRequirements  = true,
+  .bindImageMemory             = true,
+  .createSampler               = true,
+  .destroySampler              = true,
 });

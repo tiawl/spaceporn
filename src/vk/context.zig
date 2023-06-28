@@ -46,9 +46,9 @@ pub const context_vk = struct
   viewport:                     [1] vk.Viewport,
   scissor:                      [1] vk.Rect2D,
   render_pass:                  vk.RenderPass,
-  descriptor_set_layout:        vk.DescriptorSetLayout,
+  descriptor_set_layout:        [] vk.DescriptorSetLayout,
   pipeline_layout:              vk.PipelineLayout,
-  pipeline:                     vk.Pipeline,
+  pipelines:                    [] vk.Pipeline,
   framebuffers:                 [] vk.Framebuffer,
   command_pool:                 vk.CommandPool,
   command_buffers:              [] vk.CommandBuffer,
@@ -72,10 +72,12 @@ pub const context_vk = struct
   offscreen_framebuffer:        vk.Framebuffer,
   offscreen_image:              vk.Image,
   offscreen_image_memory:       vk.DeviceMemory,
-  offscreen_view:               vk.ImageView,
+  offscreen_views:              [] vk.ImageView,
   offscreen_render_pass:        vk.RenderPass,
   offscreen_sampler:            vk.Sampler,
   offscreen_descriptor:         vk.DescriptorImageInfo,
+  offscreen_pipeline_layout:    vk.PipelineLayout,
+  offscreen_pipelines:          [] vk.Pipeline,
 
   const Self = @This ();
 
@@ -211,16 +213,9 @@ pub const context_vk = struct
     try log_app ("Query Vulkan Swapchain Support OK", severity.DEBUG, .{});
   }
 
+  // TODO: issue #52: prefer a device that support drawing and presentation in the same queue for better perf
   fn is_suitable (self: *Self, device: vk.PhysicalDevice) !bool
   {
-    const device_prop = self.initializer.instance_dispatch.getPhysicalDeviceProperties (device);
-    const device_feat = self.initializer.instance_dispatch.getPhysicalDeviceFeatures (device);
-
-    // TODO: issue #52: prefer a device that support drawing and presentation in the same queue for better perf
-
-    _ = device_prop;
-    _ = device_feat;
-
     if (!try self.check_device_extension_support (device))
     {
       return false;
@@ -228,12 +223,15 @@ pub const context_vk = struct
 
     try self.query_swapchain_support (device);
 
+    const properties = self.initializer.instance_dispatch.getPhysicalDeviceProperties (device);
+    const features = self.initializer.instance_dispatch.getPhysicalDeviceFeatures (device);
+
     if (self.formats.len > 0 and self.present_modes.len > 0)
     {
       if (try self.find_queue_families (device))
       {
         try log_app ("Is Vulkan Device Suitable OK", severity.DEBUG, .{});
-        return true;
+        return features.sampler_anisotropy == vk.TRUE and properties.limits.max_sampler_anisotropy >= 1;
       }
     }
 
@@ -296,7 +294,10 @@ pub const context_vk = struct
                               };
     const queue_count: u32 = if (self.candidate.graphics_family == self.candidate.present_family) 1 else 2;
 
-    const device_features = vk.PhysicalDeviceFeatures {};
+    const device_features = vk.PhysicalDeviceFeatures
+                            {
+                              .sampler_anisotropy = vk.TRUE,
+                            };
 
     const device_create_info = vk.DeviceCreateInfo
                                {
@@ -598,8 +599,11 @@ pub const context_vk = struct
                                                     },
                              };
 
-    self.offscreen_view = try self.device_dispatch.createImageView (self.logical_device, &view_create_info, null);
-    errdefer self.device_dispatch.destroyImageView (self.logical_device, self.offscreen_view, null);
+    self.offscreen_views = try self.allocator.alloc (vk.ImageView, 1);
+    errdefer self.allocator.free (self.offscreen_views);
+
+    self.offscreen_views [0] = try self.device_dispatch.createImageView (self.logical_device, &view_create_info, null);
+    errdefer self.device_dispatch.destroyImageView (self.logical_device, self.offscreen_views [0], null);
 
     const sampler_create_info = vk.SamplerCreateInfo
                                 {
@@ -694,15 +698,15 @@ pub const context_vk = struct
                           .p_dependencies   = &dependency,
                         };
 
-    self.render_pass = try self.device_dispatch.createRenderPass (self.logical_device, &create_info, null);
-    errdefer self.device_dispatch.destroyRenderPass (self.logical_device, self.render_pass, null);
+    self.offscreen_render_pass = try self.device_dispatch.createRenderPass (self.logical_device, &create_info, null);
+    errdefer self.device_dispatch.destroyRenderPass (self.logical_device, self.offscreen_render_pass, null);
 
     const framebuffer_create_info = vk.FramebufferCreateInfo
                                     {
                                       .flags            = vk.FramebufferCreateFlags {},
                                       .render_pass      = self.offscreen_render_pass,
-                                      .attachment_count = 1,
-                                      .p_attachments    = &[_] vk.ImageView { self.offscreen_view },
+                                      .attachment_count = self.offscreen_views.len,
+                                      .p_attachments    = &self.offscreen_views,
                                       .width            = self.offscreen_width,
                                       .height           = self.offscreen_height,
                                       .layers           = 1,
@@ -714,7 +718,7 @@ pub const context_vk = struct
     self.offscreen_descriptor = vk.DescriptorImageInfo
                                 {
                                   .sampler      = self.offscreen_sampler,
-                                  .image_view   = self.offscreen_view,
+                                  .image_view   = self.offscreen_views [0],
                                   .image_layout = vk.ImageLayout.shader_read_only_optimal,
                                 };
 
@@ -733,17 +737,28 @@ pub const context_vk = struct
                                    .stage_flags          = vk.ShaderStageFlags { .fragment_bit = true, },
                                    .p_immutable_samplers = null,
                                  },
+                                 vk.DescriptorSetLayoutBinding
+                                 {
+                                   .binding              = 1,
+                                   .descriptor_type      = vk.DescriptorType.combined_image_sampler,
+                                   .descriptor_count     = 1,
+                                   .stage_flags          = vk.ShaderStageFlags { .fragment_bit = true, },
+                                   .p_immutable_samplers = null,
+                                 },
                                };
 
     const create_info = vk.DescriptorSetLayoutCreateInfo
                         {
                           .flags         = vk.DescriptorSetLayoutCreateFlags {},
-                          .binding_count = 1,
+                          .binding_count = ubo_layout_binding.len,
                           .p_bindings    = &ubo_layout_binding,
                         };
 
-    self.descriptor_set_layout = try self.device_dispatch.createDescriptorSetLayout (self.logical_device, &create_info, null);
-    errdefer self.device_dispatch.destroyDescriptorSetLayout (self.logical_device, self.descriptor_set_layout, null);
+    self.descriptor_set_layout = try self.allocator.alloc (vk.DescriptorSetLayout, 1);
+    errdefer self.allocator.free (self.descriptor_set_layout);
+
+    self.descriptor_set_layout [0] = try self.device_dispatch.createDescriptorSetLayout (self.logical_device, &create_info, null);
+    errdefer self.device_dispatch.destroyDescriptorSetLayout (self.logical_device, self.descriptor_set_layout [0], null);
 
     try log_app ("Init Vulkan Descriptor Set Layout OK", severity.DEBUG, .{});
   }
@@ -767,26 +782,28 @@ pub const context_vk = struct
     defer self.device_dispatch.destroyShaderModule (self.logical_device, vertex, null);
     const fragment = try self.init_shader_module (resources.frag [0..]);
     defer self.device_dispatch.destroyShaderModule (self.logical_device, fragment, null);
+    const offscreen_fragment = try self.init_shader_module (resources.offscreen_frag [0..]);
+    defer self.device_dispatch.destroyShaderModule (self.logical_device, offscreen_fragment, null);
 
-    const shader_stage = [_] vk.PipelineShaderStageCreateInfo
+    var shader_stage = [_] vk.PipelineShaderStageCreateInfo
+                       {
+                         vk.PipelineShaderStageCreateInfo
                          {
-                           vk.PipelineShaderStageCreateInfo
-                           {
-                              .flags                 = vk.PipelineShaderStageCreateFlags {},
-                              .stage                 = vk.ShaderStageFlags { .vertex_bit = true },
-                              .module                = vertex,
-                              .p_name                = "main",
-                              .p_specialization_info = null,
-                            },
-                           vk.PipelineShaderStageCreateInfo
-                           {
-                              .flags                 = vk.PipelineShaderStageCreateFlags {},
-                              .stage                 = vk.ShaderStageFlags { .fragment_bit = true },
-                              .module                = fragment,
-                              .p_name                = "main",
-                              .p_specialization_info = null,
-                            },
-                         };
+                            .flags                 = vk.PipelineShaderStageCreateFlags {},
+                            .stage                 = vk.ShaderStageFlags { .vertex_bit = true },
+                            .module                = vertex,
+                            .p_name                = "main",
+                            .p_specialization_info = null,
+                          },
+                         vk.PipelineShaderStageCreateInfo
+                         {
+                            .flags                 = vk.PipelineShaderStageCreateFlags {},
+                            .stage                 = vk.ShaderStageFlags { .fragment_bit = true },
+                            .module                = fragment,
+                            .p_name                = "main",
+                            .p_specialization_info = null,
+                          },
+                       };
 
     const dynamic_states = [_] vk.DynamicState { .viewport, .scissor };
 
@@ -800,7 +817,7 @@ pub const context_vk = struct
     const vertex_input_state = vk.PipelineVertexInputStateCreateInfo
                                {
                                  .flags                              = vk.PipelineVertexInputStateCreateFlags {},
-                                 .vertex_binding_description_count   = 1,
+                                 .vertex_binding_description_count   = vertex_vk.binding_description.len,
                                  .p_vertex_binding_descriptions      = &(vertex_vk.binding_description),
                                  .vertex_attribute_description_count = vertex_vk.attribute_description.len,
                                  .p_vertex_attribute_descriptions    = &(vertex_vk.attribute_description),
@@ -838,9 +855,9 @@ pub const context_vk = struct
     const viewport_state = vk.PipelineViewportStateCreateInfo
                            {
                              .flags          = vk.PipelineViewportStateCreateFlags {},
-                             .viewport_count = 1,
+                             .viewport_count = self.viewport.len,
                              .p_viewports    = &(self.viewport),
-                             .scissor_count  = 1,
+                             .scissor_count  = self.scissor.len,
                              .p_scissors     = &(self.scissor),
                            };
 
@@ -896,49 +913,86 @@ pub const context_vk = struct
                           .flags            = vk.PipelineColorBlendStateCreateFlags {},
                           .logic_op_enable  = vk.FALSE,
                           .logic_op         = vk.LogicOp.copy,
-                          .attachment_count = 1,
+                          .attachment_count = blend_attachment.len,
                           .p_attachments    = &blend_attachment,
                           .blend_constants  = [_] f32 { 0, 0, 0, 0 },
                         };
 
-    const layout_create_info = vk.PipelineLayoutCreateInfo
-                               {
-                                 .flags                     = vk.PipelineLayoutCreateFlags {},
-                                 .set_layout_count          = 1,
-                                 .p_set_layouts             = &[_] vk.DescriptorSetLayout { self.descriptor_set_layout },
-                                 .push_constant_range_count = 0,
-                                 .p_push_constant_ranges    = undefined,
-                               };
+    var layout_create_info = vk.PipelineLayoutCreateInfo
+                             {
+                               .flags                     = vk.PipelineLayoutCreateFlags {},
+                               .set_layout_count          = self.descriptor_set_layout.len,
+                               .p_set_layouts             = &self.descriptor_set_layout,
+                               .push_constant_range_count = 0,
+                               .p_push_constant_ranges    = undefined,
+                             };
 
     self.pipeline_layout = try self.device_dispatch.createPipelineLayout (self.logical_device, &layout_create_info, null);
     errdefer self.device_dispatch.destroyPipelineLayout (self.logical_device, self.pipeline_layout, null);
 
-    const pipeline_create_info = [_] vk.GraphicsPipelineCreateInfo
-                                 {
-                                   vk.GraphicsPipelineCreateInfo
-                                   {
-                                     .flags                  = vk.PipelineCreateFlags {},
-                                     .stage_count            = 2,
-                                     .p_stages               = &shader_stage,
-                                     .p_vertex_input_state   = &vertex_input_state,
-                                     .p_input_assembly_state = &input_assembly,
-                                     .p_tessellation_state   = null,
-                                     .p_viewport_state       = &viewport_state,
-                                     .p_rasterization_state  = &rasterizer,
-                                     .p_multisample_state    = &multisampling,
-                                     .p_depth_stencil_state  = null,
-                                     .p_color_blend_state    = &blend_state,
-                                     .p_dynamic_state        = &dynamic_state,
-                                     .layout                 = self.pipeline_layout,
-                                     .render_pass            = self.render_pass,
-                                     .subpass                = 0,
-                                     .base_pipeline_handle   = vk.Pipeline.null_handle,
-                                     .base_pipeline_index    = -1,
-                                   },
-                                 };
+    layout_create_info.set_layout_count = 0;
+    layout_create_info.p_set_layouts = &[_] vk.DescriptorSetLayout {};
 
-    _ = try self.device_dispatch.createGraphicsPipelines (self.logical_device, vk.PipelineCache.null_handle, 1, &pipeline_create_info, null, @ptrCast ([*] vk.Pipeline, &(self.pipeline)));
-    errdefer self.device_dispatch.destroyPipeline (self.logical_device, self.pipeline, null);
+    self.offscreen_pipeline_layout = try self.device_dispatch.createPipelineLayout (self.logical_device, &layout_create_info, null);
+    errdefer self.device_dispatch.destroyPipelineLayout (self.logical_device, self.offscreen_pipeline_layout, null);
+
+    var pipeline_create_info = [_] vk.GraphicsPipelineCreateInfo
+                               {
+                                 vk.GraphicsPipelineCreateInfo
+                                 {
+                                   .flags                  = vk.PipelineCreateFlags {},
+                                   .stage_count            = shader_stage.len,
+                                   .p_stages               = &shader_stage,
+                                   .p_vertex_input_state   = &vertex_input_state,
+                                   .p_input_assembly_state = &input_assembly,
+                                   .p_tessellation_state   = null,
+                                   .p_viewport_state       = &viewport_state,
+                                   .p_rasterization_state  = &rasterizer,
+                                   .p_multisample_state    = &multisampling,
+                                   .p_depth_stencil_state  = null,
+                                   .p_color_blend_state    = &blend_state,
+                                   .p_dynamic_state        = &dynamic_state,
+                                   .layout                 = self.pipeline_layout,
+                                   .render_pass            = self.render_pass,
+                                   .subpass                = 0,
+                                   .base_pipeline_handle   = vk.Pipeline.null_handle,
+                                   .base_pipeline_index    = -1,
+                                 },
+                               };
+
+    self.pipelines = try self.allocator.alloc (vk.Pipeline, 1);
+    errdefer self.allocator.free (self.pipelines);
+
+    _ = try self.device_dispatch.createGraphicsPipelines (self.logical_device, vk.PipelineCache.null_handle, pipeline_create_info.len, &pipeline_create_info, null, &(self.pipelines));
+    errdefer
+    {
+      var index: u32 = 0;
+
+      while (index < self.pipelines.len)
+      {
+        self.device_dispatch.destroyPipeline (self.logical_device, self.pipelines [index], null);
+        index += 1;
+      }
+    };
+
+    shader_stage [1].module = offscreen_fragment;
+    pipeline_create_info [0].layout = self.offscreen_pipeline_layout;
+    pipeline_create_info [0].render_pass = self.offscreen_render_pass;
+
+    self.offscreen_pipelines = try self.allocator.alloc (vk.Pipeline, 1);
+    errdefer self.allocator.free (self.offscreen_pipelines);
+
+    _ = try self.device_dispatch.createGraphicsPipelines (self.logical_device, vk.PipelineCache.null_handle, pipeline_create_info.len, &pipeline_create_info, null, &(self.offscreen_pipelines));
+    errdefer
+    {
+      var index: u32 = 0;
+
+      while (index < self.offscreen_pipelines.len)
+      {
+        self.device_dispatch.destroyPipeline (self.logical_device, self.offscreen_pipelines [index], null);
+        index += 1;
+      }
+    };
 
     try log_app ("Init Vulkan Graphics Pipeline OK", severity.DEBUG, .{});
   }
@@ -1041,17 +1095,18 @@ pub const context_vk = struct
 
   fn copy_buffer (self: Self, src_buffer: vk.Buffer, dst_buffer: vk.Buffer, size: vk.DeviceSize) !void
   {
-    const alloc_info = vk.CommandBufferAllocateInfo
-                       {
-                         .command_pool         = self.buffers_command_pool,
-                         .level                = vk.CommandBufferLevel.primary,
-                         .command_buffer_count = 1,
-                       };
-
     var command_buffer = [_] vk.CommandBuffer
                          {
                            undefined,
                          };
+
+    const alloc_info = vk.CommandBufferAllocateInfo
+                       {
+                         .command_pool         = self.buffers_command_pool,
+                         .level                = vk.CommandBufferLevel.primary,
+                         .command_buffer_count = command_buffer.len,
+                       };
+
     try self.device_dispatch.allocateCommandBuffers (self.logical_device, &alloc_info, &command_buffer);
     errdefer self.device_dispatch.freeCommandBuffers (self.logical_device, self.buffers_command_pool, 1, &command_buffer);
 
@@ -1079,8 +1134,8 @@ pub const context_vk = struct
                         {
                           vk.SubmitInfo
                           {
-                            .command_buffer_count   = 1,
-                            .p_command_buffers      = &command_buffer,
+                            .command_buffer_count = command_buffer.len,
+                            .p_command_buffers    = &command_buffer,
                           },
                         };
 
@@ -1177,7 +1232,7 @@ pub const context_vk = struct
     const create_info = vk.DescriptorPoolCreateInfo
                         {
                           .flags           = vk.DescriptorPoolCreateFlags {},
-                          .pool_size_count = 1,
+                          .pool_size_count = pool_size.len,
                           .p_pool_sizes    = &pool_size,
                           .max_sets        = MAX_FRAMES_IN_FLIGHT,
                         };
@@ -1190,7 +1245,7 @@ pub const context_vk = struct
 
   fn init_descriptor_sets (self: *Self) !void
   {
-    const layout = [_] vk.DescriptorSetLayout { self.descriptor_set_layout, } ** MAX_FRAMES_IN_FLIGHT;
+    const layout = self.descriptor_set_layout ** MAX_FRAMES_IN_FLIGHT;
     const alloc_info = vk.DescriptorSetAllocateInfo
                        {
                          .descriptor_pool      = self.descriptor_pool,
@@ -1373,12 +1428,12 @@ pub const context_vk = struct
                                                             .offset = vk.Offset2D { .x = 0, .y = 0 },
                                                             .extent = self.extent,
                                                           },
-                                     .clear_value_count = 1,
+                                     .clear_value_count = clear.len,
                                      .p_clear_values    = &clear,
                                    };
 
     self.device_dispatch.cmdBeginRenderPass (command_buffer, &render_pass_begin_info, .@"inline");
-    self.device_dispatch.cmdBindPipeline (command_buffer, .graphics, self.pipeline);
+    self.device_dispatch.cmdBindPipeline (command_buffer, .graphics, self.pipelines [0]);
 
     const offset = [_] vk.DeviceSize {0};
     self.device_dispatch.cmdBindVertexBuffers (command_buffer, 0, 1, &[_] vk.Buffer { self.vertex_buffer }, &offset);
@@ -1537,7 +1592,14 @@ pub const context_vk = struct
     }
 
     self.device_dispatch.destroyDescriptorPool (self.logical_device, self.descriptor_pool, null);
-    self.device_dispatch.destroyDescriptorSetLayout (self.logical_device, self.descriptor_set_layout, null);
+
+    index = 0;
+
+    while (index < self.descriptor_set_layout.len)
+    {
+      self.device_dispatch.destroyDescriptorSetLayout (self.logical_device, self.descriptor_set_layout [index], null);
+      index += 1;
+    }
 
     self.device_dispatch.destroyBuffer (self.logical_device, self.index_buffer, null);
     self.device_dispatch.freeMemory (self.logical_device, self.index_buffer_memory, null);
@@ -1545,7 +1607,14 @@ pub const context_vk = struct
     self.device_dispatch.destroyBuffer (self.logical_device, self.vertex_buffer, null);
     self.device_dispatch.freeMemory (self.logical_device, self.vertex_buffer_memory, null);
 
-    self.device_dispatch.destroyPipeline (self.logical_device, self.pipeline, null);
+    index = 0;
+
+    while (index < self.pipelines.len)
+    {
+      self.device_dispatch.destroyPipeline (self.logical_device, self.pipelines [index], null);
+      index += 1;
+    }
+
     self.device_dispatch.destroyPipelineLayout (self.logical_device, self.pipeline_layout, null);
     self.device_dispatch.destroyRenderPass (self.logical_device, self.render_pass, null);
 

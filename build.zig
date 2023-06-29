@@ -92,6 +92,7 @@ pub fn build (builder: *std.build.Builder) !void
   const shaders = vkgen.ShaderCompileStep.create (builder, &[_][] const u8 { "glslc", "--target-env=vulkan1.2" }, "-o");
   shaders.add ("vert", "shaders/main.vert", .{});
   shaders.add ("frag", "shaders/main.frag", .{});
+  shaders.add ("offscreen_frag", "shaders/offscreen.frag", .{});
   exe.addModule ("resources", shaders.getModule ());
 
   // Init a new run artifact step that will run exe (invisible for user)

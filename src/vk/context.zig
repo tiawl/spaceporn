@@ -24,60 +24,69 @@ const uniform_buffer_object_vk = struct
   time: f32,
 };
 
+const offscreen_uniform_buffer_object_vk = struct
+{
+  // WARNING: manage alignment when adding new field
+  blue: f32,
+};
+
 pub const context_vk = struct
 {
-  allocator:                    std.mem.Allocator,
-  initializer:                  init_vk,
-  surface:                      vk.SurfaceKHR      = undefined,
-  device_dispatch:              DeviceDispatch,
-  physical_device:              ?vk.PhysicalDevice = null,
-  candidate:                    struct { graphics_family: u32, present_family: u32, extensions: std.ArrayList ([*:0] const u8), },
-  logical_device:               vk.Device,
-  graphics_queue:               vk.Queue,
-  present_queue:                vk.Queue,
-  capabilities:                 vk.SurfaceCapabilitiesKHR,
-  formats:                      [] vk.SurfaceFormatKHR,
-  present_modes:                [] vk.PresentModeKHR,
-  surface_format:               vk.SurfaceFormatKHR,
-  extent:                       vk.Extent2D,
-  swapchain:                    vk.SwapchainKHR,
-  images:                       [] vk.Image,
-  views:                        [] vk.ImageView,
-  viewport:                     [1] vk.Viewport,
-  scissor:                      [1] vk.Rect2D,
-  render_pass:                  vk.RenderPass,
-  descriptor_set_layout:        [] vk.DescriptorSetLayout,
-  pipeline_layout:              vk.PipelineLayout,
-  pipelines:                    [] vk.Pipeline,
-  framebuffers:                 [] vk.Framebuffer,
-  command_pool:                 vk.CommandPool,
-  command_buffers:              [] vk.CommandBuffer,
-  image_available_semaphores:   [] vk.Semaphore,
-  render_finished_semaphores:   [] vk.Semaphore,
-  in_flight_fences:             [] vk.Fence,
-  current_frame:                u8,
-  vertex_buffer:                vk.Buffer,
-  vertex_buffer_memory:         vk.DeviceMemory,
-  buffers_command_pool:         vk.CommandPool,
-  index_buffer:                 vk.Buffer,
-  index_buffer_memory:          vk.DeviceMemory,
-  uniform_buffers:              [] vk.Buffer,
-  uniform_buffers_memory:       [] vk.DeviceMemory,
-  start_time:                   std.time.Instant,
-  descriptor_pool:              vk.DescriptorPool,
-  descriptor_sets:              [] vk.DescriptorSet,
+  allocator:                        std.mem.Allocator,
+  initializer:                      init_vk,
+  surface:                          vk.SurfaceKHR      = undefined,
+  device_dispatch:                  DeviceDispatch,
+  physical_device:                  ?vk.PhysicalDevice = null,
+  candidate:                        struct { graphics_family: u32, present_family: u32, extensions: std.ArrayList ([*:0] const u8), },
+  logical_device:                   vk.Device,
+  graphics_queue:                   vk.Queue,
+  present_queue:                    vk.Queue,
+  capabilities:                     vk.SurfaceCapabilitiesKHR,
+  formats:                          [] vk.SurfaceFormatKHR,
+  present_modes:                    [] vk.PresentModeKHR,
+  surface_format:                   vk.SurfaceFormatKHR,
+  extent:                           vk.Extent2D,
+  swapchain:                        vk.SwapchainKHR,
+  images:                           [] vk.Image,
+  views:                            [] vk.ImageView,
+  viewport:                         [1] vk.Viewport,
+  scissor:                          [1] vk.Rect2D,
+  render_pass:                      vk.RenderPass,
+  descriptor_set_layout:            [] vk.DescriptorSetLayout,
+  pipeline_layout:                  vk.PipelineLayout,
+  pipelines:                        [] vk.Pipeline,
+  framebuffers:                     [] vk.Framebuffer,
+  command_pool:                     vk.CommandPool,
+  command_buffers:                  [] vk.CommandBuffer,
+  image_available_semaphores:       [] vk.Semaphore,
+  render_finished_semaphores:       [] vk.Semaphore,
+  in_flight_fences:                 [] vk.Fence,
+  current_frame:                    u8,
+  vertex_buffer:                    vk.Buffer,
+  vertex_buffer_memory:             vk.DeviceMemory,
+  buffers_command_pool:             vk.CommandPool,
+  index_buffer:                     vk.Buffer,
+  index_buffer_memory:              vk.DeviceMemory,
+  uniform_buffers:                  [] vk.Buffer,
+  uniform_buffers_memory:           [] vk.DeviceMemory,
+  start_time:                       std.time.Instant,
+  descriptor_pool:                  vk.DescriptorPool,
+  descriptor_sets:                  [] vk.DescriptorSet,
 
-  offscreen_width:              u32,
-  offscreen_height:             u32,
-  offscreen_framebuffer:        vk.Framebuffer,
-  offscreen_image:              vk.Image,
-  offscreen_image_memory:       vk.DeviceMemory,
-  offscreen_views:              [] vk.ImageView,
-  offscreen_render_pass:        vk.RenderPass,
-  offscreen_sampler:            vk.Sampler,
-  offscreen_descriptor:         vk.DescriptorImageInfo,
-  offscreen_pipeline_layout:    vk.PipelineLayout,
-  offscreen_pipelines:          [] vk.Pipeline,
+  offscreen_width:                  u32,
+  offscreen_height:                 u32,
+  offscreen_render_pass:            vk.RenderPass,
+  offscreen_descriptor_set_layout:  [] vk.DescriptorSetLayout,
+  offscreen_pipeline_layout:        vk.PipelineLayout,
+  offscreen_pipelines:              [] vk.Pipeline,
+  offscreen_framebuffer:            vk.Framebuffer,
+  offscreen_uniform_buffers:        vk.Buffer,
+  offscreen_uniform_buffers_memory: vk.DeviceMemory,
+  offscreen_descriptor_sets:        [] vk.DescriptorSet,
+  offscreen_image:                  vk.Image,
+  offscreen_image_memory:           vk.DeviceMemory,
+  offscreen_views:                  [] vk.ImageView,
+  offscreen_sampler:                vk.Sampler,
 
   const Self = @This ();
 
@@ -85,10 +94,10 @@ pub const context_vk = struct
 
   const vertices = [_] vertex_vk
                    {
-                     vertex_vk { .pos = [_] f32 { -0.5, -0.5, }, .color = [_] f32 { 1.0, 0.0, 0.0, }, },
-                     vertex_vk { .pos = [_] f32 {  0.5, -0.5, }, .color = [_] f32 { 0.0, 1.0, 0.0, }, },
-                     vertex_vk { .pos = [_] f32 {  0.5,  0.5, }, .color = [_] f32 { 0.0, 0.0, 1.0, }, },
-                     vertex_vk { .pos = [_] f32 { -0.5,  0.5, }, .color = [_] f32 { 1.0, 1.0, 1.0, }, },
+                     vertex_vk { .pos = [_] f32 { -1.0, -1.0, }, },
+                     vertex_vk { .pos = [_] f32 {  1.0, -1.0, }, },
+                     vertex_vk { .pos = [_] f32 {  1.0,  1.0, }, },
+                     vertex_vk { .pos = [_] f32 { -1.0,  1.0, }, },
                    };
 
   const indices = [_] u32 { 0, 1, 2, 2, 3, 0, };
@@ -618,7 +627,7 @@ pub const context_vk = struct
                                   .max_anisotropy           = 1,
                                   .min_lod                  = 0,
                                   .max_lod                  = 1,
-                                  .border_color             = vk.BorderColor.float_opaque_white ,
+                                  .border_color             = vk.BorderColor.float_opaque_black ,
                                   .compare_enable           = vk.FALSE,
                                   .compare_op               = vk.CompareOp.always,
                                   .unnormalized_coordinates = vk.FALSE,
@@ -705,8 +714,8 @@ pub const context_vk = struct
                                     {
                                       .flags            = vk.FramebufferCreateFlags {},
                                       .render_pass      = self.offscreen_render_pass,
-                                      .attachment_count = self.offscreen_views.len,
-                                      .p_attachments    = &self.offscreen_views,
+                                      .attachment_count = @intCast (u32, self.offscreen_views.len),
+                                      .p_attachments    = self.offscreen_views.ptr,
                                       .width            = self.offscreen_width,
                                       .height           = self.offscreen_height,
                                       .layers           = 1,
@@ -714,13 +723,6 @@ pub const context_vk = struct
 
     self.offscreen_framebuffer = try self.device_dispatch.createFramebuffer (self.logical_device, &framebuffer_create_info, null);
     errdefer self.device_dispatch.destroyFramebuffer (self.logical_device, self.offscreen_framebuffer, null);
-
-    self.offscreen_descriptor = vk.DescriptorImageInfo
-                                {
-                                  .sampler      = self.offscreen_sampler,
-                                  .image_view   = self.offscreen_views [0],
-                                  .image_layout = vk.ImageLayout.shader_read_only_optimal,
-                                };
 
     try log_app ("Init Vulkan Offscreen Render Pass OK", severity.DEBUG, .{});
   }
@@ -747,18 +749,39 @@ pub const context_vk = struct
                                  },
                                };
 
-    const create_info = vk.DescriptorSetLayoutCreateInfo
-                        {
-                          .flags         = vk.DescriptorSetLayoutCreateFlags {},
-                          .binding_count = ubo_layout_binding.len,
-                          .p_bindings    = &ubo_layout_binding,
-                        };
+    const offscreen_ubo_layout_binding = [_] vk.DescriptorSetLayoutBinding
+                                         {
+                                           vk.DescriptorSetLayoutBinding
+                                           {
+                                             .binding              = 0,
+                                             .descriptor_type      = vk.DescriptorType.uniform_buffer,
+                                             .descriptor_count     = 1,
+                                             .stage_flags          = vk.ShaderStageFlags { .fragment_bit = true, },
+                                             .p_immutable_samplers = null,
+                                           },
+                                         };
+
+    var create_info = vk.DescriptorSetLayoutCreateInfo
+                      {
+                        .flags         = vk.DescriptorSetLayoutCreateFlags {},
+                        .binding_count = ubo_layout_binding.len,
+                        .p_bindings    = &ubo_layout_binding,
+                      };
 
     self.descriptor_set_layout = try self.allocator.alloc (vk.DescriptorSetLayout, 1);
     errdefer self.allocator.free (self.descriptor_set_layout);
 
     self.descriptor_set_layout [0] = try self.device_dispatch.createDescriptorSetLayout (self.logical_device, &create_info, null);
     errdefer self.device_dispatch.destroyDescriptorSetLayout (self.logical_device, self.descriptor_set_layout [0], null);
+
+    create_info.binding_count = offscreen_ubo_layout_binding.len;
+    create_info.p_bindings = &offscreen_ubo_layout_binding;
+
+    self.offscreen_descriptor_set_layout = try self.allocator.alloc (vk.DescriptorSetLayout, 1);
+    errdefer self.allocator.free (self.offscreen_descriptor_set_layout);
+
+    self.offscreen_descriptor_set_layout [0] = try self.device_dispatch.createDescriptorSetLayout (self.logical_device, &create_info, null);
+    errdefer self.device_dispatch.destroyDescriptorSetLayout (self.logical_device, self.offscreen_descriptor_set_layout [0], null);
 
     try log_app ("Init Vulkan Descriptor Set Layout OK", severity.DEBUG, .{});
   }
@@ -921,8 +944,8 @@ pub const context_vk = struct
     var layout_create_info = vk.PipelineLayoutCreateInfo
                              {
                                .flags                     = vk.PipelineLayoutCreateFlags {},
-                               .set_layout_count          = self.descriptor_set_layout.len,
-                               .p_set_layouts             = &self.descriptor_set_layout,
+                               .set_layout_count          = @intCast(u32, self.descriptor_set_layout.len),
+                               .p_set_layouts             = self.descriptor_set_layout.ptr,
                                .push_constant_range_count = 0,
                                .p_push_constant_ranges    = undefined,
                              };
@@ -930,8 +953,8 @@ pub const context_vk = struct
     self.pipeline_layout = try self.device_dispatch.createPipelineLayout (self.logical_device, &layout_create_info, null);
     errdefer self.device_dispatch.destroyPipelineLayout (self.logical_device, self.pipeline_layout, null);
 
-    layout_create_info.set_layout_count = 0;
-    layout_create_info.p_set_layouts = &[_] vk.DescriptorSetLayout {};
+    layout_create_info.set_layout_count = @intCast (u32, self.offscreen_descriptor_set_layout.len);
+    layout_create_info.p_set_layouts = self.offscreen_descriptor_set_layout.ptr;
 
     self.offscreen_pipeline_layout = try self.device_dispatch.createPipelineLayout (self.logical_device, &layout_create_info, null);
     errdefer self.device_dispatch.destroyPipelineLayout (self.logical_device, self.offscreen_pipeline_layout, null);
@@ -963,7 +986,7 @@ pub const context_vk = struct
     self.pipelines = try self.allocator.alloc (vk.Pipeline, 1);
     errdefer self.allocator.free (self.pipelines);
 
-    _ = try self.device_dispatch.createGraphicsPipelines (self.logical_device, vk.PipelineCache.null_handle, pipeline_create_info.len, &pipeline_create_info, null, &(self.pipelines));
+    _ = try self.device_dispatch.createGraphicsPipelines (self.logical_device, vk.PipelineCache.null_handle, pipeline_create_info.len, &pipeline_create_info, null, self.pipelines.ptr);
     errdefer
     {
       var index: u32 = 0;
@@ -973,7 +996,7 @@ pub const context_vk = struct
         self.device_dispatch.destroyPipeline (self.logical_device, self.pipelines [index], null);
         index += 1;
       }
-    };
+    }
 
     shader_stage [1].module = offscreen_fragment;
     pipeline_create_info [0].layout = self.offscreen_pipeline_layout;
@@ -982,7 +1005,7 @@ pub const context_vk = struct
     self.offscreen_pipelines = try self.allocator.alloc (vk.Pipeline, 1);
     errdefer self.allocator.free (self.offscreen_pipelines);
 
-    _ = try self.device_dispatch.createGraphicsPipelines (self.logical_device, vk.PipelineCache.null_handle, pipeline_create_info.len, &pipeline_create_info, null, &(self.offscreen_pipelines));
+    _ = try self.device_dispatch.createGraphicsPipelines (self.logical_device, vk.PipelineCache.null_handle, pipeline_create_info.len, &pipeline_create_info, null, self.offscreen_pipelines.ptr);
     errdefer
     {
       var index: u32 = 0;
@@ -992,7 +1015,7 @@ pub const context_vk = struct
         self.device_dispatch.destroyPipeline (self.logical_device, self.offscreen_pipelines [index], null);
         index += 1;
       }
-    };
+    }
 
     try log_app ("Init Vulkan Graphics Pipeline OK", severity.DEBUG, .{});
   }
@@ -1189,7 +1212,6 @@ pub const context_vk = struct
 
   fn init_uniform_buffers (self: *Self) !void
   {
-    const size = @sizeOf (uniform_buffer_object_vk);
     self.uniform_buffers = try self.allocator.alloc (vk.Buffer, MAX_FRAMES_IN_FLIGHT);
     errdefer self.allocator.free (self.uniform_buffers);
     self.uniform_buffers_memory = try self.allocator.alloc (vk.DeviceMemory, MAX_FRAMES_IN_FLIGHT);
@@ -1199,7 +1221,7 @@ pub const context_vk = struct
 
     while (index < MAX_FRAMES_IN_FLIGHT)
     {
-      try self.init_buffer (size, vk.BufferUsageFlags { .uniform_buffer_bit = true, }, vk.MemoryPropertyFlags { .host_visible_bit = true, .host_coherent_bit = true, }, &(self.uniform_buffers [index]), &(self.uniform_buffers_memory [index]));
+      try self.init_buffer (@sizeOf (uniform_buffer_object_vk), vk.BufferUsageFlags { .uniform_buffer_bit = true, }, vk.MemoryPropertyFlags { .host_visible_bit = true, .host_coherent_bit = true, }, &(self.uniform_buffers [index]), &(self.uniform_buffers_memory [index]));
       index += 1;
     }
 
@@ -1215,6 +1237,14 @@ pub const context_vk = struct
       }
     }
 
+    try self.init_buffer (@sizeOf (offscreen_uniform_buffer_object_vk), vk.BufferUsageFlags { .uniform_buffer_bit = true, }, vk.MemoryPropertyFlags { .host_visible_bit = true, .host_coherent_bit = true, }, &(self.offscreen_uniform_buffers), &(self.offscreen_uniform_buffers_memory));
+
+    errdefer
+    {
+      self.device_dispatch.destroyBuffer (self.logical_device, self.offscreen_uniform_buffers, null);
+      self.device_dispatch.freeMemory (self.logical_device, self.offscreen_uniform_buffers_memory, null);
+    }
+
     try log_app ("Init Vulkan Uniform buffers OK", severity.DEBUG, .{});
   }
 
@@ -1225,6 +1255,11 @@ pub const context_vk = struct
                         vk.DescriptorPoolSize
                         {
                           .type             = vk.DescriptorType.uniform_buffer,
+                          .descriptor_count = MAX_FRAMES_IN_FLIGHT * 2,
+                        },
+                        vk.DescriptorPoolSize
+                        {
+                          .type             = vk.DescriptorType.combined_image_sampler,
                           .descriptor_count = MAX_FRAMES_IN_FLIGHT,
                         },
                       };
@@ -1245,13 +1280,16 @@ pub const context_vk = struct
 
   fn init_descriptor_sets (self: *Self) !void
   {
-    const layout = self.descriptor_set_layout ** MAX_FRAMES_IN_FLIGHT;
-    const alloc_info = vk.DescriptorSetAllocateInfo
-                       {
-                         .descriptor_pool      = self.descriptor_pool,
-                         .descriptor_set_count = MAX_FRAMES_IN_FLIGHT,
-                         .p_set_layouts        = &layout,
-                       };
+    var alloc_info = vk.DescriptorSetAllocateInfo
+                     {
+                       .descriptor_pool      = self.descriptor_pool,
+                       .descriptor_set_count = MAX_FRAMES_IN_FLIGHT,
+                       .p_set_layouts        = &[_] vk.DescriptorSetLayout
+                                                {
+                                                  self.descriptor_set_layout [0],
+                                                  self.descriptor_set_layout [0],
+                                                },
+                     };
 
     self.descriptor_sets = try self.allocator.alloc (vk.DescriptorSet, MAX_FRAMES_IN_FLIGHT);
     errdefer self.allocator.free (self.descriptor_sets);
@@ -1260,7 +1298,8 @@ pub const context_vk = struct
 
     var index: u32 = 0;
     var buffer_info: [1] vk.DescriptorBufferInfo = undefined;
-    var descriptor_write: [1] vk.WriteDescriptorSet = undefined;
+    var image_info: [1] vk.DescriptorImageInfo = undefined;
+    var descriptor_write: [2] vk.WriteDescriptorSet = undefined;
 
     while (index < MAX_FRAMES_IN_FLIGHT)
     {
@@ -1274,6 +1313,15 @@ pub const context_vk = struct
                       },
                     };
 
+      image_info = [_] vk.DescriptorImageInfo
+                   {
+                     vk.DescriptorImageInfo
+                     {
+                       .sampler      = self.offscreen_sampler,
+                       .image_view   = self.offscreen_views [0],
+                       .image_layout = vk.ImageLayout.shader_read_only_optimal,
+                     },
+                 };
 
       descriptor_write = [_] vk.WriteDescriptorSet
                          {
@@ -1288,12 +1336,58 @@ pub const context_vk = struct
                              .p_image_info        = undefined,
                              .p_texel_buffer_view = undefined,
                            },
+                           vk.WriteDescriptorSet
+                           {
+                             .dst_set             = self.descriptor_sets [index],
+                             .dst_binding         = 1,
+                             .dst_array_element   = 0,
+                             .descriptor_type     = vk.DescriptorType.combined_image_sampler,
+                             .descriptor_count    = 1,
+                             .p_buffer_info       = undefined,
+                             .p_image_info        = &image_info,
+                             .p_texel_buffer_view = undefined,
+                           },
                          };
 
-      self.device_dispatch.updateDescriptorSets (self.logical_device, 1, &descriptor_write, 0, undefined);
+      self.device_dispatch.updateDescriptorSets (self.logical_device, descriptor_write.len, &descriptor_write, 0, undefined);
 
       index += 1;
     }
+
+    alloc_info.descriptor_set_count = @intCast (u32, self.offscreen_descriptor_set_layout.len);
+    alloc_info.p_set_layouts = self.offscreen_descriptor_set_layout.ptr;
+
+    self.offscreen_descriptor_sets = try self.allocator.alloc (vk.DescriptorSet, 1);
+    errdefer self.allocator.free (self.offscreen_descriptor_sets);
+
+    try self.device_dispatch.allocateDescriptorSets (self.logical_device, &alloc_info, self.offscreen_descriptor_sets.ptr);
+
+    buffer_info = [_] vk.DescriptorBufferInfo
+                  {
+                    vk.DescriptorBufferInfo
+                    {
+                      .buffer = self.offscreen_uniform_buffers,
+                      .offset = 0,
+                      .range  = @sizeOf (offscreen_uniform_buffer_object_vk),
+                    },
+                  };
+
+    const offscreen_descriptor_write = [_] vk.WriteDescriptorSet
+                                       {
+                                         vk.WriteDescriptorSet
+                                         {
+                                           .dst_set             = self.offscreen_descriptor_sets [0],
+                                           .dst_binding         = 0,
+                                           .dst_array_element   = 0,
+                                           .descriptor_type     = vk.DescriptorType.uniform_buffer,
+                                           .descriptor_count    = 1,
+                                           .p_buffer_info       = &buffer_info,
+                                           .p_image_info        = undefined,
+                                           .p_texel_buffer_view = undefined,
+                                         },
+                                       };
+
+    self.device_dispatch.updateDescriptorSets (self.logical_device, offscreen_descriptor_write.len, &offscreen_descriptor_write, 0, undefined);
 
     try log_app ("Init Vulkan Descriptor Sets OK", severity.DEBUG, .{});
   }
@@ -1411,34 +1505,83 @@ pub const context_vk = struct
 
     try self.device_dispatch.beginCommandBuffer (command_buffer, &command_buffer_begin_info);
 
-    const clear = [_] vk.ClearValue
+    var clear = [_] vk.ClearValue
+                {
+                  vk.ClearValue
                   {
-                    vk.ClearValue
-                    {
-                      .color = vk.ClearColorValue { .float_32 = [4] f32 { 0, 0, 0, 1 } },
-                    }
-                  };
+                    .color = vk.ClearColorValue { .float_32 = [4] f32 { 0, 0, 0, 0 } },
+                  }
+                };
 
-    const render_pass_begin_info = vk.RenderPassBeginInfo
-                                   {
-                                     .render_pass       = self.render_pass,
-                                     .framebuffer       = self.framebuffers [image_index],
-                                     .render_area       = vk.Rect2D
-                                                          {
-                                                            .offset = vk.Offset2D { .x = 0, .y = 0 },
-                                                            .extent = self.extent,
-                                                          },
-                                     .clear_value_count = clear.len,
-                                     .p_clear_values    = &clear,
-                                   };
+    var render_pass_begin_info = vk.RenderPassBeginInfo
+                                 {
+                                   .render_pass       = self.offscreen_render_pass,
+                                   .framebuffer       = self.offscreen_framebuffer,
+                                   .render_area       = vk.Rect2D
+                                                        {
+                                                          .offset = vk.Offset2D { .x = 0, .y = 0 },
+                                                          .extent = vk.Extent2D
+                                                                    {
+                                                                      .width = self.offscreen_width,
+                                                                      .height = self.offscreen_height,
+                                                                    },
+                                                        },
+                                   .clear_value_count = clear.len,
+                                   .p_clear_values    = &clear,
+                                 };
 
-    self.device_dispatch.cmdBeginRenderPass (command_buffer, &render_pass_begin_info, .@"inline");
-    self.device_dispatch.cmdBindPipeline (command_buffer, .graphics, self.pipelines [0]);
+    self.device_dispatch.cmdBeginRenderPass (command_buffer, &render_pass_begin_info, vk.SubpassContents.@"inline");
+
+    const offscreen_viewport = [_] vk.Viewport
+                               {
+                                 vk.Viewport
+                                 {
+                                   .x         = 0,
+                                   .y         = 0,
+                                   .width     = @floatFromInt(f32, self.offscreen_width),
+                                   .height    = @floatFromInt(f32, self.extent.height),
+                                   .min_depth = 0,
+                                   .max_depth = 1,
+                                 },
+                               };
+
+    const offscreen_scissor = [_] vk.Rect2D
+                              {
+                                vk.Rect2D
+                                {
+                                  .offset = vk.Offset2D { .x = 0, .y = 0 },
+                                  .extent = vk.Extent2D
+                                            {
+                                              .width  = self.offscreen_width,
+                                              .height = self.offscreen_height,
+                                            },
+                                },
+                              };
+
+    self.device_dispatch.cmdSetViewport (command_buffer, 0, 1, &offscreen_viewport);
+    self.device_dispatch.cmdSetScissor (command_buffer, 0, 1, &offscreen_scissor);
 
     const offset = [_] vk.DeviceSize {0};
     self.device_dispatch.cmdBindVertexBuffers (command_buffer, 0, 1, &[_] vk.Buffer { self.vertex_buffer }, &offset);
 
     self.device_dispatch.cmdBindIndexBuffer (command_buffer, self.index_buffer, 0, vk.IndexType.uint32);
+
+    self.device_dispatch.cmdBindDescriptorSets (command_buffer, vk.PipelineBindPoint.graphics, self.offscreen_pipeline_layout, 0, 1, self.offscreen_descriptor_sets.ptr, 0, undefined);
+    self.device_dispatch.cmdBindPipeline (command_buffer, vk.PipelineBindPoint.graphics, self.offscreen_pipelines [0]);
+
+    self.device_dispatch.cmdDrawIndexed (command_buffer, indices.len, 1, 0, 0, 0);
+
+    self.device_dispatch.cmdEndRenderPass (command_buffer);
+
+    // ----------------
+
+    clear [0].color.float_32 [3] = 1;
+    render_pass_begin_info.render_pass = self.render_pass;
+    render_pass_begin_info.framebuffer = self.framebuffers [image_index];
+    render_pass_begin_info.render_area.extent = self.extent;
+
+    self.device_dispatch.cmdBeginRenderPass (command_buffer, &render_pass_begin_info, vk.SubpassContents.@"inline");
+    self.device_dispatch.cmdBindPipeline (command_buffer, vk.PipelineBindPoint.graphics, self.pipelines [0]);
 
     self.device_dispatch.cmdSetViewport (command_buffer, 0, 1, self.viewport [0..].ptr);
     self.device_dispatch.cmdSetScissor (command_buffer, 0, 1, self.scissor [0..].ptr);
@@ -1458,6 +1601,7 @@ pub const context_vk = struct
     {
       self.device_dispatch.destroyFramebuffer (self.logical_device, framebuffer, null);
     }
+    self.device_dispatch.destroyFramebuffer (self.logical_device, self.offscreen_framebuffer, null);
 
     self.allocator.free (self.framebuffers);
 
@@ -1488,16 +1632,27 @@ pub const context_vk = struct
 
   fn update_uniform_buffer (self: *Self) !void
   {
-    const size = @sizeOf (uniform_buffer_object_vk);
+    const ubo_size = @sizeOf (uniform_buffer_object_vk);
 
     const ubo = uniform_buffer_object_vk
                 {
                   .time = @floatFromInt (f32, (try std.time.Instant.now ()).since (self.start_time)) / @floatFromInt (f32, std.time.ns_per_s),
                 };
 
-    const data = try self.device_dispatch.mapMemory (self.logical_device, self.uniform_buffers_memory [self.current_frame], 0, size, vk.MemoryMapFlags {});
-    std.mem.copy(u8, @ptrCast ([*] u8, data.?) [0..size], std.mem.asBytes (&ubo));
+    var data = try self.device_dispatch.mapMemory (self.logical_device, self.uniform_buffers_memory [self.current_frame], 0, ubo_size, vk.MemoryMapFlags {});
+    std.mem.copy(u8, @ptrCast ([*] u8, data.?) [0..ubo_size], std.mem.asBytes (&ubo));
     self.device_dispatch.unmapMemory (self.logical_device, self.uniform_buffers_memory [self.current_frame]);
+
+    const oubo_size = @sizeOf (offscreen_uniform_buffer_object_vk);
+
+    const oubo = offscreen_uniform_buffer_object_vk
+                 {
+                   .blue = 0.5,
+                 };
+
+    data = try self.device_dispatch.mapMemory (self.logical_device, self.offscreen_uniform_buffers_memory, 0, oubo_size, vk.MemoryMapFlags {});
+    std.mem.copy(u8, @ptrCast ([*] u8, data.?) [0..oubo_size], std.mem.asBytes (&oubo));
+    self.device_dispatch.unmapMemory (self.logical_device, self.offscreen_uniform_buffers_memory);
   }
 
   fn draw_frame (self: *Self, framebuffer: struct { resized: bool, width: u32, height: u32, }) !void
@@ -1582,6 +1737,11 @@ pub const context_vk = struct
 
     self.cleanup_swapchain ();
 
+    self.device_dispatch.destroySampler (self.logical_device, self.offscreen_sampler, null);
+    self.device_dispatch.destroyImageView (self.logical_device, self.offscreen_views [0], null);
+    self.device_dispatch.destroyImage (self.logical_device, self.offscreen_image, null);
+    self.device_dispatch.freeMemory (self.logical_device, self.offscreen_image_memory, null);
+
     var index: u32 = 0;
 
     while (index < MAX_FRAMES_IN_FLIGHT)
@@ -1590,6 +1750,9 @@ pub const context_vk = struct
       self.device_dispatch.freeMemory (self.logical_device, self.uniform_buffers_memory [index], null);
       index += 1;
     }
+
+    self.device_dispatch.destroyBuffer (self.logical_device, self.offscreen_uniform_buffers, null);
+    self.device_dispatch.freeMemory (self.logical_device, self.offscreen_uniform_buffers_memory, null);
 
     self.device_dispatch.destroyDescriptorPool (self.logical_device, self.descriptor_pool, null);
 
@@ -1600,6 +1763,7 @@ pub const context_vk = struct
       self.device_dispatch.destroyDescriptorSetLayout (self.logical_device, self.descriptor_set_layout [index], null);
       index += 1;
     }
+    self.device_dispatch.destroyDescriptorSetLayout (self.logical_device, self.offscreen_descriptor_set_layout [0], null);
 
     self.device_dispatch.destroyBuffer (self.logical_device, self.index_buffer, null);
     self.device_dispatch.freeMemory (self.logical_device, self.index_buffer_memory, null);
@@ -1614,9 +1778,12 @@ pub const context_vk = struct
       self.device_dispatch.destroyPipeline (self.logical_device, self.pipelines [index], null);
       index += 1;
     }
+    self.device_dispatch.destroyPipeline (self.logical_device, self.offscreen_pipelines [0], null);
 
     self.device_dispatch.destroyPipelineLayout (self.logical_device, self.pipeline_layout, null);
+    self.device_dispatch.destroyPipelineLayout (self.logical_device, self.offscreen_pipeline_layout, null);
     self.device_dispatch.destroyRenderPass (self.logical_device, self.render_pass, null);
+    self.device_dispatch.destroyRenderPass (self.logical_device, self.offscreen_render_pass, null);
 
     index = 0;
 

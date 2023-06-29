@@ -2,6 +2,8 @@ const std = @import ("std");
 const stdout = std.io.getStdOut ().writer ();
 const stderr = std.debug;
 
+const datetime = @import ("datetime").datetime;
+
 const build = @import ("build_options");
 pub const exe: [*:0] const u8 = build.EXE [0..:0];
 pub const log_file = build.LOG_DIR ++ "/" ++ exe ++ ".log";
@@ -26,10 +28,10 @@ pub const severity = enum
   {
     switch (self)
     {
-      Self.DEBUG => { expanded.format.* = try std.fmt.allocPrint(expanded.allocator.*, "[{s}{s} DEBUG{s}] {s}\n", args); },
-      Self.INFO => { expanded.format.* = try std.fmt.allocPrint(expanded.allocator.*, "[{s}{s} INFO{s}] {s}\n", args); },
-      Self.WARNING => { expanded.format.* = try std.fmt.allocPrint(expanded.allocator.*, "[{s}{s} WARNING{s}] {s}\n", args); },
-      Self.ERROR => { expanded.format.* = try std.fmt.allocPrint(expanded.allocator.*, "[{s}{s} ERROR{s}] {s}\n", args); },
+      Self.DEBUG => { expanded.format.* = try std.fmt.allocPrint(expanded.allocator.*, "[{s}: {s} DEBUG{s}] {s}\n", args); },
+      Self.INFO => { expanded.format.* = try std.fmt.allocPrint(expanded.allocator.*, "[{s}: {s} INFO{s}] {s}\n", args); },
+      Self.WARNING => { expanded.format.* = try std.fmt.allocPrint(expanded.allocator.*, "[{s}: {s} WARNING{s}] {s}\n", args); },
+      Self.ERROR => { expanded.format.* = try std.fmt.allocPrint(expanded.allocator.*, "[{s}: {s} ERROR{s}] {s}\n", args); },
     }
   }
 
@@ -53,31 +55,11 @@ fn sys_date (expanded: anytype, date: *[] const u8,
 {
   expanded.format.* = try std.fmt.allocPrint(expanded.allocator.*, format, args);
 
-  if (build.LOG_LEVEL > @intFromEnum (profile.DEFAULT))
+  if (build.LOG_LEVEL > @intFromEnum (profile.TURBO))
   {
-    const command = [_][] const u8 { "date", "+%F %T.%3N: " };
-    var child = std.process.Child.init(&command, expanded.allocator.*);
-    child.stdin_behavior = .Ignore;
-    child.stdout_behavior = .Pipe;
-    child.stderr_behavior = .Pipe;
-
-    var out = std.ArrayList (u8).init (expanded.allocator.*);
-    defer out.deinit ();
-    var _err = std.ArrayList (u8).init (expanded.allocator.*);
-    defer _err.deinit ();
-
-    try child.spawn ();
-    try child.collectOutput (&out, &_err, 4096);
-    const status = try child.wait ();
-
-    if (status.Exited != 0)
-    {
-      stderr.print ("[{s} ERROR] {s} command exit code is {}\n", .{ exe, command, status });
-      return UtilsError.ProcessFailed;
-    }
-
-    date.* = try out.toOwnedSlice ();
-    date.* = date.*[0..date.len - 1];
+    const now = datetime.Datetime.now ();
+    date.* = try now.formatISO8601 (expanded.allocator.*, true);
+    errdefer expanded.allocator.free (date.*);
   } else {
     date.* = "";
   }

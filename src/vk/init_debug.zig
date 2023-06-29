@@ -163,7 +163,7 @@ pub const init_vk = struct
                                                                          },
                                        .performance_bit_ext            = (build.LOG_LEVEL > @intFromEnum (profile.DEFAULT)),
                                      },
-                     .pfn_user_callback = @ptrCast (vk.PfnDebugUtilsMessengerCallbackEXT, &debug_callback),
+                     .pfn_user_callback = @ptrCast (&debug_callback),
                    };
   }
 
@@ -192,7 +192,7 @@ pub const init_vk = struct
       {
         if (std.mem.eql (u8, supported_ext.extension_name [0..std.mem.indexOfScalar (u8, &(supported_ext.extension_name), 0).?], std.mem.span (required_ext)))
         {
-          try extensions.append (@ptrCast ([*:0] const u8, required_ext));
+          try extensions.append (@ptrCast (required_ext));
           try log_app ("{s} required extension is supported", severity.DEBUG, .{ required_ext });
           supported = true;
           break;
@@ -211,7 +211,7 @@ pub const init_vk = struct
       {
         if (std.mem.eql (u8, supported_ext.extension_name[0..std.mem.indexOfScalar (u8, &(supported_ext.extension_name), 0).?], std.mem.span (optional_ext.name)))
         {
-          try extensions.append (@ptrCast ([*:0] const u8, optional_ext.name));
+          try extensions.append (@ptrCast (optional_ext.name));
           try log_app ("{s} optional extension is supported", severity.DEBUG, .{ optional_ext.name });
           optional_ext.supported = true;
           break;
@@ -240,11 +240,11 @@ pub const init_vk = struct
                         {
                           .flags                      = vk.InstanceCreateFlags {},
                           .enabled_layer_count        = required_layers.len,
-                          .pp_enabled_layer_names     = @ptrCast ([*] const [*:0] const u8, required_layers[0..]),
+                          .pp_enabled_layer_names     = @ptrCast (required_layers[0..]),
                           .p_next                     = debug_info,
                           .p_application_info         = &app_info,
-                          .enabled_extension_count    = @intCast (u32, self.extensions.len),
-                          .pp_enabled_extension_names = @ptrCast ([*] const [*:0] const u8, self.extensions),
+                          .enabled_extension_count    = @intCast (self.extensions.len),
+                          .pp_enabled_extension_names = @ptrCast (self.extensions),
                         };
 
     self.instance = try self.base_dispatch.createInstance (&create_info, null);
@@ -263,7 +263,7 @@ pub const init_vk = struct
     self.instance_proc_addr = instance_proc_addr;
     self.allocator = allocator;
 
-    self.base_dispatch = try BaseDispatch.load (@ptrCast (vk.PfnGetInstanceProcAddr, self.instance_proc_addr));
+    self.base_dispatch = try BaseDispatch.load (@as(vk.PfnGetInstanceProcAddr, @ptrCast (self.instance_proc_addr)));
 
     try check_layer_properties (&self);
     try check_extension_properties (&self, &debug_info);

@@ -80,6 +80,10 @@ pub fn build (builder: *std.build.Builder) !void
   // Install step must be made after install artifact step is made
   builder.getInstallStep ().dependOn (&install_exe.step);
 
+  exe.addModule ("datetime", builder.addModule ("datetime", .{
+                               .source_file = .{ .path = "libs/zig-datetime/src/main.zig", },
+                             }));
+
   // vulkan-zig: new step that generates vk.zig (stored in zig-cache) from the provided vulkan registry.
   const gen = vkgen.VkGenerateStep.create (builder, "libs/vulkan-zig/examples/vk.xml");
   exe.addModule ("vulkan", gen.getModule ());

@@ -33,7 +33,7 @@ pub const init_vk = struct
     self.extensions = extensions.*;
     self.instance_proc_addr = instance_proc_addr;
 
-    self.base_dispatch = try BaseDispatch.load (@ptrCast (vk.PfnGetInstanceProcAddr, self.instance_proc_addr));
+    self.base_dispatch = try BaseDispatch.load (@ptrCast (self.instance_proc_addr));
 
     const app_info = vk.ApplicationInfo
                      {
@@ -50,8 +50,8 @@ pub const init_vk = struct
                           .enabled_layer_count        = 0,
                           .pp_enabled_layer_names     = undefined,
                           .p_application_info         = &app_info,
-                          .enabled_extension_count    = @intCast (u32, self.extensions.len),
-                          .pp_enabled_extension_names = @ptrCast ([*] const [*:0] const u8, self.extensions),
+                          .enabled_extension_count    = @intCast (self.extensions.len),
+                          .pp_enabled_extension_names = @ptrCast (self.extensions),
                         };
 
     self.instance = try self.base_dispatch.createInstance (&create_info, null);

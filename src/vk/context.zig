@@ -131,7 +131,7 @@ pub const context_vk = struct
 
     for (queue_families, 0..) |properties, index|
     {
-      const family = @intCast(u32, index);
+      const family: u32 = @intCast(index);
 
       if (graphics_family == null and properties.queue_flags.graphics_bit)
       {
@@ -314,9 +314,9 @@ pub const context_vk = struct
                                  .p_queue_create_infos       = &queue_create_info,
                                  .queue_create_info_count    = queue_count,
                                  .enabled_layer_count        = required_layers.len,
-                                 .pp_enabled_layer_names     = if (required_layers.len > 0) @ptrCast ([*] const [*:0] const u8, required_layers [0..]) else undefined,
-                                 .enabled_extension_count    = @intCast (u32, self.candidate.extensions.items.len),
-                                 .pp_enabled_extension_names = @ptrCast ([*] const [*:0] const u8, self.candidate.extensions.items),
+                                 .pp_enabled_layer_names     = if (required_layers.len > 0) @ptrCast (required_layers [0..]) else undefined,
+                                 .enabled_extension_count    = @intCast (self.candidate.extensions.items.len),
+                                 .pp_enabled_extension_names = @ptrCast (self.candidate.extensions.items),
                                  .p_enabled_features         = &device_features,
                                };
     defer self.candidate.extensions.deinit ();
@@ -714,7 +714,7 @@ pub const context_vk = struct
                                     {
                                       .flags            = vk.FramebufferCreateFlags {},
                                       .render_pass      = self.offscreen_render_pass,
-                                      .attachment_count = @intCast (u32, self.offscreen_views.len),
+                                      .attachment_count = @intCast (self.offscreen_views.len),
                                       .p_attachments    = self.offscreen_views.ptr,
                                       .width            = self.offscreen_width,
                                       .height           = self.offscreen_height,
@@ -792,7 +792,7 @@ pub const context_vk = struct
                         {
                           .flags     = vk.ShaderModuleCreateFlags {},
                           .code_size = resource.len,
-                          .p_code    = @ptrCast ([*] const u32, @alignCast (@alignOf(u32), resource.ptr)),
+                          .p_code    = @ptrCast (@alignCast (resource.ptr)),
                         };
 
     return try self.device_dispatch.createShaderModule (self.logical_device, &create_info, null);
@@ -859,8 +859,8 @@ pub const context_vk = struct
                       {
                         .x         = 0,
                         .y         = 0,
-                        .width     = @floatFromInt(f32, self.extent.width),
-                        .height    = @floatFromInt(f32, self.extent.height),
+                        .width     = @floatFromInt(self.extent.width),
+                        .height    = @floatFromInt(self.extent.height),
                         .min_depth = 0,
                         .max_depth = 1,
                       },
@@ -944,7 +944,7 @@ pub const context_vk = struct
     var layout_create_info = vk.PipelineLayoutCreateInfo
                              {
                                .flags                     = vk.PipelineLayoutCreateFlags {},
-                               .set_layout_count          = @intCast(u32, self.descriptor_set_layout.len),
+                               .set_layout_count          = @intCast(self.descriptor_set_layout.len),
                                .p_set_layouts             = self.descriptor_set_layout.ptr,
                                .push_constant_range_count = 0,
                                .p_push_constant_ranges    = undefined,
@@ -953,7 +953,7 @@ pub const context_vk = struct
     self.pipeline_layout = try self.device_dispatch.createPipelineLayout (self.logical_device, &layout_create_info, null);
     errdefer self.device_dispatch.destroyPipelineLayout (self.logical_device, self.pipeline_layout, null);
 
-    layout_create_info.set_layout_count = @intCast (u32, self.offscreen_descriptor_set_layout.len);
+    layout_create_info.set_layout_count = @intCast (self.offscreen_descriptor_set_layout.len);
     layout_create_info.p_set_layouts = self.offscreen_descriptor_set_layout.ptr;
 
     self.offscreen_pipeline_layout = try self.device_dispatch.createPipelineLayout (self.logical_device, &layout_create_info, null);
@@ -1079,9 +1079,9 @@ pub const context_vk = struct
 
     for (memory_properties.memory_types [0..memory_properties.memory_type_count], 0..) |memory_type, index|
     {
-      if (type_filter & (@as (u32, 1) << @truncate (u5, index)) != 0 and memory_type.property_flags.contains (properties))
+      if (type_filter & (@as (u32, 1) << @truncate (index)) != 0 and memory_type.property_flags.contains (properties))
       {
-        return @truncate (u32, index);
+        return @truncate (index);
       }
     }
 
@@ -1176,7 +1176,7 @@ pub const context_vk = struct
     try self.init_buffer (size, vk.BufferUsageFlags { .transfer_src_bit = true, }, vk.MemoryPropertyFlags { .host_visible_bit = true, .host_coherent_bit = true, }, &staging_buffer, &staging_buffer_memory);
 
     const data = try self.device_dispatch.mapMemory (self.logical_device, staging_buffer_memory, 0, size, vk.MemoryMapFlags {});
-    std.mem.copy(u8, @ptrCast ([*] u8, data.?) [0..size], std.mem.sliceAsBytes (&vertices));
+    std.mem.copy(u8, @as ([*] u8, @ptrCast (data.?)) [0..size], std.mem.sliceAsBytes (&vertices));
     self.device_dispatch.unmapMemory (self.logical_device, staging_buffer_memory);
 
     try self.init_buffer (size, vk.BufferUsageFlags { .transfer_dst_bit = true, .vertex_buffer_bit = true, }, vk.MemoryPropertyFlags { .device_local_bit = true, }, &(self.vertex_buffer), &(self.vertex_buffer_memory));
@@ -1197,7 +1197,7 @@ pub const context_vk = struct
     try self.init_buffer (size, vk.BufferUsageFlags { .transfer_src_bit = true, }, vk.MemoryPropertyFlags { .host_visible_bit = true, .host_coherent_bit = true, }, &staging_buffer, &staging_buffer_memory);
 
     const data = try self.device_dispatch.mapMemory (self.logical_device, staging_buffer_memory, 0, size, vk.MemoryMapFlags {});
-    std.mem.copy(u8, @ptrCast ([*] u8, data.?) [0..size], std.mem.sliceAsBytes (&indices));
+    std.mem.copy(u8, @as ([*] u8, @ptrCast (data.?)) [0..size], std.mem.sliceAsBytes (&indices));
     self.device_dispatch.unmapMemory (self.logical_device, staging_buffer_memory);
 
     try self.init_buffer (size, vk.BufferUsageFlags { .transfer_dst_bit = true, .index_buffer_bit = true, }, vk.MemoryPropertyFlags { .device_local_bit = true, }, &(self.index_buffer), &(self.index_buffer_memory));
@@ -1354,7 +1354,7 @@ pub const context_vk = struct
       index += 1;
     }
 
-    alloc_info.descriptor_set_count = @intCast (u32, self.offscreen_descriptor_set_layout.len);
+    alloc_info.descriptor_set_count = @intCast (self.offscreen_descriptor_set_layout.len);
     alloc_info.p_set_layouts = self.offscreen_descriptor_set_layout.ptr;
 
     self.offscreen_descriptor_sets = try self.allocator.alloc (vk.DescriptorSet, 1);
@@ -1497,6 +1497,8 @@ pub const context_vk = struct
 
   fn record_command_buffer (self: Self, command_buffer: vk.CommandBuffer, image_index: u32) !void
   {
+    try self.device_dispatch.resetCommandBuffer (command_buffer, vk.CommandBufferResetFlags {});
+
     const command_buffer_begin_info = vk.CommandBufferBeginInfo
                                       {
                                         .flags              = vk.CommandBufferUsageFlags {},
@@ -1538,8 +1540,8 @@ pub const context_vk = struct
                                  {
                                    .x         = 0,
                                    .y         = 0,
-                                   .width     = @floatFromInt(f32, self.offscreen_width),
-                                   .height    = @floatFromInt(f32, self.extent.height),
+                                   .width     = @floatFromInt(self.offscreen_width),
+                                   .height    = @floatFromInt(self.extent.height),
                                    .min_depth = 0,
                                    .max_depth = 1,
                                  },
@@ -1636,11 +1638,11 @@ pub const context_vk = struct
 
     const ubo = uniform_buffer_object_vk
                 {
-                  .time = @floatFromInt (f32, (try std.time.Instant.now ()).since (self.start_time)) / @floatFromInt (f32, std.time.ns_per_s),
+                  .time = @as(f32, @floatFromInt ((try std.time.Instant.now ()).since (self.start_time))) / @as(f32, @floatFromInt (std.time.ns_per_s)),
                 };
 
     var data = try self.device_dispatch.mapMemory (self.logical_device, self.uniform_buffers_memory [self.current_frame], 0, ubo_size, vk.MemoryMapFlags {});
-    std.mem.copy(u8, @ptrCast ([*] u8, data.?) [0..ubo_size], std.mem.asBytes (&ubo));
+    std.mem.copy(u8, @as ([*] u8, @ptrCast (data.?)) [0..ubo_size], std.mem.asBytes (&ubo));
     self.device_dispatch.unmapMemory (self.logical_device, self.uniform_buffers_memory [self.current_frame]);
 
     const oubo_size = @sizeOf (offscreen_uniform_buffer_object_vk);
@@ -1651,7 +1653,7 @@ pub const context_vk = struct
                  };
 
     data = try self.device_dispatch.mapMemory (self.logical_device, self.offscreen_uniform_buffers_memory, 0, oubo_size, vk.MemoryMapFlags {});
-    std.mem.copy(u8, @ptrCast ([*] u8, data.?) [0..oubo_size], std.mem.asBytes (&oubo));
+    std.mem.copy(u8, @as ([*] u8, @ptrCast (data.?)) [0..oubo_size], std.mem.asBytes (&oubo));
     self.device_dispatch.unmapMemory (self.logical_device, self.offscreen_uniform_buffers_memory);
   }
 
@@ -1677,7 +1679,6 @@ pub const context_vk = struct
       return ContextError.ImageAcquireFailed;
     }
 
-    try self.device_dispatch.resetCommandBuffer (self.command_buffers [self.current_frame], vk.CommandBufferResetFlags {});
     try self.record_command_buffer(self.command_buffers [self.current_frame], acquire_result.image_index);
 
     const wait_stage = [_] vk.PipelineStageFlags

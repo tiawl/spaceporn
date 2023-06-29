@@ -4,3 +4,6 @@
 [submodule "libs/vulkan-zig"]
 	path = libs/vulkan-zig
 	url = https://github.com/Snektron/vulkan-zig
+[submodule "libs/zig-datetime"]
+	path = libs/zig-datetime
+	url = https://github.com/frmdstryr/zig-datetime

@@ -1527,7 +1527,7 @@ pub const context_vk = struct
                                                           .offset = vk.Offset2D { .x = 0, .y = 0 },
                                                           .extent = vk.Extent2D
                                                                     {
-                                                                      .width = self.offscreen_width,
+                                                                      .width  = self.offscreen_width,
                                                                       .height = self.offscreen_height,
                                                                     },
                                                         },
@@ -1546,7 +1546,7 @@ pub const context_vk = struct
                                      .x         = 0,
                                      .y         = 0,
                                      .width     = @floatFromInt(self.offscreen_width),
-                                     .height    = @floatFromInt(self.extent.height),
+                                     .height    = @floatFromInt(self.offscreen_height),
                                      .min_depth = 0,
                                      .max_depth = 1,
                                    },
@@ -1583,8 +1583,6 @@ pub const context_vk = struct
 
       self.device_dispatch.cmdEndRenderPass (command_buffer);
     }
-
-    // ----------------
 
     clear [0].color.float_32 [3] = 1;
     render_pass_begin_info.render_pass = self.render_pass;

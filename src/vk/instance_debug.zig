@@ -130,7 +130,7 @@ pub const instance_vk = struct
       flag = false;
     }
 
-    try log_app ("Check Vulkan Layer Properties Initializer OK", severity.DEBUG, .{});
+    try log_app ("check Vulkan layer properties initializer OK", severity.DEBUG, .{});
   }
 
   fn init_debug_info (debug_info: *vk.DebugUtilsMessengerCreateInfoEXT) void
@@ -246,7 +246,7 @@ pub const instance_vk = struct
 
     self.instance = try self.base_dispatch.createInstance (&create_info, null);
 
-    try log_app ("Check Vulkan Extension Properties Initializer OK", severity.DEBUG, .{});
+    try log_app ("check Vulkan extension properties initializer OK", severity.DEBUG, .{});
   }
 
   pub fn init (extensions: *[][*:0] const u8,
@@ -271,7 +271,7 @@ pub const instance_vk = struct
     self.debug_messenger = try self.dispatch.createDebugUtilsMessengerEXT (self.instance, &debug_info, null);
     errdefer self.dispatch.destroyDebugUtilsMessengerEXT (self.instance, self.debug_messenger, null);
 
-    try log_app ("Init Vulkan Initializer Instance OK", severity.DEBUG, .{});
+    try log_app ("init Vulkan initializer instance OK", severity.DEBUG, .{});
     return self;
   }
 
@@ -280,6 +280,6 @@ pub const instance_vk = struct
     self.dispatch.destroyDebugUtilsMessengerEXT (self.instance, self.debug_messenger, null);
     self.dispatch.destroyInstance (self.instance, null);
 
-    try log_app ("Cleanup Vulkan Initializer OK", severity.DEBUG, .{});
+    try log_app ("cleanup Vulkan initializer OK", severity.DEBUG, .{});
   }
 };

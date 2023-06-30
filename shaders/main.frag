@@ -22,6 +22,6 @@ void main ()
   {
     out_color = vec4 (vec3 (0.5 + 0.5 * cos (uniforms.time + uv.xyx + vec3 (0., 2., 4.))), 1.);
   } else {
-    out_color = texture (atlas, gl_FragCoord.xy / vec2 (512.));
+    out_color = texture (atlas, gl_FragCoord.xy / vec2 (800., 600.));
   }
 }

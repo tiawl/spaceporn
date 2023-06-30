@@ -26,7 +26,7 @@ pub const context_glfw = struct
 
   fn error_callback (code: glfw.ErrorCode, description: [:0] const u8) void
   {
-    log_app ("glfw: {}: {s}", severity.ERROR, .{ code, description }) catch
+    log_app ("GLFW: {}: {s}", severity.ERROR, .{ code, description }) catch
     {
       std.process.exit (1);
     };
@@ -83,7 +83,7 @@ pub const context_glfw = struct
     };
     self.instance_proc_addr = &(glfw.getInstanceProcAddress);
 
-    try log_app ("Init GLFW OK", severity.DEBUG, .{});
+    try log_app ("init GLFW OK", severity.DEBUG, .{});
 
     return self;
   }
@@ -95,7 +95,7 @@ pub const context_glfw = struct
       return GlfwError.SurfaceInitFailed;
     }
 
-    try log_app ("Init GLFW Surface OK", severity.DEBUG, .{});
+    try log_app ("init GLFW surface OK", severity.DEBUG, .{});
   }
 
   pub fn get_framebuffer_size (self: *Self) struct { resized: bool, width: u32, height: u32, }
@@ -132,13 +132,13 @@ pub const context_glfw = struct
   {
     _ = self;
     glfw.pollEvents ();
-    try log_app ("Loop GLFW OK", severity.DEBUG, .{});
+    try log_app ("loop GLFW OK", severity.DEBUG, .{});
   }
 
   pub fn cleanup (self: Self) !void
   {
     self.window.destroy ();
     glfw.terminate ();
-    try log_app ("Cleanup GLFW OK", severity.DEBUG, .{});
+    try log_app ("cleanup GLFW OK", severity.DEBUG, .{});
   }
 };

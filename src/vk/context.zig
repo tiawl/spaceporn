@@ -91,16 +91,16 @@ pub const context_vk = struct
   const Self = @This ();
 
   const MAX_FRAMES_IN_FLIGHT = 2;
+  const MAX_DEVICE_SCORE = 3;
 
   const vertices = [_] vertex_vk
                    {
                      vertex_vk { .pos = [_] f32 { -1.0, -1.0, }, },
-                     vertex_vk { .pos = [_] f32 {  1.0, -1.0, }, },
-                     vertex_vk { .pos = [_] f32 {  1.0,  1.0, }, },
-                     vertex_vk { .pos = [_] f32 { -1.0,  1.0, }, },
+                     vertex_vk { .pos = [_] f32 {  3.0, -1.0, }, },
+                     vertex_vk { .pos = [_] f32 { -1.0,  3.0, }, },
                    };
 
-  const indices = [_] u32 { 0, 1, 2, 2, 3, 0, };
+  const indices = [_] u32 { 0, 1, 2, };
 
   const required_device_extensions = [_][*:0] const u8
   {
@@ -152,11 +152,11 @@ pub const context_vk = struct
 
     if (graphics_family != null and present_family != null)
     {
-      try log_app ("Find Vulkan Queue Families OK", severity.DEBUG, .{});
+      try log_app ("find Vulkan queue families OK", severity.DEBUG, .{});
       return .{ .graphics_family = graphics_family.?, .present_family = present_family.?, };
     }
 
-    try log_app ("Find Vulkan Queue Families failed", severity.ERROR, .{});
+    try log_app ("find Vulkan queue families failed", severity.ERROR, .{});
     return null;
   }
 
@@ -176,11 +176,11 @@ pub const context_vk = struct
       {
         if (std.mem.eql (u8, std.mem.span (required_ext), supported_ext.extension_name [0..std.mem.indexOfScalar (u8, &(supported_ext.extension_name), 0).?]))
         {
-          try log_app ("Vulkan Device {s} supports the {s} Required Device Extension", severity.DEBUG, .{ name, required_ext });
+          try log_app ("Vulkan device {s} supports the {s} required device extension", severity.DEBUG, .{ name, required_ext });
           break;
         }
       } else {
-        try log_app ("Vulkan Device {s} does not support the {s} Required Device Extension", severity.DEBUG, .{ name, required_ext });
+        try log_app ("Vulkan device {s} does not support the {s} required device extension", severity.DEBUG, .{ name, required_ext });
         return false;
       }
     }
@@ -190,7 +190,7 @@ pub const context_vk = struct
 
     try self.candidate.extensions.appendSlice (required_device_extensions [0..]);
 
-    try log_app ("Vulkan Device {s} supports All Required Device Extension", severity.DEBUG, .{ name });
+    try log_app ("Vulkan device {s} supports all required device extension", severity.DEBUG, .{ name });
     return true;
   }
 
@@ -220,38 +220,180 @@ pub const context_vk = struct
       _ = try self.instance.dispatch.getPhysicalDeviceSurfacePresentModesKHR (device, self.surface, &present_mode_count, self.present_modes.ptr);
     }
 
-    try log_app ("Query Vulkan Swapchain Support OK", severity.DEBUG, .{});
+    try log_app ("query Vulkan swapchain support OK", severity.DEBUG, .{});
   }
 
-  fn check_device_features_properties (self: Self, features: vk.PhysicalDeviceFeatures, properties: vk.PhysicalDeviceProperties) bool
+  fn check_device_features_properties (self: Self, features: vk.PhysicalDeviceFeatures, properties: vk.PhysicalDeviceProperties) !bool
   {
-    return     features.sampler_anisotropy == vk.TRUE
-           and properties.limits.max_sampler_anisotropy >= 1
-           and properties.limits.max_image_dimension_2d >= self.offscreen_width and properties.limits.max_image_dimension_2d >= self.offscreen_height
-           ;
-           // and properties.limits.max_uniform_buffer_range -> is the maximum value that can be specified in the range member of a VkDescriptorBufferInfo structure passed to vkUpdateDescriptorSets for descriptors of type VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER or VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC.
-           // and properties.limits.max_storage_buffer_range -> is the maximum value that can be specified in the range member of a VkDescriptorBufferInfo structure passed to vkUpdateDescriptorSets for descriptors of type VK_DESCRIPTOR_TYPE_STORAGE_BUFFER or VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC.
-           // and properties.limits.max_memory_allocation_count -> is the maximum number of device memory allocations, as created by vkAllocateMemory, which can simultaneously exist.
-           // and properties.limits.max_sampler_allocation_count -> is the maximum number of sampler objects, as created by vkCreateSampler, which can simultaneously exist on a device.
-           // and properties.limits.buffer_image_granularity -> is the granularity, in bytes, at which buffer or linear image resources, and optimal image resources can be bound to adjacent offsets in the same VkDeviceMemory object without aliasing. ????
-           // and properties.limits.max_bound_descriptor_sets -> is the maximum number of descriptor sets that can be simultaneously used by a pipeline.
-           // and properties.limits.max_per_stage_descriptor_samplers -> is the maximum number of samplers that can be accessible to a single shader stage in a pipeline layout. Descriptors with a type of VK_DESCRIPTOR_TYPE_SAMPLER or VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER count against this limit
-           // and properties.limits.max_per_stage_descriptor_uniform_buffers -> is the maximum number of uniform buffers that can be accessible to a single shader stage in a pipeline layout. Descriptors with a type of VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER or VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC count against this limit.
-           // and properties.limits.max_per_stage_descriptor_storage_buffers -> is the maximum number of storage buffers that can be accessible to a single shader stage in a pipeline layout. Descriptors with a type of VK_DESCRIPTOR_TYPE_STORAGE_BUFFER or VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC count against this limit.
-           // and properties.limits.max_per_stage_descriptor_sampled_images -> is the maximum number of sampled images that can be accessible to a single shader stage in a pipeline layout. Descriptors with a type of VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, or VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER count against this limit
-           // and properties.limits.max_per_stage_descriptor_input_attachments -> is the maximum number of input attachments that can be accessible to a single shader stage in a pipeline layout. Descriptors with a type of VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT count against this limit.
-           // and properties.limits.max_per_stage_resources -> is the maximum number of resources that can be accessible to a single shader stage in a pipeline layout. Descriptors with a type of VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, or VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT count against this limit.
-           // and properties.limits.max_descriptor_set_uniform_buffers -> is the maximum number of uniform buffers that can be included in a pipeline layout
-           // and properties.limits.max_descriptor_set_samplers -> is the maximum number of samplers that can be included in a pipeline layout. Descriptors with a type of VK_DESCRIPTOR_TYPE_SAMPLER or VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER count against this limit.
-           // and properties.limits.max_descriptor_set_storage_buffers -> is the maximum number of storage buffers that can be included in a pipeline layout. Descriptors with a type of VK_DESCRIPTOR_TYPE_STORAGE_BUFFER or VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC count against this limit.
-           // and properties.limits.max_descriptor_set_sampled_images is the maximum number of sampled images that can be included in a pipeline layout. Descriptors with a type of VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, or VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER count against this limit.
-           // and properties.limits.max_descriptor_set_input_attachments -> is the maximum number of input attachments that can be included in a pipeline layout. Descriptors with a type of VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT count against this limit.
-           // and properties.limits.max_fragment_input_components is the maximum number of components of input variables which can be provided as inputs to the fragment shader stage.
-           // and properties.limits.max_viewports is the maximum number of active viewports. The viewportCount member of the VkPipelineViewportStateCreateInfo structure that is provided at pipeline creation must be less than or equal to this limit.
-           // and properties.limits.max_viewport_dimensions[2] are the maximum viewport dimensions in the X (width) and Y (height) dimensions, respectively. The maximum viewport dimensions must be greater than or equal to the largest image which can be created and used as a framebuffer attachment.
-           // and properties.limits.max_framebuffer_width is the maximum width for a framebuffer. The width member of the VkFramebufferCreateInfo structure must be less than or equal to this limit.
-           // and properties.limits.max_framebuffer_height is the maximum height for a framebuffer. The height member of the VkFramebufferCreateInfo structure must be less than or equal to this limit.
-           // and properties.limits.max_color_attachments is the maximum number of color attachments that can be used by a subpass in a render pass. The colorAttachmentCount member of the VkSubpassDescription or VkSubpassDescription2 structure must be less than or equal to this limit.
+    if (features.sampler_anisotropy != vk.TRUE)
+    {
+      try log_app ("Vulkan device {s} does not support sampler anisotropy feature", severity.INFO, .{ properties.device_name, });
+      return false;
+    }
+    try log_app ("Vulkan device {s} supports sampler anisotropy feature", severity.DEBUG, .{ properties.device_name, });
+
+    if (properties.limits.max_sampler_anisotropy < 1)
+    {
+      try log_app ("Vulkan device {s} does not support a sampler anisotropy value greater than 1", severity.INFO, .{ properties.device_name, });
+      return false;
+    }
+    try log_app ("Vulkan device {s} supports a sampler anisotropy value greater than 1", severity.DEBUG, .{ properties.device_name, });
+
+    if (properties.limits.max_image_dimension_2d < self.offscreen_width)
+    {
+      try log_app ("Vulkan device {s} does not support a maximum 2D image size ({d}) greater than offscreen framebuffer width ({d})", severity.INFO, .{ properties.device_name, properties.limits.max_image_dimension_2d, self.offscreen_width, });
+      return false;
+    }
+    try log_app ("Vulkan device {s} supports a maximum 2D image size ({d}) greater than offscreen framebuffer width ({d})", severity.DEBUG, .{ properties.device_name, properties.limits.max_image_dimension_2d, self.offscreen_width, });
+
+    if (properties.limits.max_image_dimension_2d < self.offscreen_height)
+    {
+      try log_app ("Vulkan device {s} does not support a maximum 2D image size ({d}) greater than offscreen framebuffer height ({d})", severity.INFO, .{ properties.device_name, properties.limits.max_image_dimension_2d, self.offscreen_height, });
+      return false;
+    }
+    try log_app ("Vulkan device {s} supports a maximum 2D image size ({d}) greater than offscreen framebuffer height ({d})", severity.DEBUG, .{ properties.device_name, properties.limits.max_image_dimension_2d, self.offscreen_height, });
+
+    if (properties.limits.max_uniform_buffer_range < @sizeOf (uniform_buffer_object_vk))
+    {
+      try log_app ("Vulkan device {s} does not support a maximum uniform buffer range ({d}) greater than uniform_buffer_object_vk struct size ({d})", severity.INFO, .{ properties.device_name, properties.limits.max_uniform_buffer_range, @sizeOf (uniform_buffer_object_vk), });
+      return false;
+    }
+    try log_app ("Vulkan device {s} supports a maximum uniform buffer range ({d}) greater than uniform_buffer_object_vk struct size ({d})", severity.DEBUG, .{ properties.device_name, properties.limits.max_uniform_buffer_range, @sizeOf (uniform_buffer_object_vk), });
+
+    if (properties.limits.max_uniform_buffer_range < @sizeOf (offscreen_uniform_buffer_object_vk))
+    {
+      try log_app ("Vulkan device {s} does not support a maximum uniform buffer range ({d}) greater than offscreen_uniform_buffer_object_vk struct size ({d})", severity.INFO, .{ properties.device_name, properties.limits.max_uniform_buffer_range, @sizeOf (offscreen_uniform_buffer_object_vk), });
+      return false;
+    }
+    try log_app ("Vulkan device {s} supports a maximum uniform buffer range ({d}) greater than offscreen_uniform_buffer_object_vk struct size ({d})", severity.DEBUG, .{ properties.device_name, properties.limits.max_uniform_buffer_range, @sizeOf (offscreen_uniform_buffer_object_vk), });
+
+    if (properties.limits.max_memory_allocation_count < 1)
+    {
+      try log_app ("Vulkan device {s} does not support a vkAllocateMemory() call", severity.INFO, .{ properties.device_name, });
+      return false;
+    }
+    try log_app ("Vulkan device {s} supports until {d} vkAllocateMemory() calls simultaneously", severity.DEBUG, .{ properties.device_name, properties.limits.max_memory_allocation_count });
+
+    if (properties.limits.max_sampler_allocation_count < 1)
+    {
+      try log_app ("Vulkan device {s} does not support creation of sampler objects", severity.INFO, .{ properties.device_name, });
+      return false;
+    }
+    try log_app ("Vulkan device {s} supports until {d} sampler objects simultaneously", severity.DEBUG, .{ properties.device_name, properties.limits.max_sampler_allocation_count, });
+
+    if (properties.limits.max_bound_descriptor_sets < 2)
+    {
+      try log_app ("Vulkan device {s} does not support that 2 or more descriptor sets can be simultaneously used", severity.INFO, .{ properties.device_name, });
+      return false;
+    }
+    try log_app ("Vulkan device {s} supports until {d} descriptor sets used simultaneously", severity.DEBUG, .{ properties.device_name, properties.limits.max_bound_descriptor_sets });
+
+    if (properties.limits.max_per_stage_descriptor_samplers < 1)
+    {
+      try log_app ("Vulkan device {s} does not support access to a sample object by a single shader stage", severity.INFO, .{ properties.device_name, });
+      return false;
+    }
+    try log_app ("Vulkan device {s} supports until {d} accessible sample objects by a single shader stage", severity.DEBUG, .{ properties.device_name, properties.limits.max_per_stage_descriptor_samplers });
+
+    if (properties.limits.max_per_stage_descriptor_uniform_buffers < 1)
+    {
+      try log_app ("Vulkan device {s} does not support access to a uniform buffer by a single shader stage", severity.INFO, .{ properties.device_name, });
+      return false;
+    }
+    try log_app ("Vulkan device {s} supports until {d} accessible uniform buffers by a single shader stage", severity.DEBUG, .{ properties.device_name, properties.limits.max_per_stage_descriptor_samplers });
+
+    if (properties.limits.max_per_stage_descriptor_sampled_images < 1)
+    {
+      try log_app ("Vulkan device {s} does not support access to a sampled image by a single shader stage", severity.INFO, .{ properties.device_name, });
+      return false;
+    }
+    try log_app ("Vulkan device {s} supports until {d} accessible sampled image by a single shader stage", severity.DEBUG, .{ properties.device_name, properties.limits.max_per_stage_descriptor_sampled_images });
+
+    if (properties.limits.max_per_stage_resources < 2)
+    {
+      try log_app ("Vulkan device {s} does not support access to 2 or more resources by a single shader stage", severity.INFO, .{ properties.device_name, });
+      return false;
+    }
+    try log_app ("Vulkan device {s} supports until {d} resources by a single shader stage", severity.DEBUG, .{ properties.device_name, properties.limits.max_per_stage_resources });
+
+    if (properties.limits.max_descriptor_set_uniform_buffers < 1)
+    {
+      try log_app ("Vulkan device {s} does not support inclusion of a uniform buffer in a pipeline layout", severity.INFO, .{ properties.device_name, });
+      return false;
+    }
+    try log_app ("Vulkan device {s} supports until {d} included uniform buffers in a pipeline layout", severity.DEBUG, .{ properties.device_name, properties.limits.max_descriptor_set_uniform_buffers });
+
+    if (properties.limits.max_descriptor_set_samplers < 1)
+    {
+      try log_app ("Vulkan device {s} does not support inclusion of a sampler in a pipeline layout", severity.INFO, .{ properties.device_name, });
+      return false;
+    }
+    try log_app ("Vulkan device {s} supports until {d} included samplers in a pipeline layout", severity.DEBUG, .{ properties.device_name, properties.limits.max_descriptor_set_samplers });
+
+    if (properties.limits.max_descriptor_set_sampled_images < 1)
+    {
+      try log_app ("Vulkan device {s} does not support inclusion of a sampled image in a pipeline layout", severity.INFO, .{ properties.device_name, });
+      return false;
+    }
+    try log_app ("Vulkan device {s} supports until {d} included sampled image in a pipeline layout", severity.DEBUG, .{ properties.device_name, properties.limits.max_descriptor_set_sampled_images });
+
+    if (properties.limits.max_fragment_input_components < 2)
+    {
+      try log_app ("Vulkan device {s} does not support 2 or more components of input variables provided as inputs to the fragment shader stage", severity.INFO, .{ properties.device_name, });
+      return false;
+    }
+    try log_app ("Vulkan device {s} supports until {d} components of input variables provided as inputs to the fragment shader stage", severity.DEBUG, .{ properties.device_name, properties.limits.max_fragment_input_components });
+
+    if (properties.limits.max_viewports < 1)
+    {
+      try log_app ("Vulkan device {s} does not support active viewport", severity.INFO, .{ properties.device_name, });
+      return false;
+    }
+    try log_app ("Vulkan device {s} supports until {d} active viewports", severity.DEBUG, .{ properties.device_name, properties.limits.max_viewports });
+
+    if (properties.limits.max_viewports < 1)
+    {
+      try log_app ("Vulkan device {s} does not support active viewport", severity.INFO, .{ properties.device_name, });
+      return false;
+    }
+    try log_app ("Vulkan device {s} supports until {d} active viewports", severity.DEBUG, .{ properties.device_name, properties.limits.max_viewports });
+
+    if (properties.limits.max_viewport_dimensions [0] < self.offscreen_width)
+    {
+      try log_app ("Vulkan device {s} does not support a maximum viewport width ({d}) greater than offscreen framebuffer width ({d})", severity.INFO, .{ properties.device_name, properties.limits.max_viewport_dimensions [0], self.offscreen_width});
+      return false;
+    }
+    try log_app ("Vulkan device {s} supports a maximum viewport width ({d}) greater than offscreen framebuffer width ({d})", severity.DEBUG, .{ properties.device_name, properties.limits.max_viewport_dimensions [0], self.offscreen_width});
+
+    if (properties.limits.max_viewport_dimensions [1] < self.offscreen_height)
+    {
+      try log_app ("Vulkan device {s} does not support a maximum viewport height ({d}) greater than offscreen framebuffer height ({d})", severity.INFO, .{ properties.device_name, properties.limits.max_viewport_dimensions [1], self.offscreen_height});
+      return false;
+    }
+    try log_app ("Vulkan device {s} supports a maximum viewport height ({d}) greater than offscreen framebuffer height ({d})", severity.DEBUG, .{ properties.device_name, properties.limits.max_viewport_dimensions [1], self.offscreen_height});
+
+    if (properties.limits.max_framebuffer_width < self.offscreen_width)
+    {
+      try log_app ("Vulkan device {s} does not support a maximum framebuffer width ({d}) greater than offscreen framebuffer width ({d})", severity.INFO, .{ properties.device_name, properties.limits.max_framebuffer_width, self.offscreen_width});
+      return false;
+    }
+    try log_app ("Vulkan device {s} supports a maximum framebuffer width ({d}) greater than offscreen framebuffer width ({d})", severity.DEBUG, .{ properties.device_name, properties.limits.max_framebuffer_width, self.offscreen_width});
+
+    if (properties.limits.max_framebuffer_height < self.offscreen_height)
+    {
+      try log_app ("Vulkan device {s} does not support a maximum framebuffer height ({d}) greater than offscreen framebuffer height ({d})", severity.INFO, .{ properties.device_name, properties.limits.max_framebuffer_height, self.offscreen_height});
+      return false;
+    }
+    try log_app ("Vulkan device {s} supports a maximum framebuffer height ({d}) greater than offscreen framebuffer height ({d})", severity.DEBUG, .{ properties.device_name, properties.limits.max_framebuffer_height, self.offscreen_height});
+
+    if (properties.limits.max_color_attachments < 1)
+    {
+      try log_app ("Vulkan device {s} does not support color attachment used by a subpass in a render pass", severity.INFO, .{ properties.device_name, });
+      return false;
+    }
+    try log_app ("Vulkan device {s} supports until {d} color attachment used by a subpass in a render pass", severity.DEBUG, .{ properties.device_name, properties.limits.max_color_attachments });
+
+    return true;
   }
 
   fn is_suitable (self: *Self, device: vk.PhysicalDevice, allocator: *std.mem.Allocator) !?struct { graphics_family: u32, present_family: u32, score: u8, }
@@ -261,15 +403,15 @@ pub const context_vk = struct
 
     if (!try self.check_device_extension_support (device, properties.device_name, allocator))
     {
-      try log_app ("Vulkan Device {s} is not Suitable", severity.ERROR, .{ properties.device_name, });
+      try log_app ("Vulkan device {s} is not suitable", severity.ERROR, .{ properties.device_name, });
       return null;
     }
 
     try self.query_swapchain_support (device, allocator);
 
-    if (!self.check_device_features_properties (features, properties))
+    if (!try self.check_device_features_properties (features, properties))
     {
-      try log_app ("Vulkan Device {s} is not Suitable", severity.ERROR, .{ properties.device_name, });
+      try log_app ("Vulkan device {s} is not suitable", severity.ERROR, .{ properties.device_name, });
       return null;
     }
 
@@ -277,7 +419,7 @@ pub const context_vk = struct
     {
       if (try self.find_queue_families (device, allocator)) |candidate|
       {
-        try log_app ("Vulkan Device {s} is Suitable OK", severity.DEBUG, .{ properties.device_name, });
+        try log_app ("Vulkan device {s} is suitable", severity.DEBUG, .{ properties.device_name, });
         return .{
                   .graphics_family = candidate.graphics_family,
                   .present_family  = candidate.present_family,
@@ -287,7 +429,7 @@ pub const context_vk = struct
       }
     }
 
-    try log_app ("Vulkan Device {s} is not Suitable", severity.ERROR, .{ properties.device_name, });
+    try log_app ("Vulkan device {s} is not suitable", severity.ERROR, .{ properties.device_name, });
     return null;
   }
 
@@ -317,6 +459,7 @@ pub const context_vk = struct
         self.candidate.present_family  = candidate.?.present_family;
         max_score                      = candidate.?.score;
       }
+      if (max_score == MAX_DEVICE_SCORE) break;
     }
 
     if (max_score == 0 or self.physical_device == null)
@@ -324,7 +467,7 @@ pub const context_vk = struct
       return ContextError.NoSuitableDevice;
     }
 
-    try log_app ("Pick a {d}/3 Vulkan Physical Device OK", severity.DEBUG, .{ max_score });
+    try log_app ("pick a {d}/3 Vulkan physical device OK", severity.DEBUG, .{ max_score });
   }
 
   fn init_logical_device (self: *Self) !void
@@ -375,7 +518,7 @@ pub const context_vk = struct
     self.graphics_queue = self.device_dispatch.getDeviceQueue (self.logical_device, self.candidate.graphics_family, 0);
     self.present_queue = self.device_dispatch.getDeviceQueue (self.logical_device, self.candidate.present_family, 0);
 
-    try log_app ("Init Vulkan Logical Device OK", severity.DEBUG, .{});
+    try log_app ("init Vulkan logical device OK", severity.DEBUG, .{});
   }
 
   fn choose_swap_support_format (self: *Self) void
@@ -429,7 +572,7 @@ pub const context_vk = struct
 
     _ = try self.device_dispatch.getSwapchainImagesKHR (self.logical_device, self.swapchain, &image_count, self.images.ptr);
 
-    try log_app ("Init Vulkan Swapchain Images OK", severity.DEBUG, .{});
+    try log_app ("init Vulkan swapchain images OK", severity.DEBUG, .{});
   }
 
   fn init_swapchain (self: *Self, framebuffer: struct { width: u32, height: u32, }, allocator: *std.mem.Allocator) !void
@@ -478,7 +621,7 @@ pub const context_vk = struct
 
     try self.init_swapchain_images (allocator);
 
-    try log_app ("Init Vulkan Swapchain OK", severity.DEBUG, .{});
+    try log_app ("init Vulkan swapchain OK", severity.DEBUG, .{});
   }
 
   fn init_image_views (self: *Self) !void
@@ -514,7 +657,7 @@ pub const context_vk = struct
       errdefer self.device_dispatch.destroyImageView (self.logical_device, self.views [index], null);
     }
 
-    try log_app ("Init Vulkan Swapchain Image Views OK", severity.DEBUG, .{});
+    try log_app ("init Vulkan swapchain image views OK", severity.DEBUG, .{});
   }
 
   fn init_render_pass (self: *Self) !void
@@ -582,7 +725,7 @@ pub const context_vk = struct
     self.render_pass = try self.device_dispatch.createRenderPass (self.logical_device, &create_info, null);
     errdefer self.device_dispatch.destroyRenderPass (self.logical_device, self.render_pass, null);
 
-    try log_app ("Init Vulkan Render Pass OK", severity.DEBUG, .{});
+    try log_app ("init Vulkan render pass OK", severity.DEBUG, .{});
   }
 
   fn init_offscreen (self: *Self, allocator: *std.mem.Allocator) !void
@@ -765,7 +908,7 @@ pub const context_vk = struct
 
     self.first_pass_done = false;
 
-    try log_app ("Init Vulkan Offscreen Render Pass OK", severity.DEBUG, .{});
+    try log_app ("init Vulkan offscreen render pass OK", severity.DEBUG, .{});
   }
 
   fn init_descriptor_set_layout (self: *Self, allocator: *std.mem.Allocator) !void
@@ -822,7 +965,7 @@ pub const context_vk = struct
     self.offscreen_descriptor_set_layout [0] = try self.device_dispatch.createDescriptorSetLayout (self.logical_device, &create_info, null);
     errdefer self.device_dispatch.destroyDescriptorSetLayout (self.logical_device, self.offscreen_descriptor_set_layout [0], null);
 
-    try log_app ("Init Vulkan Descriptor Set Layout OK", severity.DEBUG, .{});
+    try log_app ("init Vulkan descriptor set layout OK", severity.DEBUG, .{});
   }
 
   fn init_shader_module (self: Self, resource: [] const u8) !vk.ShaderModule
@@ -1054,7 +1197,7 @@ pub const context_vk = struct
       }
     }
 
-    try log_app ("Init Vulkan Graphics Pipeline OK", severity.DEBUG, .{});
+    try log_app ("init Vulkan graphics pipeline OK", severity.DEBUG, .{});
   }
 
   fn init_framebuffers (self: *Self, allocator: *std.mem.Allocator) !void
@@ -1083,7 +1226,7 @@ pub const context_vk = struct
       index += 1;
     }
 
-    try log_app ("Init Vulkan Framebuffers OK", severity.DEBUG, .{});
+    try log_app ("init Vulkan framebuffers OK", severity.DEBUG, .{});
   }
 
   fn init_command_pools (self: *Self) !void
@@ -1106,7 +1249,7 @@ pub const context_vk = struct
     self.buffers_command_pool = try self.device_dispatch.createCommandPool (self.logical_device, &buffers_create_info, null);
     errdefer self.device_dispatch.destroyCommandPool (self.logical_device, self.buffers_command_pool, null);
 
-    try log_app ("Init Vulkan Command Pools OK", severity.DEBUG, .{});
+    try log_app ("init Vulkan command pools OK", severity.DEBUG, .{});
   }
 
   fn find_memory_type (self: Self, type_filter: u32, properties: vk.MemoryPropertyFlags) !u32
@@ -1222,7 +1365,7 @@ pub const context_vk = struct
     self.device_dispatch.destroyBuffer (self.logical_device, staging_buffer, null);
     self.device_dispatch.freeMemory (self.logical_device, staging_buffer_memory, null);
 
-    try log_app ("Init Vulkan Vertexbuffer OK", severity.DEBUG, .{});
+    try log_app ("init Vulkan vertexbuffer OK", severity.DEBUG, .{});
   }
 
   fn init_index_buffer (self: *Self) !void
@@ -1243,7 +1386,7 @@ pub const context_vk = struct
     self.device_dispatch.destroyBuffer (self.logical_device, staging_buffer, null);
     self.device_dispatch.freeMemory (self.logical_device, staging_buffer_memory, null);
 
-    try log_app ("Init Vulkan Indexbuffer OK", severity.DEBUG, .{});
+    try log_app ("init Vulkan indexbuffer OK", severity.DEBUG, .{});
   }
 
   fn init_uniform_buffers (self: *Self, allocator: *std.mem.Allocator) !void
@@ -1279,7 +1422,7 @@ pub const context_vk = struct
       self.device_dispatch.freeMemory (self.logical_device, self.offscreen_uniform_buffers_memory, null);
     }
 
-    try log_app ("Init Vulkan Uniform buffers OK", severity.DEBUG, .{});
+    try log_app ("init Vulkan uniform buffers OK", severity.DEBUG, .{});
   }
 
   fn init_descriptor_pool (self: *Self) !void
@@ -1309,7 +1452,7 @@ pub const context_vk = struct
     self.descriptor_pool = try self.device_dispatch.createDescriptorPool (self.logical_device, &create_info, null);
     errdefer self.device_dispatch.destroyDescriptorPool (self.logical_device, self.descriptor_pool, null);
 
-    try log_app ("Init Vulkan Descriptor Pool OK", severity.DEBUG, .{});
+    try log_app ("init Vulkan descriptor pool OK", severity.DEBUG, .{});
   }
 
   fn init_descriptor_sets (self: *Self, allocator: *std.mem.Allocator) !void
@@ -1421,7 +1564,7 @@ pub const context_vk = struct
 
     self.device_dispatch.updateDescriptorSets (self.logical_device, offscreen_descriptor_write.len, &offscreen_descriptor_write, 0, undefined);
 
-    try log_app ("Init Vulkan Descriptor Sets OK", severity.DEBUG, .{});
+    try log_app ("init Vulkan descriptor sets OK", severity.DEBUG, .{});
   }
 
   fn init_command_buffers (self: *Self, allocator: *std.mem.Allocator) !void
@@ -1438,7 +1581,7 @@ pub const context_vk = struct
     try self.device_dispatch.allocateCommandBuffers (self.logical_device, &alloc_info, self.command_buffers.ptr);
     errdefer self.device_dispatch.freeCommandBuffers (self.logical_device, self.command_pool, 1, self.command_buffers.ptr);
 
-    try log_app ("Init Vulkan Command Buffer OK", severity.DEBUG, .{});
+    try log_app ("init Vulkan command buffer OK", severity.DEBUG, .{});
   }
 
   fn init_sync_objects (self: *Self, allocator: *std.mem.Allocator) !void
@@ -1462,7 +1605,7 @@ pub const context_vk = struct
 
     self.current_frame = 0;
 
-    try log_app ("Init Vulkan Semaphores & Fence OK", severity.DEBUG, .{});
+    try log_app ("init Vulkan semaphores and fence OK", severity.DEBUG, .{});
   }
 
   pub fn get_surface (self: Self) struct { instance: vk.Instance, surface: vk.SurfaceKHR, success: i32, }
@@ -1488,7 +1631,7 @@ pub const context_vk = struct
 
     self.instance = try instance_vk.init (extensions, instance_proc_addr, allocator);
 
-    try log_app ("Init Vulkan Instance OK", severity.DEBUG, .{});
+    try log_app ("init Vulkan instance OK", severity.DEBUG, .{});
     return self;
   }
 
@@ -1518,7 +1661,7 @@ pub const context_vk = struct
     try self.init_command_buffers (allocator);
     try self.init_sync_objects (allocator);
 
-    try log_app ("Init Vulkan OK", severity.DEBUG, .{});
+    try log_app ("init Vulkan OK", severity.DEBUG, .{});
   }
 
   fn record_command_buffer (self: *Self, command_buffer: vk.CommandBuffer, image_index: u32) !void
@@ -1757,7 +1900,7 @@ pub const context_vk = struct
   pub fn loop (self: *Self, framebuffer: struct { resized: bool, width: u32, height: u32, }, allocator: *std.mem.Allocator) !void
   {
     try self.draw_frame (.{ .resized = framebuffer.resized, .width = framebuffer.width, .height = framebuffer.height, }, allocator);
-    try log_app ("Loop Vulkan OK", severity.DEBUG, .{});
+    try log_app ("loop Vulkan OK", severity.DEBUG, .{});
   }
 
   pub fn cleanup (self: Self) !void
@@ -1833,6 +1976,6 @@ pub const context_vk = struct
     self.instance.dispatch.destroySurfaceKHR (self.instance.instance, self.surface, null);
     try self.instance.cleanup ();
 
-    try log_app ("Cleanup Vulkan OK", severity.DEBUG, .{});
+    try log_app ("cleanup Vulkan OK", severity.DEBUG, .{});
   }
 };

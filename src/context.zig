@@ -52,7 +52,7 @@ pub const context = struct
 
       defer file.close ();
     }
-    try log_app ("Log File Init OK", severity.DEBUG, .{});
+    try log_app ("log file init OK", severity.DEBUG, .{});
   }
 
   pub fn init (allocator: *std.mem.Allocator) !Self
@@ -72,7 +72,7 @@ pub const context = struct
     const framebuffer = self.glfw.get_framebuffer_size ();
     try self.vk.init (.{ .width = framebuffer.width, .height = framebuffer.height, }, allocator);
 
-    try log_app ("Init OK", severity.DEBUG, .{});
+    try log_app ("init OK", severity.DEBUG, .{});
     return self;
   }
 
@@ -84,13 +84,13 @@ pub const context = struct
       const framebuffer = self.glfw.get_framebuffer_size ();
       try self.vk.loop (.{ .resized = framebuffer.resized, .width = framebuffer.width, .height = framebuffer.height, }, allocator);
     }
-    try log_app ("Loop OK", severity.DEBUG, .{});
+    try log_app ("loop OK", severity.DEBUG, .{});
   }
 
   pub fn cleanup (self: Self) !void
   {
     try self.vk.cleanup ();
     try self.glfw.cleanup ();
-    try log_app ("Cleanup OK", severity.DEBUG, .{});
+    try log_app ("cleanup OK", severity.DEBUG, .{});
   }
 };

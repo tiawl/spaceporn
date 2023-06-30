@@ -6,14 +6,14 @@ const log_app    = utils.log_app;
 const exe        = utils.exe;
 const severity   = utils.severity;
 
-const dispatch         = @import ("dispatch.zig");
-const BaseDispatch     = dispatch.BaseDispatch;
-const InstanceDispatch = dispatch.InstanceDispatch;
+const dispatch_vk      = @import ("dispatch.zig");
+const BaseDispatch     = dispatch_vk.BaseDispatch;
+const InstanceDispatch = dispatch_vk.InstanceDispatch;
 
-pub const init_vk = struct
+pub const instance_vk = struct
 {
   base_dispatch:      BaseDispatch,
-  instance_dispatch:  InstanceDispatch,
+  dispatch:           InstanceDispatch,
   instance:           vk.Instance,
   extensions:         [][*:0] const u8,
   instance_proc_addr: *const fn (?*anyopaque, [*:0] const u8) callconv (.C) ?*const fn () callconv (.C) void,
@@ -22,9 +22,9 @@ pub const init_vk = struct
 
   pub const required_layers = [_][] const u8 {};
 
-  pub fn init_instance (extensions: *[][*:0] const u8,
+  pub fn init (extensions: *[][*:0] const u8,
     instance_proc_addr: *const fn (?*anyopaque, [*:0] const u8) callconv (.C) ?*const fn () callconv (.C) void,
-    allocator: std.mem.Allocator) !Self
+    allocator: *std.mem.Allocator) !Self
   {
     _ = allocator;
 
@@ -33,7 +33,7 @@ pub const init_vk = struct
     self.extensions = extensions.*;
     self.instance_proc_addr = instance_proc_addr;
 
-    self.base_dispatch = try BaseDispatch.load (@ptrCast (self.instance_proc_addr));
+    self.base_dispatch = try BaseDispatch.load (@as(vk.PfnGetInstanceProcAddr, @ptrCast (self.instance_proc_addr)));
 
     const app_info = vk.ApplicationInfo
                      {
@@ -56,14 +56,14 @@ pub const init_vk = struct
 
     self.instance = try self.base_dispatch.createInstance (&create_info, null);
 
-    self.instance_dispatch = try InstanceDispatch.load (self.instance, self.base_dispatch.dispatch.vkGetInstanceProcAddr);
-    errdefer self.instance_dispatch.destroyInstance (self.instance, null);
+    self.dispatch = try InstanceDispatch.load (self.instance, self.base_dispatch.dispatch.vkGetInstanceProcAddr);
+    errdefer self.dispatch.destroyInstance (self.instance, null);
 
     return self;
   }
 
   pub fn cleanup (self: Self) !void
   {
-    self.instance_dispatch.destroyInstance (self.instance, null);
+    self.dispatch.destroyInstance (self.instance, null);
   }
 };

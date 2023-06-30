@@ -9,9 +9,9 @@ const exe      = utils.exe;
 const profile  = utils.profile;
 const severity = utils.severity;
 
-const dispatch         = @import ("dispatch.zig");
-const BaseDispatch     = dispatch.BaseDispatch;
-const InstanceDispatch = dispatch.InstanceDispatch;
+const dispatch_vk      = @import ("dispatch.zig");
+const BaseDispatch     = dispatch_vk.BaseDispatch;
+const InstanceDispatch = dispatch_vk.InstanceDispatch;
 
 const ext_vk = struct
 {
@@ -19,11 +19,10 @@ const ext_vk = struct
   supported: bool = false,
 };
 
-pub const init_vk = struct
+pub const instance_vk = struct
 {
-  allocator:          std.mem.Allocator,
   base_dispatch:      BaseDispatch,
-  instance_dispatch:  InstanceDispatch,
+  dispatch:           InstanceDispatch,
   instance:           vk.Instance,
   extensions:         [][*:0] const u8,
   instance_proc_addr: *const fn (?*anyopaque, [*:0] const u8) callconv (.C) ?*const fn () callconv (.C) void,
@@ -96,14 +95,13 @@ pub const init_vk = struct
     return true;
   }
 
-  fn check_layer_properties (self: *Self) !void
+  fn check_layer_properties (self: *Self, allocator: *std.mem.Allocator) !void
   {
     var available_layers_count: u32 = undefined;
 
     _ = try self.base_dispatch.enumerateInstanceLayerProperties (&available_layers_count, null);
 
-    var available_layers = try self.allocator.alloc (vk.LayerProperties, available_layers_count);
-    defer self.allocator.free (available_layers);
+    var available_layers = try allocator.alloc (vk.LayerProperties, available_layers_count);
 
     _ = try self.base_dispatch.enumerateInstanceLayerProperties (&available_layers_count, available_layers.ptr);
 
@@ -167,9 +165,9 @@ pub const init_vk = struct
                    };
   }
 
-  fn check_extension_properties (self: *Self, debug_info: *vk.DebugUtilsMessengerCreateInfoEXT) !void
+  fn check_extension_properties (self: *Self, debug_info: *vk.DebugUtilsMessengerCreateInfoEXT, allocator: *std.mem.Allocator) !void
   {
-    var extensions = try std.ArrayList ([*:0] const u8).initCapacity (self.allocator, self.extensions.len + required_extensions.len + optional_extensions.len);
+    var extensions = try std.ArrayList ([*:0] const u8).initCapacity (allocator.*, self.extensions.len + required_extensions.len + optional_extensions.len);
     defer extensions.deinit ();
 
     try extensions.appendSlice(self.extensions);
@@ -178,8 +176,7 @@ pub const init_vk = struct
 
     _ = try self.base_dispatch.enumerateInstanceExtensionProperties (null, &supported_extensions_count, null);
 
-    var supported_extensions = try self.allocator.alloc (vk.ExtensionProperties, supported_extensions_count);
-    defer self.allocator.free (supported_extensions);
+    var supported_extensions = try allocator.alloc (vk.ExtensionProperties, supported_extensions_count);
 
     _ = try self.base_dispatch.enumerateInstanceExtensionProperties (null, &supported_extensions_count, supported_extensions.ptr);
 
@@ -252,28 +249,27 @@ pub const init_vk = struct
     try log_app ("Check Vulkan Extension Properties Initializer OK", severity.DEBUG, .{});
   }
 
-  pub fn init_instance (extensions: *[][*:0] const u8,
+  pub fn init (extensions: *[][*:0] const u8,
     instance_proc_addr: *const fn (?*anyopaque, [*:0] const u8) callconv (.C) ?*const fn () callconv (.C) void,
-    allocator: std.mem.Allocator) !Self
+    allocator: *std.mem.Allocator) !Self
   {
     var self: Self = undefined;
     var debug_info: vk.DebugUtilsMessengerCreateInfoEXT = undefined;
 
     self.extensions = extensions.*;
     self.instance_proc_addr = instance_proc_addr;
-    self.allocator = allocator;
 
     self.base_dispatch = try BaseDispatch.load (@as(vk.PfnGetInstanceProcAddr, @ptrCast (self.instance_proc_addr)));
 
-    try check_layer_properties (&self);
-    try check_extension_properties (&self, &debug_info);
+    try check_layer_properties (&self, allocator);
+    try check_extension_properties (&self, &debug_info, allocator);
 
-    self.instance_dispatch = try InstanceDispatch.load (self.instance, self.base_dispatch.dispatch.vkGetInstanceProcAddr);
-    errdefer self.instance_dispatch.destroyInstance (self.instance, null);
+    self.dispatch = try InstanceDispatch.load (self.instance, self.base_dispatch.dispatch.vkGetInstanceProcAddr);
+    errdefer self.dispatch.destroyInstance (self.instance, null);
 
     init_debug_info (&debug_info);
-    self.debug_messenger = try self.instance_dispatch.createDebugUtilsMessengerEXT (self.instance, &debug_info, null);
-    errdefer self.instance_dispatch.destroyDebugUtilsMessengerEXT (self.instance, self.debug_messenger, null);
+    self.debug_messenger = try self.dispatch.createDebugUtilsMessengerEXT (self.instance, &debug_info, null);
+    errdefer self.dispatch.destroyDebugUtilsMessengerEXT (self.instance, self.debug_messenger, null);
 
     try log_app ("Init Vulkan Initializer Instance OK", severity.DEBUG, .{});
     return self;
@@ -281,8 +277,8 @@ pub const init_vk = struct
 
   pub fn cleanup (self: Self) !void
   {
-    self.instance_dispatch.destroyDebugUtilsMessengerEXT (self.instance, self.debug_messenger, null);
-    self.instance_dispatch.destroyInstance (self.instance, null);
+    self.dispatch.destroyDebugUtilsMessengerEXT (self.instance, self.debug_messenger, null);
+    self.dispatch.destroyInstance (self.instance, null);
 
     try log_app ("Cleanup Vulkan Initializer OK", severity.DEBUG, .{});
   }

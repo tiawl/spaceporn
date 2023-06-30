@@ -55,7 +55,7 @@ pub const context = struct
     try log_app ("Log File Init OK", severity.DEBUG, .{});
   }
 
-  pub fn init () !Self
+  pub fn init (allocator: *std.mem.Allocator) !Self
   {
     try init_logfile ();
 
@@ -63,26 +63,26 @@ pub const context = struct
 
     self.glfw = try context_glfw.init ();
 
-    self.vk = try context_vk.init_instance (&self.glfw.extensions, self.glfw.instance_proc_addr);
+    self.vk = try context_vk.init_instance (&self.glfw.extensions, self.glfw.instance_proc_addr, allocator);
 
     var wrapper = self.vk.get_surface ();
     try self.glfw.init_surface (wrapper.instance, &wrapper.surface, wrapper.success);
     self.vk.set_surface (&wrapper.surface);
 
     const framebuffer = self.glfw.get_framebuffer_size ();
-    try self.vk.init (.{ .width = framebuffer.width, .height = framebuffer.height, });
+    try self.vk.init (.{ .width = framebuffer.width, .height = framebuffer.height, }, allocator);
 
     try log_app ("Init OK", severity.DEBUG, .{});
     return self;
   }
 
-  pub fn loop (self: *Self) !void
+  pub fn loop (self: *Self, allocator: *std.mem.Allocator) !void
   {
     while (self.glfw.looping ())
     {
       try self.glfw.loop ();
       const framebuffer = self.glfw.get_framebuffer_size ();
-      try self.vk.loop (.{ .resized = framebuffer.resized, .width = framebuffer.width, .height = framebuffer.height, });
+      try self.vk.loop (.{ .resized = framebuffer.resized, .width = framebuffer.width, .height = framebuffer.height, }, allocator);
     }
     try log_app ("Loop OK", severity.DEBUG, .{});
   }

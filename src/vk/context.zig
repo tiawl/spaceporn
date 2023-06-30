@@ -115,7 +115,7 @@ pub const context_vk = struct
     ImageAcquireFailed,
   };
 
-  fn find_queue_families (self: *Self, device: vk.PhysicalDevice, allocator: *std.mem.Allocator) !bool
+  fn find_queue_families (self: *Self, device: vk.PhysicalDevice, allocator: *std.mem.Allocator) !?struct { graphics_family: u32, present_family: u32, }
   {
     var queue_family_count: u32 = undefined;
 
@@ -132,6 +132,13 @@ pub const context_vk = struct
     {
       const family: u32 = @intCast(index);
 
+      if (properties.queue_flags.graphics_bit and try self.instance.dispatch.getPhysicalDeviceSurfaceSupportKHR (device, family, self.surface) == vk.TRUE)
+      {
+        graphics_family = family;
+        present_family = family;
+        break;
+      }
+
       if (graphics_family == null and properties.queue_flags.graphics_bit)
       {
         graphics_family = family;
@@ -146,16 +153,14 @@ pub const context_vk = struct
     if (graphics_family != null and present_family != null)
     {
       try log_app ("Find Vulkan Queue Families OK", severity.DEBUG, .{});
-      self.candidate.graphics_family = graphics_family.?;
-      self.candidate.present_family = present_family.?;
-      return true;
+      return .{ .graphics_family = graphics_family.?, .present_family = present_family.?, };
     }
 
     try log_app ("Find Vulkan Queue Families failed", severity.ERROR, .{});
-    return false;
+    return null;
   }
 
-  fn check_device_extension_support (self: *Self, device: vk.PhysicalDevice, allocator: *std.mem.Allocator) !bool
+  fn check_device_extension_support (self: *Self, device: vk.PhysicalDevice, name: [vk.MAX_PHYSICAL_DEVICE_NAME_SIZE] u8, allocator: *std.mem.Allocator) !bool
   {
     var supported_device_extensions_count: u32 = undefined;
 
@@ -171,11 +176,11 @@ pub const context_vk = struct
       {
         if (std.mem.eql (u8, std.mem.span (required_ext), supported_ext.extension_name [0..std.mem.indexOfScalar (u8, &(supported_ext.extension_name), 0).?]))
         {
-          try log_app ("{s} required device extension is supported", severity.DEBUG, .{ required_ext });
+          try log_app ("Vulkan Device {s} supports the {s} Required Device Extension", severity.DEBUG, .{ name, required_ext });
           break;
         }
       } else {
-        try log_app ("{s} required device extension is not supported", severity.ERROR, .{ required_ext });
+        try log_app ("Vulkan Device {s} does not support the {s} Required Device Extension", severity.DEBUG, .{ name, required_ext });
         return false;
       }
     }
@@ -185,7 +190,7 @@ pub const context_vk = struct
 
     try self.candidate.extensions.appendSlice (required_device_extensions [0..]);
 
-    try log_app ("Check Vulkan Device Extension Support OK", severity.DEBUG, .{});
+    try log_app ("Vulkan Device {s} supports All Required Device Extension", severity.DEBUG, .{ name });
     return true;
   }
 
@@ -218,30 +223,72 @@ pub const context_vk = struct
     try log_app ("Query Vulkan Swapchain Support OK", severity.DEBUG, .{});
   }
 
-  // TODO: issue #52: prefer a device that support drawing and presentation in the same queue for better perf
-  fn is_suitable (self: *Self, device: vk.PhysicalDevice, allocator: *std.mem.Allocator) !bool
+  fn check_device_features_properties (self: Self, features: vk.PhysicalDeviceFeatures, properties: vk.PhysicalDeviceProperties) bool
   {
-    if (!try self.check_device_extension_support (device, allocator))
+    return     features.sampler_anisotropy == vk.TRUE
+           and properties.limits.max_sampler_anisotropy >= 1
+           and properties.limits.max_image_dimension_2d >= self.offscreen_width and properties.limits.max_image_dimension_2d >= self.offscreen_height
+           ;
+           // and properties.limits.max_uniform_buffer_range -> is the maximum value that can be specified in the range member of a VkDescriptorBufferInfo structure passed to vkUpdateDescriptorSets for descriptors of type VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER or VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC.
+           // and properties.limits.max_storage_buffer_range -> is the maximum value that can be specified in the range member of a VkDescriptorBufferInfo structure passed to vkUpdateDescriptorSets for descriptors of type VK_DESCRIPTOR_TYPE_STORAGE_BUFFER or VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC.
+           // and properties.limits.max_memory_allocation_count -> is the maximum number of device memory allocations, as created by vkAllocateMemory, which can simultaneously exist.
+           // and properties.limits.max_sampler_allocation_count -> is the maximum number of sampler objects, as created by vkCreateSampler, which can simultaneously exist on a device.
+           // and properties.limits.buffer_image_granularity -> is the granularity, in bytes, at which buffer or linear image resources, and optimal image resources can be bound to adjacent offsets in the same VkDeviceMemory object without aliasing. ????
+           // and properties.limits.max_bound_descriptor_sets -> is the maximum number of descriptor sets that can be simultaneously used by a pipeline.
+           // and properties.limits.max_per_stage_descriptor_samplers -> is the maximum number of samplers that can be accessible to a single shader stage in a pipeline layout. Descriptors with a type of VK_DESCRIPTOR_TYPE_SAMPLER or VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER count against this limit
+           // and properties.limits.max_per_stage_descriptor_uniform_buffers -> is the maximum number of uniform buffers that can be accessible to a single shader stage in a pipeline layout. Descriptors with a type of VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER or VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC count against this limit.
+           // and properties.limits.max_per_stage_descriptor_storage_buffers -> is the maximum number of storage buffers that can be accessible to a single shader stage in a pipeline layout. Descriptors with a type of VK_DESCRIPTOR_TYPE_STORAGE_BUFFER or VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC count against this limit.
+           // and properties.limits.max_per_stage_descriptor_sampled_images -> is the maximum number of sampled images that can be accessible to a single shader stage in a pipeline layout. Descriptors with a type of VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, or VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER count against this limit
+           // and properties.limits.max_per_stage_descriptor_input_attachments -> is the maximum number of input attachments that can be accessible to a single shader stage in a pipeline layout. Descriptors with a type of VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT count against this limit.
+           // and properties.limits.max_per_stage_resources -> is the maximum number of resources that can be accessible to a single shader stage in a pipeline layout. Descriptors with a type of VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, or VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT count against this limit.
+           // and properties.limits.max_descriptor_set_uniform_buffers -> is the maximum number of uniform buffers that can be included in a pipeline layout
+           // and properties.limits.max_descriptor_set_samplers -> is the maximum number of samplers that can be included in a pipeline layout. Descriptors with a type of VK_DESCRIPTOR_TYPE_SAMPLER or VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER count against this limit.
+           // and properties.limits.max_descriptor_set_storage_buffers -> is the maximum number of storage buffers that can be included in a pipeline layout. Descriptors with a type of VK_DESCRIPTOR_TYPE_STORAGE_BUFFER or VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC count against this limit.
+           // and properties.limits.max_descriptor_set_sampled_images is the maximum number of sampled images that can be included in a pipeline layout. Descriptors with a type of VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, or VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER count against this limit.
+           // and properties.limits.max_descriptor_set_input_attachments -> is the maximum number of input attachments that can be included in a pipeline layout. Descriptors with a type of VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT count against this limit.
+           // and properties.limits.max_fragment_input_components is the maximum number of components of input variables which can be provided as inputs to the fragment shader stage.
+           // and properties.limits.max_viewports is the maximum number of active viewports. The viewportCount member of the VkPipelineViewportStateCreateInfo structure that is provided at pipeline creation must be less than or equal to this limit.
+           // and properties.limits.max_viewport_dimensions[2] are the maximum viewport dimensions in the X (width) and Y (height) dimensions, respectively. The maximum viewport dimensions must be greater than or equal to the largest image which can be created and used as a framebuffer attachment.
+           // and properties.limits.max_framebuffer_width is the maximum width for a framebuffer. The width member of the VkFramebufferCreateInfo structure must be less than or equal to this limit.
+           // and properties.limits.max_framebuffer_height is the maximum height for a framebuffer. The height member of the VkFramebufferCreateInfo structure must be less than or equal to this limit.
+           // and properties.limits.max_color_attachments is the maximum number of color attachments that can be used by a subpass in a render pass. The colorAttachmentCount member of the VkSubpassDescription or VkSubpassDescription2 structure must be less than or equal to this limit.
+  }
+
+  fn is_suitable (self: *Self, device: vk.PhysicalDevice, allocator: *std.mem.Allocator) !?struct { graphics_family: u32, present_family: u32, score: u8, }
+  {
+    const properties = self.instance.dispatch.getPhysicalDeviceProperties (device);
+    const features = self.instance.dispatch.getPhysicalDeviceFeatures (device);
+
+    if (!try self.check_device_extension_support (device, properties.device_name, allocator))
     {
-      return false;
+      try log_app ("Vulkan Device {s} is not Suitable", severity.ERROR, .{ properties.device_name, });
+      return null;
     }
 
     try self.query_swapchain_support (device, allocator);
 
-    const properties = self.instance.dispatch.getPhysicalDeviceProperties (device);
-    const features = self.instance.dispatch.getPhysicalDeviceFeatures (device);
+    if (!self.check_device_features_properties (features, properties))
+    {
+      try log_app ("Vulkan Device {s} is not Suitable", severity.ERROR, .{ properties.device_name, });
+      return null;
+    }
 
     if (self.formats.len > 0 and self.present_modes.len > 0)
     {
-      if (try self.find_queue_families (device, allocator))
+      if (try self.find_queue_families (device, allocator)) |candidate|
       {
-        try log_app ("Is Vulkan Device Suitable OK", severity.DEBUG, .{});
-        return features.sampler_anisotropy == vk.TRUE and properties.limits.max_sampler_anisotropy >= 1;
+        try log_app ("Vulkan Device {s} is Suitable OK", severity.DEBUG, .{ properties.device_name, });
+        return .{
+                  .graphics_family = candidate.graphics_family,
+                  .present_family  = candidate.present_family,
+                  .score           = @as (u8, @intFromBool (properties.device_type == vk.PhysicalDeviceType.discrete_gpu)) * 4 +
+                                     @as (u8, @intFromBool (candidate.graphics_family == candidate.present_family)) * 2 + 1,
+                };
       }
     }
 
-    try log_app ("Is Vulkan Device Suitable failed", severity.ERROR, .{});
-    return false;
+    try log_app ("Vulkan Device {s} is not Suitable", severity.ERROR, .{ properties.device_name, });
+    return null;
   }
 
   fn pick_physical_device (self: *Self, allocator: *std.mem.Allocator) !void
@@ -256,24 +303,28 @@ pub const context_vk = struct
     }
 
     var devices = try allocator.alloc (vk.PhysicalDevice, device_count);
+    var max_score: u8 = 0;
 
     _ = try self.instance.dispatch.enumeratePhysicalDevices (self.instance.instance, &device_count, devices.ptr);
 
     for (devices) |device|
     {
-      if (try self.is_suitable (device, allocator))
+      const candidate = try self.is_suitable (device, allocator);
+      if (candidate != null and candidate.?.score > max_score)
       {
-        self.physical_device = device;
-        break;
+        self.physical_device           = device;
+        self.candidate.graphics_family = candidate.?.graphics_family;
+        self.candidate.present_family  = candidate.?.present_family;
+        max_score                      = candidate.?.score;
       }
     }
 
-    if (self.physical_device == null)
+    if (max_score == 0 or self.physical_device == null)
     {
       return ContextError.NoSuitableDevice;
     }
 
-    try log_app ("Pick Vulkan Physical Device OK", severity.DEBUG, .{});
+    try log_app ("Pick a {d}/3 Vulkan Physical Device OK", severity.DEBUG, .{ max_score });
   }
 
   fn init_logical_device (self: *Self) !void
@@ -536,9 +587,6 @@ pub const context_vk = struct
 
   fn init_offscreen (self: *Self, allocator: *std.mem.Allocator) !void
   {
-    self.offscreen_width  = 512;
-    self.offscreen_height = 512;
-
     const image_create_info = vk.ImageCreateInfo
                               {
                                 .image_type     = vk.ImageType.@"2d",
@@ -1446,6 +1494,9 @@ pub const context_vk = struct
 
   pub fn init (self: *Self, framebuffer: struct { width: u32, height: u32, }, allocator: *std.mem.Allocator) !void
   {
+    self.offscreen_width  = framebuffer.width;
+    self.offscreen_height = framebuffer.height;
+
     try self.pick_physical_device (allocator);
 
     try self.init_logical_device ();

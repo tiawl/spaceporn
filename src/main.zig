@@ -16,16 +16,16 @@ pub fn main () !void
   {
     errdefer status = 1;
 
-    _ = try opts.init ();
+    _ = try opts.init (allocator);
 
-    var app = try context.init (&allocator);
+    var app = try context.init (allocator);
 
     defer app.cleanup () catch
     {
       log_app ("failed to cleanup {s} context", severity.ERROR, .{ utils.exe }) catch {};
     };
 
-    try app.loop (&allocator);
+    try app.loop (allocator);
   }
 
   std.process.exit (status);

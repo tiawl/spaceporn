@@ -95,7 +95,7 @@ pub const instance_vk = struct
     return true;
   }
 
-  fn check_layer_properties (self: *Self, allocator: *std.mem.Allocator) !void
+  fn check_layer_properties (self: *Self, allocator: std.mem.Allocator) !void
   {
     var available_layers_count: u32 = undefined;
 
@@ -165,9 +165,9 @@ pub const instance_vk = struct
                    };
   }
 
-  fn check_extension_properties (self: *Self, debug_info: *vk.DebugUtilsMessengerCreateInfoEXT, allocator: *std.mem.Allocator) !void
+  fn check_extension_properties (self: *Self, debug_info: *vk.DebugUtilsMessengerCreateInfoEXT, allocator: std.mem.Allocator) !void
   {
-    var extensions = try std.ArrayList ([*:0] const u8).initCapacity (allocator.*, self.extensions.len + required_extensions.len + optional_extensions.len);
+    var extensions = try std.ArrayList ([*:0] const u8).initCapacity (allocator, self.extensions.len + required_extensions.len + optional_extensions.len);
     defer extensions.deinit ();
 
     try extensions.appendSlice(self.extensions);
@@ -251,7 +251,7 @@ pub const instance_vk = struct
 
   pub fn init (extensions: *[][*:0] const u8,
     instance_proc_addr: *const fn (?*anyopaque, [*:0] const u8) callconv (.C) ?*const fn () callconv (.C) void,
-    allocator: *std.mem.Allocator) !Self
+    allocator: std.mem.Allocator) !Self
   {
     var self: Self = undefined;
     var debug_info: vk.DebugUtilsMessengerCreateInfoEXT = undefined;

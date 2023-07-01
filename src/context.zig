@@ -55,7 +55,7 @@ pub const context = struct
     try log_app ("log file init OK", severity.DEBUG, .{});
   }
 
-  pub fn init (allocator: *std.mem.Allocator) !Self
+  pub fn init (allocator: std.mem.Allocator) !Self
   {
     try init_logfile ();
 
@@ -76,7 +76,7 @@ pub const context = struct
     return self;
   }
 
-  pub fn loop (self: *Self, allocator: *std.mem.Allocator) !void
+  pub fn loop (self: *Self, allocator: std.mem.Allocator) !void
   {
     while (self.glfw.looping ())
     {

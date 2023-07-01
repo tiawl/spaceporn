@@ -115,7 +115,7 @@ pub const context_vk = struct
     ImageAcquireFailed,
   };
 
-  fn find_queue_families (self: *Self, device: vk.PhysicalDevice, allocator: *std.mem.Allocator) !?struct { graphics_family: u32, present_family: u32, }
+  fn find_queue_families (self: *Self, device: vk.PhysicalDevice, allocator: std.mem.Allocator) !?struct { graphics_family: u32, present_family: u32, }
   {
     var queue_family_count: u32 = undefined;
 
@@ -160,7 +160,7 @@ pub const context_vk = struct
     return null;
   }
 
-  fn check_device_extension_support (self: *Self, device: vk.PhysicalDevice, name: [vk.MAX_PHYSICAL_DEVICE_NAME_SIZE] u8, allocator: *std.mem.Allocator) !bool
+  fn check_device_extension_support (self: *Self, device: vk.PhysicalDevice, name: [vk.MAX_PHYSICAL_DEVICE_NAME_SIZE] u8, allocator: std.mem.Allocator) !bool
   {
     var supported_device_extensions_count: u32 = undefined;
 
@@ -185,7 +185,7 @@ pub const context_vk = struct
       }
     }
 
-    self.candidate.extensions = try std.ArrayList ([*:0] const u8).initCapacity (allocator.*, required_device_extensions.len);
+    self.candidate.extensions = try std.ArrayList ([*:0] const u8).initCapacity (allocator, required_device_extensions.len);
     errdefer self.candidate.extensions.deinit ();
 
     try self.candidate.extensions.appendSlice (required_device_extensions [0..]);
@@ -194,7 +194,7 @@ pub const context_vk = struct
     return true;
   }
 
-  fn query_swapchain_support (self: *Self, device: vk.PhysicalDevice, allocator: *std.mem.Allocator) !void
+  fn query_swapchain_support (self: *Self, device: vk.PhysicalDevice, allocator: std.mem.Allocator) !void
   {
     self.capabilities = try self.instance.dispatch.getPhysicalDeviceSurfaceCapabilitiesKHR (device, self.surface);
 
@@ -396,7 +396,7 @@ pub const context_vk = struct
     return true;
   }
 
-  fn is_suitable (self: *Self, device: vk.PhysicalDevice, allocator: *std.mem.Allocator) !?struct { graphics_family: u32, present_family: u32, score: u8, }
+  fn is_suitable (self: *Self, device: vk.PhysicalDevice, allocator: std.mem.Allocator) !?struct { graphics_family: u32, present_family: u32, score: u8, }
   {
     const properties = self.instance.dispatch.getPhysicalDeviceProperties (device);
     const features = self.instance.dispatch.getPhysicalDeviceFeatures (device);
@@ -433,7 +433,7 @@ pub const context_vk = struct
     return null;
   }
 
-  fn pick_physical_device (self: *Self, allocator: *std.mem.Allocator) !void
+  fn pick_physical_device (self: *Self, allocator: std.mem.Allocator) !void
   {
     var device_count: u32 = undefined;
 
@@ -561,7 +561,7 @@ pub const context_vk = struct
     }
   }
 
-  fn init_swapchain_images (self: *Self, allocator: *std.mem.Allocator) !void
+  fn init_swapchain_images (self: *Self, allocator: std.mem.Allocator) !void
   {
     var image_count: u32 = undefined;
 
@@ -575,7 +575,7 @@ pub const context_vk = struct
     try log_app ("init Vulkan swapchain images OK", severity.DEBUG, .{});
   }
 
-  fn init_swapchain (self: *Self, framebuffer: struct { width: u32, height: u32, }, allocator: *std.mem.Allocator) !void
+  fn init_swapchain (self: *Self, framebuffer: struct { width: u32, height: u32, }, allocator: std.mem.Allocator) !void
   {
     self.choose_swap_support_format ();
     const present_mode = self.choose_swap_present_mode ();
@@ -728,7 +728,7 @@ pub const context_vk = struct
     try log_app ("init Vulkan render pass OK", severity.DEBUG, .{});
   }
 
-  fn init_offscreen (self: *Self, allocator: *std.mem.Allocator) !void
+  fn init_offscreen (self: *Self, allocator: std.mem.Allocator) !void
   {
     const image_create_info = vk.ImageCreateInfo
                               {
@@ -911,7 +911,7 @@ pub const context_vk = struct
     try log_app ("init Vulkan offscreen render pass OK", severity.DEBUG, .{});
   }
 
-  fn init_descriptor_set_layout (self: *Self, allocator: *std.mem.Allocator) !void
+  fn init_descriptor_set_layout (self: *Self, allocator: std.mem.Allocator) !void
   {
     const ubo_layout_binding = [_] vk.DescriptorSetLayoutBinding
                                {
@@ -981,7 +981,7 @@ pub const context_vk = struct
 
   }
 
-  fn init_graphics_pipeline (self: *Self, allocator: *std.mem.Allocator) !void
+  fn init_graphics_pipeline (self: *Self, allocator: std.mem.Allocator) !void
   {
     const vertex = try self.init_shader_module (resources.vert [0..]);
     defer self.device_dispatch.destroyShaderModule (self.logical_device, vertex, null);
@@ -1200,7 +1200,7 @@ pub const context_vk = struct
     try log_app ("init Vulkan graphics pipeline OK", severity.DEBUG, .{});
   }
 
-  fn init_framebuffers (self: *Self, allocator: *std.mem.Allocator) !void
+  fn init_framebuffers (self: *Self, allocator: std.mem.Allocator) !void
   {
     self.framebuffers = try allocator.alloc (vk.Framebuffer, self.views.len);
 
@@ -1389,7 +1389,7 @@ pub const context_vk = struct
     try log_app ("init Vulkan indexbuffer OK", severity.DEBUG, .{});
   }
 
-  fn init_uniform_buffers (self: *Self, allocator: *std.mem.Allocator) !void
+  fn init_uniform_buffers (self: *Self, allocator: std.mem.Allocator) !void
   {
     self.uniform_buffers = try allocator.alloc (vk.Buffer, MAX_FRAMES_IN_FLIGHT);
     self.uniform_buffers_memory = try allocator.alloc (vk.DeviceMemory, MAX_FRAMES_IN_FLIGHT);
@@ -1455,7 +1455,7 @@ pub const context_vk = struct
     try log_app ("init Vulkan descriptor pool OK", severity.DEBUG, .{});
   }
 
-  fn init_descriptor_sets (self: *Self, allocator: *std.mem.Allocator) !void
+  fn init_descriptor_sets (self: *Self, allocator: std.mem.Allocator) !void
   {
     var alloc_info = vk.DescriptorSetAllocateInfo
                      {
@@ -1567,7 +1567,7 @@ pub const context_vk = struct
     try log_app ("init Vulkan descriptor sets OK", severity.DEBUG, .{});
   }
 
-  fn init_command_buffers (self: *Self, allocator: *std.mem.Allocator) !void
+  fn init_command_buffers (self: *Self, allocator: std.mem.Allocator) !void
   {
     self.command_buffers = try allocator.alloc (vk.CommandBuffer, MAX_FRAMES_IN_FLIGHT);
 
@@ -1584,7 +1584,7 @@ pub const context_vk = struct
     try log_app ("init Vulkan command buffer OK", severity.DEBUG, .{});
   }
 
-  fn init_sync_objects (self: *Self, allocator: *std.mem.Allocator) !void
+  fn init_sync_objects (self: *Self, allocator: std.mem.Allocator) !void
   {
     self.image_available_semaphores = try allocator.alloc (vk.Semaphore, MAX_FRAMES_IN_FLIGHT);
     self.render_finished_semaphores = try allocator.alloc (vk.Semaphore, MAX_FRAMES_IN_FLIGHT);
@@ -1624,7 +1624,7 @@ pub const context_vk = struct
 
   pub fn init_instance (extensions: *[][*:0] const u8,
     instance_proc_addr: *const fn (?*anyopaque, [*:0] const u8) callconv (.C) ?*const fn () callconv (.C) void,
-    allocator: *std.mem.Allocator) !Self
+    allocator: std.mem.Allocator) !Self
   {
     var self: Self = undefined;
     self.start_time = try std.time.Instant.now ();
@@ -1635,7 +1635,7 @@ pub const context_vk = struct
     return self;
   }
 
-  pub fn init (self: *Self, framebuffer: struct { width: u32, height: u32, }, allocator: *std.mem.Allocator) !void
+  pub fn init (self: *Self, framebuffer: struct { width: u32, height: u32, }, allocator: std.mem.Allocator) !void
   {
     self.offscreen_width  = framebuffer.width;
     self.offscreen_height = framebuffer.height;
@@ -1787,7 +1787,7 @@ pub const context_vk = struct
     self.device_dispatch.destroySwapchainKHR (self.logical_device, self.swapchain, null);
   }
 
-  fn rebuild_swapchain (self: *Self, framebuffer: struct { width: u32, height: u32, }, allocator: *std.mem.Allocator) !void
+  fn rebuild_swapchain (self: *Self, framebuffer: struct { width: u32, height: u32, }, allocator: std.mem.Allocator) !void
   {
     try self.device_dispatch.deviceWaitIdle (self.logical_device);
 
@@ -1828,7 +1828,7 @@ pub const context_vk = struct
     }
   }
 
-  fn draw_frame (self: *Self, framebuffer: struct { resized: bool, width: u32, height: u32, }, allocator: *std.mem.Allocator) !void
+  fn draw_frame (self: *Self, framebuffer: struct { resized: bool, width: u32, height: u32, }, allocator: std.mem.Allocator) !void
   {
     _ = try self.device_dispatch.waitForFences (self.logical_device, 1, &[_] vk.Fence { self.in_flight_fences [self.current_frame] }, vk.TRUE, std.math.maxInt (u64));
 
@@ -1897,7 +1897,7 @@ pub const context_vk = struct
     self.current_frame = (self.current_frame + 1) % MAX_FRAMES_IN_FLIGHT;
   }
 
-  pub fn loop (self: *Self, framebuffer: struct { resized: bool, width: u32, height: u32, }, allocator: *std.mem.Allocator) !void
+  pub fn loop (self: *Self, framebuffer: struct { resized: bool, width: u32, height: u32, }, allocator: std.mem.Allocator) !void
   {
     try self.draw_frame (.{ .resized = framebuffer.resized, .width = framebuffer.width, .height = framebuffer.height, }, allocator);
     try log_app ("loop Vulkan OK", severity.DEBUG, .{});

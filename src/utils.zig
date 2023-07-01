@@ -24,14 +24,26 @@ pub const severity = enum
 
   const Self = @This ();
 
-  pub fn expand (self: Self, expanded: anytype, args: anytype) !void
+  pub fn expand (self: Self, to_expand: anytype) !void
   {
     switch (self)
     {
-      Self.DEBUG => { expanded.format.* = try std.fmt.allocPrint(expanded.allocator.*, "[{s}: {s} DEBUG{s}] {s}\n", args); },
-      Self.INFO => { expanded.format.* = try std.fmt.allocPrint(expanded.allocator.*, "[{s}: {s} INFO{s}] {s}\n", args); },
-      Self.WARNING => { expanded.format.* = try std.fmt.allocPrint(expanded.allocator.*, "[{s}: {s} WARNING{s}] {s}\n", args); },
-      Self.ERROR => { expanded.format.* = try std.fmt.allocPrint(expanded.allocator.*, "[{s}: {s} ERROR{s}] {s}\n", args); },
+      Self.DEBUG =>   {
+                        to_expand.format.log.* = try std.fmt.allocPrint(to_expand.allocator, "[{s}: {s} DEBUG{s}] {s}\n", to_expand.args.log);
+                        to_expand.format.stdout.* = try std.fmt.allocPrint(to_expand.allocator, "[{s} DEBUG{s}] {s}\n", to_expand.args.stdout);
+                      },
+      Self.INFO =>    {
+                        to_expand.format.log.* = try std.fmt.allocPrint(to_expand.allocator, "[{s}: {s} INFO{s}] {s}\n", to_expand.args.log);
+                        to_expand.format.stdout.* = try std.fmt.allocPrint(to_expand.allocator, "[{s} INFO{s}] {s}\n", to_expand.args.stdout);
+                      },
+      Self.WARNING => {
+                        to_expand.format.log.* = try std.fmt.allocPrint(to_expand.allocator, "[{s}: {s} WARNING{s}] {s}\n", to_expand.args.log);
+                        to_expand.format.stdout.* = try std.fmt.allocPrint(to_expand.allocator, "[{s} WARNING{s}] {s}\n", to_expand.args.stdout);
+                      },
+      Self.ERROR =>   {
+                        to_expand.format.log.* = try std.fmt.allocPrint(to_expand.allocator, "[{s}: {s} ERROR{s}] {s}\n", to_expand.args.log);
+                        to_expand.format.stdout.* = try std.fmt.allocPrint(to_expand.allocator, "[{s} ERROR{s}] {s}\n", to_expand.args.stdout);
+                      },
     }
   }
 
@@ -53,12 +65,12 @@ const UtilsError = error
 fn sys_date (expanded: anytype, date: *[] const u8,
              comptime format: [] const u8, args: anytype) !void
 {
-  expanded.format.* = try std.fmt.allocPrint(expanded.allocator.*, format, args);
+  expanded.format.* = try std.fmt.allocPrint(expanded.allocator, format, args);
 
   if (build.LOG_LEVEL > @intFromEnum (profile.TURBO))
   {
     const now = datetime.Datetime.now ();
-    date.* = try now.formatISO8601 (expanded.allocator.*, true);
+    date.* = try now.formatISO8601 (expanded.allocator, true);
     errdefer expanded.allocator.free (date.*);
   } else {
     date.* = "";
@@ -75,26 +87,22 @@ pub fn log (comptime format: [] const u8, id: [*:0] const u8, sev: severity, min
 {
   if (is_logging (sev, min_sev))
   {
-    var expanded_format: [] const u8 = undefined;
+    var expanded: [] const u8 = undefined;
     var date: [] const u8 = undefined;
 
-    var buffer: [4096] u8 = undefined;
-    var fba = std.heap.FixedBufferAllocator.init (&buffer);
-    const allocator = fba.allocator ();
+    var arena = std.heap.ArenaAllocator.init (std.heap.page_allocator);
+    defer arena.deinit ();
+    const allocator = arena.allocator ();
 
-    try sys_date (.{ .format = &expanded_format, .allocator = &allocator }, &date, format, args);
-    defer allocator.free (expanded_format);
+    try sys_date (.{ .format = &expanded, .allocator = allocator }, &date, format, args);
+    defer allocator.free (expanded);
 
-    var full_expanded_format: [] const u8 = undefined;
+    var log_format: [] const u8 = undefined;
+    var stdout_format: [] const u8 = undefined;
 
-    var gpa = std.heap.GeneralPurposeAllocator (.{}){};
-    defer _ = gpa.deinit ();
-    const full_allocator = gpa.allocator ();
+    try sev.expand (.{ .format = .{ .log = &log_format, .stdout = &stdout_format }, .allocator = allocator, .args = .{ .log = .{ date, id, _type, expanded }, .stdout = .{ id, _type, expanded },},});
 
-    try sev.expand (.{ .format = &full_expanded_format, .allocator = &full_allocator }, .{ date, id, _type, expanded_format });
-    defer full_allocator.free (full_expanded_format);
-
-    try sev.print (full_expanded_format);
+    try sev.print (stdout_format);
 
     if (build.LOG_DIR.len > 0)
     {
@@ -102,7 +110,7 @@ pub fn log (comptime format: [] const u8, id: [*:0] const u8, sev: severity, min
       defer file.close ();
 
       try file.seekFromEnd (0);
-      _ = try file.writeAll (full_expanded_format);
+      _ = try file.writeAll (log_format);
     }
   }
 }

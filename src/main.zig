@@ -1,7 +1,7 @@
-const std   = @import ("std");
+const std = @import ("std");
 
 const context = @import ("context.zig").context;
-//const options = @import ("options.zig").options;
+const opts    = @import ("options.zig").options;
 
 const utils    = @import ("utils.zig");
 const log_app  = utils.log_app;
@@ -16,7 +16,7 @@ pub fn main () !void
   {
     errdefer status = 1;
 
-    //const options = options.parse ();
+    _ = try opts.init ();
 
     var app = try context.init (&allocator);
 

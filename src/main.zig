@@ -25,7 +25,7 @@ pub fn main () !void
       log_app ("failed to cleanup {s} context", severity.ERROR, .{ utils.exe }) catch {};
     };
 
-    try app.loop (allocator);
+    try app.loop ();
   }
 
   std.process.exit (status);

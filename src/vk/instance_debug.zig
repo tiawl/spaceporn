@@ -21,12 +21,12 @@ const ext_vk = struct
 
 pub const instance_vk = struct
 {
-  base_dispatch:      BaseDispatch,
-  dispatch:           InstanceDispatch,
-  instance:           vk.Instance,
-  extensions:         [][*:0] const u8,
-  instance_proc_addr: *const fn (?*anyopaque, [*:0] const u8) callconv (.C) ?*const fn () callconv (.C) void,
-  debug_messenger:    vk.DebugUtilsMessengerEXT,
+  base_dispatch:      BaseDispatch = undefined,
+  dispatch:           InstanceDispatch = undefined,
+  instance:           vk.Instance = undefined,
+  extensions:         [][*:0] const u8 = undefined,
+  instance_proc_addr: *const fn (?*anyopaque, [*:0] const u8) callconv (.C) ?*const fn () callconv (.C) void = undefined,
+  debug_messenger:    vk.DebugUtilsMessengerEXT = undefined,
 
   const Self = @This ();
 
@@ -253,7 +253,7 @@ pub const instance_vk = struct
     instance_proc_addr: *const fn (?*anyopaque, [*:0] const u8) callconv (.C) ?*const fn () callconv (.C) void,
     allocator: std.mem.Allocator) !Self
   {
-    var self: Self = undefined;
+    var self = Self {};
     var debug_info: vk.DebugUtilsMessengerCreateInfoEXT = undefined;
 
     self.extensions = extensions.*;

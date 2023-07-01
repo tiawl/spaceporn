@@ -17,10 +17,10 @@ const GlfwError = error
 
 pub const context_glfw = struct
 {
-  window:              glfw.Window,
-  extensions:          [][*:0] const u8,
-  instance_proc_addr:  *const fn (?*anyopaque, [*:0] const u8) callconv (.C) ?*const fn () callconv (.C) void,
-  framebuffer_resized: bool,
+  window:              glfw.Window = undefined,
+  extensions:          [][*:0] const u8 = undefined,
+  instance_proc_addr:  *const fn (?*anyopaque, [*:0] const u8) callconv (.C) ?*const fn () callconv (.C) void = undefined,
+  framebuffer_resized: bool = undefined,
 
   const Self = @This ();
 
@@ -43,7 +43,7 @@ pub const context_glfw = struct
 
   pub fn init () !Self
   {
-    var self: Self = undefined;
+    var self = Self {};
 
     glfw.setErrorCallback (error_callback);
     if (!glfw.init (.{}))

@@ -32,61 +32,61 @@ const offscreen_uniform_buffer_object_vk = struct
 
 pub const context_vk = struct
 {
-  instance:                         instance_vk,
-  surface:                          vk.SurfaceKHR      = undefined,
-  device_dispatch:                  DeviceDispatch,
+  instance:                         instance_vk = undefined,
+  surface:                          vk.SurfaceKHR = undefined,
+  device_dispatch:                  DeviceDispatch = undefined,
   physical_device:                  ?vk.PhysicalDevice = null,
-  candidate:                        struct { graphics_family: u32, present_family: u32, extensions: std.ArrayList ([*:0] const u8), },
-  logical_device:                   vk.Device,
-  graphics_queue:                   vk.Queue,
-  present_queue:                    vk.Queue,
-  capabilities:                     vk.SurfaceCapabilitiesKHR,
-  formats:                          [] vk.SurfaceFormatKHR,
-  present_modes:                    [] vk.PresentModeKHR,
-  surface_format:                   vk.SurfaceFormatKHR,
-  extent:                           vk.Extent2D,
-  swapchain:                        vk.SwapchainKHR,
-  images:                           [] vk.Image,
-  views:                            [] vk.ImageView,
-  viewport:                         [1] vk.Viewport,
-  scissor:                          [1] vk.Rect2D,
-  render_pass:                      vk.RenderPass,
-  descriptor_set_layout:            [] vk.DescriptorSetLayout,
-  pipeline_layout:                  vk.PipelineLayout,
-  pipelines:                        [] vk.Pipeline,
-  framebuffers:                     [] vk.Framebuffer,
-  command_pool:                     vk.CommandPool,
-  command_buffers:                  [] vk.CommandBuffer,
-  image_available_semaphores:       [] vk.Semaphore,
-  render_finished_semaphores:       [] vk.Semaphore,
-  in_flight_fences:                 [] vk.Fence,
-  current_frame:                    u8,
-  vertex_buffer:                    vk.Buffer,
-  vertex_buffer_memory:             vk.DeviceMemory,
-  buffers_command_pool:             vk.CommandPool,
-  index_buffer:                     vk.Buffer,
-  index_buffer_memory:              vk.DeviceMemory,
-  uniform_buffers:                  [] vk.Buffer,
-  uniform_buffers_memory:           [] vk.DeviceMemory,
+  candidate:                        struct { graphics_family: u32, present_family: u32, extensions: std.ArrayList ([*:0] const u8), } = undefined,
+  logical_device:                   vk.Device = undefined,
+  graphics_queue:                   vk.Queue = undefined,
+  present_queue:                    vk.Queue = undefined,
+  capabilities:                     vk.SurfaceCapabilitiesKHR = undefined,
+  formats:                          [] vk.SurfaceFormatKHR = undefined,
+  present_modes:                    [] vk.PresentModeKHR = undefined,
+  surface_format:                   vk.SurfaceFormatKHR = undefined,
+  extent:                           vk.Extent2D = undefined,
+  swapchain:                        vk.SwapchainKHR = undefined,
+  images:                           [] vk.Image = undefined,
+  views:                            [] vk.ImageView = undefined,
+  viewport:                         [1] vk.Viewport = undefined,
+  scissor:                          [1] vk.Rect2D = undefined,
+  render_pass:                      vk.RenderPass = undefined,
+  descriptor_set_layout:            [] vk.DescriptorSetLayout = undefined,
+  pipeline_layout:                  vk.PipelineLayout = undefined,
+  pipelines:                        [] vk.Pipeline = undefined,
+  framebuffers:                     [] vk.Framebuffer = undefined,
+  command_pool:                     vk.CommandPool = undefined,
+  command_buffers:                  [] vk.CommandBuffer = undefined,
+  image_available_semaphores:       [] vk.Semaphore = undefined,
+  render_finished_semaphores:       [] vk.Semaphore = undefined,
+  in_flight_fences:                 [] vk.Fence = undefined,
+  current_frame:                    u8 = 0,
+  vertex_buffer:                    vk.Buffer = undefined,
+  vertex_buffer_memory:             vk.DeviceMemory = undefined,
+  buffers_command_pool:             vk.CommandPool = undefined,
+  index_buffer:                     vk.Buffer = undefined,
+  index_buffer_memory:              vk.DeviceMemory = undefined,
+  uniform_buffers:                  [] vk.Buffer = undefined,
+  uniform_buffers_memory:           [] vk.DeviceMemory = undefined,
   start_time:                       std.time.Instant,
-  descriptor_pool:                  vk.DescriptorPool,
-  descriptor_sets:                  [] vk.DescriptorSet,
+  descriptor_pool:                  vk.DescriptorPool = undefined,
+  descriptor_sets:                  [] vk.DescriptorSet = undefined,
 
-  offscreen_width:                  u32,
-  offscreen_height:                 u32,
-  offscreen_render_pass:            vk.RenderPass,
-  offscreen_descriptor_set_layout:  [] vk.DescriptorSetLayout,
-  offscreen_pipeline_layout:        vk.PipelineLayout,
-  offscreen_pipelines:              [] vk.Pipeline,
-  offscreen_framebuffer:            vk.Framebuffer,
-  offscreen_uniform_buffers:        vk.Buffer,
-  offscreen_uniform_buffers_memory: vk.DeviceMemory,
-  offscreen_descriptor_sets:        [] vk.DescriptorSet,
-  offscreen_image:                  vk.Image,
-  offscreen_image_memory:           vk.DeviceMemory,
-  offscreen_views:                  [] vk.ImageView,
-  offscreen_sampler:                vk.Sampler,
-  first_pass_done:                  bool,
+  offscreen_width:                  u32 = undefined,
+  offscreen_height:                 u32 = undefined,
+  offscreen_render_pass:            vk.RenderPass = undefined,
+  offscreen_descriptor_set_layout:  [] vk.DescriptorSetLayout = undefined,
+  offscreen_pipeline_layout:        vk.PipelineLayout = undefined,
+  offscreen_pipelines:              [] vk.Pipeline = undefined,
+  offscreen_framebuffer:            vk.Framebuffer = undefined,
+  offscreen_uniform_buffers:        vk.Buffer = undefined,
+  offscreen_uniform_buffers_memory: vk.DeviceMemory = undefined,
+  offscreen_descriptor_sets:        [] vk.DescriptorSet = undefined,
+  offscreen_image:                  vk.Image = undefined,
+  offscreen_image_memory:           vk.DeviceMemory = undefined,
+  offscreen_views:                  [] vk.ImageView = undefined,
+  offscreen_sampler:                vk.Sampler = undefined,
+  first_pass_done:                  bool = false,
 
   const Self = @This ();
 
@@ -906,8 +906,6 @@ pub const context_vk = struct
     self.offscreen_framebuffer = try self.device_dispatch.createFramebuffer (self.logical_device, &framebuffer_create_info, null);
     errdefer self.device_dispatch.destroyFramebuffer (self.logical_device, self.offscreen_framebuffer, null);
 
-    self.first_pass_done = false;
-
     try log_app ("init Vulkan offscreen render pass OK", severity.DEBUG, .{});
   }
 
@@ -1603,8 +1601,6 @@ pub const context_vk = struct
       index += 1;
     }
 
-    self.current_frame = 0;
-
     try log_app ("init Vulkan semaphores and fence OK", severity.DEBUG, .{});
   }
 
@@ -1626,8 +1622,7 @@ pub const context_vk = struct
     instance_proc_addr: *const fn (?*anyopaque, [*:0] const u8) callconv (.C) ?*const fn () callconv (.C) void,
     allocator: std.mem.Allocator) !Self
   {
-    var self: Self = undefined;
-    self.start_time = try std.time.Instant.now ();
+    var self = Self { .start_time = try std.time.Instant.now (), };
 
     self.instance = try instance_vk.init (extensions, instance_proc_addr, allocator);
 
@@ -1787,17 +1782,21 @@ pub const context_vk = struct
     self.device_dispatch.destroySwapchainKHR (self.logical_device, self.swapchain, null);
   }
 
-  fn rebuild_swapchain (self: *Self, framebuffer: struct { width: u32, height: u32, }, allocator: std.mem.Allocator) !void
+  fn rebuild_swapchain (self: *Self, framebuffer: struct { width: u32, height: u32, }, arena: *std.heap.ArenaAllocator, allocator: *std.mem.Allocator) !void
   {
     try self.device_dispatch.deviceWaitIdle (self.logical_device);
 
     self.cleanup_swapchain ();
 
-    try self.query_swapchain_support (self.physical_device.?, allocator);
-    try self.init_swapchain (.{ .width = framebuffer.width, .height = framebuffer.height, }, allocator);
+    arena.deinit ();
+    arena.* = std.heap.ArenaAllocator.init (std.heap.page_allocator);
+    allocator.* = arena.allocator ();
+
+    try self.query_swapchain_support (self.physical_device.?, allocator.*);
+    try self.init_swapchain (.{ .width = framebuffer.width, .height = framebuffer.height, }, allocator.*);
 
     try self.init_image_views ();
-    try self.init_framebuffers (allocator);
+    try self.init_framebuffers (allocator.*);
   }
 
   fn update_uniform_buffer (self: *Self) !void
@@ -1828,14 +1827,14 @@ pub const context_vk = struct
     }
   }
 
-  fn draw_frame (self: *Self, framebuffer: struct { resized: bool, width: u32, height: u32, }, allocator: std.mem.Allocator) !void
+  fn draw_frame (self: *Self, framebuffer: struct { resized: bool, width: u32, height: u32, }, arena: *std.heap.ArenaAllocator, allocator: *std.mem.Allocator) !void
   {
     _ = try self.device_dispatch.waitForFences (self.logical_device, 1, &[_] vk.Fence { self.in_flight_fences [self.current_frame] }, vk.TRUE, std.math.maxInt (u64));
 
     const acquire_result = self.device_dispatch.acquireNextImageKHR (self.logical_device, self.swapchain, std.math.maxInt(u64), self.image_available_semaphores [self.current_frame], vk.Fence.null_handle) catch |err| switch (err)
                            {
                              error.OutOfDateKHR => {
-                                                     try self.rebuild_swapchain (.{ .width = framebuffer.width, .height = framebuffer.height, }, allocator);
+                                                     try self.rebuild_swapchain (.{ .width = framebuffer.width, .height = framebuffer.height, }, arena, allocator);
                                                      return;
                                                    },
                              else               => return err,
@@ -1891,15 +1890,15 @@ pub const context_vk = struct
 
     if (present_result == vk.Result.suboptimal_khr or framebuffer.resized)
     {
-      try self.rebuild_swapchain (.{ .width = framebuffer.width, .height = framebuffer.height, }, allocator);
+      try self.rebuild_swapchain (.{ .width = framebuffer.width, .height = framebuffer.height, }, arena, allocator);
     }
 
     self.current_frame = (self.current_frame + 1) % MAX_FRAMES_IN_FLIGHT;
   }
 
-  pub fn loop (self: *Self, framebuffer: struct { resized: bool, width: u32, height: u32, }, allocator: std.mem.Allocator) !void
+  pub fn loop (self: *Self, framebuffer: struct { resized: bool, width: u32, height: u32, }, arena: *std.heap.ArenaAllocator, allocator: *std.mem.Allocator) !void
   {
-    try self.draw_frame (.{ .resized = framebuffer.resized, .width = framebuffer.width, .height = framebuffer.height, }, allocator);
+    try self.draw_frame (.{ .resized = framebuffer.resized, .width = framebuffer.width, .height = framebuffer.height, }, arena, allocator);
     try log_app ("loop Vulkan OK", severity.DEBUG, .{});
   }
 

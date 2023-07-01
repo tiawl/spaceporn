@@ -183,18 +183,22 @@ pub const options = struct
 
   fn show (self: Self) !void
   {
-    _ = self;
-    //try log_app ("Slide mode activated: {}", severity.INFO, .{ self.camera_slide });
+    if (self.camera_slide == null)
+    {
+      try log_app ("Slide mode: not used", severity.INFO, .{});
+    } else {
+      try log_app ("Slide mode: every {d} minutes", severity.INFO, .{ self.camera_slide.? });
+    }
   }
 
   pub fn init (allocator: std.mem.Allocator) !Self
   {
-    var self: Self = undefined;
+    var self = Self {};
 
     try self.parse (allocator);
     self.check ();
     if (build.LOG_LEVEL > @intFromEnum (profile.TURBO)) try self.show ();
-    std.process.exit (0);
+    //std.process.exit (0);
 
     return self;
   }

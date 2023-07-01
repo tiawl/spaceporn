@@ -12,11 +12,11 @@ const InstanceDispatch = dispatch_vk.InstanceDispatch;
 
 pub const instance_vk = struct
 {
-  base_dispatch:      BaseDispatch,
-  dispatch:           InstanceDispatch,
-  instance:           vk.Instance,
-  extensions:         [][*:0] const u8,
-  instance_proc_addr: *const fn (?*anyopaque, [*:0] const u8) callconv (.C) ?*const fn () callconv (.C) void,
+  base_dispatch:      BaseDispatch = undefined,
+  dispatch:           InstanceDispatch = undefined,
+  instance:           vk.Instance = undefined,
+  fxtensions:         [][*:0] const u8 = undefined,
+  instance_proc_addr: *const fn (?*anyopaque, [*:0] const u8) callconv (.C) ?*const fn () callconv (.C) void = undefined,
 
   const Self = @This ();
 
@@ -28,7 +28,7 @@ pub const instance_vk = struct
   {
     _ = allocator;
 
-    var self: Self = undefined;
+    var self = Self {};
 
     self.extensions = extensions.*;
     self.instance_proc_addr = instance_proc_addr;

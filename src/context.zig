@@ -14,8 +14,8 @@ const severity = utils.severity;
 
 pub const context = struct
 {
-  glfw: context_glfw,
-  vk:   context_vk,
+  glfw: context_glfw = undefined,
+  vk:   context_vk   = undefined,
 
   const Self = @This ();
 
@@ -59,7 +59,7 @@ pub const context = struct
   {
     try init_logfile ();
 
-    var self: Self = undefined;
+    var self = Self {};
 
     self.glfw = try context_glfw.init ();
 
@@ -76,13 +76,16 @@ pub const context = struct
     return self;
   }
 
-  pub fn loop (self: *Self, allocator: std.mem.Allocator) !void
+  pub fn loop (self: *Self) !void
   {
+    var arena = std.heap.ArenaAllocator.init (std.heap.page_allocator);
+    var allocator = arena.allocator ();
+
     while (self.glfw.looping ())
     {
       try self.glfw.loop ();
       const framebuffer = self.glfw.get_framebuffer_size ();
-      try self.vk.loop (.{ .resized = framebuffer.resized, .width = framebuffer.width, .height = framebuffer.height, }, allocator);
+      try self.vk.loop (.{ .resized = framebuffer.resized, .width = framebuffer.width, .height = framebuffer.height, }, &arena, &allocator);
     }
     try log_app ("loop OK", severity.DEBUG, .{});
   }

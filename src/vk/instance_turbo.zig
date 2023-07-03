@@ -1,10 +1,10 @@
 const std = @import ("std");
 const vk  = @import ("vulkan");
 
-const utils      = @import ("../utils.zig");
-const log_app    = utils.log_app;
-const exe        = utils.exe;
-const severity   = utils.severity;
+const utils    = @import ("../utils.zig");
+const log_app  = utils.log_app;
+const exe      = utils.exe;
+const severity = utils.severity;
 
 const dispatch_vk      = @import ("dispatch.zig");
 const BaseDispatch     = dispatch_vk.BaseDispatch;

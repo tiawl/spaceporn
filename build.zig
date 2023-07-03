@@ -1,11 +1,26 @@
 const std = @import ("std");
 
 const glfw = @import ("libs/mach-glfw/build.zig");
-const vkgen = @import ("libs/vulkan-zig/generator/index.zig");
-const zigvulkan = @import ("libs/vulkan-zig/build.zig");
+const vk_gen = @import ("libs/vulkan-zig/generator/index.zig");
 
-pub fn build (builder: *std.build.Builder) !void
+pub fn build (builder: *std.Build) !void
 {
+  const modules = [_] struct { name: [] const u8, ptr: *std.build.Module, }
+                  {
+                    .{
+                      .name = "datetime",
+                      .ptr = builder.addModule ("datetime", .{ .source_file = .{ .path = "libs/zig-datetime/src/main.zig", },}),
+                     },
+                    .{
+                      .name = "vulkan",
+                      .ptr = vk_gen.VkGenerateStep.create (builder, "libs/vulkan-zig/examples/vk.xml").getModule (),
+                     },
+                    .{
+                      .name = "glfw",
+                      .ptr = glfw.module (builder),
+                     },
+                  };
+
   const build_options = builder.addOptions ();
   const EXE = "spaceporn";
   const DEV = builder.option (bool, "DEV", "Build " ++ EXE ++ " in verbose mode.") orelse false;
@@ -80,24 +95,31 @@ pub fn build (builder: *std.build.Builder) !void
   // Install step must be made after install artifact step is made
   builder.getInstallStep ().dependOn (&install_exe.step);
 
-  exe.addModule ("datetime", builder.addModule ("datetime", .{
-                               .source_file = .{ .path = "libs/zig-datetime/src/main.zig", },
-                             }));
-
-  // vulkan-zig: new step that generates vk.zig (stored in zig-cache) from the provided vulkan registry.
-  const gen = vkgen.VkGenerateStep.create (builder, "libs/vulkan-zig/examples/vk.xml");
-  exe.addModule ("vulkan", gen.getModule ());
+  for (modules) |module|
+  {
+    exe.addModule (module.name, module.ptr);
+  }
 
   // mach-glfw
-  exe.addModule ("glfw", glfw.module (builder));
   try glfw.link (builder, exe, .{});
 
   // shader resources, to be compiled using glslc
-  const shaders = vkgen.ShaderCompileStep.create (builder, &[_][] const u8 { "glslc", "--target-env=vulkan1.2" }, "-o");
+  const shaders = vk_gen.ShaderCompileStep.create (builder, &[_][] const u8 { "glslc", "--target-env=vulkan1.2" }, "-o");
   shaders.add ("vert", "shaders/main.vert", .{});
   shaders.add ("frag", "shaders/main.frag", .{});
   shaders.add ("offscreen_frag", "shaders/offscreen.frag", .{});
   exe.addModule ("resources", shaders.getModule ());
+
+  const test_cmd = builder.addTest(.{ .root_source_file = .{ .path = "src/tests.zig" }, .optimize = .Debug, });
+  test_cmd.addOptions ("build_options", build_options);
+
+  for (modules) |module|
+  {
+    test_cmd.addModule (module.name, module.ptr);
+  }
+
+  const test_step = builder.step("test", "Run tests");
+  test_step.dependOn(&test_cmd.step);
 
   // Init a new run artifact step that will run exe (invisible for user)
   const run_cmd = builder.addRunArtifact (exe);

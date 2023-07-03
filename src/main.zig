@@ -1,11 +1,11 @@
 const std = @import ("std");
 
-const context = @import ("context.zig").context;
-const opts    = @import ("options.zig").options;
-
 const utils    = @import ("utils.zig");
 const log_app  = utils.log_app;
 const severity = utils.severity;
+
+const context = @import ("context.zig").context;
+const opts    = @import ("options.zig").options;
 
 pub fn main () !void
 {

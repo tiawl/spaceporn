@@ -31,9 +31,11 @@ pub const options = struct
     Basic,
   };
 
-  const DEFAULT_WINDOW = OptionsWindow.Basic;
-  const SHORT_WINDOW   = "-w";
-  const LONG_WINDOW    = "--window";
+  const DEFAULT_WINDOW        = OptionsWindow.Basic;
+  const DEFAULT_WINDOW_WIDTH  = 800;
+  const DEFAULT_WINDOW_HEIGHT = 600;
+  const SHORT_WINDOW          = "-w";
+  const LONG_WINDOW           = "--window";
 
   const DEFAULT_CAMERA_DYNAMIC = false;
   const CAMERA_DYNAMIC         = "--camera-dynamic";
@@ -51,7 +53,15 @@ pub const options = struct
   const DEFAULT_CAMERA_ZOOM = .{ .random = true, .percent = 0, };
   const CAMERA_ZOOM         = "--camera-zoom";
 
-  const Camera = struct
+  const DEFAULT_COLORS_SMOOTH = false;
+  const COLORS_SMOOTH         = "--colors-smooth";
+  const COLORS_SMOOTH_NO      = "--no" ++ COLORS_SMOOTH [1..];
+
+  const DEFAULT_STARS_DYNAMIC = false;
+  const STARS_DYNAMIC         = "--stars-dynamic";
+  const STARS_DYNAMIC_NO      = "--no" ++ STARS_DYNAMIC [1..];
+
+  const camera_options = struct
   {
     dynamic: bool                                   = DEFAULT_CAMERA_DYNAMIC,
     fps:     ?u8                                    = DEFAULT_CAMERA_FPS,
@@ -60,20 +70,12 @@ pub const options = struct
     zoom:    struct { random: bool, percent: u32, } = DEFAULT_CAMERA_ZOOM,
   };
 
-  const DEFAULT_COLORS_SMOOTH = false;
-  const COLORS_SMOOTH         = "--colors-smooth";
-  const COLORS_SMOOTH_NO      = "--no" ++ COLORS_SMOOTH [1..];
-
-  const Colors = struct
+  const colors_options = struct
   {
     smooth: bool = DEFAULT_COLORS_SMOOTH,
   };
 
-  const DEFAULT_STARS_DYNAMIC = false;
-  const STARS_DYNAMIC         = "--stars-dynamic";
-  const STARS_DYNAMIC_NO      = "--no" ++ STARS_DYNAMIC [1..];
-
-  const Stars = struct
+  const stars_options = struct
   {
     dynamic: bool = DEFAULT_STARS_DYNAMIC,
   };
@@ -82,10 +84,10 @@ pub const options = struct
   output:  ?[] const u8                                               = DEFAULT_OUTPUT,
   seed:    struct { random: bool, sample: u32, }                      = DEFAULT_SEED,
   version: bool                                                       = DEFAULT_VERSION,
-  window:  struct { type: OptionsWindow, width: ?u32, height: ?u32, } = .{ .type = DEFAULT_WINDOW, .width = 800, .height = 600, },
-  camera:  Camera                                                     = Camera {},
-  colors:  Colors                                                     = Colors {},
-  stars:   Stars                                                      = Stars {},
+  window:  struct { type: OptionsWindow, width: ?u32, height: ?u32, } = .{ .type = DEFAULT_WINDOW, .width = DEFAULT_WINDOW_WIDTH, .height = DEFAULT_WINDOW_HEIGHT, },
+  camera:  camera_options                                             = camera_options {},
+  colors:  colors_options                                             = colors_options {},
+  stars:   stars_options                                              = stars_options {},
 
   const Self = @This ();
 
@@ -363,3 +365,62 @@ pub const options = struct
     return self;
   }
 };
+
+test "parse CLI 'spaceporn'"
+{
+  var gpa = std.heap.GeneralPurposeAllocator (.{}){};
+  defer _ = gpa.deinit ();
+
+  const allocator = gpa.allocator ();
+
+  const opts = try options.init (allocator);
+
+  try std.testing.expect (opts.help == options.DEFAULT_HELP);
+  try std.testing.expect (opts.output == options.DEFAULT_OUTPUT);
+  try std.testing.expect (opts.seed.random == true);
+  try std.testing.expect (opts.seed.sample == 0);
+  try std.testing.expect (opts.version == options.DEFAULT_VERSION);
+  try std.testing.expect (opts.window.type == options.DEFAULT_WINDOW);
+  try std.testing.expect (opts.window.width == options.DEFAULT_WINDOW_WIDTH);
+  try std.testing.expect (opts.window.height == options.DEFAULT_WINDOW_HEIGHT);
+  try std.testing.expect (opts.camera.dynamic == options.DEFAULT_CAMERA_DYNAMIC);
+  try std.testing.expect (opts.camera.fps == options.DEFAULT_CAMERA_FPS);
+  try std.testing.expect (opts.camera.pixel == options.DEFAULT_CAMERA_PIXEL);
+  try std.testing.expect (opts.camera.slide == options.DEFAULT_CAMERA_SLIDE);
+  try std.testing.expect (opts.camera.zoom.random == true);
+  try std.testing.expect (opts.camera.zoom.percent == 0);
+  try std.testing.expect (opts.colors.smooth == options.DEFAULT_COLORS_SMOOTH);
+  try std.testing.expect (opts.stars.dynamic == options.DEFAULT_STARS_DYNAMIC);
+}
+
+test "parse CLI 'spaceporn -h'"
+{
+  var gpa = std.heap.GeneralPurposeAllocator (.{}){};
+  defer _ = gpa.deinit ();
+
+  const allocator = gpa.allocator ();
+
+  var opts_list = std.ArrayList ([] const u8).init (allocator);
+  defer opts_list.deinit ();
+
+  try opts_list.appendSlice (&[_][] const u8 { "-h", });
+
+  const opts = try options.init (allocator);
+
+  try std.testing.expect (opts.help == true);
+  try std.testing.expect (opts.output == options.DEFAULT_OUTPUT);
+  try std.testing.expect (opts.seed.random == true);
+  try std.testing.expect (opts.seed.sample == 0);
+  try std.testing.expect (opts.version == options.DEFAULT_VERSION);
+  try std.testing.expect (opts.window.type == options.DEFAULT_WINDOW);
+  try std.testing.expect (opts.window.width == options.DEFAULT_WINDOW_WIDTH);
+  try std.testing.expect (opts.window.height == options.DEFAULT_WINDOW_HEIGHT);
+  try std.testing.expect (opts.camera.dynamic == options.DEFAULT_CAMERA_DYNAMIC);
+  try std.testing.expect (opts.camera.fps == options.DEFAULT_CAMERA_FPS);
+  try std.testing.expect (opts.camera.pixel == options.DEFAULT_CAMERA_PIXEL);
+  try std.testing.expect (opts.camera.slide == options.DEFAULT_CAMERA_SLIDE);
+  try std.testing.expect (opts.camera.zoom.random == true);
+  try std.testing.expect (opts.camera.zoom.percent == 0);
+  try std.testing.expect (opts.colors.smooth == options.DEFAULT_COLORS_SMOOTH);
+  try std.testing.expect (opts.stars.dynamic == options.DEFAULT_STARS_DYNAMIC);
+}

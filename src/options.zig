@@ -37,7 +37,7 @@ pub const options = struct
 
   const DEFAULT_CAMERA_DYNAMIC = false;
   const CAMERA_DYNAMIC         = "--camera-dynamic";
-  const CAMERA_DYNAMIC_NO      = "--no-camera-dynamic";
+  const CAMERA_DYNAMIC_NO      = "--no" ++ CAMERA_DYNAMIC [1..];
 
   const DEFAULT_CAMERA_FPS = null;
   const CAMERA_FPS         = "--camera-fps";
@@ -62,7 +62,7 @@ pub const options = struct
 
   const DEFAULT_COLORS_SMOOTH = false;
   const COLORS_SMOOTH         = "--colors-smooth";
-  const COLORS_SMOOTH_NO      = "--no-colors-smooth";
+  const COLORS_SMOOTH_NO      = "--no" ++ COLORS_SMOOTH [1..];
 
   const Colors = struct
   {
@@ -71,7 +71,7 @@ pub const options = struct
 
   const DEFAULT_STARS_DYNAMIC = false;
   const STARS_DYNAMIC         = "--stars-dynamic";
-  const STARS_DYNAMIC_NO      = "--no-stars-dynamic";
+  const STARS_DYNAMIC_NO      = "--no" ++ STARS_DYNAMIC [1..];
 
   const Stars = struct
   {
@@ -244,6 +244,8 @@ pub const options = struct
       // camera dynamic option
       } else if (std.mem.eql (u8, opts.items [index], CAMERA_DYNAMIC)) {
         self.camera.dynamic = true;
+      } else if (std.mem.eql (u8, opts.items [index], CAMERA_DYNAMIC_NO)) {
+        self.camera.dynamic = false;
       // camera fps option
       } else if (std.mem.eql (u8, opts.items [index], CAMERA_FPS)) {
         if (index + 1 >= opts.items.len)
@@ -291,12 +293,16 @@ pub const options = struct
       // colors smooth option
       } else if (std.mem.eql (u8, opts.items [index], COLORS_SMOOTH)) {
         self.colors.smooth = true;
+      } else if (std.mem.eql (u8, opts.items [index], COLORS_SMOOTH_NO)) {
+        self.colors.smooth = false;
 
       // --- STARS -----------------------------------------------------------
 
       // stars dynamic option
       } else if (std.mem.eql (u8, opts.items [index], STARS_DYNAMIC)) {
         self.stars.dynamic = true;
+      } else if (std.mem.eql (u8, opts.items [index], STARS_DYNAMIC_NO)) {
+        self.stars.dynamic = false;
 
       // ---------------------------------------------------------------------
 

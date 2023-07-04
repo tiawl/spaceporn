@@ -71,7 +71,6 @@ fn sys_date (expanded: anytype, date: *[] const u8,
   {
     const now = datetime.Datetime.now ();
     date.* = try now.formatISO8601 (expanded.allocator, true);
-    errdefer expanded.allocator.free (date.*);
   } else {
     date.* = "";
   }
@@ -95,7 +94,6 @@ pub fn log (comptime format: [] const u8, id: [*:0] const u8, sev: severity, min
     const allocator = arena.allocator ();
 
     try sys_date (.{ .format = &expanded, .allocator = allocator }, &date, format, args);
-    defer allocator.free (expanded);
 
     var log_format: [] const u8 = undefined;
     var stdout_format: [] const u8 = undefined;

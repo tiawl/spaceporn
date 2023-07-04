@@ -99,28 +99,11 @@ pub const options = struct
     UnknownArgument,
   };
 
-  fn parse (self: *Self, allocator: std.mem.Allocator) !void
+  fn parse (self: *Self, allocator: std.mem.Allocator, opts: *std.ArrayList ([] const u8)) !void
   {
-    var opts_iterator = try std.process.argsWithAllocator (allocator);
-    defer opts_iterator.deinit();
-
-    _ = opts_iterator.next () orelse
-        {
-          return OptionsError.NoExecutableName;
-        };
-
-    var opts = std.ArrayList ([] const u8).init (allocator);
-    defer opts.deinit ();
-
-    while (opts_iterator.next ()) |opt|
-    {
-      try opts.append (opt);
-    }
-
     var index: usize = 0;
     var new_opt_used = false;
     var new_opt: [] const u8 = undefined;
-    defer if (new_opt_used) allocator.free (new_opt);
 
     while (index < opts.items.len)
     {
@@ -136,7 +119,7 @@ pub const options = struct
         try opts.insert (index + 1, opts.items [index][0..2]);
         new_opt = try std.fmt.allocPrint(allocator, "-{s}", .{ opts.items [index][2..] });
         new_opt_used = true;
-        try opts.insert (index + 2, new_opt [0..]);
+        try opts.insert (index + 2, new_opt);
         _ = opts.orderedRemove (index);
         continue;
       }
@@ -174,7 +157,6 @@ pub const options = struct
       if (std.mem.eql (u8, opts.items [index], SHORT_HELP) or std.mem.eql (u8, opts.items [index], LONG_HELP))
       {
         self.help = true;
-        break;
       // output option
       } else if (std.mem.eql (u8, opts.items [index], SHORT_OUTPUT) or std.mem.eql (u8, opts.items [index], LONG_OUTPUT)) {
         if (index + 1 >= opts.items.len)
@@ -199,7 +181,6 @@ pub const options = struct
       // version option
       } else if (std.mem.eql (u8, opts.items [index], SHORT_VERSION) or std.mem.eql (u8, opts.items [index], LONG_VERSION)) {
         self.version = true;
-        break;
       // window option
       } else if (std.mem.eql (u8, opts.items [index], SHORT_WINDOW) or std.mem.eql (u8, opts.items [index], LONG_WINDOW)) {
         if (index + 1 >= opts.items.len)
@@ -358,7 +339,33 @@ pub const options = struct
   {
     var self = Self {};
 
-    try self.parse (allocator);
+    var opts_iterator = try std.process.argsWithAllocator (allocator);
+    defer opts_iterator.deinit();
+
+    _ = opts_iterator.next () orelse
+        {
+          return OptionsError.NoExecutableName;
+        };
+
+    var opts = std.ArrayList ([] const u8).init (allocator);
+
+    while (opts_iterator.next ()) |opt|
+    {
+      try opts.append (opt);
+    }
+
+    try self.parse (allocator, &opts);
+    self.check ();
+    if (build.LOG_LEVEL > @intFromEnum (profile.TURBO)) try self.show ();
+
+    return self;
+  }
+
+  pub fn init2 (allocator: std.mem.Allocator, opts: *std.ArrayList ([] const u8)) !Self
+  {
+    var self = Self {};
+
+    try self.parse (allocator, opts);
     self.check ();
     if (build.LOG_LEVEL > @intFromEnum (profile.TURBO)) try self.show ();
 
@@ -368,10 +375,11 @@ pub const options = struct
 
 test "parse CLI 'spaceporn'"
 {
-  var gpa = std.heap.GeneralPurposeAllocator (.{}){};
-  defer _ = gpa.deinit ();
+  std.debug.print ("\n", .{});
 
-  const allocator = gpa.allocator ();
+  var arena = std.heap.ArenaAllocator.init (std.heap.page_allocator);
+  defer arena.deinit ();
+  var allocator = arena.allocator ();
 
   const opts = try options.init (allocator);
 
@@ -395,23 +403,87 @@ test "parse CLI 'spaceporn'"
 
 test "parse CLI 'spaceporn -h'"
 {
-  var gpa = std.heap.GeneralPurposeAllocator (.{}){};
-  defer _ = gpa.deinit ();
+  std.debug.print ("\n", .{});
 
-  const allocator = gpa.allocator ();
+  var arena = std.heap.ArenaAllocator.init (std.heap.page_allocator);
+  defer arena.deinit ();
+  var allocator = arena.allocator ();
 
   var opts_list = std.ArrayList ([] const u8).init (allocator);
-  defer opts_list.deinit ();
 
   try opts_list.appendSlice (&[_][] const u8 { "-h", });
 
-  const opts = try options.init (allocator);
+  const opts = try options.init2 (allocator, &opts_list);
 
   try std.testing.expect (opts.help == true);
   try std.testing.expect (opts.output == options.DEFAULT_OUTPUT);
   try std.testing.expect (opts.seed.random == true);
   try std.testing.expect (opts.seed.sample == 0);
   try std.testing.expect (opts.version == options.DEFAULT_VERSION);
+  try std.testing.expect (opts.window.type == options.DEFAULT_WINDOW);
+  try std.testing.expect (opts.window.width == options.DEFAULT_WINDOW_WIDTH);
+  try std.testing.expect (opts.window.height == options.DEFAULT_WINDOW_HEIGHT);
+  try std.testing.expect (opts.camera.dynamic == options.DEFAULT_CAMERA_DYNAMIC);
+  try std.testing.expect (opts.camera.fps == options.DEFAULT_CAMERA_FPS);
+  try std.testing.expect (opts.camera.pixel == options.DEFAULT_CAMERA_PIXEL);
+  try std.testing.expect (opts.camera.slide == options.DEFAULT_CAMERA_SLIDE);
+  try std.testing.expect (opts.camera.zoom.random == true);
+  try std.testing.expect (opts.camera.zoom.percent == 0);
+  try std.testing.expect (opts.colors.smooth == options.DEFAULT_COLORS_SMOOTH);
+  try std.testing.expect (opts.stars.dynamic == options.DEFAULT_STARS_DYNAMIC);
+}
+
+test "parse CLI 'spaceporn -h -v'"
+{
+  std.debug.print ("\n", .{});
+
+  var arena = std.heap.ArenaAllocator.init (std.heap.page_allocator);
+  defer arena.deinit ();
+  var allocator = arena.allocator ();
+
+  var opts_list = std.ArrayList ([] const u8).init (allocator);
+
+  try opts_list.appendSlice (&[_][] const u8 { "-h", "-v", });
+
+  const opts = try options.init2 (allocator, &opts_list);
+
+  try std.testing.expect (opts.help == true);
+  try std.testing.expect (opts.output == options.DEFAULT_OUTPUT);
+  try std.testing.expect (opts.seed.random == true);
+  try std.testing.expect (opts.seed.sample == 0);
+  try std.testing.expect (opts.version == true);
+  try std.testing.expect (opts.window.type == options.DEFAULT_WINDOW);
+  try std.testing.expect (opts.window.width == options.DEFAULT_WINDOW_WIDTH);
+  try std.testing.expect (opts.window.height == options.DEFAULT_WINDOW_HEIGHT);
+  try std.testing.expect (opts.camera.dynamic == options.DEFAULT_CAMERA_DYNAMIC);
+  try std.testing.expect (opts.camera.fps == options.DEFAULT_CAMERA_FPS);
+  try std.testing.expect (opts.camera.pixel == options.DEFAULT_CAMERA_PIXEL);
+  try std.testing.expect (opts.camera.slide == options.DEFAULT_CAMERA_SLIDE);
+  try std.testing.expect (opts.camera.zoom.random == true);
+  try std.testing.expect (opts.camera.zoom.percent == 0);
+  try std.testing.expect (opts.colors.smooth == options.DEFAULT_COLORS_SMOOTH);
+  try std.testing.expect (opts.stars.dynamic == options.DEFAULT_STARS_DYNAMIC);
+}
+
+test "parse CLI 'spaceporn -hvopotato'"
+{
+  std.debug.print ("\n", .{});
+
+  var arena = std.heap.ArenaAllocator.init (std.heap.page_allocator);
+  defer arena.deinit ();
+  var allocator = arena.allocator ();
+
+  var opts_list = std.ArrayList ([] const u8).init (allocator);
+
+  try opts_list.appendSlice (&[_][] const u8 { "-hvopotato", });
+
+  const opts = try options.init2 (allocator, &opts_list);
+
+  try std.testing.expect (opts.help == true);
+  try std.testing.expect (std.mem.eql (u8, opts.output.?, "potato"));
+  try std.testing.expect (opts.seed.random == true);
+  try std.testing.expect (opts.seed.sample == 0);
+  try std.testing.expect (opts.version == true);
   try std.testing.expect (opts.window.type == options.DEFAULT_WINDOW);
   try std.testing.expect (opts.window.width == options.DEFAULT_WINDOW_WIDTH);
   try std.testing.expect (opts.window.height == options.DEFAULT_WINDOW_HEIGHT);

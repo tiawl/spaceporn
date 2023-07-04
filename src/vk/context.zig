@@ -186,7 +186,6 @@ pub const context_vk = struct
     }
 
     self.candidate.extensions = try std.ArrayList ([*:0] const u8).initCapacity (allocator, required_device_extensions.len);
-    errdefer self.candidate.extensions.deinit ();
 
     try self.candidate.extensions.appendSlice (required_device_extensions [0..]);
 
@@ -508,7 +507,6 @@ pub const context_vk = struct
                                  .pp_enabled_extension_names = @ptrCast (self.candidate.extensions.items),
                                  .p_enabled_features         = &device_features,
                                };
-    defer self.candidate.extensions.deinit ();
 
     self.logical_device = try self.instance.dispatch.createDevice (self.physical_device.?, &device_create_info, null);
 
@@ -1353,7 +1351,7 @@ pub const context_vk = struct
     try self.init_buffer (size, vk.BufferUsageFlags { .transfer_src_bit = true, }, vk.MemoryPropertyFlags { .host_visible_bit = true, .host_coherent_bit = true, }, &staging_buffer, &staging_buffer_memory);
 
     const data = try self.device_dispatch.mapMemory (self.logical_device, staging_buffer_memory, 0, size, vk.MemoryMapFlags {});
-    std.mem.copy(u8, @as ([*] u8, @ptrCast (data.?)) [0..size], std.mem.sliceAsBytes (&vertices));
+    @memcpy (@as ([*] u8, @ptrCast (data.?)) [0..size], std.mem.sliceAsBytes (&vertices));
     self.device_dispatch.unmapMemory (self.logical_device, staging_buffer_memory);
 
     try self.init_buffer (size, vk.BufferUsageFlags { .transfer_dst_bit = true, .vertex_buffer_bit = true, }, vk.MemoryPropertyFlags { .device_local_bit = true, }, &(self.vertex_buffer), &(self.vertex_buffer_memory));
@@ -1374,7 +1372,7 @@ pub const context_vk = struct
     try self.init_buffer (size, vk.BufferUsageFlags { .transfer_src_bit = true, }, vk.MemoryPropertyFlags { .host_visible_bit = true, .host_coherent_bit = true, }, &staging_buffer, &staging_buffer_memory);
 
     const data = try self.device_dispatch.mapMemory (self.logical_device, staging_buffer_memory, 0, size, vk.MemoryMapFlags {});
-    std.mem.copy(u8, @as ([*] u8, @ptrCast (data.?)) [0..size], std.mem.sliceAsBytes (&indices));
+    @memcpy (@as ([*] u8, @ptrCast (data.?)) [0..size], std.mem.sliceAsBytes (&indices));
     self.device_dispatch.unmapMemory (self.logical_device, staging_buffer_memory);
 
     try self.init_buffer (size, vk.BufferUsageFlags { .transfer_dst_bit = true, .index_buffer_bit = true, }, vk.MemoryPropertyFlags { .device_local_bit = true, }, &(self.index_buffer), &(self.index_buffer_memory));
@@ -1809,7 +1807,7 @@ pub const context_vk = struct
                 };
 
     var data = try self.device_dispatch.mapMemory (self.logical_device, self.uniform_buffers_memory [self.current_frame], 0, ubo_size, vk.MemoryMapFlags {});
-    std.mem.copy(u8, @as ([*] u8, @ptrCast (data.?)) [0..ubo_size], std.mem.asBytes (&ubo));
+    @memcpy (@as ([*] u8, @ptrCast (data.?)) [0..ubo_size], std.mem.asBytes (&ubo));
     self.device_dispatch.unmapMemory (self.logical_device, self.uniform_buffers_memory [self.current_frame]);
 
     if (!self.first_pass_done)
@@ -1822,7 +1820,7 @@ pub const context_vk = struct
                    };
 
       data = try self.device_dispatch.mapMemory (self.logical_device, self.offscreen_uniform_buffers_memory, 0, oubo_size, vk.MemoryMapFlags {});
-      std.mem.copy(u8, @as ([*] u8, @ptrCast (data.?)) [0..oubo_size], std.mem.asBytes (&oubo));
+      @memcpy (@as ([*] u8, @ptrCast (data.?)) [0..oubo_size], std.mem.asBytes (&oubo));
       self.device_dispatch.unmapMemory (self.logical_device, self.offscreen_uniform_buffers_memory);
     }
   }

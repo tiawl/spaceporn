@@ -168,7 +168,6 @@ pub const instance_vk = struct
   fn check_extension_properties (self: *Self, debug_info: *vk.DebugUtilsMessengerCreateInfoEXT, allocator: std.mem.Allocator) !void
   {
     var extensions = try std.ArrayList ([*:0] const u8).initCapacity (allocator, self.extensions.len + required_extensions.len + optional_extensions.len);
-    defer extensions.deinit ();
 
     try extensions.appendSlice(self.extensions);
 

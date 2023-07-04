@@ -1,6 +1,7 @@
 const std = @import ("std");
 
 const glfw = @import ("libs/mach-glfw/build.zig");
+// const glfw = @import ("libs/mach-glfw/sdk.zig").Sdk (.{ .xcode_frameworks = @import("libs/mach-glfw/libs/xcode-frameworks/build.zig"), });
 const vk_gen = @import ("libs/vulkan-zig/generator/index.zig");
 
 pub fn build (builder: *std.Build) !void

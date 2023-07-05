@@ -426,6 +426,20 @@ pub const options = struct
     }
   }
 
+  fn fix_random (self: *Self) void
+  {
+    if (self.seed.random)
+    {
+      self.seed.sample = @intCast (@mod (std.time.milliTimestamp (), std.math.maxInt (u32)));
+    }
+
+    if (self.camera.zoom.random)
+    {
+      self.camera.zoom.percent = @intCast (@mod (std.time.milliTimestamp (), std.math.maxInt (u32)));
+      self.camera.zoom.percent = (self.camera.zoom.percent % (CAMERA_ZOOM_MAX - CAMERA_ZOOM_MIN + 1)) + CAMERA_ZOOM_MIN;
+    }
+  }
+
   fn show (self: Self) !void
   {
     if (self.output == null)
@@ -479,6 +493,7 @@ pub const options = struct
 
     try self.parse (allocator, &opts);
     try self.check ();
+    self.fix_random ();
     if (build.LOG_LEVEL > @intFromEnum (profile.TURBO)) try self.show ();
 
     return self;
@@ -490,6 +505,7 @@ pub const options = struct
 
     try self.parse (allocator, opts);
     try self.check ();
+    self.fix_random ();
     if (build.LOG_LEVEL > @intFromEnum (profile.TURBO)) try self.show ();
 
     return self;

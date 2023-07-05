@@ -41,18 +41,31 @@ pub const instance_vk = struct
     vk.extension_info.ext_debug_utils.name,
   };
 
-  var optional_extensions = [_] ext_vk
-  {
-    .{
-       .name = vk.extension_info.ext_device_address_binding_report.name,
-     },
-    .{
-       .name = vk.extension_info.khr_shader_non_semantic_info.name,
-     },
-    .{
-       .name = vk.extension_info.ext_validation_features.name,
-     },
-  };
+  var optional_extensions = blk:
+                            {
+                              if (build.LOG_LEVEL > @intFromEnum (profile.DEFAULT))
+                              {
+                                break :blk [_] ext_vk
+                                           {
+                                             .{
+                                                .name = vk.extension_info.ext_device_address_binding_report.name,
+                                              },
+                                             .{
+                                                .name = vk.extension_info.khr_shader_non_semantic_info.name,
+                                              },
+                                             .{
+                                                .name = vk.extension_info.ext_validation_features.name,
+                                              },
+                                           };
+                              } else {
+                                break :blk [_] ext_vk
+                                           {
+                                             .{
+                                                .name = vk.extension_info.ext_device_address_binding_report.name,
+                                              },
+                                           };
+                              }
+                            };
 
   const InitVkError = error
   {

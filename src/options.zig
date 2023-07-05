@@ -97,6 +97,7 @@ pub const options = struct
     MissingArgument,
     UnknownOption,
     UnknownArgument,
+    ZeroIntegerArgument,
   };
 
   fn parse (self: *Self, allocator: std.mem.Allocator, opts: *std.ArrayList ([] const u8)) !void
@@ -140,6 +141,8 @@ pub const options = struct
 
       // Handle '--file=file1' the same as '--file file1' for long-form 1-arg options
       if (    std.mem.startsWith (u8, opts.items [index], CAMERA_PIXEL ++ "=")
+           or std.mem.startsWith (u8, opts.items [index], CAMERA_FPS ++ "=")
+           or std.mem.startsWith (u8, opts.items [index], CAMERA_SLIDE ++ "=")
            or std.mem.startsWith (u8, opts.items [index], CAMERA_ZOOM ++ "=")
            or std.mem.startsWith (u8, opts.items [index], LONG_OUTPUT ++ "=")
            or std.mem.startsWith (u8, opts.items [index], LONG_SEED ++ "=")
@@ -176,12 +179,13 @@ pub const options = struct
         } else {
           self.seed.sample = std.fmt.parseInt (u32, opts.items [index + 1], 10) catch |err|
                              {
-                               if (err == error.InvalidCharacter)
+                               if (err == error.InvalidCharacter or err == error.Overflow)
                                {
                                  try log_app ("mandatory argument with {s},{s} option should a positive integer", severity.ERROR, .{ SHORT_SEED, LONG_SEED });
                                }
                                return err;
                              };
+
           self.seed.random = false;
           index += 1;
         }
@@ -204,12 +208,18 @@ pub const options = struct
             {
               self.window.width = std.fmt.parseInt(u32, token, 10) catch |err|
                                   {
-                                    if (err == error.InvalidCharacter)
+                                    if (err == error.InvalidCharacter or err == error.Overflow)
                                     {
-                                      try log_app ("mandatory argument with {s},{s} option should respect this format: WIDTHxHEIGHT", severity.ERROR, .{ SHORT_WINDOW, LONG_WINDOW });
+                                      try log_app ("mandatory argument with {s},{s} option should respect this format: WIDTHxHEIGHT where WIDTH and HEIGHT are greater than 0 integers", severity.ERROR, .{ SHORT_WINDOW, LONG_WINDOW });
                                     }
                                     return err;
                                   };
+
+              if (self.window.width == 0)
+              {
+                try log_app ("mandatory argument with {s},{s} option should respect this format: WIDTHxHEIGHT where WIDTH and HEIGHT are greater than 0 integers", severity.ERROR, .{ SHORT_WINDOW, LONG_WINDOW });
+                return OptionsError.ZeroIntegerArgument;
+              }
             } else {
               try log_app ("unknown argument with {s},{s} option: '{s}'", severity.ERROR, .{ SHORT_WINDOW, LONG_WINDOW, opts.items [index + 1] });
               return OptionsError.UnknownArgument;
@@ -219,12 +229,18 @@ pub const options = struct
             {
               self.window.height = std.fmt.parseInt(u32, token, 10) catch |err|
                                    {
-                                     if (err == error.InvalidCharacter)
+                                     if (err == error.InvalidCharacter or err == error.Overflow)
                                      {
-                                       try log_app ("mandatory argument with {s},{s} option should respect this format: WIDTHxHEIGHT", severity.ERROR, .{ SHORT_WINDOW, LONG_WINDOW });
+                                       try log_app ("mandatory argument with {s},{s} option should respect this format: WIDTHxHEIGHT where WIDTH and HEIGHT are greater than 0 integers", severity.ERROR, .{ SHORT_WINDOW, LONG_WINDOW });
                                      }
                                      return err;
                                    };
+
+              if (self.window.height == 0)
+              {
+                try log_app ("mandatory argument with {s},{s} option should respect this format: WIDTHxHEIGHT where WIDTH and HEIGHT are greater than 0 integers", severity.ERROR, .{ SHORT_WINDOW, LONG_WINDOW });
+                return OptionsError.ZeroIntegerArgument;
+              }
             } else {
               try log_app ("unknown argument with {s},{s} option: '{s}'", severity.ERROR, .{ SHORT_WINDOW, LONG_WINDOW, opts.items [index + 1] });
               return OptionsError.UnknownArgument;
@@ -259,12 +275,19 @@ pub const options = struct
         } else {
           self.camera.fps = std.fmt.parseInt (u8, opts.items [index + 1], 10) catch |err|
                             {
-                              if (err == error.InvalidCharacter)
+                              if (err == error.InvalidCharacter or err == error.Overflow)
                               {
-                                try log_app ("mandatory argument with {s} option should be a positive integer", severity.ERROR, .{ CAMERA_FPS });
+                                try log_app ("mandatory argument with {s} option should be a greater than 0 integer", severity.ERROR, .{ CAMERA_FPS });
                               }
                               return err;
                             };
+
+          if (self.camera.fps == 0)
+          {
+            try log_app ("mandatory argument with {s} option should be a greater than 0 integer", severity.ERROR, .{ CAMERA_FPS });
+            return OptionsError.ZeroIntegerArgument;
+          }
+
           index += 1;
         }
       // camera pixel option
@@ -276,12 +299,19 @@ pub const options = struct
         } else {
           self.camera.pixel = std.fmt.parseInt (u32, opts.items [index + 1], 10) catch |err|
                               {
-                                if (err == error.InvalidCharacter)
+                                if (err == error.InvalidCharacter or err == error.Overflow)
                                 {
-                                  try log_app ("mandatory argument with {s} option should be a positive integer", severity.ERROR, .{ CAMERA_PIXEL });
+                                  try log_app ("mandatory argument with {s} option should be a greater than 0 integer", severity.ERROR, .{ CAMERA_PIXEL });
                                 }
                                 return err;
                               };
+
+          if (self.camera.pixel == 0)
+          {
+            try log_app ("mandatory argument with {s} option should be a greater than 0 integer", severity.ERROR, .{ CAMERA_PIXEL });
+            return OptionsError.ZeroIntegerArgument;
+          }
+
           index += 1;
         }
       // camera slide option
@@ -293,12 +323,19 @@ pub const options = struct
         } else {
           self.camera.slide = std.fmt.parseInt (u32, opts.items [index + 1], 10) catch |err|
                               {
-                                if (err == error.InvalidCharacter)
+                                if (err == error.InvalidCharacter or err == error.Overflow)
                                 {
-                                  try log_app ("mandatory argument with {s} option should be a positive integer", severity.ERROR, .{ CAMERA_SLIDE });
+                                  try log_app ("mandatory argument with {s} option should be a greater than 0 integer", severity.ERROR, .{ CAMERA_SLIDE });
                                 }
                                 return err;
                               };
+
+          if (self.camera.slide == 0)
+          {
+            try log_app ("mandatory argument with {s} option should be a greater than 0 integer", severity.ERROR, .{ CAMERA_SLIDE });
+            return OptionsError.ZeroIntegerArgument;
+          }
+
           index += 1;
         }
       // camera zoom option
@@ -310,13 +347,21 @@ pub const options = struct
         } else {
           self.camera.zoom.percent = std.fmt.parseInt (u32, opts.items [index + 1], 10) catch |err|
                                      {
-                                       if (err == error.InvalidCharacter)
+                                       if (err == error.InvalidCharacter or err == error.Overflow)
                                        {
                                          try log_app ("mandatory argument with {s} option should be a positive integer", severity.ERROR, .{ CAMERA_ZOOM });
                                        }
                                        return err;
                                      };
+
           self.camera.zoom.random  = false;
+
+          if (self.camera.zoom.percent == 0)
+          {
+            try log_app ("mandatory argument with {s} option should be a greater than 0 integer", severity.ERROR, .{ CAMERA_ZOOM });
+            return OptionsError.ZeroIntegerArgument;
+          }
+
           index += 1;
         }
 
@@ -525,7 +570,7 @@ test "parse CLI args: short-help short-version short-seed short-window"
   try std.testing.expect (opts.stars.dynamic == options.DEFAULT_STARS_DYNAMIC);
 }
 
-test "parse CLI args: wrong window argument 1"
+test "parse CLI args: wrong window argument: bad separator"
 {
   std.debug.print ("\n", .{});
 
@@ -546,7 +591,7 @@ test "parse CLI args: wrong window argument 1"
   try std.testing.expectError(options.OptionsError.UnknownArgument, options.init2 (allocator, &opts_list));
 }
 
-test "parse CLI args: wrong window argument 2"
+test "parse CLI args: wrong window argument: missing width"
 {
   std.debug.print ("\n", .{});
 
@@ -566,7 +611,7 @@ test "parse CLI args: wrong window argument 2"
   try std.testing.expectError(options.OptionsError.UnknownArgument, options.init2 (allocator, &opts_list));
 }
 
-test "parse CLI args: wrong window argument 3"
+test "parse CLI args: wrong window argument: missing height"
 {
   std.debug.print ("\n", .{});
 
@@ -586,7 +631,7 @@ test "parse CLI args: wrong window argument 3"
   try std.testing.expectError(options.OptionsError.UnknownArgument, options.init2 (allocator, &opts_list));
 }
 
-test "parse CLI args: wrong window argument 4"
+test "parse CLI args: wrong window argument: invalid characters in height"
 {
   std.debug.print ("\n", .{});
 
@@ -605,6 +650,90 @@ test "parse CLI args: wrong window argument 4"
                                              });
 
   try std.testing.expectError(error.InvalidCharacter, options.init2 (allocator, &opts_list));
+}
+
+test "parse CLI args: wrong window argument: negative width"
+{
+  std.debug.print ("\n", .{});
+
+  var arena = std.heap.ArenaAllocator.init (std.heap.page_allocator);
+  defer arena.deinit ();
+  var allocator = arena.allocator ();
+
+  var opts_list = std.ArrayList ([] const u8).init (allocator);
+
+  const window_width = "-1280";
+  const window_height = "1024";
+  const window_arg = window_width ++ "x" ++ window_height;
+  try opts_list.appendSlice (&[_][] const u8 {
+                                               options.SHORT_WINDOW,
+                                               window_arg,
+                                             });
+
+  try std.testing.expectError(error.Overflow, options.init2 (allocator, &opts_list));
+}
+
+test "parse CLI args: wrong window argument: negative height"
+{
+  std.debug.print ("\n", .{});
+
+  var arena = std.heap.ArenaAllocator.init (std.heap.page_allocator);
+  defer arena.deinit ();
+  var allocator = arena.allocator ();
+
+  var opts_list = std.ArrayList ([] const u8).init (allocator);
+
+  const window_width = "1280";
+  const window_height = "-1024";
+  const window_arg = window_width ++ "x" ++ window_height;
+  try opts_list.appendSlice (&[_][] const u8 {
+                                               options.SHORT_WINDOW,
+                                               window_arg,
+                                             });
+
+  try std.testing.expectError(error.Overflow, options.init2 (allocator, &opts_list));
+}
+
+test "parse CLI args: wrong window argument: null width"
+{
+  std.debug.print ("\n", .{});
+
+  var arena = std.heap.ArenaAllocator.init (std.heap.page_allocator);
+  defer arena.deinit ();
+  var allocator = arena.allocator ();
+
+  var opts_list = std.ArrayList ([] const u8).init (allocator);
+
+  const window_width = "0";
+  const window_height = "1024";
+  const window_arg = window_width ++ "x" ++ window_height;
+  try opts_list.appendSlice (&[_][] const u8 {
+                                               options.SHORT_WINDOW,
+                                               window_arg,
+                                             });
+
+  try std.testing.expectError(options.OptionsError.ZeroIntegerArgument, options.init2 (allocator, &opts_list));
+}
+
+test "parse CLI args: wrong window argument: null height"
+{
+  std.debug.print ("\n", .{});
+
+  var arena = std.heap.ArenaAllocator.init (std.heap.page_allocator);
+  defer arena.deinit ();
+  var allocator = arena.allocator ();
+
+  var opts_list = std.ArrayList ([] const u8).init (allocator);
+
+  const window_width = "1280";
+  const window_height = "0";
+  const window_arg = window_width ++ "x" ++ window_height;
+  try opts_list.appendSlice (&[_][] const u8 {
+                                               options.SHORT_WINDOW,
+                                               window_arg,
+                                             });
+
+  try std.testing.expectError(options.OptionsError.ZeroIntegerArgument, options.init2 (allocator, &opts_list));
 }
 
 test "parse CLI args: missing window argument"
@@ -655,7 +784,402 @@ test "parse CLI args: combined short-help short-version short-output"
   try std.testing.expect (opts.stars.dynamic == options.DEFAULT_STARS_DYNAMIC);
 }
 
-test "parse CLI args: complex 1"
+test "parse CLI args: missing output argument"
+{
+  std.debug.print ("\n", .{});
+
+  var arena = std.heap.ArenaAllocator.init (std.heap.page_allocator);
+  defer arena.deinit ();
+  var allocator = arena.allocator ();
+
+  var opts_list = std.ArrayList ([] const u8).init (allocator);
+
+  try opts_list.appendSlice (&[_][] const u8 { options.LONG_OUTPUT, });
+
+  try std.testing.expectError(options.OptionsError.MissingArgument, options.init2 (allocator, &opts_list));
+}
+
+test "parse CLI args: missing seed argument"
+{
+  std.debug.print ("\n", .{});
+
+  var arena = std.heap.ArenaAllocator.init (std.heap.page_allocator);
+  defer arena.deinit ();
+  var allocator = arena.allocator ();
+
+  var opts_list = std.ArrayList ([] const u8).init (allocator);
+
+  try opts_list.appendSlice (&[_][] const u8 { options.LONG_SEED, });
+
+  try std.testing.expectError(options.OptionsError.MissingArgument, options.init2 (allocator, &opts_list));
+}
+
+test "parse CLI args: wrong seed argument: invalid characters"
+{
+  std.debug.print ("\n", .{});
+
+  var arena = std.heap.ArenaAllocator.init (std.heap.page_allocator);
+  defer arena.deinit ();
+  var allocator = arena.allocator ();
+
+  var opts_list = std.ArrayList ([] const u8).init (allocator);
+
+  const seed_arg = "wrong_arg";
+  try opts_list.appendSlice (&[_][] const u8 {
+                                               options.SHORT_SEED,
+                                               seed_arg,
+                                             });
+
+  try std.testing.expectError(error.InvalidCharacter, options.init2 (allocator, &opts_list));
+}
+
+test "parse CLI args: wrong seed argument: negative integer"
+{
+  std.debug.print ("\n", .{});
+
+  var arena = std.heap.ArenaAllocator.init (std.heap.page_allocator);
+  defer arena.deinit ();
+  var allocator = arena.allocator ();
+
+  var opts_list = std.ArrayList ([] const u8).init (allocator);
+
+  const seed_arg = "-2";
+  try opts_list.appendSlice (&[_][] const u8 {
+                                               options.SHORT_SEED,
+                                               seed_arg,
+                                             });
+
+  try std.testing.expectError(error.Overflow, options.init2 (allocator, &opts_list));
+}
+
+test "parse CLI args: missing camera fps argument"
+{
+  std.debug.print ("\n", .{});
+
+  var arena = std.heap.ArenaAllocator.init (std.heap.page_allocator);
+  defer arena.deinit ();
+  var allocator = arena.allocator ();
+
+  var opts_list = std.ArrayList ([] const u8).init (allocator);
+
+  try opts_list.appendSlice (&[_][] const u8 { options.CAMERA_FPS, });
+
+  try std.testing.expectError(options.OptionsError.MissingArgument, options.init2 (allocator, &opts_list));
+}
+
+test "parse CLI args: wrong camera fps argument: invalid characters"
+{
+  std.debug.print ("\n", .{});
+
+  var arena = std.heap.ArenaAllocator.init (std.heap.page_allocator);
+  defer arena.deinit ();
+  var allocator = arena.allocator ();
+
+  var opts_list = std.ArrayList ([] const u8).init (allocator);
+
+  const camera_fps_arg = "wrong_arg";
+  try opts_list.appendSlice (&[_][] const u8 {
+                                               options.CAMERA_FPS,
+                                               camera_fps_arg,
+                                             });
+
+  try std.testing.expectError(error.InvalidCharacter, options.init2 (allocator, &opts_list));
+}
+
+test "parse CLI args: wrong camera fps argument: negative integer"
+{
+  std.debug.print ("\n", .{});
+
+  var arena = std.heap.ArenaAllocator.init (std.heap.page_allocator);
+  defer arena.deinit ();
+  var allocator = arena.allocator ();
+
+  var opts_list = std.ArrayList ([] const u8).init (allocator);
+
+  const camera_fps_arg = "-2";
+  try opts_list.appendSlice (&[_][] const u8 {
+                                               options.CAMERA_FPS,
+                                               camera_fps_arg,
+                                             });
+
+  try std.testing.expectError(error.Overflow, options.init2 (allocator, &opts_list));
+}
+
+test "parse CLI args: wrong camera fps argument: null integer"
+{
+  std.debug.print ("\n", .{});
+
+  var arena = std.heap.ArenaAllocator.init (std.heap.page_allocator);
+  defer arena.deinit ();
+  var allocator = arena.allocator ();
+
+  var opts_list = std.ArrayList ([] const u8).init (allocator);
+
+  const camera_fps_arg = "0";
+  try opts_list.appendSlice (&[_][] const u8 {
+                                               options.CAMERA_FPS,
+                                               camera_fps_arg,
+                                             });
+
+  try std.testing.expectError(options.OptionsError.ZeroIntegerArgument, options.init2 (allocator, &opts_list));
+}
+
+test "parse CLI args: missing camera pixel argument"
+{
+  std.debug.print ("\n", .{});
+
+  var arena = std.heap.ArenaAllocator.init (std.heap.page_allocator);
+  defer arena.deinit ();
+  var allocator = arena.allocator ();
+
+  var opts_list = std.ArrayList ([] const u8).init (allocator);
+
+  try opts_list.appendSlice (&[_][] const u8 { options.CAMERA_PIXEL, });
+
+  try std.testing.expectError(options.OptionsError.MissingArgument, options.init2 (allocator, &opts_list));
+}
+
+test "parse CLI args: wrong camera pixel argument: invalid characters"
+{
+  std.debug.print ("\n", .{});
+
+  var arena = std.heap.ArenaAllocator.init (std.heap.page_allocator);
+  defer arena.deinit ();
+  var allocator = arena.allocator ();
+
+  var opts_list = std.ArrayList ([] const u8).init (allocator);
+
+  const camera_pixel_arg = "wrong_arg";
+  try opts_list.appendSlice (&[_][] const u8 {
+                                               options.CAMERA_PIXEL,
+                                               camera_pixel_arg,
+                                             });
+
+  try std.testing.expectError(error.InvalidCharacter, options.init2 (allocator, &opts_list));
+}
+
+test "parse CLI args: wrong camera pixel argument: negative integer"
+{
+  std.debug.print ("\n", .{});
+
+  var arena = std.heap.ArenaAllocator.init (std.heap.page_allocator);
+  defer arena.deinit ();
+  var allocator = arena.allocator ();
+
+  var opts_list = std.ArrayList ([] const u8).init (allocator);
+
+  const camera_pixel_arg = "-2";
+  try opts_list.appendSlice (&[_][] const u8 {
+                                               options.CAMERA_PIXEL,
+                                               camera_pixel_arg,
+                                             });
+
+  try std.testing.expectError(error.Overflow, options.init2 (allocator, &opts_list));
+}
+
+test "parse CLI args: wrong camera pixel argument: null integer"
+{
+  std.debug.print ("\n", .{});
+
+  var arena = std.heap.ArenaAllocator.init (std.heap.page_allocator);
+  defer arena.deinit ();
+  var allocator = arena.allocator ();
+
+  var opts_list = std.ArrayList ([] const u8).init (allocator);
+
+  const camera_pixel_arg = "0";
+  try opts_list.appendSlice (&[_][] const u8 {
+                                               options.CAMERA_PIXEL,
+                                               camera_pixel_arg,
+                                             });
+
+  try std.testing.expectError(options.OptionsError.ZeroIntegerArgument, options.init2 (allocator, &opts_list));
+}
+
+test "parse CLI args: missing camera slide argument"
+{
+  std.debug.print ("\n", .{});
+
+  var arena = std.heap.ArenaAllocator.init (std.heap.page_allocator);
+  defer arena.deinit ();
+  var allocator = arena.allocator ();
+
+  var opts_list = std.ArrayList ([] const u8).init (allocator);
+
+  try opts_list.appendSlice (&[_][] const u8 { options.CAMERA_SLIDE, });
+
+  try std.testing.expectError(options.OptionsError.MissingArgument, options.init2 (allocator, &opts_list));
+}
+
+test "parse CLI args: wrong camera slide argument: invalid characters"
+{
+  std.debug.print ("\n", .{});
+
+  var arena = std.heap.ArenaAllocator.init (std.heap.page_allocator);
+  defer arena.deinit ();
+  var allocator = arena.allocator ();
+
+  var opts_list = std.ArrayList ([] const u8).init (allocator);
+
+  const camera_slide_arg = "wrong_arg";
+  try opts_list.appendSlice (&[_][] const u8 {
+                                               options.CAMERA_SLIDE,
+                                               camera_slide_arg,
+                                             });
+
+  try std.testing.expectError(error.InvalidCharacter, options.init2 (allocator, &opts_list));
+}
+
+test "parse CLI args: wrong camera slide argument: negative integer"
+{
+  std.debug.print ("\n", .{});
+
+  var arena = std.heap.ArenaAllocator.init (std.heap.page_allocator);
+  defer arena.deinit ();
+  var allocator = arena.allocator ();
+
+  var opts_list = std.ArrayList ([] const u8).init (allocator);
+
+  const camera_slide_arg = "-2";
+  try opts_list.appendSlice (&[_][] const u8 {
+                                               options.CAMERA_SLIDE,
+                                               camera_slide_arg,
+                                             });
+
+  try std.testing.expectError(error.Overflow, options.init2 (allocator, &opts_list));
+}
+
+test "parse CLI args: wrong camera slide argument: null integer"
+{
+  std.debug.print ("\n", .{});
+
+  var arena = std.heap.ArenaAllocator.init (std.heap.page_allocator);
+  defer arena.deinit ();
+  var allocator = arena.allocator ();
+
+  var opts_list = std.ArrayList ([] const u8).init (allocator);
+
+  const camera_slide_arg = "0";
+  try opts_list.appendSlice (&[_][] const u8 {
+                                               options.CAMERA_SLIDE,
+                                               camera_slide_arg,
+                                             });
+
+  try std.testing.expectError(options.OptionsError.ZeroIntegerArgument, options.init2 (allocator, &opts_list));
+}
+
+test "parse CLI args: missing camera zoom argument"
+{
+  std.debug.print ("\n", .{});
+
+  var arena = std.heap.ArenaAllocator.init (std.heap.page_allocator);
+  defer arena.deinit ();
+  var allocator = arena.allocator ();
+
+  var opts_list = std.ArrayList ([] const u8).init (allocator);
+
+  try opts_list.appendSlice (&[_][] const u8 { options.CAMERA_ZOOM, });
+
+  try std.testing.expectError(options.OptionsError.MissingArgument, options.init2 (allocator, &opts_list));
+}
+
+test "parse CLI args: wrong camera zoom argument: invalid characters"
+{
+  std.debug.print ("\n", .{});
+
+  var arena = std.heap.ArenaAllocator.init (std.heap.page_allocator);
+  defer arena.deinit ();
+  var allocator = arena.allocator ();
+
+  var opts_list = std.ArrayList ([] const u8).init (allocator);
+
+  const camera_zoom_arg = "wrong_arg";
+  try opts_list.appendSlice (&[_][] const u8 {
+                                               options.CAMERA_ZOOM,
+                                               camera_zoom_arg,
+                                             });
+
+  try std.testing.expectError(error.InvalidCharacter, options.init2 (allocator, &opts_list));
+}
+
+test "parse CLI args: wrong camera zoom argument: negative integer"
+{
+  std.debug.print ("\n", .{});
+
+  var arena = std.heap.ArenaAllocator.init (std.heap.page_allocator);
+  defer arena.deinit ();
+  var allocator = arena.allocator ();
+
+  var opts_list = std.ArrayList ([] const u8).init (allocator);
+
+  const camera_zoom_arg = "-2";
+  try opts_list.appendSlice (&[_][] const u8 {
+                                               options.CAMERA_ZOOM,
+                                               camera_zoom_arg,
+                                             });
+
+  try std.testing.expectError(error.Overflow, options.init2 (allocator, &opts_list));
+}
+
+test "parse CLI args: wrong camera zoom argument: null integer"
+{
+  std.debug.print ("\n", .{});
+
+  var arena = std.heap.ArenaAllocator.init (std.heap.page_allocator);
+  defer arena.deinit ();
+  var allocator = arena.allocator ();
+
+  var opts_list = std.ArrayList ([] const u8).init (allocator);
+
+  const camera_zoom_arg = "0";
+  try opts_list.appendSlice (&[_][] const u8 {
+                                               options.CAMERA_ZOOM,
+                                               camera_zoom_arg,
+                                             });
+
+  try std.testing.expectError(options.OptionsError.ZeroIntegerArgument, options.init2 (allocator, &opts_list));
+}
+
+test "parse CLI args: NO long options"
+{
+  std.debug.print ("\n", .{});
+
+  var arena = std.heap.ArenaAllocator.init (std.heap.page_allocator);
+  defer arena.deinit ();
+  var allocator = arena.allocator ();
+
+  var opts_list = std.ArrayList ([] const u8).init (allocator);
+
+  try opts_list.appendSlice (&[_][] const u8 {
+                                               options.STARS_DYNAMIC,
+                                               options.CAMERA_DYNAMIC,
+                                               options.COLORS_SMOOTH,
+                                               options.STARS_DYNAMIC_NO,
+                                               options.CAMERA_DYNAMIC_NO,
+                                               options.COLORS_SMOOTH_NO,
+                                             });
+
+  const opts = try options.init2 (allocator, &opts_list);
+
+  try std.testing.expect (opts.help == options.DEFAULT_HELP);
+  try std.testing.expect (opts.output == options.DEFAULT_OUTPUT);
+  try std.testing.expect (opts.seed.random == true);
+  try std.testing.expect (opts.seed.sample == 0);
+  try std.testing.expect (opts.version == options.DEFAULT_VERSION);
+  try std.testing.expect (opts.window.type == options.DEFAULT_WINDOW);
+  try std.testing.expect (opts.window.width == options.DEFAULT_WINDOW_WIDTH);
+  try std.testing.expect (opts.window.height == options.DEFAULT_WINDOW_HEIGHT);
+  try std.testing.expect (opts.camera.dynamic == false);
+  try std.testing.expect (opts.camera.fps == options.DEFAULT_CAMERA_FPS);
+  try std.testing.expect (opts.camera.pixel == options.DEFAULT_CAMERA_PIXEL);
+  try std.testing.expect (opts.camera.slide == options.DEFAULT_CAMERA_SLIDE);
+  try std.testing.expect (opts.camera.zoom.random == true);
+  try std.testing.expect (opts.camera.zoom.percent == 0);
+  try std.testing.expect (opts.colors.smooth == false);
+  try std.testing.expect (opts.stars.dynamic == false);
+}
+
+test "parse CLI args: complex successfull usage case 1"
 {
   std.debug.print ("\n", .{});
 
@@ -668,10 +1192,13 @@ test "parse CLI args: complex 1"
   const output_arg = "potato";
   const camera_pixel_arg = "150";
   const camera_zoom_arg = "50";
+  const camera_fps_arg = "10";
   try opts_list.appendSlice (&[_][] const u8 {
                                                options.STARS_DYNAMIC,
+                                               options.CAMERA_DYNAMIC,
                                                options.COLORS_SMOOTH,
                                                options.SHORT_VERSION ++ options.SHORT_OUTPUT [1..] ++ options.SHORT_HELP [1..] ++ output_arg,
+                                               options.CAMERA_FPS ++ "=" ++ camera_fps_arg,
                                                options.CAMERA_PIXEL,
                                                camera_pixel_arg,
                                                options.CAMERA_ZOOM ++ "=" ++ camera_zoom_arg,
@@ -687,8 +1214,8 @@ test "parse CLI args: complex 1"
   try std.testing.expect (opts.window.type == options.DEFAULT_WINDOW);
   try std.testing.expect (opts.window.width == options.DEFAULT_WINDOW_WIDTH);
   try std.testing.expect (opts.window.height == options.DEFAULT_WINDOW_HEIGHT);
-  try std.testing.expect (opts.camera.dynamic == options.DEFAULT_CAMERA_DYNAMIC);
-  try std.testing.expect (opts.camera.fps == options.DEFAULT_CAMERA_FPS);
+  try std.testing.expect (opts.camera.dynamic == true);
+  try std.testing.expect (opts.camera.fps.? == try std.fmt.parseInt (u8, camera_fps_arg, 10));
   try std.testing.expect (opts.camera.pixel == try std.fmt.parseInt (u32, camera_pixel_arg, 10));
   try std.testing.expect (opts.camera.slide == options.DEFAULT_CAMERA_SLIDE);
   try std.testing.expect (opts.camera.zoom.random == false);

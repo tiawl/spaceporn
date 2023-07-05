@@ -586,10 +586,11 @@ pub const context_vk = struct
       image_count = self.capabilities.max_image_count;
     }
 
-    const queue_family_indices = [_] u32 {
-                                           self.candidate.graphics_family,
-                                           self.candidate.present_family,
-                                         };
+    const queue_family_indices = [_] u32
+                                 {
+                                   self.candidate.graphics_family,
+                                   self.candidate.present_family,
+                                 };
 
     const create_info = vk.SwapchainCreateInfoKHR
                         {

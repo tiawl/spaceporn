@@ -1,32 +1,35 @@
 const std = @import ("std");
 
 const utils    = @import ("utils.zig");
-const log_app  = utils.log_app;
-const severity = utils.severity;
 
 const context = @import ("context.zig").context;
 const opts    = @import ("options.zig").options;
 
-pub fn main () !void
+pub fn main () void
 {
-  var status: u2 = 0;
   var arena = std.heap.ArenaAllocator.init (std.heap.page_allocator);
   defer arena.deinit ();
   var allocator = arena.allocator ();
+
+  _ = opts.init (allocator) catch
+      {
+        std.process.exit (1);
+      };
+
+  var app = context.init (allocator) catch
+            {
+              std.process.exit (1);
+            };
+
+  defer app.cleanup () catch
   {
-    errdefer status = 1;
+    std.process.exit (1);
+  };
 
-    _ = try opts.init (allocator);
+  app.loop () catch
+  {
+    std.process.exit (1);
+  };
 
-    var app = try context.init (allocator);
-
-    defer app.cleanup () catch
-    {
-      log_app ("failed to cleanup {s} context", severity.ERROR, .{ utils.exe }) catch {};
-    };
-
-    try app.loop ();
-  }
-
-  std.process.exit (status);
+  std.process.exit (0);
 }

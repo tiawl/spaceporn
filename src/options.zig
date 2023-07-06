@@ -129,6 +129,7 @@ pub const options = struct
     ZeroIntegerArgument,
     OverflowArgument,
     Help,
+    Version,
   };
 
   fn usage_help (self: *Self) void
@@ -236,6 +237,12 @@ pub const options = struct
     std.debug.print ("\nThe {s} home page: http://www.github.com/tiawl/spaceporn\nReport {s} bugs to http://www.github.com/tiawl/spaceporn/issues\n\n", .{ utils.exe, utils.exe });
   }
 
+  fn print_version (self: Self) void
+  {
+    _ = self;
+    std.debug.print ("{s} {s}\n", .{ exe, build.VERSION, });
+  }
+
   fn parse (self: *Self, allocator: std.mem.Allocator, opts: *std.ArrayList ([] const u8)) !void
   {
     var index: usize = 0;
@@ -244,8 +251,6 @@ pub const options = struct
 
     while (index < opts.items.len)
     {
-      std.log.debug ("{s} | {s}", .{opts.items, opts.items [index]});
-
       // Handle '-abc' the same as '-a -bc' for short-form no-arg options
       if (opts.items [index][0] == '-' and opts.items [index].len > 2
           and (opts.items [index][1] == SHORT_HELP [1]
@@ -630,6 +635,9 @@ pub const options = struct
     {
       self.usage ();
       return OptionsError.Help;
+    } else if (self.version) {
+      self.print_version ();
+      return OptionsError.Version;
     }
 
     self.fix_random ();

@@ -24,6 +24,7 @@ pub fn build (builder: *std.Build) !void
 
   const build_options = builder.addOptions ();
   const EXE = "spaceporn";
+  const VERSION = std.os.getenv ("VERSION").?;
   const DEV = builder.option (bool, "DEV", "Build " ++ EXE ++ " in verbose mode.") orelse false;
   const TURBO = builder.option (bool, "TURBO", "Build " ++ EXE ++ " without logging feature. LOG build option is ignored.") orelse false;
 
@@ -34,6 +35,7 @@ pub fn build (builder: *std.Build) !void
   }
 
   build_options.addOption ([] const u8, "EXE", EXE);
+  build_options.addOption ([] const u8, "VERSION", VERSION);
 
   var mode: std.builtin.Mode = undefined;
 

@@ -10,21 +10,27 @@ const severity = utils.severity;
 
 pub const options = struct
 {
+  const Self = @This ();
+
   const DEFAULT_HELP = false;
   const SHORT_HELP   = "-h";
   const LONG_HELP    = "--help";
+  const HELP_FLAGS   = "  " ++ SHORT_HELP ++ ", " ++ LONG_HELP;
 
   const DEFAULT_OUTPUT = null;
   const SHORT_OUTPUT   = "-o";
   const LONG_OUTPUT    = "--output";
+  const OUTPUT_FLAGS   = "  " ++ SHORT_OUTPUT ++ ", " ++ LONG_OUTPUT ++ " <NAME>";
 
   const DEFAULT_SEED = .{ .random = true, .sample = 0, };
-  const SHORT_SEED   = "-S";
+  const SHORT_SEED   = "-s";
   const LONG_SEED    = "--seed";
+  const SEED_FLAGS   = "  " ++ SHORT_SEED ++ ", " ++ LONG_SEED ++ " <SEED>";
 
   const DEFAULT_VERSION = false;
   const SHORT_VERSION   = "-v";
   const LONG_VERSION    = "--version";
+  const VERSION_FLAGS   = "  " ++ SHORT_VERSION ++ ", " ++ LONG_VERSION;
 
   const OptionsWindow = enum
   {
@@ -36,34 +42,55 @@ pub const options = struct
   const DEFAULT_WINDOW_HEIGHT = 600;
   const SHORT_WINDOW          = "-w";
   const LONG_WINDOW           = "--window";
+  const WINDOW_FLAGS          = "  " ++ SHORT_WINDOW ++ ", " ++ LONG_WINDOW ++ " <TYPE>";
 
   const DEFAULT_CAMERA_DYNAMIC = false;
   const CAMERA_DYNAMIC         = "--camera-dynamic";
   const CAMERA_DYNAMIC_NO      = "--no" ++ CAMERA_DYNAMIC [1..];
+  const CAMERA_DYNAMIC_FLAGS   = "  " ++ CAMERA_DYNAMIC ++ ", " ++ CAMERA_DYNAMIC_NO;
 
   const DEFAULT_CAMERA_FPS = null;
   const CAMERA_FPS         = "--camera-fps";
+  const CAMERA_FPS_FLAGS   = "  " ++ CAMERA_FPS ++ " <FPS>";
 
   const DEFAULT_CAMERA_PIXEL = 200;
   const CAMERA_PIXEL         = "--camera-pixel";
   const CAMERA_PIXEL_MIN     = 100;
   const CAMERA_PIXEL_MAX     = 600;
+  const CAMERA_PIXEL_FLAGS   = "  " ++ CAMERA_PIXEL ++ " <PIXEL>";
 
   const DEFAULT_CAMERA_SLIDE = null;
   const CAMERA_SLIDE         = "--camera-slide";
+  const CAMERA_SLIDE_FLAGS   = "  " ++ CAMERA_SLIDE ++ " <SECS>";
 
   const DEFAULT_CAMERA_ZOOM = .{ .random = true, .percent = 0, };
   const CAMERA_ZOOM         = "--camera-zoom";
   const CAMERA_ZOOM_MIN     = 1;
   const CAMERA_ZOOM_MAX     = 40;
+  const CAMERA_ZOOM_FLAGS   = "  " ++ CAMERA_ZOOM ++ " <PERCENT>";
 
   const DEFAULT_COLORS_SMOOTH = false;
   const COLORS_SMOOTH         = "--colors-smooth";
   const COLORS_SMOOTH_NO      = "--no" ++ COLORS_SMOOTH [1..];
+  const COLORS_SMOOTH_FLAGS   = "  " ++ COLORS_SMOOTH ++ ", " ++ COLORS_SMOOTH_NO;
 
   const DEFAULT_STARS_DYNAMIC = false;
   const STARS_DYNAMIC         = "--stars-dynamic";
   const STARS_DYNAMIC_NO      = "--no" ++ STARS_DYNAMIC [1..];
+  const STARS_DYNAMIC_FLAGS   = "  " ++ STARS_DYNAMIC ++ ", " ++ STARS_DYNAMIC_NO;
+
+  const MAX_FLAGS_LEN = blk:
+                        {
+                          var max: usize = 0;
+                          inline for (@typeInfo (Self).Struct.decls) |decl|
+                          {
+                            if (std.mem.endsWith (u8, decl.name, "_FLAGS"))
+                            {
+                              max = @max (max, @field (Self, decl.name).len);
+                            }
+                          }
+                          break :blk max;
+                        };
 
   const camera_options = struct
   {
@@ -93,8 +120,6 @@ pub const options = struct
   colors:  colors_options                                             = colors_options {},
   stars:   stars_options                                              = stars_options {},
 
-  const Self = @This ();
-
   const OptionsError = error
   {
     NoExecutableName,
@@ -103,56 +128,112 @@ pub const options = struct
     UnknownArgument,
     ZeroIntegerArgument,
     OverflowArgument,
+    Help,
   };
 
-  fn help_help (self: Self) void
+  fn usage_help (self: *Self) void
   {
     _ = self;
-    std.debug.print ("{s},{s} - Print this help\n", SHORT_HELP, LONG_HELP);
+    std.debug.print ("{s}{s} - Print this help\n", .{ HELP_FLAGS, " " ** (MAX_FLAGS_LEN - HELP_FLAGS.len), });
   }
 
-  fn help_output (self: Self) void
-  {
-    std.debug.print ("{s},{s} <NAME> - Generate a PPM file of the displayed view with the specified NAME if selected options are fully static\n", SHORT_OUTPUT, LONG_OUTPUT);
-  }
-
-  fn help_version (self: Self) void
+  fn usage_output (self: *Self) void
   {
     _ = self;
-    std.debug.print ("{s},{s} - Report the version\n", SHORT_VERSION, LONG_VERSION);
+    std.debug.print ("{s}{s} - Generate a PPM file of the displayed view with the specified NAME if selected options are fully static\n", .{ OUTPUT_FLAGS, " " ** (MAX_FLAGS_LEN - OUTPUT_FLAGS.len), });
   }
 
-  fn help_seed (self: Self) void
-  {
-    std.debug.print ("{s},{s} <SEED> - Use the specifies SEED instead of a random one\n{s}Default: random, Possible values: [0;{d}]\n", SHORT_SEED, LONG_SEED, " " ** (SHORT_SEED.len + LONG_SEED.len + 11), std.math.maxInt (@TypeOf (self.seed.sample)));
-  }
-
-  fn help_window (self: Self) void
+  fn usage_version (self: *Self) void
   {
     _ = self;
+    std.debug.print ("{s}{s} - Report the version\n", .{ VERSION_FLAGS, " " ** (MAX_FLAGS_LEN - VERSION_FLAGS.len), });
   }
 
-  fn help_camera (self: Self) void
+  fn usage_seed (self: *Self) void
+  {
+    std.debug.print ("{s}{s} - Use the specifies SEED instead of a random one. Default: random. Possible values: [0;{d}]\n", .{ SEED_FLAGS, " " ** (MAX_FLAGS_LEN - SEED_FLAGS.len), std.math.maxInt (@TypeOf (self.seed.sample)), });
+  }
+
+  fn usage_window (self: *Self) void
   {
     _ = self;
+    std.debug.print ("{s}{s} - Use the specifies window TYPE. Default: {d}x{d}. Possible values: WINDOWxHEIGHT\n", .{ WINDOW_FLAGS, " " ** (MAX_FLAGS_LEN - WINDOW_FLAGS.len), DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, });
   }
 
-  fn help_colors (self: Self) void
+  fn usage_camera_dynamic (self: *Self) void
   {
     _ = self;
+    std.debug.print ("{s}{s} - Move the camera. Default: {}\n", .{ CAMERA_DYNAMIC_FLAGS, " " ** (MAX_FLAGS_LEN - CAMERA_DYNAMIC_FLAGS.len), DEFAULT_CAMERA_DYNAMIC, });
   }
 
-  fn help_stars (self: Self) void
+  fn usage_camera_fps (self: *Self) void
+  {
+    self.camera.fps = 0;
+    std.debug.print ("{s}{s} - Set the maximum FPS. Default: max. Possible values: [1;{d}]\n", .{ CAMERA_FPS_FLAGS, " " ** (MAX_FLAGS_LEN - CAMERA_FPS_FLAGS.len), std.math.maxInt (@TypeOf (self.camera.fps.?)), });
+  }
+
+  fn usage_camera_pixel (self: *Self) void
   {
     _ = self;
+    std.debug.print ("{s}{s} - Set the pixellization for the wider screen side. Default: {d}. Possible values: [{d};{d}]\n", .{ CAMERA_PIXEL_FLAGS, " " ** (MAX_FLAGS_LEN - CAMERA_PIXEL_FLAGS.len), DEFAULT_CAMERA_PIXEL, CAMERA_PIXEL_MIN, CAMERA_PIXEL_MAX, });
   }
 
-  fn help (self: Self) void
+  fn usage_camera_slide (self: *Self) void
   {
-    inline for (std.meta.fields(@TypeOf(self))) |field|
+    self.camera.slide = 0;
+    std.debug.print ("{s}{s} - Use slide mode: a new seed will be generated every SECS seconds. Default: off. Possible values: [1;{d}]\n", .{ CAMERA_SLIDE_FLAGS, " " ** (MAX_FLAGS_LEN - CAMERA_SLIDE_FLAGS.len), std.math.maxInt (@TypeOf (self.camera.slide.?)), });
+  }
+
+  fn usage_camera_zoom (self: *Self) void
+  {
+    _ = self;
+    std.debug.print ("{s}{s} - Set the zoom level. Default: random. Possible values: [{d};{d}]\n", .{ CAMERA_ZOOM_FLAGS, " " ** (MAX_FLAGS_LEN - CAMERA_ZOOM_FLAGS.len), CAMERA_ZOOM_MIN, CAMERA_ZOOM_MAX, });
+  }
+
+  fn usage_camera (self: *Self) void
+  {
+    inline for (std.meta.fields (@TypeOf (self.camera))) |field|
     {
-      @call (.auto, @field (Self, "help_" ++ field.name), .{ self });
+      @call (.auto, @field (Self, "usage_camera_" ++ field.name), .{ self });
     }
+  }
+
+  fn usage_colors_smooth (self: *Self) void
+  {
+    _ = self;
+    std.debug.print ("{s}{s} - Smooth colors transition. Default: {}\n", .{ COLORS_SMOOTH_FLAGS, " " ** (MAX_FLAGS_LEN - COLORS_SMOOTH_FLAGS.len), DEFAULT_COLORS_SMOOTH, });
+  }
+
+  fn usage_colors (self: *Self) void
+  {
+    inline for (std.meta.fields (@TypeOf (self.colors))) |field|
+    {
+      @call (.auto, @field (Self, "usage_colors_" ++ field.name), .{ self });
+    }
+  }
+
+  fn usage_stars_dynamic (self: *Self) void
+  {
+    _ = self;
+    std.debug.print ("{s}{s} - Dynamic stars light. Default: {}\n", .{ STARS_DYNAMIC_FLAGS, " " ** (MAX_FLAGS_LEN - STARS_DYNAMIC_FLAGS.len), DEFAULT_STARS_DYNAMIC, });
+  }
+
+  fn usage_stars (self: *Self) void
+  {
+    inline for (std.meta.fields (@TypeOf (self.stars))) |field|
+    {
+      @call (.auto, @field (Self, "usage_stars_" ++ field.name), .{ self });
+    }
+  }
+
+  fn usage (self: *Self) void
+  {
+    std.debug.print ("\nUsage: {s} [OPTION] ...\n\nSpawn window or generate file for space contemplators\n\nOptions:\n", .{ utils.exe });
+    inline for (std.meta.fields (@TypeOf (self.*))) |field|
+    {
+      @call (.auto, @field (Self, "usage_" ++ field.name), .{ self });
+    }
+    std.debug.print ("\nThe {s} home page: http://www.github.com/tiawl/spaceporn\nReport {s} bugs to http://www.github.com/tiawl/spaceporn/issues\n\n", .{ utils.exe, utils.exe });
   }
 
   fn parse (self: *Self, allocator: std.mem.Allocator, opts: *std.ArrayList ([] const u8)) !void
@@ -440,6 +521,7 @@ pub const options = struct
 
       } else {
         try log_app ("unknown option: '{s}'", severity.ERROR, .{ opts.items [index] });
+        self.usage ();
         return OptionsError.UnknownOption;
       }
 
@@ -543,6 +625,13 @@ pub const options = struct
 
     try self.parse (allocator, &opts);
     try self.check ();
+
+    if (self.help)
+    {
+      self.usage ();
+      return OptionsError.Help;
+    }
+
     self.fix_random ();
     if (build.LOG_LEVEL > @intFromEnum (profile.TURBO)) try self.show ();
 

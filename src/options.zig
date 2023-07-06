@@ -86,7 +86,7 @@ pub const options = struct
 
   help:    bool                                                       = DEFAULT_HELP,
   output:  ?[] const u8                                               = DEFAULT_OUTPUT,
-  seed:    struct { random: bool, sample: u32, }                      = DEFAULT_SEED,
+  seed:    struct { random: bool, sample: u64, }                      = DEFAULT_SEED,
   version: bool                                                       = DEFAULT_VERSION,
   window:  struct { type: OptionsWindow, width: ?u32, height: ?u32, } = .{ .type = DEFAULT_WINDOW, .width = DEFAULT_WINDOW_WIDTH, .height = DEFAULT_WINDOW_HEIGHT, },
   camera:  camera_options                                             = camera_options {},
@@ -104,6 +104,56 @@ pub const options = struct
     ZeroIntegerArgument,
     OverflowArgument,
   };
+
+  fn help_help (self: Self) void
+  {
+    _ = self;
+    std.debug.print ("{s},{s} - Print this help\n", SHORT_HELP, LONG_HELP);
+  }
+
+  fn help_output (self: Self) void
+  {
+    std.debug.print ("{s},{s} <NAME> - Generate a PPM file of the displayed view with the specified NAME if selected options are fully static\n", SHORT_OUTPUT, LONG_OUTPUT);
+  }
+
+  fn help_version (self: Self) void
+  {
+    _ = self;
+    std.debug.print ("{s},{s} - Report the version\n", SHORT_VERSION, LONG_VERSION);
+  }
+
+  fn help_seed (self: Self) void
+  {
+    std.debug.print ("{s},{s} <SEED> - Use the specifies SEED instead of a random one\n{s}Default: random, Possible values: [0;{d}]\n", SHORT_SEED, LONG_SEED, " " ** (SHORT_SEED.len + LONG_SEED.len + 11), std.math.maxInt (@TypeOf (self.seed.sample)));
+  }
+
+  fn help_window (self: Self) void
+  {
+    _ = self;
+  }
+
+  fn help_camera (self: Self) void
+  {
+    _ = self;
+  }
+
+  fn help_colors (self: Self) void
+  {
+    _ = self;
+  }
+
+  fn help_stars (self: Self) void
+  {
+    _ = self;
+  }
+
+  fn help (self: Self) void
+  {
+    inline for (std.meta.fields(@TypeOf(self))) |field|
+    {
+      @call (.auto, @field (Self, "help_" ++ field.name), .{ self });
+    }
+  }
 
   fn parse (self: *Self, allocator: std.mem.Allocator, opts: *std.ArrayList ([] const u8)) !void
   {
@@ -182,7 +232,7 @@ pub const options = struct
           try log_app ("missing mandatory argument with {s},{s} option", severity.ERROR, .{ SHORT_SEED, LONG_SEED });
           return OptionsError.MissingArgument;
         } else {
-          self.seed.sample = std.fmt.parseInt (u32, opts.items [index + 1], 10) catch |err|
+          self.seed.sample = std.fmt.parseInt (u64, opts.items [index + 1], 10) catch |err|
                              {
                                if (err == error.InvalidCharacter or err == error.Overflow)
                                {
@@ -430,7 +480,7 @@ pub const options = struct
   {
     if (self.seed.random)
     {
-      self.seed.sample = @intCast (@mod (std.time.milliTimestamp (), std.math.maxInt (u32)));
+      self.seed.sample = @intCast (std.time.milliTimestamp ());
     }
 
     if (self.camera.zoom.random)

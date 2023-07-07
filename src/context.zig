@@ -12,6 +12,8 @@ const log_file = utils.log_file;
 const profile  = utils.profile;
 const severity = utils.severity;
 
+const opts = @import ("options.zig").options;
+
 pub const context = struct
 {
   glfw: context_glfw = undefined,
@@ -55,13 +57,13 @@ pub const context = struct
     try log_app ("log file init OK", severity.DEBUG, .{});
   }
 
-  pub fn init (allocator: std.mem.Allocator) !Self
+  pub fn init (allocator: std.mem.Allocator, options: opts) !Self
   {
     try init_logfile ();
 
     var self = Self {};
 
-    self.glfw = try context_glfw.init ();
+    self.glfw = try context_glfw.init (options);
 
     self.vk = try context_vk.init_instance (&self.glfw.extensions, self.glfw.instance_proc_addr, allocator);
 

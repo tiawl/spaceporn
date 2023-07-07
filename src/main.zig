@@ -11,12 +11,12 @@ pub fn main () void
   defer arena.deinit ();
   var allocator = arena.allocator ();
 
-  _ = opts.init (allocator) catch
-      {
-        std.process.exit (1);
-      };
+  const options = opts.init (allocator) catch
+                  {
+                    std.process.exit (1);
+                  };
 
-  var app = context.init (allocator) catch
+  var app = context.init (allocator, options) catch
             {
               std.process.exit (1);
             };

@@ -32,7 +32,7 @@ pub const options = struct
   const LONG_VERSION    = "--version";
   const VERSION_FLAGS   = "  " ++ SHORT_VERSION ++ ", " ++ LONG_VERSION;
 
-  const OptionsWindow = enum
+  pub const OptionsWindow = enum
   {
     Basic,
   };

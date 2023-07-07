@@ -8,6 +8,8 @@ const log_app  = utils.log_app;
 const profile  = utils.profile;
 const severity = utils.severity;
 
+const opts = @import ("../options.zig").options;
+
 const dispatch         = @import ("dispatch.zig");
 const InstanceDispatch = dispatch.InstanceDispatch;
 const DeviceDispatch   = dispatch.DeviceDispatch;
@@ -27,7 +29,7 @@ const uniform_buffer_object_vk = struct
 const offscreen_uniform_buffer_object_vk = struct
 {
   // WARNING: manage alignment when adding new field
-  blue: f32,
+  seed: f32,
 };
 
 pub const context_vk = struct
@@ -1798,7 +1800,7 @@ pub const context_vk = struct
     try self.init_framebuffers (allocator.*);
   }
 
-  fn update_uniform_buffer (self: *Self) !void
+  fn update_uniform_buffer (self: *Self, options: opts) !void
   {
     const ubo_size = @sizeOf (uniform_buffer_object_vk);
 
@@ -1817,7 +1819,7 @@ pub const context_vk = struct
 
       const oubo = offscreen_uniform_buffer_object_vk
                    {
-                     .blue = 0.5,
+                     .seed = options.seed.sample,
                    };
 
       data = try self.device_dispatch.mapMemory (self.logical_device, self.offscreen_uniform_buffers_memory, 0, oubo_size, vk.MemoryMapFlags {});
@@ -1826,7 +1828,7 @@ pub const context_vk = struct
     }
   }
 
-  fn draw_frame (self: *Self, framebuffer: struct { resized: bool, width: u32, height: u32, }, arena: *std.heap.ArenaAllocator, allocator: *std.mem.Allocator) !void
+  fn draw_frame (self: *Self, framebuffer: struct { resized: bool, width: u32, height: u32, }, arena: *std.heap.ArenaAllocator, allocator: *std.mem.Allocator, options: opts) !void
   {
     _ = try self.device_dispatch.waitForFences (self.logical_device, 1, &[_] vk.Fence { self.in_flight_fences [self.current_frame] }, vk.TRUE, std.math.maxInt (u64));
 
@@ -1839,7 +1841,7 @@ pub const context_vk = struct
                              else               => return err,
                            };
 
-    try self.update_uniform_buffer ();
+    try self.update_uniform_buffer (options);
 
     _ = try self.device_dispatch.resetFences (self.logical_device, 1, &[_] vk.Fence { self.in_flight_fences [self.current_frame] });
 
@@ -1895,9 +1897,9 @@ pub const context_vk = struct
     self.current_frame = (self.current_frame + 1) % MAX_FRAMES_IN_FLIGHT;
   }
 
-  pub fn loop (self: *Self, framebuffer: struct { resized: bool, width: u32, height: u32, }, arena: *std.heap.ArenaAllocator, allocator: *std.mem.Allocator) !void
+  pub fn loop (self: *Self, framebuffer: struct { resized: bool, width: u32, height: u32, }, arena: *std.heap.ArenaAllocator, allocator: *std.mem.Allocator, options: opts) !void
   {
-    try self.draw_frame (.{ .resized = framebuffer.resized, .width = framebuffer.width, .height = framebuffer.height, }, arena, allocator);
+    try self.draw_frame (.{ .resized = framebuffer.resized, .width = framebuffer.width, .height = framebuffer.height, }, arena, allocator, options);
     try log_app ("loop Vulkan OK", severity.DEBUG, .{});
   }
 

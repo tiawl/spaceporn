@@ -26,7 +26,7 @@ pub fn main () void
     std.process.exit (1);
   };
 
-  app.loop () catch
+  app.loop (options) catch
   {
     std.process.exit (1);
   };

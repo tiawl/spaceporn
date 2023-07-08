@@ -185,24 +185,6 @@ pub fn build (builder: *std.Build) !void
   const test_step = builder.step("test", "Run tests");
   test_step.dependOn(&test_cmd.step);
 
-  // Init a new run artifact step that will run exe (invisible for user)
-  const run_cmd = builder.addRunArtifact (exe);
-
-  // Run artifact step must be made after install step is made
-  run_cmd.step.dependOn (builder.getInstallStep());
-
-  // Allow to pass arguments from the zig build command line: zig build run -- -o foo.bin foo.asm
-  if (builder.args) |args|
-  {
-    run_cmd.addArgs (args);
-  }
-
-  // Init a new step (visible for user)
-  const run_step = builder.step ("run", "Run the app");
-
-  // New step must be made after run artifact step is made
-  run_step.dependOn (&run_cmd.step);
-
   if (DEV)
   {
     var arena = std.heap.ArenaAllocator.init (std.heap.page_allocator);
@@ -255,4 +237,22 @@ pub fn build (builder: *std.Build) !void
       std.process.exit (1);
     }
   }
+
+  // Init a new run artifact step that will run exe (invisible for user)
+  const run_cmd = builder.addRunArtifact (exe);
+
+  // Run artifact step must be made after install step is made
+  run_cmd.step.dependOn (builder.getInstallStep());
+
+  // Allow to pass arguments from the zig build command line: zig build run -- -o foo.bin foo.asm
+  if (builder.args) |args|
+  {
+    run_cmd.addArgs (args);
+  }
+
+  // Init a new step (visible for user)
+  const run_step = builder.step ("run", "Run the app");
+
+  // New step must be made after run artifact step is made
+  run_step.dependOn (&run_cmd.step);
 }

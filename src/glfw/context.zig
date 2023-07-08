@@ -6,6 +6,9 @@ const log_app  = utils.log_app;
 const exe      = utils.exe;
 const severity = utils.severity;
 
+const opts          = @import ("../options.zig").options;
+const OptionsWindow = opts.OptionsWindow;
+
 const GlfwError = error
 {
   ContextInitFailed,
@@ -41,7 +44,7 @@ pub const context_glfw = struct
     self.?.framebuffer_resized = true;
   }
 
-  pub fn init () !Self
+  pub fn init (options: opts) !Self
   {
     var self = Self {};
 
@@ -64,11 +67,14 @@ pub const context_glfw = struct
                     .resizable  = true,
                   };
 
-    self.window = glfw.Window.create (800, 600, exe, null, null, hints) orelse
+    if (options.window.type == OptionsWindow.Basic)
     {
-      try log_app ("failed to initialize GLFW window: {?s}", severity.ERROR, .{ glfw.getErrorString () });
-      return GlfwError.WindowInitFailed;
-    };
+      self.window = glfw.Window.create (options.window.width.?, options.window.height.?, exe, null, null, hints) orelse
+      {
+        try log_app ("failed to initialize GLFW window: {?s}", severity.ERROR, .{ glfw.getErrorString () });
+        return GlfwError.WindowInitFailed;
+      };
+    }
     errdefer self.window.destroy ();
 
     self.framebuffer_resized = true;

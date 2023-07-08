@@ -1,7 +1,9 @@
+const version         = @import("builtin").zig_version;
+const min_zig_version = "0.10.1";
+
 const std = @import ("std");
 
 const glfw = @import ("libs/mach-glfw/build.zig");
-// const glfw = @import ("libs/mach-glfw/sdk.zig").Sdk (.{ .xcode_frameworks = @import("libs/mach-glfw/libs/xcode-frameworks/build.zig"), });
 const vk_gen = @import ("libs/vulkan-zig/generator/index.zig");
 
 pub fn build (builder: *std.Build) !void
@@ -24,8 +26,15 @@ pub fn build (builder: *std.Build) !void
 
   const build_options = builder.addOptions ();
   const EXE = "spaceporn";
+  const VERSION = std.os.getenv ("VERSION").?;
   const DEV = builder.option (bool, "DEV", "Build " ++ EXE ++ " in verbose mode.") orelse false;
   const TURBO = builder.option (bool, "TURBO", "Build " ++ EXE ++ " without logging feature. LOG build option is ignored.") orelse false;
+
+  if (version.order (std.SemanticVersion.parse (min_zig_version) catch unreachable) != .gt)
+  {
+    std.log.err ("{s} needs at least Zig {s} to be build", .{ EXE, min_zig_version, });
+    std.process.exit (1);
+  }
 
   if (TURBO and DEV)
   {
@@ -34,6 +43,7 @@ pub fn build (builder: *std.Build) !void
   }
 
   build_options.addOption ([] const u8, "EXE", EXE);
+  build_options.addOption ([] const u8, "VERSION", VERSION);
 
   var mode: std.builtin.Mode = undefined;
 
@@ -57,8 +67,8 @@ pub fn build (builder: *std.Build) !void
       // Do not return error if log directory already exists
       if (err != std.fs.File.OpenError.PathAlreadyExists)
       {
-        std.log.err ("filed to build {s}", .{ LOG_DIR });
-        return err;
+        std.log.err ("failed to build {s}", .{ LOG_DIR });
+        std.process.exit (1);
       }
     };
 
@@ -102,7 +112,30 @@ pub fn build (builder: *std.Build) !void
   }
 
   // mach-glfw
-  try glfw.link (builder, exe, .{});
+  glfw.link (builder, exe, .{}) catch
+  {
+    std.log.err ("failed to link GLFW", .{});
+    std.process.exit (1);
+  };
+
+  // cimgui
+  if (DEV)
+  {
+    exe.addIncludePath ("libs/cimgui");
+    exe.addIncludePath ("libs/cimgui/imgui");
+    exe.addIncludePath ("libs/cimgui/imgui/backends");
+    exe.addIncludePath ("libs/cimgui/generator/output");
+    exe.addCSourceFiles (&[_][] const u8
+      {
+        "libs/cimgui/cimgui.cpp",
+        "libs/cimgui/imgui/imgui.cpp",
+        "libs/cimgui/imgui/imgui_demo.cpp",
+        "libs/cimgui/imgui/imgui_draw.cpp",
+        "libs/cimgui/imgui/imgui_tables.cpp",
+        "libs/cimgui/imgui/imgui_widgets.cpp",
+      }, &.{});
+    exe.linkLibCpp ();
+  }
 
   // shader resources, to be compiled using glslc
   const shaders = vk_gen.ShaderCompileStep.create (builder, &[_][] const u8 { "glslc", "--target-env=vulkan1.2" }, "-o");

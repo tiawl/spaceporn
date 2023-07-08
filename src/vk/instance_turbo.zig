@@ -15,7 +15,7 @@ pub const instance_vk = struct
   base_dispatch:      BaseDispatch = undefined,
   dispatch:           InstanceDispatch = undefined,
   instance:           vk.Instance = undefined,
-  fxtensions:         [][*:0] const u8 = undefined,
+  extensions:         [][*:0] const u8 = undefined,
   instance_proc_addr: *const fn (?*anyopaque, [*:0] const u8) callconv (.C) ?*const fn () callconv (.C) void = undefined,
 
   const Self = @This ();

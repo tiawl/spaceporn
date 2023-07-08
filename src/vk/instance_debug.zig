@@ -9,6 +9,8 @@ const exe      = utils.exe;
 const profile  = utils.profile;
 const severity = utils.severity;
 
+const gui = if (build.LOG_LEVEL > @intFromEnum (profile.DEFAULT)) @cImport({ @cInclude("cimgui.h"); }) else null;
+
 const dispatch_vk      = @import ("dispatch.zig");
 const BaseDispatch     = dispatch_vk.BaseDispatch;
 const InstanceDispatch = dispatch_vk.InstanceDispatch;
@@ -30,7 +32,7 @@ pub const instance_vk = struct
 
   const Self = @This ();
 
-  pub const required_layers = [_][] const u8
+  pub const required_layers = [_][*:0] const u8
   {
     "VK_LAYER_KHRONOS_validation",
   };
@@ -41,12 +43,31 @@ pub const instance_vk = struct
     vk.extension_info.ext_debug_utils.name,
   };
 
-  var optional_extensions = [_] ext_vk
-  {
-    .{
-       .name = vk.extension_info.ext_device_address_binding_report.name,
-     },
-  };
+  var optional_extensions = blk:
+                            {
+                              if (build.LOG_LEVEL > @intFromEnum (profile.DEFAULT))
+                              {
+                                break :blk [_] ext_vk
+                                           {
+                                             .{
+                                                .name = vk.extension_info.ext_device_address_binding_report.name,
+                                              },
+                                             .{
+                                                .name = vk.extension_info.khr_shader_non_semantic_info.name,
+                                              },
+                                             .{
+                                                .name = vk.extension_info.ext_validation_features.name,
+                                              },
+                                           };
+                              } else {
+                                break :blk [_] ext_vk
+                                           {
+                                             .{
+                                                .name = vk.extension_info.ext_device_address_binding_report.name,
+                                              },
+                                           };
+                              }
+                            };
 
   const InitVkError = error
   {
@@ -115,7 +136,10 @@ pub const instance_vk = struct
 
       while (i < available_layers_count)
       {
-        if (std.mem.eql (u8, layer, available_layers[i].layer_name[0..layer.len])) found = true;
+        const required_layer = std.mem.span (layer);
+        const available_layer = available_layers [i].layer_name [0..required_layer.len];
+        found = std.mem.eql (u8, required_layer, available_layer);
+        if (found) break;
         i += 1;
       }
 
@@ -135,33 +159,59 @@ pub const instance_vk = struct
 
   fn init_debug_info (debug_info: *vk.DebugUtilsMessengerCreateInfoEXT) void
   {
+    const use_features = blk:
+                         {
+                           var i: u8 = 0;
+                           for (optional_extensions) |ext|
+                           {
+                             if (ext.name == vk.extension_info.khr_shader_non_semantic_info.name.ptr and ext.supported)
+                             {
+                               i += 1;
+                             } else if (ext.name == vk.extension_info.ext_validation_features.name.ptr and ext.supported) {
+                               i += 1;
+                             }
+                           }
+                           break :blk (i == 2);
+                         };
+
+    const enabled_features = [_] vk.ValidationFeatureEnableEXT { .debug_printf_ext, .best_practices_ext, };
+
+    const features = vk.ValidationFeaturesEXT
+                     {
+                       .enabled_validation_feature_count  = enabled_features.len,
+                       .p_enabled_validation_features     = &enabled_features,
+                       .disabled_validation_feature_count = 0,
+                       .p_disabled_validation_features    = null,
+                     };
+
     debug_info.* = vk.DebugUtilsMessengerCreateInfoEXT
                    {
-                     .message_severity = vk.DebugUtilsMessageSeverityFlagsEXT
-                                         {
-                                           .verbose_bit_ext = (build.LOG_LEVEL > @intFromEnum (profile.DEFAULT)),
-                                           .info_bit_ext    = true,
-                                           .warning_bit_ext = true,
-                                           .error_bit_ext   = true,
-                                         },
-                     .message_type = vk.DebugUtilsMessageTypeFlagsEXT
-                                     {
-                                       .general_bit_ext                = true,
-                                       .validation_bit_ext             = true,
-                                       .device_address_binding_bit_ext = blk:
-                                                                         {
-                                                                           for (optional_extensions) |ext|
-                                                                           {
-                                                                             if (ext.name == vk.extension_info.ext_device_address_binding_report.name.ptr and ext.supported)
-                                                                             {
-                                                                               break :blk true;
-                                                                             }
-                                                                           }
-                                                                           break :blk false;
-                                                                         },
-                                       .performance_bit_ext            = (build.LOG_LEVEL > @intFromEnum (profile.DEFAULT)),
-                                     },
+                     .message_severity  = vk.DebugUtilsMessageSeverityFlagsEXT
+                                          {
+                                            .verbose_bit_ext = (build.LOG_LEVEL > @intFromEnum (profile.DEFAULT)),
+                                            .info_bit_ext    = true,
+                                            .warning_bit_ext = true,
+                                            .error_bit_ext   = true,
+                                          },
+                     .message_type      = vk.DebugUtilsMessageTypeFlagsEXT
+                                          {
+                                            .general_bit_ext                = true,
+                                            .validation_bit_ext             = true,
+                                            .device_address_binding_bit_ext = blk:
+                                                                              {
+                                                                                for (optional_extensions) |ext|
+                                                                                {
+                                                                                  if (ext.name == vk.extension_info.ext_device_address_binding_report.name.ptr and ext.supported)
+                                                                                  {
+                                                                                    break :blk true;
+                                                                                  }
+                                                                                }
+                                                                                break :blk false;
+                                                                              },
+                                            .performance_bit_ext            = (build.LOG_LEVEL > @intFromEnum (profile.DEFAULT)),
+                                          },
                      .pfn_user_callback = @ptrCast (&debug_callback),
+                     .p_next            = if (use_features) @ptrCast (&features) else null,
                    };
   }
 
@@ -205,7 +255,7 @@ pub const instance_vk = struct
     {
       for (supported_extensions) |supported_ext|
       {
-        if (std.mem.eql (u8, supported_ext.extension_name[0..std.mem.indexOfScalar (u8, &(supported_ext.extension_name), 0).?], std.mem.span (optional_ext.name)))
+        if (std.mem.eql (u8, supported_ext.extension_name [0..std.mem.indexOfScalar (u8, &(supported_ext.extension_name), 0).?], std.mem.span (optional_ext.name)))
         {
           try extensions.append (@ptrCast (optional_ext.name));
           try log_app ("{s} optional extension is supported", severity.DEBUG, .{ optional_ext.name });
@@ -236,11 +286,11 @@ pub const instance_vk = struct
                         {
                           .flags                      = vk.InstanceCreateFlags {},
                           .enabled_layer_count        = required_layers.len,
-                          .pp_enabled_layer_names     = @ptrCast (required_layers[0..]),
+                          .pp_enabled_layer_names     = required_layers [0..].ptr,
                           .p_next                     = debug_info,
                           .p_application_info         = &app_info,
                           .enabled_extension_count    = @intCast (self.extensions.len),
-                          .pp_enabled_extension_names = @ptrCast (self.extensions),
+                          .pp_enabled_extension_names = self.extensions [0..].ptr,
                         };
 
     self.instance = try self.base_dispatch.createInstance (&create_info, null);

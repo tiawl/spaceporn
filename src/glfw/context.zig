@@ -128,6 +128,11 @@ pub const context_glfw = struct
             };
   }
 
+  pub fn get_window (self: Self) glfw.Window
+  {
+    return self.window;
+  }
+
   pub fn looping (self: Self) bool
   {
     const close_window = self.window.shouldClose ();

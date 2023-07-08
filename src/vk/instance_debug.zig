@@ -9,8 +9,6 @@ const exe      = utils.exe;
 const profile  = utils.profile;
 const severity = utils.severity;
 
-const gui = if (build.LOG_LEVEL > @intFromEnum (profile.DEFAULT)) @cImport({ @cInclude("cimgui.h"); }) else null;
-
 const dispatch_vk      = @import ("dispatch.zig");
 const BaseDispatch     = dispatch_vk.BaseDispatch;
 const InstanceDispatch = dispatch_vk.InstanceDispatch;

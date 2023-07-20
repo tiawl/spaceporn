@@ -1,9 +1,9 @@
-const version         = @import("builtin").zig_version;
+const version         = @import ("builtin").zig_version;
 const min_zig_version = "0.10.1";
 
 const std = @import ("std");
 
-const glfw = @import ("libs/mach-glfw/build.zig");
+const glfw   = @import ("libs/mach-glfw/build.zig");
 const vk_gen = @import ("libs/vulkan-zig/generator/index.zig");
 
 pub fn build (builder: *std.Build) !void
@@ -242,7 +242,7 @@ pub fn build (builder: *std.Build) !void
   const run_cmd = builder.addRunArtifact (exe);
 
   // Run artifact step must be made after install step is made
-  run_cmd.step.dependOn (builder.getInstallStep());
+  run_cmd.step.dependOn (builder.getInstallStep ());
 
   // Allow to pass arguments from the zig build command line: zig build run -- -o foo.bin foo.asm
   if (builder.args) |args|

@@ -1,6 +1,8 @@
 const std  = @import ("std");
 const glfw = @import ("glfw");
 
+const imgui = @import ("../imgui/context.zig").context_imgui;
+
 const utils    = @import ("../utils.zig");
 const log_app  = utils.log_app;
 const exe      = utils.exe;
@@ -88,6 +90,8 @@ pub const context_glfw = struct
       return GlfwError.RequiredInstanceExtensionsFailed;
     };
     self.instance_proc_addr = &(glfw.getInstanceProcAddress);
+
+    try imgui.init_glfw (self.window);
 
     try log_app ("init GLFW OK", severity.DEBUG, .{});
 

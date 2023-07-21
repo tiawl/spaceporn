@@ -2,7 +2,8 @@ const std = @import ("std");
 
 const context_glfw  = @import ("glfw/context.zig").context_glfw;
 const context_vk    = @import ("vk/context.zig").context_vk;
-const context_imgui = @import ("imgui/context.zig").context_imgui;
+
+const imgui = @import ("imgui/context.zig").context_imgui;
 
 const utils    = @import ("utils.zig");
 const log_app  = utils.log_app;
@@ -14,7 +15,6 @@ pub const context = struct
 {
   glfw:  context_glfw  = undefined,
   vk:    context_vk    = undefined,
-  imgui: context_imgui = undefined,
 
   const Self = @This ();
 
@@ -32,8 +32,6 @@ pub const context = struct
 
     const framebuffer = self.glfw.get_framebuffer_size ();
     try self.vk.init (.{ .width = framebuffer.width, .height = framebuffer.height, }, allocator);
-
-    self.imgui = context_imgui.init (self.glfw.get_window (), self.vk);
 
     try log_app ("init OK", severity.DEBUG, .{});
     return self;
@@ -55,6 +53,7 @@ pub const context = struct
 
   pub fn cleanup (self: Self) !void
   {
+    imgui.cleanup ();
     try self.vk.cleanup ();
     try self.glfw.cleanup ();
     try log_app ("cleanup OK", severity.DEBUG, .{});

@@ -125,7 +125,7 @@ pub fn build (builder: *std.Build) !void
     var allocator = arena.allocator ();
     var child = std.ChildProcess.init (&[_][] const u8
                                        {
-                                         "./generator.sh", "-c", "glfw vulkan",
+                                         "git", "reset", "--hard",
                                        }, allocator);
     child.stdin_behavior = .Ignore;
     child.stdout_behavior = .Pipe;
@@ -138,7 +138,54 @@ pub fn build (builder: *std.Build) !void
     try child.spawn ();
     try child.collectOutput (&stdout, &stderr, 50 * 1024);
 
-    const term = try child.wait ();
+    var term = try child.wait ();
+
+    std.debug.print ("STDOUT: {s}\nSTDERR: {s}\n", .{ try stdout.toOwnedSlice (), try stderr.toOwnedSlice (), });
+
+    if (term != std.ChildProcess.Term.Exited)
+    {
+      std.log.err ("git reset --hard failed\n", .{});
+      std.process.exit (1);
+    }
+
+    child = std.ChildProcess.init (&[_][] const u8
+                                   {
+                                     "git", "clean", "-f", "-x", "-d", ":/",
+                                   }, allocator);
+    child.stdin_behavior = .Ignore;
+    child.stdout_behavior = .Pipe;
+    child.stderr_behavior = .Pipe;
+    child.cwd = "libs/cimgui/generator";
+
+    try child.spawn ();
+    try child.collectOutput (&stdout, &stderr, 50 * 1024);
+
+    term = try child.wait ();
+
+    std.debug.print ("STDOUT: {s}\nSTDERR: {s}\n", .{ try stdout.toOwnedSlice (), try stderr.toOwnedSlice (), });
+
+    if (term != std.ChildProcess.Term.Exited)
+    {
+      std.log.err ("git clean -f -x -d :/ failed\n", .{});
+      std.process.exit (1);
+    }
+
+    child = std.ChildProcess.init (&[_][] const u8
+                                       {
+                                         "./generator.sh", "-c", "glfw vulkan",
+                                       }, allocator);
+    child.stdin_behavior = .Ignore;
+    child.stdout_behavior = .Pipe;
+    child.stderr_behavior = .Pipe;
+    child.cwd = "libs/cimgui/generator";
+
+    stdout = std.ArrayList (u8).init (allocator);
+    stderr = std.ArrayList (u8).init (allocator);
+
+    try child.spawn ();
+    try child.collectOutput (&stdout, &stderr, 50 * 1024);
+
+    term = try child.wait ();
 
     std.debug.print ("STDOUT: {s}\nSTDERR: {s}\n", .{ try stdout.toOwnedSlice (), try stderr.toOwnedSlice (), });
 
@@ -184,59 +231,6 @@ pub fn build (builder: *std.Build) !void
 
   const test_step = builder.step("test", "Run tests");
   test_step.dependOn(&test_cmd.step);
-
-  if (DEV)
-  {
-    var arena = std.heap.ArenaAllocator.init (std.heap.page_allocator);
-    defer arena.deinit ();
-    var allocator = arena.allocator ();
-    var child = std.ChildProcess.init (&[_][] const u8
-                                       {
-                                         "git", "reset", "--hard",
-                                       }, allocator);
-    child.stdin_behavior = .Ignore;
-    child.stdout_behavior = .Pipe;
-    child.stderr_behavior = .Pipe;
-    child.cwd = "libs/cimgui/generator";
-
-    var stdout = std.ArrayList (u8).init (allocator);
-    var stderr = std.ArrayList (u8).init (allocator);
-
-    try child.spawn ();
-    try child.collectOutput (&stdout, &stderr, 50 * 1024);
-
-    var term = try child.wait ();
-
-    std.debug.print ("STDOUT: {s}\nSTDERR: {s}\n", .{ try stdout.toOwnedSlice (), try stderr.toOwnedSlice (), });
-
-    if (term != std.ChildProcess.Term.Exited)
-    {
-      std.log.err ("git reset --hard failed\n", .{});
-      std.process.exit (1);
-    }
-
-    child = std.ChildProcess.init (&[_][] const u8
-                                   {
-                                     "git", "clean", "-f", "-x", "-d", ":/",
-                                   }, allocator);
-    child.stdin_behavior = .Ignore;
-    child.stdout_behavior = .Pipe;
-    child.stderr_behavior = .Pipe;
-    child.cwd = "libs/cimgui/generator";
-
-    try child.spawn ();
-    try child.collectOutput (&stdout, &stderr, 50 * 1024);
-
-    term = try child.wait ();
-
-    std.debug.print ("STDOUT: {s}\nSTDERR: {s}\n", .{ try stdout.toOwnedSlice (), try stderr.toOwnedSlice (), });
-
-    if (term != std.ChildProcess.Term.Exited)
-    {
-      std.log.err ("git clean -f -x -d :/ failed\n", .{});
-      std.process.exit (1);
-    }
-  }
 
   // Init a new run artifact step that will run exe (invisible for user)
   const run_cmd = builder.addRunArtifact (exe);

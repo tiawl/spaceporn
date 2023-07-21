@@ -3,6 +3,8 @@ const build     = @import ("build_options");
 const resources = @import ("resources");
 const vk        = @import ("vulkan");
 
+const imgui = @import ("../imgui/context.zig").context_imgui;
+
 const utils    = @import ("../utils.zig");
 const log_app  = utils.log_app;
 const profile  = utils.profile;
@@ -1657,12 +1659,22 @@ pub const context_vk = struct
     try self.init_command_buffers (allocator);
     try self.init_sync_objects (allocator);
 
+    try imgui.init_vk (.{
+                          .instance        = &(self.instance.instance),
+                          .physical_device = &(self.physical_device.?),
+                          .logical_device  = &(self.logical_device),
+                          .graphics_family = self.candidate.graphics_family,
+                          .graphics_queue  = &(self.graphics_queue),
+                          .descriptor_pool = &(self.descriptor_pool),
+                          .render_pass     = &(self.render_pass),
+                        });
+
     try log_app ("init Vulkan OK", severity.DEBUG, .{});
   }
 
-  fn record_command_buffer (self: *Self, command_buffer: vk.CommandBuffer, image_index: u32) !void
+  fn record_command_buffer (self: *Self, command_buffer: *vk.CommandBuffer, image_index: u32) !void
   {
-    try self.device_dispatch.resetCommandBuffer (command_buffer, vk.CommandBufferResetFlags {});
+    try self.device_dispatch.resetCommandBuffer (command_buffer.*, vk.CommandBufferResetFlags {});
 
     const command_buffer_begin_info = vk.CommandBufferBeginInfo
                                       {
@@ -1670,7 +1682,7 @@ pub const context_vk = struct
                                         .p_inheritance_info = null,
                                       };
 
-    try self.device_dispatch.beginCommandBuffer (command_buffer, &command_buffer_begin_info);
+    try self.device_dispatch.beginCommandBuffer (command_buffer.*, &command_buffer_begin_info);
 
     var clear = [_] vk.ClearValue
                 {
@@ -1699,7 +1711,7 @@ pub const context_vk = struct
 
     if (!self.first_pass_done)
     {
-      self.device_dispatch.cmdBeginRenderPass (command_buffer, &render_pass_begin_info, vk.SubpassContents.@"inline");
+      self.device_dispatch.cmdBeginRenderPass (command_buffer.*, &render_pass_begin_info, vk.SubpassContents.@"inline");
 
       const offscreen_viewport = [_] vk.Viewport
                                  {
@@ -1727,23 +1739,23 @@ pub const context_vk = struct
                                   },
                                 };
 
-      self.device_dispatch.cmdSetViewport (command_buffer, 0, 1, &offscreen_viewport);
-      self.device_dispatch.cmdSetScissor (command_buffer, 0, 1, &offscreen_scissor);
+      self.device_dispatch.cmdSetViewport (command_buffer.*, 0, 1, &offscreen_viewport);
+      self.device_dispatch.cmdSetScissor (command_buffer.*, 0, 1, &offscreen_scissor);
     }
 
     const offset = [_] vk.DeviceSize {0};
-    self.device_dispatch.cmdBindVertexBuffers (command_buffer, 0, 1, &[_] vk.Buffer { self.vertex_buffer }, &offset);
+    self.device_dispatch.cmdBindVertexBuffers (command_buffer.*, 0, 1, &[_] vk.Buffer { self.vertex_buffer }, &offset);
 
-    self.device_dispatch.cmdBindIndexBuffer (command_buffer, self.index_buffer, 0, vk.IndexType.uint32);
+    self.device_dispatch.cmdBindIndexBuffer (command_buffer.*, self.index_buffer, 0, vk.IndexType.uint32);
 
     if (!self.first_pass_done)
     {
-      self.device_dispatch.cmdBindDescriptorSets (command_buffer, vk.PipelineBindPoint.graphics, self.offscreen_pipeline_layout, 0, 1, self.offscreen_descriptor_sets.ptr, 0, undefined);
-      self.device_dispatch.cmdBindPipeline (command_buffer, vk.PipelineBindPoint.graphics, self.offscreen_pipelines [0]);
+      self.device_dispatch.cmdBindDescriptorSets (command_buffer.*, vk.PipelineBindPoint.graphics, self.offscreen_pipeline_layout, 0, 1, self.offscreen_descriptor_sets.ptr, 0, undefined);
+      self.device_dispatch.cmdBindPipeline (command_buffer.*, vk.PipelineBindPoint.graphics, self.offscreen_pipelines [0]);
 
-      self.device_dispatch.cmdDrawIndexed (command_buffer, indices.len, 1, 0, 0, 0);
+      self.device_dispatch.cmdDrawIndexed (command_buffer.*, indices.len, 1, 0, 0, 0);
 
-      self.device_dispatch.cmdEndRenderPass (command_buffer);
+      self.device_dispatch.cmdEndRenderPass (command_buffer.*);
     }
 
     clear [0].color.float_32 [3] = 1;
@@ -1751,19 +1763,21 @@ pub const context_vk = struct
     render_pass_begin_info.framebuffer = self.framebuffers [image_index];
     render_pass_begin_info.render_area.extent = self.extent;
 
-    self.device_dispatch.cmdBeginRenderPass (command_buffer, &render_pass_begin_info, vk.SubpassContents.@"inline");
-    self.device_dispatch.cmdBindPipeline (command_buffer, vk.PipelineBindPoint.graphics, self.pipelines [0]);
+    self.device_dispatch.cmdBeginRenderPass (command_buffer.*, &render_pass_begin_info, vk.SubpassContents.@"inline");
+    self.device_dispatch.cmdBindPipeline (command_buffer.*, vk.PipelineBindPoint.graphics, self.pipelines [0]);
 
-    self.device_dispatch.cmdSetViewport (command_buffer, 0, 1, self.viewport [0..].ptr);
-    self.device_dispatch.cmdSetScissor (command_buffer, 0, 1, self.scissor [0..].ptr);
+    self.device_dispatch.cmdSetViewport (command_buffer.*, 0, 1, self.viewport [0..].ptr);
+    self.device_dispatch.cmdSetScissor (command_buffer.*, 0, 1, self.scissor [0..].ptr);
 
-    self.device_dispatch.cmdBindDescriptorSets (command_buffer, vk.PipelineBindPoint.graphics, self.pipeline_layout, 0, 1, &[_] vk.DescriptorSet { self.descriptor_sets [self.current_frame] }, 0, undefined);
+    self.device_dispatch.cmdBindDescriptorSets (command_buffer.*, vk.PipelineBindPoint.graphics, self.pipeline_layout, 0, 1, &[_] vk.DescriptorSet { self.descriptor_sets [self.current_frame] }, 0, undefined);
 
-    self.device_dispatch.cmdDrawIndexed (command_buffer, indices.len, 1, 0, 0, 0);
+    self.device_dispatch.cmdDrawIndexed (command_buffer.*, indices.len, 1, 0, 0, 0);
 
-    self.device_dispatch.cmdEndRenderPass (command_buffer);
+    try imgui.render_end (command_buffer);
 
-    try self.device_dispatch.endCommandBuffer (command_buffer);
+    self.device_dispatch.cmdEndRenderPass (command_buffer.*);
+
+    try self.device_dispatch.endCommandBuffer (command_buffer.*);
 
     self.first_pass_done = true;
   }
@@ -1832,6 +1846,8 @@ pub const context_vk = struct
   {
     _ = try self.device_dispatch.waitForFences (self.logical_device, 1, &[_] vk.Fence { self.in_flight_fences [self.current_frame] }, vk.TRUE, std.math.maxInt (u64));
 
+    try imgui.render_start ();
+
     const acquire_result = self.device_dispatch.acquireNextImageKHR (self.logical_device, self.swapchain, std.math.maxInt(u64), self.image_available_semaphores [self.current_frame], vk.Fence.null_handle) catch |err| switch (err)
                            {
                              error.OutOfDateKHR => {
@@ -1850,7 +1866,7 @@ pub const context_vk = struct
       return ContextError.ImageAcquireFailed;
     }
 
-    try self.record_command_buffer(self.command_buffers [self.current_frame], acquire_result.image_index);
+    try self.record_command_buffer (&(self.command_buffers [self.current_frame]), acquire_result.image_index);
 
     const wait_stage = [_] vk.PipelineStageFlags
                        {
@@ -1906,6 +1922,8 @@ pub const context_vk = struct
   pub fn cleanup (self: Self) !void
   {
     try self.device_dispatch.deviceWaitIdle (self.logical_device);
+
+    self.instance.cleanup_imgui ();
 
     self.cleanup_swapchain ();
 

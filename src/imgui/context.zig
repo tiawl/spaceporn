@@ -15,7 +15,8 @@ const imgui = if (build.LOG_LEVEL > @intFromEnum (profile.DEFAULT))
                             @cDefine ("CIMGUI_USE_GLFW", {});
                             @cInclude ("vulkan/vulkan.h");
                             @cInclude ("cimgui.h");
-                            @cInclude ("cimgui_impl.h"); })
+                            @cInclude ("cimgui_impl.h");
+                          })
               else null;
 
 pub const context_imgui = struct

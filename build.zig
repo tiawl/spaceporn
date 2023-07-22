@@ -6,6 +6,103 @@ const std = @import ("std");
 const glfw   = @import ("libs/mach-glfw/build.zig");
 const vk_gen = @import ("libs/vulkan-zig/generator/index.zig");
 
+fn gen_imgui_binding (allocator: std.mem.Allocator) !void
+{
+  var child = std.ChildProcess.init (&[_][] const u8
+                                     {
+                                       "./generator.sh", "-c", "glfw vulkan",
+                                     }, allocator);
+  child.stdin_behavior = .Ignore;
+  child.stdout_behavior = .Pipe;
+  child.stderr_behavior = .Pipe;
+  child.cwd = "libs/cimgui/generator";
+
+  var stdout = std.ArrayList (u8).init (allocator);
+  var stderr = std.ArrayList (u8).init (allocator);
+
+  try child.spawn ();
+  try child.collectOutput (&stdout, &stderr, 50 * 1024);
+
+  const term = try child.wait ();
+
+  std.debug.print ("STDOUT: {s}\nSTDERR: {s}\n", .{ try stdout.toOwnedSlice (), try stderr.toOwnedSlice (), });
+
+  if (term != std.ChildProcess.Term.Exited)
+  {
+    std.log.err ("cimgui generator failed\n", .{});
+    std.process.exit (1);
+  }
+
+  const cwd = std.fs.cwd ();
+  cwd.makeDir ("libs/binding") catch |err|
+  {
+    // Do not return error if binding directory already exists
+    if (err != std.fs.File.OpenError.PathAlreadyExists)
+    {
+      std.log.err ("failed to build 'libs/binding'", .{});
+      std.process.exit (1);
+    }
+  };
+
+  try cwd.copyFile ("libs/cimgui/generator/output/cimgui_impl.h", cwd, "libs/binding/cimgui_impl.h", .{});
+}
+
+fn git_reset (allocator: std.mem.Allocator) !void
+{
+  var child = std.ChildProcess.init (&[_][] const u8
+                                     {
+                                       "git", "reset", "--hard",
+                                     }, allocator);
+  child.stdin_behavior = .Ignore;
+  child.stdout_behavior = .Pipe;
+  child.stderr_behavior = .Pipe;
+  child.cwd = "libs/cimgui/generator";
+
+  var stdout = std.ArrayList (u8).init (allocator);
+  var stderr = std.ArrayList (u8).init (allocator);
+
+  try child.spawn ();
+  try child.collectOutput (&stdout, &stderr, 50 * 1024);
+
+  const term = try child.wait ();
+
+  std.debug.print ("STDOUT: {s}\nSTDERR: {s}\n", .{ try stdout.toOwnedSlice (), try stderr.toOwnedSlice (), });
+
+  if (term != std.ChildProcess.Term.Exited)
+  {
+    std.log.err ("git reset --hard failed\n", .{});
+    std.process.exit (1);
+  }
+}
+
+fn git_clean (allocator: std.mem.Allocator) !void
+{
+  var child = std.ChildProcess.init (&[_][] const u8
+                                     {
+                                       "git", "clean", "-f", "-x", "-d", ":/",
+                                     }, allocator);
+  child.stdin_behavior = .Ignore;
+  child.stdout_behavior = .Pipe;
+  child.stderr_behavior = .Pipe;
+  child.cwd = "libs/cimgui/generator";
+
+  var stdout = std.ArrayList (u8).init (allocator);
+  var stderr = std.ArrayList (u8).init (allocator);
+
+  try child.spawn ();
+  try child.collectOutput (&stdout, &stderr, 50 * 1024);
+
+  const term = try child.wait ();
+
+  std.debug.print ("STDOUT: {s}\nSTDERR: {s}\n", .{ try stdout.toOwnedSlice (), try stderr.toOwnedSlice (), });
+
+  if (term != std.ChildProcess.Term.Exited)
+  {
+    std.log.err ("git clean -f -x -d :/ failed\n", .{});
+    std.process.exit (1);
+  }
+}
+
 pub fn build (builder: *std.Build) !void
 {
   const modules = [_] struct { name: [] const u8, ptr: *std.build.Module, }
@@ -120,89 +217,18 @@ pub fn build (builder: *std.Build) !void
   // cimgui
   if (DEV)
   {
-    var arena = std.heap.ArenaAllocator.init (std.heap.page_allocator);
-    defer arena.deinit ();
-    var allocator = arena.allocator ();
-    var child = std.ChildProcess.init (&[_][] const u8
-                                       {
-                                         "git", "reset", "--hard",
-                                       }, allocator);
-    child.stdin_behavior = .Ignore;
-    child.stdout_behavior = .Pipe;
-    child.stderr_behavior = .Pipe;
-    child.cwd = "libs/cimgui/generator";
-
-    var stdout = std.ArrayList (u8).init (allocator);
-    var stderr = std.ArrayList (u8).init (allocator);
-
-    try child.spawn ();
-    try child.collectOutput (&stdout, &stderr, 50 * 1024);
-
-    var term = try child.wait ();
-
-    std.debug.print ("STDOUT: {s}\nSTDERR: {s}\n", .{ try stdout.toOwnedSlice (), try stderr.toOwnedSlice (), });
-
-    if (term != std.ChildProcess.Term.Exited)
-    {
-      std.log.err ("git reset --hard failed\n", .{});
-      std.process.exit (1);
-    }
-
-    child = std.ChildProcess.init (&[_][] const u8
-                                   {
-                                     "git", "clean", "-f", "-x", "-d", ":/",
-                                   }, allocator);
-    child.stdin_behavior = .Ignore;
-    child.stdout_behavior = .Pipe;
-    child.stderr_behavior = .Pipe;
-    child.cwd = "libs/cimgui/generator";
-
-    try child.spawn ();
-    try child.collectOutput (&stdout, &stderr, 50 * 1024);
-
-    term = try child.wait ();
-
-    std.debug.print ("STDOUT: {s}\nSTDERR: {s}\n", .{ try stdout.toOwnedSlice (), try stderr.toOwnedSlice (), });
-
-    if (term != std.ChildProcess.Term.Exited)
-    {
-      std.log.err ("git clean -f -x -d :/ failed\n", .{});
-      std.process.exit (1);
-    }
-
-    child = std.ChildProcess.init (&[_][] const u8
-                                       {
-                                         "./generator.sh", "-c", "glfw vulkan",
-                                       }, allocator);
-    child.stdin_behavior = .Ignore;
-    child.stdout_behavior = .Pipe;
-    child.stderr_behavior = .Pipe;
-    child.cwd = "libs/cimgui/generator";
-
-    stdout = std.ArrayList (u8).init (allocator);
-    stderr = std.ArrayList (u8).init (allocator);
-
-    try child.spawn ();
-    try child.collectOutput (&stdout, &stderr, 50 * 1024);
-
-    term = try child.wait ();
-
-    std.debug.print ("STDOUT: {s}\nSTDERR: {s}\n", .{ try stdout.toOwnedSlice (), try stderr.toOwnedSlice (), });
-
-    if (term != std.ChildProcess.Term.Exited)
-    {
-      std.log.err ("cimgui generator failed\n", .{});
-      std.process.exit (1);
-    }
+    //try gen_imgui_binding (builder.allocator);
+    try git_reset (builder.allocator);
+    try git_clean (builder.allocator);
 
     exe.linkLibC ();
     exe.linkLibCpp ();
-    const cflags = &.{"-fno-sanitize=undefined"};
+    const cflags = &.{ "-fno-sanitize=undefined" };
 
+    exe.addIncludePath ("libs/binding");
     exe.addIncludePath ("libs/cimgui");
     exe.addIncludePath ("libs/cimgui/imgui");
     exe.addIncludePath ("libs/cimgui/imgui/backends");
-    exe.addIncludePath ("libs/cimgui/generator/output");
 
     exe.addCSourceFile ("libs/cimgui/cimgui.cpp", cflags);
     exe.addCSourceFile ("libs/cimgui/imgui/imgui.cpp", cflags);

@@ -11,11 +11,7 @@ const severity = utils.severity;
 const imgui = if (build.LOG_LEVEL > @intFromEnum (profile.DEFAULT))
                 @cImport ({
                             @cDefine ("CIMGUI_DEFINE_ENUMS_AND_STRUCTS", {});
-                            @cDefine ("CIMGUI_USE_VULKAN", {});
-                            @cDefine ("CIMGUI_USE_GLFW", {});
-                            @cInclude ("vulkan/vulkan.h");
                             @cInclude ("cimgui.h");
-                            @cInclude ("cimgui_impl.h");
                           })
               else null;
 

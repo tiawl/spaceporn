@@ -23,7 +23,7 @@ fn gen_imgui_binding (allocator: std.mem.Allocator) !void
   try child.spawn ();
   try child.collectOutput (&stdout, &stderr, 50 * 1024);
 
-  const term = try child.wait ();
+  var term = try child.wait ();
 
   std.debug.print ("STDOUT: {s}\nSTDERR: {s}\n", .{ try stdout.toOwnedSlice (), try stderr.toOwnedSlice (), });
 
@@ -33,18 +33,27 @@ fn gen_imgui_binding (allocator: std.mem.Allocator) !void
     std.process.exit (1);
   }
 
-  const cwd = std.fs.cwd ();
-  cwd.makeDir ("libs/binding") catch |err|
-  {
-    // Do not return error if binding directory already exists
-    if (err != std.fs.File.OpenError.PathAlreadyExists)
-    {
-      std.log.err ("failed to build 'libs/binding'", .{});
-      std.process.exit (1);
-    }
-  };
+  child = std.ChildProcess.init (&[_][] const u8 { "./gen_binding.sh", }, allocator);
+  child.stdin_behavior = .Ignore;
+  child.stdout_behavior = .Pipe;
+  child.stderr_behavior = .Pipe;
+  child.cwd = "libs";
 
-  try cwd.copyFile ("libs/cimgui/generator/output/cimgui_impl.h", cwd, "libs/binding/cimgui_impl.h", .{});
+  stdout = std.ArrayList (u8).init (allocator);
+  stderr = std.ArrayList (u8).init (allocator);
+
+  try child.spawn ();
+  try child.collectOutput (&stdout, &stderr, 50 * 1024);
+
+  term = try child.wait ();
+
+  std.debug.print ("STDOUT: {s}\nSTDERR: {s}\n", .{ try stdout.toOwnedSlice (), try stderr.toOwnedSlice (), });
+
+  if (term != std.ChildProcess.Term.Exited)
+  {
+    std.log.err ("script failed\n", .{});
+    std.process.exit (1);
+  }
 }
 
 fn git_reset (allocator: std.mem.Allocator) !void
@@ -217,7 +226,7 @@ pub fn build (builder: *std.Build) !void
   // cimgui
   if (DEV)
   {
-    //try gen_imgui_binding (builder.allocator);
+    try gen_imgui_binding (builder.allocator);
     try git_reset (builder.allocator);
     try git_clean (builder.allocator);
 
@@ -225,12 +234,11 @@ pub fn build (builder: *std.Build) !void
     exe.linkLibCpp ();
     const cflags = &.{ "-fno-sanitize=undefined" };
 
-    exe.addIncludePath ("libs/binding");
-    exe.addIncludePath ("libs/cimgui");
+    exe.addIncludePath ("libs");
     exe.addIncludePath ("libs/cimgui/imgui");
     exe.addIncludePath ("libs/cimgui/imgui/backends");
 
-    exe.addCSourceFile ("libs/cimgui/cimgui.cpp", cflags);
+    exe.addCSourceFile ("libs/cimgui.cpp", cflags);
     exe.addCSourceFile ("libs/cimgui/imgui/imgui.cpp", cflags);
     exe.addCSourceFile ("libs/cimgui/imgui/imgui_demo.cpp", cflags);
     exe.addCSourceFile ("libs/cimgui/imgui/imgui_draw.cpp", cflags);

@@ -65,7 +65,7 @@ fn git_reset (allocator: std.mem.Allocator) !void
   child.stdin_behavior = .Ignore;
   child.stdout_behavior = .Pipe;
   child.stderr_behavior = .Pipe;
-  child.cwd = "libs/cimgui/generator";
+  child.cwd = "libs/cimgui";
 
   var stdout = std.ArrayList (u8).init (allocator);
   var stderr = std.ArrayList (u8).init (allocator);
@@ -93,7 +93,7 @@ fn git_clean (allocator: std.mem.Allocator) !void
   child.stdin_behavior = .Ignore;
   child.stdout_behavior = .Pipe;
   child.stderr_behavior = .Pipe;
-  child.cwd = "libs/cimgui/generator";
+  child.cwd = "libs/cimgui";
 
   var stdout = std.ArrayList (u8).init (allocator);
   var stderr = std.ArrayList (u8).init (allocator);
@@ -226,12 +226,14 @@ pub fn build (builder: *std.Build) !void
   // cimgui
   if (DEV)
   {
-    try gen_imgui_binding (builder.allocator);
+    //try gen_imgui_binding (builder.allocator);
     try git_reset (builder.allocator);
     try git_clean (builder.allocator);
 
     exe.linkLibC ();
     exe.linkLibCpp ();
+    exe.linkSystemLibrary ("glfw");
+    exe.linkSystemLibrary ("vulkan");
     const cflags = &.{ "-fno-sanitize=undefined" };
 
     exe.addIncludePath ("libs");

@@ -46,7 +46,7 @@ pub const context_imgui = struct
       style.*.WindowRounding = 0;
       style.*.Colors [imgui.ImGuiCol_WindowBg].w = 1;
 
-      if (!imgui.ImGui_ImplGlfw_InitForVulkan (@ptrCast (window.handle), true))
+      if (!imgui.igImGui_ImplGlfw_InitForVulkan (@ptrCast (window.handle), true))
       {
         return ImguiContextError.InitGlfwFailure;
       }
@@ -77,15 +77,14 @@ pub const context_imgui = struct
       var cache = vk.PipelineCache.null_handle;
       const sample = vk.SampleCountFlags { .@"1_bit" = true, };
       const format = vk.Format.undefined;
-      var init_info = imgui.ImGui_ImplVulkan_InitInfo
-                      {
-                        .Instance              = @ptrCast (renderer.instance),
-                        .PhysicalDevice        = @ptrCast (renderer.physical_device),
-                        .Device                = @ptrCast (renderer.logical_device),
+      var init_info = .{
+                        .Instance              = @as (imgui.VkInstance, @ptrCast (renderer.instance)),
+                        .PhysicalDevice        = @as (imgui.VkPhysicalDevice, @ptrCast (renderer.physical_device)),
+                        .Device                = @as (imgui.VkDevice, @ptrCast (renderer.logical_device)),
                         .QueueFamily           = renderer.graphics_family,
-                        .Queue                 = @ptrCast (renderer.graphics_queue),
-                        .PipelineCache         = @ptrCast (&cache),
-                        .DescriptorPool        = @ptrCast (renderer.descriptor_pool),
+                        .Queue                 = @as (imgui.VkQueue, @ptrCast (renderer.graphics_queue)),
+                        .PipelineCache         = @as (imgui.VkPipelineCache, @ptrCast (&cache)),
+                        .DescriptorPool        = @as (imgui.VkDescriptorPool, @ptrCast (renderer.descriptor_pool)),
                         .Subpass               = 0,
                         .MinImageCount         = 2,
                         .ImageCount            = 2,
@@ -96,7 +95,7 @@ pub const context_imgui = struct
                         .CheckVkResultFn       = check_vk_result,
                       };
 
-      if (!imgui.ImGui_ImplVulkan_Init (&init_info, @ptrCast (renderer.render_pass)))
+      if (!imgui.igImGui_ImplVulkan_Init (@ptrCast (&init_info), @ptrCast (renderer.render_pass)))
       {
         return ImguiContextError.InitVulkanFailure;
       }
@@ -109,8 +108,8 @@ pub const context_imgui = struct
   {
     if (build.LOG_LEVEL > @intFromEnum (profile.DEFAULT))
     {
-      imgui.ImGui_ImplVulkan_NewFrame ();
-      imgui.ImGui_ImplGlfw_NewFrame ();
+      imgui.igImGui_ImplVulkan_NewFrame ();
+      imgui.igImGui_ImplGlfw_NewFrame ();
       imgui.igNewFrame ();
 
       var f: f32 = 0.0;
@@ -152,7 +151,7 @@ pub const context_imgui = struct
     if (build.LOG_LEVEL > @intFromEnum (profile.DEFAULT))
     {
       var pipeline = vk.Pipeline.null_handle;
-      imgui.ImGui_ImplVulkan_RenderDrawData (imgui.igGetDrawData (), @ptrCast (command_buffer), @ptrCast (&pipeline));
+      imgui.igImGui_ImplVulkan_RenderDrawData (imgui.igGetDrawData (), @ptrCast (command_buffer), @ptrCast (&pipeline));
 
       try log_app ("end render Imgui OK", severity.DEBUG, .{});
     }
@@ -162,8 +161,8 @@ pub const context_imgui = struct
   {
     if (build.LOG_LEVEL > @intFromEnum (profile.DEFAULT))
     {
-      imgui.ImGui_ImplVulkan_Shutdown ();
-      imgui.ImGui_ImplGlfw_Shutdown ();
+      imgui.igImGui_ImplVulkan_Shutdown ();
+      imgui.igImGui_ImplGlfw_Shutdown ();
       imgui.igDestroyContext (null);
 
       try log_app ("cleanup Imgui OK", severity.DEBUG, .{});

@@ -18,7 +18,7 @@ cimgui_h ()
   printf '#define GLFW_INCLUDE_NONE\n#define GLFW_INCLUDE_VULKAN\n#include <GLFW/glfw3.h>\n#include <vulkan/vulkan.h>\n' >> "${ld}/cimgui.h"
 
   # add the backends header file
-  grep -v -E 'CIMGUI_USE_|#endif' "${ld}/cimgui/generator/output/cimgui_impl.h" >> "${ld}/cimgui.h"
+  grep -v -E 'CIMGUI_USE_|#endif' "${ld}/cimgui/generator/output/cimgui_impl.h" | sed 's/;\(.\+\)$/;\n\1/g' | grep -E 'struct.*;|CIMGUI_API' | sed 's/^\(CIMGUI_API [^ ]* \)/\1ig/g' >> "${ld}/cimgui.h"
 
   # add the removed #endif include guard
   printf '#endif\n' >> "${ld}/cimgui.h"
@@ -28,6 +28,9 @@ cimgui_cpp ()
 {
   # copy cimgui generated file and change includes
   sed 's/#\s*include\s\+"\./#include "cimgui/g' "${ld}/cimgui/cimgui.cpp" >| "${ld}/cimgui.cpp"
+
+  # add the backends header files
+  printf '#include "cimgui/imgui/backends/imgui_impl_glfw.h"\n#include "cimgui/imgui/backends/imgui_impl_vulkan.h"\n' >> "${ld}/cimgui.cpp"
 
   # add definition for backends functions
   local ret_type funcname args args_names
@@ -58,7 +61,7 @@ cimgui_cpp ()
                       shift
                     done)"
       IFS="${old_ifs}"
-      printf '\nCIMGUI_API %s %s(%s)\n{\n    return %s(%s);\n}' "${ret_type}" "${funcname}" "${args}" "${funcname}" "${args_names%,}" >> "${ld}/cimgui.cpp" ;;
+      printf 'CIMGUI_API %s ig%s(%s)\n{\n    return %s(%s);\n}\n' "${ret_type}" "${funcname}" "${args}" "${funcname}" "${args_names%,}" >> "${ld}/cimgui.cpp" ;;
     ( * ) ;;
     esac
   done < "${ld}/cimgui/generator/output/cimgui_impl.h"

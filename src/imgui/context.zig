@@ -15,6 +15,25 @@ const imgui = if (build.LOG_LEVEL > @intFromEnum (profile.DEFAULT))
                           })
               else null;
 
+const ImGui_ImplVulkan_InitInfo = extern struct
+{
+  Instance:              vk.Instance,
+  PhysicalDevice:        vk.PhysicalDevice,
+  Device:                vk.Device,
+  QueueFamily:           u32,
+  Queue:                 vk.Queue,
+  PipelineCache:         vk.PipelineCache,
+  DescriptorPool:        vk.DescriptorPool,
+  Subpass:               u32,
+  MinImageCount:         u32,
+  ImageCount:            u32,
+  MSAASamples:           c_uint,
+  UseDynamicRendering:   bool,
+  ColorAttachmentFormat: i32,
+  Allocator:             [*c] const vk.AllocationCallbacks,
+  CheckVkResultFn:       ?*const fn (c_int) callconv (.C) void,
+};
+
 pub const context_imgui = struct
 {
   const ImguiContextError = error
@@ -63,28 +82,28 @@ pub const context_imgui = struct
   }
 
   pub fn init_vk (renderer: struct {
-                                     instance: *vk.Instance,
-                                     physical_device: *vk.PhysicalDevice,
-                                     logical_device: *vk.Device,
+                                     instance:        vk.Instance,
+                                     physical_device: vk.PhysicalDevice,
+                                     logical_device:  vk.Device,
                                      graphics_family: u32,
-                                     graphics_queue: *vk.Queue,
-                                     descriptor_pool: *vk.DescriptorPool,
-                                     render_pass: *vk.RenderPass,
+                                     graphics_queue:  vk.Queue,
+                                     descriptor_pool: vk.DescriptorPool,
+                                     render_pass:     vk.RenderPass,
                                    }) !void
   {
     if (build.LOG_LEVEL > @intFromEnum (profile.DEFAULT))
     {
-      var cache = vk.PipelineCache.null_handle;
       const sample = vk.SampleCountFlags { .@"1_bit" = true, };
       const format = vk.Format.undefined;
-      var init_info = .{
-                        .Instance              = @as (imgui.VkInstance, @ptrCast (renderer.instance)),
-                        .PhysicalDevice        = @as (imgui.VkPhysicalDevice, @ptrCast (renderer.physical_device)),
-                        .Device                = @as (imgui.VkDevice, @ptrCast (renderer.logical_device)),
+      var init_info = ImGui_ImplVulkan_InitInfo
+                      {
+                        .Instance              = renderer.instance,
+                        .PhysicalDevice        = renderer.physical_device,
+                        .Device                = renderer.logical_device,
                         .QueueFamily           = renderer.graphics_family,
-                        .Queue                 = @as (imgui.VkQueue, @ptrCast (renderer.graphics_queue)),
-                        .PipelineCache         = @as (imgui.VkPipelineCache, @ptrCast (&cache)),
-                        .DescriptorPool        = @as (imgui.VkDescriptorPool, @ptrCast (renderer.descriptor_pool)),
+                        .Queue                 = renderer.graphics_queue,
+                        .PipelineCache         = vk.PipelineCache.null_handle,
+                        .DescriptorPool        = renderer.descriptor_pool,
                         .Subpass               = 0,
                         .MinImageCount         = 2,
                         .ImageCount            = 2,
@@ -95,7 +114,7 @@ pub const context_imgui = struct
                         .CheckVkResultFn       = check_vk_result,
                       };
 
-      if (!imgui.igImGui_ImplVulkan_Init (@ptrCast (&init_info), @ptrCast (renderer.render_pass)))
+      if (!imgui.igImGui_ImplVulkan_Init (@ptrCast (&init_info), @ptrFromInt (@intFromEnum (renderer.render_pass))))
       {
         return ImguiContextError.InitVulkanFailure;
       }

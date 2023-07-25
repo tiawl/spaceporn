@@ -1660,13 +1660,13 @@ pub const context_vk = struct
     try self.init_sync_objects (allocator);
 
     try imgui.init_vk (.{
-                          .instance        = &(self.instance.instance),
-                          .physical_device = &(self.physical_device.?),
-                          .logical_device  = &(self.logical_device),
+                          .instance        = self.instance.instance,
+                          .physical_device = self.physical_device.?,
+                          .logical_device  = self.logical_device,
                           .graphics_family = self.candidate.graphics_family,
-                          .graphics_queue  = &(self.graphics_queue),
-                          .descriptor_pool = &(self.descriptor_pool),
-                          .render_pass     = &(self.render_pass),
+                          .graphics_queue  = self.graphics_queue,
+                          .descriptor_pool = self.descriptor_pool,
+                          .render_pass     = self.render_pass,
                         });
 
     try log_app ("init Vulkan OK", severity.DEBUG, .{});

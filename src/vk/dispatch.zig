@@ -55,6 +55,7 @@ pub const DeviceDispatch = vk.DeviceWrapper (
   .destroyFramebuffer          = true,
   .createCommandPool           = true,
   .destroyCommandPool          = true,
+  .resetCommandPool            = true,
   .allocateCommandBuffers      = true,
   .freeCommandBuffers          = true,
   .beginCommandBuffer          = true,

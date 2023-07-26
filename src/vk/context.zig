@@ -1438,16 +1438,16 @@ pub const context_vk = struct
                         vk.DescriptorPoolSize
                         {
                           .type             = vk.DescriptorType.combined_image_sampler,
-                          .descriptor_count = MAX_FRAMES_IN_FLIGHT,
+                          .descriptor_count = MAX_FRAMES_IN_FLIGHT + 1,
                         },
                       };
 
     const create_info = vk.DescriptorPoolCreateInfo
                         {
-                          .flags           = vk.DescriptorPoolCreateFlags {},
+                          .flags           = vk.DescriptorPoolCreateFlags { .free_descriptor_set_bit = true, },
                           .pool_size_count = pool_size.len,
                           .p_pool_sizes    = &pool_size,
-                          .max_sets        = MAX_FRAMES_IN_FLIGHT,
+                          .max_sets        = MAX_FRAMES_IN_FLIGHT + 1,
                         };
 
     self.descriptor_pool = try self.device_dispatch.createDescriptorPool (self.logical_device, &create_info, null);
@@ -1660,6 +1660,7 @@ pub const context_vk = struct
     try self.init_sync_objects (allocator);
 
     try imgui.init_vk (.{
+                          .device_dispatch = self.device_dispatch,
                           .instance        = self.instance.instance,
                           .physical_device = self.physical_device.?,
                           .logical_device  = self.logical_device,
@@ -1667,6 +1668,8 @@ pub const context_vk = struct
                           .graphics_queue  = self.graphics_queue,
                           .descriptor_pool = self.descriptor_pool,
                           .render_pass     = self.render_pass,
+                          .command_pool    = self.command_pool,
+                          .command_buffer  = self.command_buffers [self.current_frame],
                         });
 
     try log_app ("init Vulkan OK", severity.DEBUG, .{});

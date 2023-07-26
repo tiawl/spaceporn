@@ -15,6 +15,9 @@ const imgui = if (build.LOG_LEVEL > @intFromEnum (profile.DEFAULT))
                           })
               else null;
 
+const dispatch         = @import ("../vk/dispatch.zig");
+const DeviceDispatch   = dispatch.DeviceDispatch;
+
 const ImGui_ImplVulkan_InitInfo = extern struct
 {
   Instance:              vk.Instance,
@@ -36,11 +39,26 @@ const ImGui_ImplVulkan_InitInfo = extern struct
 
 pub const context_imgui = struct
 {
+  const Renderer = struct
+                   {
+                     device_dispatch: DeviceDispatch,
+                     instance:        vk.Instance,
+                     physical_device: vk.PhysicalDevice,
+                     logical_device:  vk.Device,
+                     graphics_family: u32,
+                     graphics_queue:  vk.Queue,
+                     descriptor_pool: vk.DescriptorPool,
+                     render_pass:     vk.RenderPass,
+                     command_pool:    vk.CommandPool,
+                     command_buffer:  vk.CommandBuffer,
+                   };
+
   const ImguiContextError = error
                             {
                               InitFailure,
                               InitGlfwFailure,
                               InitVulkanFailure,
+                              CreateFontsTextureFailure,
                               BeginFailure,
                               SliderFloatFailure,
                             };
@@ -77,19 +95,49 @@ pub const context_imgui = struct
   fn check_vk_result (err: c_int) callconv(.C) void
   {
     if (err == 0) return;
-    std.debug.print ("[vulkan ERROR] VkResult = {d}\n", .{ err, });
+    std.debug.print ("[vulkan ERROR from Imgui] VkResult = {d}\n", .{ err, });
     if (err < 0) std.process.exit (1);
   }
 
-  pub fn init_vk (renderer: struct {
-                                     instance:        vk.Instance,
-                                     physical_device: vk.PhysicalDevice,
-                                     logical_device:  vk.Device,
-                                     graphics_family: u32,
-                                     graphics_queue:  vk.Queue,
-                                     descriptor_pool: vk.DescriptorPool,
-                                     render_pass:     vk.RenderPass,
-                                   }) !void
+  fn upload_fonts (renderer: Renderer) !void
+  {
+    try renderer.device_dispatch.resetCommandPool (renderer.logical_device, renderer.command_pool, vk.CommandPoolResetFlags {});
+    const begin_info = vk.CommandBufferBeginInfo
+                       {
+                         .flags = vk.CommandBufferUsageFlags { .one_time_submit_bit = true, },
+                       };
+
+    const command_buffers = [_] vk.CommandBuffer
+                            {
+                              renderer.command_buffer,
+                            };
+
+    try renderer.device_dispatch.beginCommandBuffer (command_buffers [0], &begin_info);
+
+    if (!imgui.igImGui_ImplVulkan_CreateFontsTexture (@ptrFromInt (@intFromEnum (renderer.command_buffer))))
+    {
+      return ImguiContextError.CreateFontsTextureFailure;
+    }
+
+    const submit_info = [_] vk.SubmitInfo
+                        {
+                          vk.SubmitInfo
+                          {
+                            .command_buffer_count = command_buffers.len,
+                            .p_command_buffers    = &command_buffers,
+                          },
+                        };
+
+    try renderer.device_dispatch.endCommandBuffer (command_buffers [0]);
+    try renderer.device_dispatch.queueSubmit (renderer.graphics_queue, 1, &submit_info, vk.Fence.null_handle);
+
+    try renderer.device_dispatch.deviceWaitIdle (renderer.logical_device);
+    imgui.igImGui_ImplVulkan_DestroyFontUploadObjects ();
+
+    try log_app ("upload Imgui fonts OK", severity.DEBUG, .{});
+  }
+
+  pub fn init_vk (renderer: Renderer) !void
   {
     if (build.LOG_LEVEL > @intFromEnum (profile.DEFAULT))
     {
@@ -119,6 +167,8 @@ pub const context_imgui = struct
         return ImguiContextError.InitVulkanFailure;
       }
 
+      try upload_fonts (renderer);
+
       try log_app ("init Imgui Vulkan OK", severity.DEBUG, .{});
     }
   }
@@ -141,6 +191,7 @@ pub const context_imgui = struct
 
       imgui.igText ("This is some useful text");
 
+      std.debug.print ("OKKK\n", .{});
       if (!imgui.igSliderFloat ("Float", &f, 0.0, 1.0, "%.3f", 0))
       {
         return ImguiContextError.SliderFloatFailure;

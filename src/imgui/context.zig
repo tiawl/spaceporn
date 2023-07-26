@@ -191,7 +191,6 @@ pub const context_imgui = struct
 
       imgui.igText ("This is some useful text");
 
-      std.debug.print ("OKKK\n", .{});
       if (!imgui.igSliderFloat ("Float", &f, 0.0, 1.0, "%.3f", 0))
       {
         return ImguiContextError.SliderFloatFailure;

@@ -6,3 +6,4 @@ zig-out/
 log/
 cimgui.h
 cimgui.cpp
+imgui.ini

@@ -173,16 +173,13 @@ pub const context_imgui = struct
     }
   }
 
-  pub fn render_start () !void
+  pub fn render_start (imgui_vars: anytype) !void
   {
     if (build.LOG_LEVEL > @intFromEnum (profile.DEFAULT))
     {
       imgui.igImGui_ImplVulkan_NewFrame ();
       imgui.igImGui_ImplGlfw_NewFrame ();
       imgui.igNewFrame ();
-
-      var f: f32 = 0.0;
-      var counter: u32 = 0;
 
       if (!imgui.igBegin ("Hello, world!", null, 0))
       {
@@ -191,10 +188,8 @@ pub const context_imgui = struct
 
       imgui.igText ("This is some useful text");
 
-      if (!imgui.igSliderFloat ("Float", &f, 0.0, 1.0, "%.3f", 0))
-      {
-        return ImguiContextError.SliderFloatFailure;
-      }
+      // Return a boolean depending on the fact that the value of the variable changed or not
+      _ = imgui.igSliderFloat ("Float", imgui_vars.f, 0.0, 1.0, "%.3f", 0);
 
       const button_size = imgui.ImVec2
                           {
@@ -202,9 +197,9 @@ pub const context_imgui = struct
                             .y = 0,
                           };
 
-      if (imgui.igButton ("Button", button_size)) counter += 1;
+      if (imgui.igButton ("Button", button_size)) imgui_vars.counter.* += 1;
       imgui.igSameLine (0.0, -1.0);
-      imgui.igText ("counter = %d", counter);
+      imgui.igText ("counter = %d", imgui_vars.counter.*);
 
       imgui.igText ("Application average %.3f ms/frame (%.1f FPS)", 1000.0 / imgui.igGetIO ().*.Framerate, imgui.igGetIO ().*.Framerate);
       imgui.igEnd ();
@@ -215,12 +210,14 @@ pub const context_imgui = struct
     }
   }
 
-  pub fn render_end (command_buffer: *vk.CommandBuffer) !void
+  pub fn render_end (command_buffer: vk.CommandBuffer) !void
   {
     if (build.LOG_LEVEL > @intFromEnum (profile.DEFAULT))
     {
       var pipeline = vk.Pipeline.null_handle;
-      imgui.igImGui_ImplVulkan_RenderDrawData (imgui.igGetDrawData (), @ptrCast (command_buffer), @ptrCast (&pipeline));
+      imgui.igImGui_ImplVulkan_RenderDrawData (imgui.igGetDrawData (), @ptrFromInt (@intFromEnum (command_buffer)), @ptrFromInt (@intFromEnum (pipeline)));
+
+      imgui.igUpdatePlatformWindows ();
 
       try log_app ("end render Imgui OK", severity.DEBUG, .{});
     }

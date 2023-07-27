@@ -36,6 +36,9 @@ const offscreen_uniform_buffer_object_vk = struct
 
 pub const context_vk = struct
 {
+  f: f32 = 0.0,
+  counter: u32 = 0,
+
   instance:                         instance_vk = undefined,
   surface:                          vk.SurfaceKHR = undefined,
   device_dispatch:                  DeviceDispatch = undefined,
@@ -1776,7 +1779,7 @@ pub const context_vk = struct
 
     self.device_dispatch.cmdDrawIndexed (command_buffer.*, indices.len, 1, 0, 0, 0);
 
-    try imgui.render_end (command_buffer);
+    try imgui.render_end (command_buffer.*);
 
     self.device_dispatch.cmdEndRenderPass (command_buffer.*);
 
@@ -1849,7 +1852,7 @@ pub const context_vk = struct
   {
     _ = try self.device_dispatch.waitForFences (self.logical_device, 1, &[_] vk.Fence { self.in_flight_fences [self.current_frame] }, vk.TRUE, std.math.maxInt (u64));
 
-    try imgui.render_start ();
+    try imgui.render_start (&.{ .f = &(self.f), .counter = &(self.counter), });
 
     const acquire_result = self.device_dispatch.acquireNextImageKHR (self.logical_device, self.swapchain, std.math.maxInt(u64), self.image_available_semaphores [self.current_frame], vk.Fence.null_handle) catch |err| switch (err)
                            {

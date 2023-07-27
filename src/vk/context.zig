@@ -1441,7 +1441,7 @@ pub const context_vk = struct
                         vk.DescriptorPoolSize
                         {
                           .type             = vk.DescriptorType.combined_image_sampler,
-                          .descriptor_count = MAX_FRAMES_IN_FLIGHT + 1,
+                          .descriptor_count = if (build.LOG_LEVEL > @intFromEnum (profile.DEFAULT)) MAX_FRAMES_IN_FLIGHT + 1 else MAX_FRAMES_IN_FLIGHT,
                         },
                       };
 
@@ -1450,7 +1450,7 @@ pub const context_vk = struct
                           .flags           = vk.DescriptorPoolCreateFlags { .free_descriptor_set_bit = true, },
                           .pool_size_count = pool_size.len,
                           .p_pool_sizes    = &pool_size,
-                          .max_sets        = MAX_FRAMES_IN_FLIGHT + 1,
+                          .max_sets        = @min (pool_size [0].descriptor_count, pool_size [1].descriptor_count),
                         };
 
     self.descriptor_pool = try self.device_dispatch.createDescriptorPool (self.logical_device, &create_info, null);

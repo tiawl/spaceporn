@@ -113,7 +113,7 @@ pub const options = struct
 
   help:    bool                                                       = DEFAULT_HELP,
   output:  ?[] const u8                                               = DEFAULT_OUTPUT,
-  seed:    struct { random: bool, sample: f32, }                      = DEFAULT_SEED,
+  seed:    struct { random: bool, sample: u32, }                      = DEFAULT_SEED,
   version: bool                                                       = DEFAULT_VERSION,
   window:  struct { type: OptionsWindow, width: ?u32, height: ?u32, } = .{ .type = DEFAULT_WINDOW, .width = DEFAULT_WINDOW_WIDTH, .height = DEFAULT_WINDOW_HEIGHT, },
   camera:  camera_options                                             = camera_options {},
@@ -319,14 +319,14 @@ pub const options = struct
           try log_app ("missing mandatory argument with {s},{s} option", severity.ERROR, .{ SHORT_SEED, LONG_SEED });
           return OptionsError.MissingArgument;
         } else {
-          self.seed.sample = @floatFromInt (std.fmt.parseInt (u32, opts.items [index + 1], 10) catch |err|
+          self.seed.sample = std.fmt.parseInt (u32, opts.items [index + 1], 10) catch |err|
                              {
                                if (err == error.InvalidCharacter or err == error.Overflow)
                                {
                                  try log_app ("mandatory argument with {s},{s} option should a positive integer", severity.ERROR, .{ SHORT_SEED, LONG_SEED });
                                }
                                return err;
-                             });
+                             };
 
           self.seed.random = false;
           index += 1;
@@ -568,7 +568,7 @@ pub const options = struct
   {
     if (self.seed.random)
     {
-      self.seed.sample = @floatFromInt (std.time.milliTimestamp ());
+      self.seed.sample = @intCast (@mod (std.time.milliTimestamp (), @as (i64, @intCast (std.math.maxInt (u32)))));
     }
 
     if (self.camera.zoom.random)
@@ -744,7 +744,7 @@ test "parse CLI args: short-help short-version short-seed short-window"
   try std.testing.expect (opts.help == true);
   try std.testing.expect (opts.output == options.DEFAULT_OUTPUT);
   try std.testing.expect (opts.seed.random == false);
-  try std.testing.expect (opts.seed.sample == @as(f32, @floatFromInt (try std.fmt.parseInt (u32, seed_arg, 10))));
+  try std.testing.expect (opts.seed.sample == try std.fmt.parseInt (u32, seed_arg, 10));
   try std.testing.expect (opts.version == true);
   try std.testing.expect (opts.window.type == options.DEFAULT_WINDOW);
   try std.testing.expect (opts.window.width == try std.fmt.parseInt (u32, window_width, 10));

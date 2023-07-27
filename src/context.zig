@@ -37,7 +37,7 @@ pub const context = struct
     return self;
   }
 
-  pub fn loop (self: *Self, options: opts) !void
+  pub fn loop (self: *Self, options: *opts) !void
   {
     var arena = std.heap.ArenaAllocator.init (std.heap.page_allocator);
     var allocator = arena.allocator ();

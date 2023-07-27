@@ -59,11 +59,7 @@ pub fn main () !void
     std.process.exit (1);
   };
 
-  const options = try opts.init (allocator);
-  //const options = opts.init (allocator) catch
-  //                {
-  //                  std.process.exit (1);
-  //                };
+  var options = try opts.init (allocator);
 
   var app = context.init (allocator, options) catch
             {
@@ -75,7 +71,7 @@ pub fn main () !void
     std.process.exit (1);
   };
 
-  app.loop (options) catch
+  app.loop (&options) catch
   {
     std.process.exit (1);
   };

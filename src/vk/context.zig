@@ -31,14 +31,11 @@ const uniform_buffer_object_vk = struct
 const offscreen_uniform_buffer_object_vk = struct
 {
   // WARNING: manage alignment when adding new field
-  seed: f32,
+  seed: u32,
 };
 
 pub const context_vk = struct
 {
-  f: f32 = 0.0,
-  counter: u32 = 0,
-
   instance:                         instance_vk = undefined,
   surface:                          vk.SurfaceKHR = undefined,
   device_dispatch:                  DeviceDispatch = undefined,
@@ -76,6 +73,8 @@ pub const context_vk = struct
   uniform_buffers:                  [] vk.Buffer = undefined,
   uniform_buffers_memory:           [] vk.DeviceMemory = undefined,
   start_time:                       std.time.Instant,
+  last_displayed_fps:               ?std.time.Instant = null,
+  fps:                              f32 = undefined,
   descriptor_pool:                  vk.DescriptorPool = undefined,
   descriptor_sets:                  [] vk.DescriptorSet = undefined,
 
@@ -1820,7 +1819,7 @@ pub const context_vk = struct
     try self.init_framebuffers (allocator.*);
   }
 
-  fn update_uniform_buffer (self: *Self, options: opts) !void
+  fn update_uniform_buffer (self: *Self, options: *opts) !void
   {
     const ubo_size = @sizeOf (uniform_buffer_object_vk);
 
@@ -1848,11 +1847,16 @@ pub const context_vk = struct
     }
   }
 
-  fn draw_frame (self: *Self, framebuffer: struct { resized: bool, width: u32, height: u32, }, arena: *std.heap.ArenaAllocator, allocator: *std.mem.Allocator, options: opts) !void
+  fn draw_frame (self: *Self, framebuffer: struct { resized: bool, width: u32, height: u32, }, arena: *std.heap.ArenaAllocator, allocator: *std.mem.Allocator, options: *opts) !void
   {
     _ = try self.device_dispatch.waitForFences (self.logical_device, 1, &[_] vk.Fence { self.in_flight_fences [self.current_frame] }, vk.TRUE, std.math.maxInt (u64));
 
-    try imgui.render_start (&.{ .f = &(self.f), .counter = &(self.counter), });
+    const seed_before = options.seed.sample;
+    try imgui.render_start (&(self.last_displayed_fps), &(self.fps),
+                            .{
+                               .seed = &(options.seed.sample),
+                             });
+    self.first_pass_done = self.first_pass_done and (options.seed.sample == seed_before);
 
     const acquire_result = self.device_dispatch.acquireNextImageKHR (self.logical_device, self.swapchain, std.math.maxInt(u64), self.image_available_semaphores [self.current_frame], vk.Fence.null_handle) catch |err| switch (err)
                            {
@@ -1919,7 +1923,7 @@ pub const context_vk = struct
     self.current_frame = (self.current_frame + 1) % MAX_FRAMES_IN_FLIGHT;
   }
 
-  pub fn loop (self: *Self, framebuffer: struct { resized: bool, width: u32, height: u32, }, arena: *std.heap.ArenaAllocator, allocator: *std.mem.Allocator, options: opts) !void
+  pub fn loop (self: *Self, framebuffer: struct { resized: bool, width: u32, height: u32, }, arena: *std.heap.ArenaAllocator, allocator: *std.mem.Allocator, options: *opts) !void
   {
     try self.draw_frame (.{ .resized = framebuffer.resized, .width = framebuffer.width, .height = framebuffer.height, }, arena, allocator, options);
     try log_app ("loop Vulkan OK", severity.DEBUG, .{});

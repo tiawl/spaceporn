@@ -60,7 +60,6 @@ pub const context_imgui = struct
                               InitVulkanFailure,
                               CreateFontsTextureFailure,
                               BeginFailure,
-                              SliderFloatFailure,
                             };
 
   pub fn init_glfw (window: glfw.Window) !void
@@ -173,7 +172,7 @@ pub const context_imgui = struct
     }
   }
 
-  pub fn render_start (imgui_vars: anytype) !void
+  pub fn render_start (last_displayed_fps: *?std.time.Instant, fps: *f32, tweak_me: anytype) !void
   {
     if (build.LOG_LEVEL > @intFromEnum (profile.DEFAULT))
     {
@@ -181,15 +180,21 @@ pub const context_imgui = struct
       imgui.igImGui_ImplGlfw_NewFrame ();
       imgui.igNewFrame ();
 
-      if (!imgui.igBegin ("Hello, world!", null, 0))
+      if (!imgui.igBegin ("Tweaker", null, 0))
       {
         return ImguiContextError.BeginFailure;
       }
 
-      imgui.igText ("This is some useful text");
+      if (last_displayed_fps.* == null or (try std.time.Instant.now ()).since (last_displayed_fps.*.?) > std.time.ns_per_s)
+      {
+        fps.* = imgui.igGetIO ().*.Framerate;
+        last_displayed_fps.* = try std.time.Instant.now ();
+      }
+
+      imgui.igText ("Application average %.3f ms/frame (%.1f FPS)", 1000.0 / fps.*, fps.*);
 
       // Return a boolean depending on the fact that the value of the variable changed or not
-      _ = imgui.igSliderFloat ("Float", imgui_vars.f, 0.0, 1.0, "%.3f", 0);
+      //_ = imgui.igSliderFloat ("Float", tweak_me.f, 0.0, 1.0, "%.3f", 0);
 
       const button_size = imgui.ImVec2
                           {
@@ -197,11 +202,9 @@ pub const context_imgui = struct
                             .y = 0,
                           };
 
-      if (imgui.igButton ("Button", button_size)) imgui_vars.counter.* += 1;
+      if (imgui.igButton ("New seed", button_size)) tweak_me.seed.* = @intCast (@mod (std.time.milliTimestamp (), @as (i64, @intCast (std.math.maxInt (u32)))));
       imgui.igSameLine (0.0, -1.0);
-      imgui.igText ("counter = %d", imgui_vars.counter.*);
-
-      imgui.igText ("Application average %.3f ms/frame (%.1f FPS)", 1000.0 / imgui.igGetIO ().*.Framerate, imgui.igGetIO ().*.Framerate);
+      imgui.igText ("seed = %u", tweak_me.seed.*);
       imgui.igEnd ();
 
       imgui.igRender ();

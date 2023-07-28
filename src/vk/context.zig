@@ -3,7 +3,7 @@ const build     = @import ("build_options");
 const resources = @import ("resources");
 const vk        = @import ("vulkan");
 
-const imgui = @import ("../imgui/context.zig").context_imgui;
+const context_imgui = @import ("../imgui/context.zig").context_imgui;
 
 const utils    = @import ("../utils.zig");
 const log_app  = utils.log_app;
@@ -1635,7 +1635,7 @@ pub const context_vk = struct
     return self;
   }
 
-  pub fn init (self: *Self, framebuffer: struct { width: u32, height: u32, }, allocator: std.mem.Allocator) !void
+  pub fn init (self: *Self, imgui: context_imgui, framebuffer: struct { width: u32, height: u32, }, allocator: std.mem.Allocator) !void
   {
     self.offscreen_width  = framebuffer.width;
     self.offscreen_height = framebuffer.height;
@@ -1677,7 +1677,7 @@ pub const context_vk = struct
     try log_app ("init Vulkan OK", severity.DEBUG, .{});
   }
 
-  fn record_command_buffer (self: *Self, command_buffer: *vk.CommandBuffer, image_index: u32) !void
+  fn record_command_buffer (self: *Self, imgui: *context_imgui, command_buffer: *vk.CommandBuffer, image_index: u32) !void
   {
     try self.device_dispatch.resetCommandBuffer (command_buffer.*, vk.CommandBufferResetFlags {});
 
@@ -1778,7 +1778,7 @@ pub const context_vk = struct
 
     self.device_dispatch.cmdDrawIndexed (command_buffer.*, indices.len, 1, 0, 0, 0);
 
-    try imgui.render_end (command_buffer.*);
+    try imgui.render (command_buffer.*);
 
     self.device_dispatch.cmdEndRenderPass (command_buffer.*);
 
@@ -1847,15 +1847,15 @@ pub const context_vk = struct
     }
   }
 
-  fn draw_frame (self: *Self, framebuffer: struct { resized: bool, width: u32, height: u32, }, arena: *std.heap.ArenaAllocator, allocator: *std.mem.Allocator, options: *opts) !void
+  fn draw_frame (self: *Self, imgui: *context_imgui, framebuffer: struct { resized: bool, width: u32, height: u32, }, arena: *std.heap.ArenaAllocator, allocator: *std.mem.Allocator, options: *opts) !void
   {
     _ = try self.device_dispatch.waitForFences (self.logical_device, 1, &[_] vk.Fence { self.in_flight_fences [self.current_frame] }, vk.TRUE, std.math.maxInt (u64));
 
     const seed_before = options.seed;
-    try imgui.render_start (&(self.last_displayed_fps), &(self.fps),
-                            .{
-                               .seed = &(options.seed),
-                             });
+    try imgui.prepare (&(self.last_displayed_fps), &(self.fps), .{ .width = framebuffer.width, .height = framebuffer.height, },
+                       .{
+                          .seed = &(options.seed),
+                        });
     self.render_offscreen = self.render_offscreen or (options.seed != seed_before);
 
     const acquire_result = self.device_dispatch.acquireNextImageKHR (self.logical_device, self.swapchain, std.math.maxInt(u64), self.image_available_semaphores [self.current_frame], vk.Fence.null_handle) catch |err| switch (err)
@@ -1876,7 +1876,7 @@ pub const context_vk = struct
       return ContextError.ImageAcquireFailed;
     }
 
-    try self.record_command_buffer (&(self.command_buffers [self.current_frame]), acquire_result.image_index);
+    try self.record_command_buffer (imgui, &(self.command_buffers [self.current_frame]), acquire_result.image_index);
 
     const wait_stage = [_] vk.PipelineStageFlags
                        {
@@ -1923,9 +1923,9 @@ pub const context_vk = struct
     self.current_frame = (self.current_frame + 1) % MAX_FRAMES_IN_FLIGHT;
   }
 
-  pub fn loop (self: *Self, framebuffer: struct { resized: bool, width: u32, height: u32, }, arena: *std.heap.ArenaAllocator, allocator: *std.mem.Allocator, options: *opts) !void
+  pub fn loop (self: *Self, imgui: *context_imgui, framebuffer: struct { resized: bool, width: u32, height: u32, }, arena: *std.heap.ArenaAllocator, allocator: *std.mem.Allocator, options: *opts) !void
   {
-    try self.draw_frame (.{ .resized = framebuffer.resized, .width = framebuffer.width, .height = framebuffer.height, }, arena, allocator, options);
+    try self.draw_frame (imgui, .{ .resized = framebuffer.resized, .width = framebuffer.width, .height = framebuffer.height, }, arena, allocator, options);
     try log_app ("loop Vulkan OK", severity.DEBUG, .{});
   }
 

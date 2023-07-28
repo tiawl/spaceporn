@@ -1,7 +1,7 @@
 const std  = @import ("std");
 const glfw = @import ("glfw");
 
-const imgui = @import ("../imgui/context.zig").context_imgui;
+const context_imgui = @import ("../imgui/context.zig").context_imgui;
 
 const utils    = @import ("../utils.zig");
 const log_app  = utils.log_app;
@@ -45,7 +45,7 @@ pub const context_glfw = struct
     self.?.framebuffer_resized = true;
   }
 
-  pub fn init (options: opts) !Self
+  pub fn init (imgui: *context_imgui, options: opts) !Self
   {
     var self = Self {};
 

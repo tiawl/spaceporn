@@ -60,8 +60,22 @@ pub const context_imgui = struct
                               BeginFailure,
                             };
 
-  pub fn init_glfw (window: glfw.Window) !void
+  glfw_win_pos: glfw.Window.Pos = undefined,
+  glfw_win_size: glfw.Window.Size = undefined,
+  init_window: bool = false,
+
+  const Self = @This ();
+
+  pub fn init () Self
   {
+    return Self {};
+  }
+
+  pub fn init_glfw (self: *Self, window: glfw.Window) !void
+  {
+    self.glfw_win_pos = window.getPos ();
+    self.glfw_win_size = window.getFramebufferSize ();
+
     if (imgui.igCreateContext (null) == null)
     {
       return ImguiContextError.InitFailure;
@@ -93,8 +107,10 @@ pub const context_imgui = struct
     if (err < 0) std.process.exit (1);
   }
 
-  fn upload_fonts (renderer: Renderer) !void
+  fn upload_fonts (self: Self, renderer: Renderer) !void
   {
+    _ = self;
+
     try renderer.device_dispatch.resetCommandPool (renderer.logical_device, renderer.command_pool, vk.CommandPoolResetFlags {});
     const begin_info = vk.CommandBufferBeginInfo
                        {
@@ -131,7 +147,7 @@ pub const context_imgui = struct
     try log_app ("upload Imgui fonts OK", severity.DEBUG, .{});
   }
 
-  pub fn init_vk (renderer: Renderer) !void
+  pub fn init_vk (self: Self, renderer: Renderer) !void
   {
     const sample = vk.SampleCountFlags { .@"1_bit" = true, };
     const format = vk.Format.undefined;
@@ -159,18 +175,43 @@ pub const context_imgui = struct
       return ImguiContextError.InitVulkanFailure;
     }
 
-    try upload_fonts (renderer);
+    try self.upload_fonts (renderer);
 
     try log_app ("init Imgui Vulkan OK", severity.DEBUG, .{});
   }
 
-  pub fn render_start (last_displayed_fps: *?std.time.Instant, fps: *f32, tweak_me: anytype) !void
+  pub fn prepare (self: *Self, last_displayed_fps: *?std.time.Instant, fps: *f32, framebuffer: struct { width: u32, height: u32, }, tweak_me: anytype) !void
   {
     imgui.igImGui_ImplVulkan_NewFrame ();
     imgui.igImGui_ImplGlfw_NewFrame ();
     imgui.igNewFrame ();
 
-    if (!imgui.igBegin ("Tweaker", null, 0))
+    if (framebuffer.height != self.glfw_win_size.height)
+    {
+      self.glfw_win_size.height = framebuffer.height;
+      const window_size = imgui.ImVec2 { .x = 0.0, .y = @floatFromInt (self.glfw_win_size.height), };
+      imgui.igSetNextWindowSize (window_size, 0);
+    }
+
+    if (!self.init_window)
+    {
+      const window_pos = imgui.ImVec2
+                         {
+                           .x = @floatFromInt (self.glfw_win_pos.x),
+                           .y = @floatFromInt (self.glfw_win_pos.y),
+                         };
+      const window_pivot = imgui.ImVec2 { .x = 0.0, .y = 0.0, };
+      imgui.igSetNextWindowPos (window_pos, 0, window_pivot);
+
+      const window_size = imgui.ImVec2 { .x = 0.0, .y = @floatFromInt (self.glfw_win_size.height), };
+      imgui.igSetNextWindowSize (window_size, 0);
+
+      self.init_window = true;
+    }
+
+    const window_flags = imgui.ImGuiWindowFlags_NoTitleBar | imgui.ImGuiWindowFlags_NoCollapse | imgui.ImGuiWindowFlags_NoResize | imgui.ImGuiWindowFlags_NoMove;
+
+    if (!imgui.igBegin ("Tweaker", null, window_flags))
     {
       return ImguiContextError.BeginFailure;
     }
@@ -181,16 +222,12 @@ pub const context_imgui = struct
       last_displayed_fps.* = try std.time.Instant.now ();
     }
 
-    imgui.igText ("Application average %.3f ms/frame (%.1f FPS)", 1000.0 / fps.*, fps.*);
+    imgui.igText ("Average %.3f ms/frame (%.1f FPS)", 1000.0 / fps.*, fps.*);
 
     // Return a boolean depending on the fact that the value of the variable changed or not
     //_ = imgui.igSliderFloat ("Float", tweak_me.f, 0.0, 1.0, "%.3f", 0);
 
-    const button_size = imgui.ImVec2
-                        {
-                          .x = 0,
-                          .y = 0,
-                        };
+    const button_size = imgui.ImVec2 { .x = 0, .y = 0, };
 
     if (imgui.igButton ("New seed", button_size)) tweak_me.seed.* = @intCast (@mod (std.time.milliTimestamp (), @as (i64, @intCast (std.math.maxInt (u32)))));
     if (build.LOG_LEVEL > @intFromEnum (profile.DEFAULT))
@@ -205,8 +242,10 @@ pub const context_imgui = struct
     try log_app ("start render Imgui OK", severity.DEBUG, .{});
   }
 
-  pub fn render_end (command_buffer: vk.CommandBuffer) !void
+  pub fn render (self: Self, command_buffer: vk.CommandBuffer) !void
   {
+    _ = self;
+
     var pipeline = vk.Pipeline.null_handle;
     imgui.igImGui_ImplVulkan_RenderDrawData (imgui.igGetDrawData (), @ptrFromInt (@intFromEnum (command_buffer)), @ptrFromInt (@intFromEnum (pipeline)));
 
@@ -215,8 +254,10 @@ pub const context_imgui = struct
     try log_app ("end render Imgui OK", severity.DEBUG, .{});
   }
 
-  pub fn cleanup () void
+  pub fn cleanup (self: Self) void
   {
+    _ = self;
+
     imgui.igImGui_ImplVulkan_Shutdown ();
     imgui.igImGui_ImplGlfw_Shutdown ();
     imgui.igDestroyContext (null);

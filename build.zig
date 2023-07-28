@@ -224,31 +224,28 @@ pub fn build (builder: *std.Build) !void
   };
 
   // cimgui
-  if (DEV)
-  {
-    //try gen_imgui_binding (builder.allocator);
-    try git_reset (builder.allocator);
-    try git_clean (builder.allocator);
+  try gen_imgui_binding (builder.allocator);
+  try git_reset (builder.allocator);
+  try git_clean (builder.allocator);
 
-    exe.linkLibC ();
-    exe.linkLibCpp ();
-    exe.linkSystemLibrary ("glfw");
-    exe.linkSystemLibrary ("vulkan");
-    const cflags = &.{ "-fno-sanitize=undefined" };
+  exe.linkLibC ();
+  exe.linkLibCpp ();
+  exe.linkSystemLibrary ("glfw");
+  exe.linkSystemLibrary ("vulkan");
+  const cflags = &.{ "-fno-sanitize=undefined" };
 
-    exe.addIncludePath ("libs");
-    exe.addIncludePath ("libs/cimgui/imgui");
-    exe.addIncludePath ("libs/cimgui/imgui/backends");
+  exe.addIncludePath ("libs");
+  exe.addIncludePath ("libs/cimgui/imgui");
+  exe.addIncludePath ("libs/cimgui/imgui/backends");
 
-    exe.addCSourceFile ("libs/cimgui.cpp", cflags);
-    exe.addCSourceFile ("libs/cimgui/imgui/imgui.cpp", cflags);
-    exe.addCSourceFile ("libs/cimgui/imgui/imgui_demo.cpp", cflags);
-    exe.addCSourceFile ("libs/cimgui/imgui/imgui_draw.cpp", cflags);
-    exe.addCSourceFile ("libs/cimgui/imgui/imgui_tables.cpp", cflags);
-    exe.addCSourceFile ("libs/cimgui/imgui/imgui_widgets.cpp", cflags);
-    exe.addCSourceFile ("libs/cimgui/imgui/backends/imgui_impl_glfw.cpp", cflags);
-    exe.addCSourceFile ("libs/cimgui/imgui/backends/imgui_impl_vulkan.cpp", cflags);
-  }
+  exe.addCSourceFile ("libs/cimgui.cpp", cflags);
+  exe.addCSourceFile ("libs/cimgui/imgui/imgui.cpp", cflags);
+  exe.addCSourceFile ("libs/cimgui/imgui/imgui_demo.cpp", cflags);
+  exe.addCSourceFile ("libs/cimgui/imgui/imgui_draw.cpp", cflags);
+  exe.addCSourceFile ("libs/cimgui/imgui/imgui_tables.cpp", cflags);
+  exe.addCSourceFile ("libs/cimgui/imgui/imgui_widgets.cpp", cflags);
+  exe.addCSourceFile ("libs/cimgui/imgui/backends/imgui_impl_glfw.cpp", cflags);
+  exe.addCSourceFile ("libs/cimgui/imgui/backends/imgui_impl_vulkan.cpp", cflags);
 
   // shader resources, to be compiled using glslc
   const shaders = vk_gen.ShaderCompileStep.create (builder, &[_][] const u8 { "glslc", "--target-env=vulkan1.2" }, "-o");

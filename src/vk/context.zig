@@ -1440,7 +1440,7 @@ pub const context_vk = struct
                         vk.DescriptorPoolSize
                         {
                           .type             = vk.DescriptorType.combined_image_sampler,
-                          .descriptor_count = if (build.LOG_LEVEL > @intFromEnum (profile.DEFAULT)) MAX_FRAMES_IN_FLIGHT + 1 else MAX_FRAMES_IN_FLIGHT,
+                          .descriptor_count = MAX_FRAMES_IN_FLIGHT + 1,
                         },
                       };
 

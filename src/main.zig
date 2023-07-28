@@ -48,7 +48,7 @@ fn init_logfile () !void
   try log_app ("log file init OK", severity.DEBUG, .{});
 }
 
-pub fn main () !void
+pub fn main () void
 {
   var arena = std.heap.ArenaAllocator.init (std.heap.page_allocator);
   defer arena.deinit ();
@@ -59,7 +59,10 @@ pub fn main () !void
     std.process.exit (1);
   };
 
-  var options = try opts.init (allocator);
+  var options = opts.init (allocator) catch
+                {
+                  std.process.exit (1);
+                };
 
   var app = context.init (allocator, options) catch
             {

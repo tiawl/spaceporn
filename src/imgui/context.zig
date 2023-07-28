@@ -5,6 +5,7 @@ const vk    = @import ("vulkan");
 
 const utils    = @import ("../utils.zig");
 const log_app  = utils.log_app;
+const profile  = utils.profile;
 const severity = utils.severity;
 
 const imgui = @cImport ({
@@ -192,8 +193,11 @@ pub const context_imgui = struct
                         };
 
     if (imgui.igButton ("New seed", button_size)) tweak_me.seed.* = @intCast (@mod (std.time.milliTimestamp (), @as (i64, @intCast (std.math.maxInt (u32)))));
-    imgui.igSameLine (0.0, -1.0);
-    imgui.igText ("seed = %u", tweak_me.seed.*);
+    if (build.LOG_LEVEL > @intFromEnum (profile.DEFAULT))
+    {
+      imgui.igSameLine (0.0, -1.0);
+      imgui.igText ("%u", tweak_me.seed.*);
+    }
     imgui.igEnd ();
 
     imgui.igRender ();

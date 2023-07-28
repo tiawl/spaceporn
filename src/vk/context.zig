@@ -92,7 +92,7 @@ pub const context_vk = struct
   offscreen_image_memory:           vk.DeviceMemory = undefined,
   offscreen_views:                  [] vk.ImageView = undefined,
   offscreen_sampler:                vk.Sampler = undefined,
-  first_pass_done:                  bool = false,
+  render_offscreen:                 bool = true,
 
   const Self = @This ();
 
@@ -1714,7 +1714,7 @@ pub const context_vk = struct
                                    .p_clear_values    = &clear,
                                  };
 
-    if (!self.first_pass_done)
+    if (self.render_offscreen)
     {
       self.device_dispatch.cmdBeginRenderPass (command_buffer.*, &render_pass_begin_info, vk.SubpassContents.@"inline");
 
@@ -1753,7 +1753,7 @@ pub const context_vk = struct
 
     self.device_dispatch.cmdBindIndexBuffer (command_buffer.*, self.index_buffer, 0, vk.IndexType.uint32);
 
-    if (!self.first_pass_done)
+    if (self.render_offscreen)
     {
       self.device_dispatch.cmdBindDescriptorSets (command_buffer.*, vk.PipelineBindPoint.graphics, self.offscreen_pipeline_layout, 0, 1, self.offscreen_descriptor_sets.ptr, 0, undefined);
       self.device_dispatch.cmdBindPipeline (command_buffer.*, vk.PipelineBindPoint.graphics, self.offscreen_pipelines [0]);
@@ -1784,7 +1784,7 @@ pub const context_vk = struct
 
     try self.device_dispatch.endCommandBuffer (command_buffer.*);
 
-    self.first_pass_done = true;
+    self.render_offscreen = false;
   }
 
   fn cleanup_swapchain (self: Self) void
@@ -1832,7 +1832,7 @@ pub const context_vk = struct
     @memcpy (@as ([*] u8, @ptrCast (data.?)) [0..ubo_size], std.mem.asBytes (&ubo));
     self.device_dispatch.unmapMemory (self.logical_device, self.uniform_buffers_memory [self.current_frame]);
 
-    if (!self.first_pass_done)
+    if (self.render_offscreen)
     {
       const oubo_size = @sizeOf (offscreen_uniform_buffer_object_vk);
 
@@ -1856,7 +1856,7 @@ pub const context_vk = struct
                             .{
                                .seed = &(options.seed.sample),
                              });
-    self.first_pass_done = self.first_pass_done and (options.seed.sample == seed_before);
+    self.render_offscreen = self.render_offscreen or (options.seed.sample != seed_before);
 
     const acquire_result = self.device_dispatch.acquireNextImageKHR (self.logical_device, self.swapchain, std.math.maxInt(u64), self.image_available_semaphores [self.current_frame], vk.Fence.null_handle) catch |err| switch (err)
                            {

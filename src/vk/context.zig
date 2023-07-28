@@ -1838,7 +1838,7 @@ pub const context_vk = struct
 
       const oubo = offscreen_uniform_buffer_object_vk
                    {
-                     .seed = options.seed.sample,
+                     .seed = options.seed,
                    };
 
       data = try self.device_dispatch.mapMemory (self.logical_device, self.offscreen_uniform_buffers_memory, 0, oubo_size, vk.MemoryMapFlags {});
@@ -1851,12 +1851,12 @@ pub const context_vk = struct
   {
     _ = try self.device_dispatch.waitForFences (self.logical_device, 1, &[_] vk.Fence { self.in_flight_fences [self.current_frame] }, vk.TRUE, std.math.maxInt (u64));
 
-    const seed_before = options.seed.sample;
+    const seed_before = options.seed;
     try imgui.render_start (&(self.last_displayed_fps), &(self.fps),
                             .{
-                               .seed = &(options.seed.sample),
+                               .seed = &(options.seed),
                              });
-    self.render_offscreen = self.render_offscreen or (options.seed.sample != seed_before);
+    self.render_offscreen = self.render_offscreen or (options.seed != seed_before);
 
     const acquire_result = self.device_dispatch.acquireNextImageKHR (self.logical_device, self.swapchain, std.math.maxInt(u64), self.image_available_semaphores [self.current_frame], vk.Fence.null_handle) catch |err| switch (err)
                            {

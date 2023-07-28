@@ -9,7 +9,6 @@ const exe      = utils.exe;
 const severity = utils.severity;
 
 const opts          = @import ("../options.zig").options;
-const OptionsWindow = opts.OptionsWindow;
 
 const GlfwError = error
 {
@@ -69,14 +68,11 @@ pub const context_glfw = struct
                     .resizable  = true,
                   };
 
-    if (options.window.type == OptionsWindow.Basic)
+    self.window = glfw.Window.create (options.window.width.?, options.window.height.?, exe, null, null, hints) orelse
     {
-      self.window = glfw.Window.create (options.window.width.?, options.window.height.?, exe, null, null, hints) orelse
-      {
-        try log_app ("failed to initialize GLFW window: {?s}", severity.ERROR, .{ glfw.getErrorString () });
-        return GlfwError.WindowInitFailed;
-      };
-    }
+      try log_app ("failed to initialize GLFW window: {?s}", severity.ERROR, .{ glfw.getErrorString () });
+      return GlfwError.WindowInitFailed;
+    };
     errdefer self.window.destroy ();
 
     self.framebuffer_resized = true;

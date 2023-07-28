@@ -75,6 +75,18 @@ pub const context_glfw = struct
     };
     errdefer self.window.destroy ();
 
+    const min = glfw.Window.SizeOptional
+                {
+                  .width  = options.window.width.?,
+                  .height = options.window.height.?,
+                };
+    const max = glfw.Window.SizeOptional
+                {
+                  .width  = null,
+                  .height = null,
+                };
+    self.window.setSizeLimits (min, max);
+
     self.framebuffer_resized = true;
     self.window.setUserPointer (&self);
     self.window.setFramebufferSizeCallback (framebuffer_resize_callback);

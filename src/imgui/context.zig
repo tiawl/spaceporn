@@ -252,15 +252,21 @@ pub const context_imgui = struct
     defer screenshots_dir.close ();
 
     const now = datetime.Datetime.now ();
-    const date = try now.formatISO8601 (allocator, true);
+    var iterator = std.mem.tokenizeAny (u8, try now.formatISO8601 (allocator, true), ":.+");
     var id: u32 = 0;
     var filename: [] const u8 = undefined;
     var file: std.fs.File = undefined;
     var available = false;
+    var date: [] const u8 = "";
+
+    while (iterator.next ()) |token|
+    {
+      date = try std.fmt.allocPrint (allocator, "{s}{s}-", .{ date, token, });
+    }
 
     while (id < std.math.maxInt (u32))
     {
-      filename = try std.fmt.allocPrint (allocator, "{s}-{d}", .{ date, id, });
+      filename = try std.fmt.allocPrint (allocator, "{s}{d}", .{ date, id, });
       file = screenshots_dir.openFile (filename, .{}) catch |err|
              {
                if (err == std.fs.File.OpenError.FileNotFound)
@@ -291,8 +297,7 @@ pub const context_imgui = struct
     if (imgui.igButton ("Take a screenshot", button_size))
     {
       const filename = try self.find_available_filename (allocator);
-      std.debug.print ("FILE = {s}\n", .{ filename });
-      // TODO: 2023-07-29T15:50:52.362000+00:00-0
+      _ = filename;
 
       // TODO: make the screenshot
     }

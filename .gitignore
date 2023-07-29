@@ -4,6 +4,7 @@ spaceporn.wiki/
 zig-cache/
 zig-out/
 log/
+screenshots/
 cimgui.h
 cimgui.cpp
 imgui.ini

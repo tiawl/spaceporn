@@ -97,7 +97,8 @@ pub const context_vk = struct
   const Self = @This ();
 
   const MAX_FRAMES_IN_FLIGHT = 2;
-  const MAX_DEVICE_SCORE = 3;
+  const DEVICE_CRITERIAS = 4;
+  const MAX_DEVICE_SCORE = std.math.pow (u32, 2, DEVICE_CRITERIAS) - 1;
 
   const vertices = [_] vertex_vk
                    {
@@ -414,6 +415,28 @@ pub const context_vk = struct
 
     try self.query_swapchain_support (device, allocator);
 
+    var selected_format = self.formats [0].format;
+
+    for (self.formats) |supported_format|
+    {
+      if (selected_format == vk.Format.b8g8r8a8_unorm)
+      {
+        break;
+      }
+
+      if (supported_format.format == vk.Format.b8g8r8a8_unorm)
+      {
+        selected_format = supported_format.format;
+      } else if (supported_format.format == vk.Format.r8g8b8a8_unorm and selected_format != vk.Format.r8g8b8a8_unorm) {
+        selected_format = supported_format.format;
+      } else if (supported_format.format == vk.Format.a8b8g8r8_unorm_pack32 and selected_format != vk.Format.r8g8b8a8_unorm and selected_format != vk.Format.a8b8g8r8_unorm_pack32) {
+        selected_format = supported_format.format;
+      }
+    }
+
+    const blitting_supported = self.instance.dispatch.getPhysicalDeviceFormatProperties (device, selected_format).optimal_tiling_features.blit_src_bit and
+                               self.instance.dispatch.getPhysicalDeviceFormatProperties (device, vk.Format.r8g8b8a8_unorm).linear_tiling_features.blit_dst_bit;
+
     if (!try self.check_device_features_properties (features, properties))
     {
       try log_app ("Vulkan device {s} is not suitable", severity.ERROR, .{ properties.device_name, });
@@ -428,8 +451,10 @@ pub const context_vk = struct
         return .{
                   .graphics_family = candidate.graphics_family,
                   .present_family  = candidate.present_family,
-                  .score           = @as (u8, @intFromBool (properties.device_type == vk.PhysicalDeviceType.discrete_gpu)) * 4 +
-                                     @as (u8, @intFromBool (candidate.graphics_family == candidate.present_family)) * 2 + 1,
+                  .score           = @as (u8, @intFromBool (blitting_supported)) * 8 +
+                                     @as (u8, @intFromBool (properties.device_type == vk.PhysicalDeviceType.discrete_gpu)) * 4 +
+                                     @as (u8, @intFromBool (candidate.graphics_family == candidate.present_family)) * 2 +
+                                     1,
                 };
       }
     }
@@ -472,7 +497,7 @@ pub const context_vk = struct
       return ContextError.NoSuitableDevice;
     }
 
-    try log_app ("pick a {d}/3 Vulkan physical device OK", severity.DEBUG, .{ max_score });
+    try log_app ("pick a {d}/{d} Vulkan physical device OK", severity.DEBUG, .{ max_score, MAX_DEVICE_SCORE, });
   }
 
   fn init_logical_device (self: *Self) !void

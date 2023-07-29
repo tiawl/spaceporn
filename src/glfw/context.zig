@@ -45,6 +45,9 @@ pub const context_glfw = struct
     self.?.framebuffer_resized = true;
   }
 
+  const MIN_WINDOW_WIDTH  = 800;
+  const MIN_WINDOW_HEIGHT = 600;
+
   pub fn init (imgui: *context_imgui, options: opts) !Self
   {
     var self = Self {};
@@ -77,8 +80,8 @@ pub const context_glfw = struct
 
     const min = glfw.Window.SizeOptional
                 {
-                  .width  = options.window.width.?,
-                  .height = options.window.height.?,
+                  .width  = MIN_WINDOW_WIDTH,
+                  .height = MIN_WINDOW_HEIGHT,
                 };
     const max = glfw.Window.SizeOptional
                 {

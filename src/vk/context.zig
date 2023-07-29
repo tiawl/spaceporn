@@ -610,7 +610,8 @@ pub const context_vk = struct
                           .image_usage              = vk.ImageUsageFlags
                                                       {
                                                         .color_attachment_bit = true,
-                                                        .transfer_dst_bit     = true
+                                                        .transfer_src_bit     = true,
+                                                        .transfer_dst_bit     = true,
                                                       },
                           .image_sharing_mode       = if (self.candidate.graphics_family != self.candidate.present_family) .concurrent else .exclusive,
                           .queue_family_index_count = if (self.candidate.graphics_family != self.candidate.present_family) queue_family_indices.len else 0,
@@ -1852,7 +1853,7 @@ pub const context_vk = struct
     _ = try self.device_dispatch.waitForFences (self.logical_device, 1, &[_] vk.Fence { self.in_flight_fences [self.current_frame] }, vk.TRUE, std.math.maxInt (u64));
 
     const seed_before = options.seed;
-    try imgui.prepare (&(self.last_displayed_fps), &(self.fps), .{ .width = framebuffer.width, .height = framebuffer.height, },
+    try imgui.prepare (allocator.*, &(self.last_displayed_fps), &(self.fps), .{ .width = framebuffer.width, .height = framebuffer.height, },
                        .{
                           .seed = &(options.seed),
                         });

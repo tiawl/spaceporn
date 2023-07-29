@@ -17,31 +17,31 @@ fn init_logfile () !void
   if (build.LOG_LEVEL > @intFromEnum (profile.TURBO) and build.LOG_DIR.len > 0)
   {
     var dir = std.fs.cwd ().openDir (LOG_DIR, .{}) catch |err|
-    {
-      if (err == std.fs.File.OpenError.FileNotFound)
-      {
-        try log_app ("{s} does not exist, impossible to log execution.", severity.ERROR, .{ LOG_DIR });
-      }
-      return err;
-    };
+              {
+                if (err == std.fs.File.OpenError.FileNotFound)
+                {
+                  try log_app ("{s} does not exist, impossible to log execution.", severity.ERROR, .{ LOG_DIR });
+                }
+                return err;
+              };
 
     defer dir.close ();
 
     const file = std.fs.cwd ().openFile (log_file, .{}) catch |open_err| blk:
-    {
-      if (open_err != std.fs.File.OpenError.FileNotFound)
-      {
-        try log_app ("failed to open log file", severity.ERROR, .{});
-        return open_err;
-      } else {
-        const cfile = std.fs.cwd ().createFile (log_file, .{}) catch |create_err|
-        {
-          try log_app ("failed to create log file", severity.ERROR, .{});
-          return create_err;
-        };
-        break :blk cfile;
-      }
-    };
+                 {
+                   if (open_err != std.fs.File.OpenError.FileNotFound)
+                   {
+                     try log_app ("failed to open log file", severity.ERROR, .{});
+                     return open_err;
+                   } else {
+                     const cfile = std.fs.cwd ().createFile (log_file, .{}) catch |create_err|
+                     {
+                       try log_app ("failed to create log file", severity.ERROR, .{});
+                       return create_err;
+                     };
+                     break :blk cfile;
+                   }
+                 };
 
     defer file.close ();
   }

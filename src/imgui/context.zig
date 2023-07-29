@@ -1,7 +1,8 @@
-const std   = @import ("std");
-const build = @import ("build_options");
-const glfw  = @import ("glfw");
-const vk    = @import ("vulkan");
+const std      = @import ("std");
+const build    = @import ("build_options");
+const glfw     = @import ("glfw");
+const vk       = @import ("vulkan");
+const datetime = @import ("datetime").datetime;
 
 const utils    = @import ("../utils.zig");
 const log_app  = utils.log_app;
@@ -58,6 +59,7 @@ pub const context_imgui = struct
                               InitVulkanFailure,
                               CreateFontsTextureFailure,
                               BeginFailure,
+                              NoAvailableFilename,
                             };
 
   glfw_win_pos: glfw.Window.Pos = undefined,
@@ -180,12 +182,8 @@ pub const context_imgui = struct
     try log_app ("init Imgui Vulkan OK", severity.DEBUG, .{});
   }
 
-  pub fn prepare (self: *Self, last_displayed_fps: *?std.time.Instant, fps: *f32, framebuffer: struct { width: u32, height: u32, }, tweak_me: anytype) !void
+  fn prepare_pane (self: *Self, framebuffer: struct { width: u32, height: u32, }) !void
   {
-    imgui.igImGui_ImplVulkan_NewFrame ();
-    imgui.igImGui_ImplGlfw_NewFrame ();
-    imgui.igNewFrame ();
-
     if (framebuffer.height != self.glfw_win_size.height)
     {
       self.glfw_win_size.height = framebuffer.height;
@@ -208,13 +206,11 @@ pub const context_imgui = struct
 
       self.init_window = true;
     }
+  }
 
-    const window_flags = imgui.ImGuiWindowFlags_NoTitleBar | imgui.ImGuiWindowFlags_NoCollapse | imgui.ImGuiWindowFlags_NoResize | imgui.ImGuiWindowFlags_NoMove;
-
-    if (!imgui.igBegin ("Tweaker", null, window_flags))
-    {
-      return ImguiContextError.BeginFailure;
-    }
+  fn prepare_fps (self: Self, last_displayed_fps: *?std.time.Instant, fps: *f32) !void
+  {
+    _ = self;
 
     if (last_displayed_fps.* == null or (try std.time.Instant.now ()).since (last_displayed_fps.*.?) > std.time.ns_per_s)
     {
@@ -223,9 +219,11 @@ pub const context_imgui = struct
     }
 
     imgui.igText ("Average %.3f ms/frame (%.1f FPS)", 1000.0 / fps.*, fps.*);
+  }
 
-    // Return a boolean depending on the fact that the value of the variable changed or not
-    //_ = imgui.igSliderFloat ("Float", tweak_me.f, 0.0, 1.0, "%.3f", 0);
+  fn prepare_seed (self: Self, tweak_me: anytype) void
+  {
+    _ = self;
 
     const button_size = imgui.ImVec2 { .x = 0, .y = 0, };
 
@@ -235,6 +233,94 @@ pub const context_imgui = struct
       imgui.igSameLine (0.0, -1.0);
       imgui.igText ("%u", tweak_me.seed.*);
     }
+  }
+
+  fn find_available_filename (self: Self, allocator: std.mem.Allocator) ![] const u8
+  {
+    _ = self;
+
+    var screenshots_dir = std.fs.cwd ().openDir ("screenshots", .{}) catch |err| blk:
+                          {
+                            if (err == std.fs.Dir.OpenError.FileNotFound)
+                            {
+                              try std.fs.cwd ().makeDir ("screenshots");
+                              break :blk try std.fs.cwd ().openDir ("screenshots", .{});
+                            } else {
+                              return err;
+                            }
+                          };
+    defer screenshots_dir.close ();
+
+    const now = datetime.Datetime.now ();
+    const date = try now.formatISO8601 (allocator, true);
+    var id: u32 = 0;
+    var filename: [] const u8 = undefined;
+    var file: std.fs.File = undefined;
+    var available = false;
+
+    while (id < std.math.maxInt (u32))
+    {
+      filename = try std.fmt.allocPrint (allocator, "{s}-{d}", .{ date, id, });
+      file = screenshots_dir.openFile (filename, .{}) catch |err|
+             {
+               if (err == std.fs.File.OpenError.FileNotFound)
+               {
+                 available = true;
+                 break;
+               } else {
+                 return err;
+               }
+             };
+      file.close ();
+      id += 1;
+    }
+
+    if (!available)
+    {
+      return ImguiContextError.NoAvailableFilename;
+    }
+
+    return filename;
+  }
+
+  fn prepare_screenshot (self: Self, allocator: std.mem.Allocator) !void
+  {
+    const button_size = imgui.ImVec2 { .x = 0, .y = 0, };
+
+    // TODO: display window size
+    if (imgui.igButton ("Take a screenshot", button_size))
+    {
+      const filename = try self.find_available_filename (allocator);
+      std.debug.print ("FILE = {s}\n", .{ filename });
+      // TODO: 2023-07-29T15:50:52.362000+00:00-0
+
+      // TODO: make the screenshot
+    }
+  }
+
+  pub fn prepare (self: *Self, allocator: std.mem.Allocator, last_displayed_fps: *?std.time.Instant, fps: *f32, framebuffer: struct { width: u32, height: u32, }, tweak_me: anytype) !void
+  {
+    imgui.igImGui_ImplVulkan_NewFrame ();
+    imgui.igImGui_ImplGlfw_NewFrame ();
+    imgui.igNewFrame ();
+
+    try self.prepare_pane (.{ .width = framebuffer.width, .height = framebuffer.height, });
+
+    const window_flags = imgui.ImGuiWindowFlags_NoTitleBar | imgui.ImGuiWindowFlags_NoCollapse | imgui.ImGuiWindowFlags_NoResize | imgui.ImGuiWindowFlags_NoMove;
+
+    if (!imgui.igBegin ("Tweaker", null, window_flags))
+    {
+      return ImguiContextError.BeginFailure;
+    }
+
+    try self.prepare_fps (last_displayed_fps, fps);
+    self.prepare_seed (tweak_me);
+    try self.prepare_screenshot (allocator);
+
+    // Return a boolean depending on the fact that the value of the variable changed or not
+    //_ = imgui.igSliderFloat ("Float", tweak_me.f, 0.0, 1.0, "%.3f", 0);
+
+
     imgui.igEnd ();
 
     imgui.igRender ();

@@ -10,8 +10,9 @@ const profile  = utils.profile;
 const severity = utils.severity;
 
 const imgui = @cImport ({
-                          @cDefine ("CIMGUI_DEFINE_ENUMS_AND_STRUCTS", {});
                           @cInclude ("cimgui.h");
+                          @cInclude ("cimgui_impl_glfw.h");
+                          @cInclude ("cimgui_impl_vulkan.h");
                         });
 
 const dispatch         = @import ("../vk/dispatch.zig");
@@ -62,7 +63,6 @@ pub const context_imgui = struct
                               NoAvailableFilename,
                             };
 
-  glfw_win_pos: glfw.Window.Pos = undefined,
   glfw_win_size: glfw.Window.Size = undefined,
   init_window: bool = false,
 
@@ -75,26 +75,23 @@ pub const context_imgui = struct
 
   pub fn init_glfw (self: *Self, window: glfw.Window) !void
   {
-    self.glfw_win_pos = window.getPos ();
     self.glfw_win_size = window.getFramebufferSize ();
 
-    if (imgui.igCreateContext (null) == null)
+    if (imgui.ImGui_CreateContext (null) == null)
     {
       return ImguiContextError.InitFailure;
     }
 
-    var io = imgui.igGetIO ();
+    var io = imgui.ImGui_GetIO ();
     io.*.ConfigFlags |= imgui.ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
-    io.*.ConfigFlags |= imgui.ImGuiConfigFlags_DockingEnable;     // Enable Docking
-    io.*.ConfigFlags |= imgui.ImGuiConfigFlags_ViewportsEnable;   // Enable Multi-Viewport / Platform Windows
 
-    imgui.igStyleColorsDark (null);
+    imgui.ImGui_StyleColorsDark (null);
 
-    var style = imgui.igGetStyle ();
+    var style = imgui.ImGui_GetStyle ();
     style.*.WindowRounding = 0;
     style.*.Colors [imgui.ImGuiCol_WindowBg].w = 1;
 
-    if (!imgui.igImGui_ImplGlfw_InitForVulkan (@ptrCast (window.handle), true))
+    if (!imgui.cImGui_ImplGlfw_InitForVulkan (@ptrCast (window.handle), true))
     {
       return ImguiContextError.InitGlfwFailure;
     }
@@ -126,7 +123,7 @@ pub const context_imgui = struct
 
     try renderer.device_dispatch.beginCommandBuffer (command_buffers [0], &begin_info);
 
-    if (!imgui.igImGui_ImplVulkan_CreateFontsTexture (@ptrFromInt (@intFromEnum (renderer.command_buffer))))
+    if (!imgui.cImGui_ImplVulkan_CreateFontsTexture (@ptrFromInt (@intFromEnum (renderer.command_buffer))))
     {
       return ImguiContextError.CreateFontsTextureFailure;
     }
@@ -144,7 +141,7 @@ pub const context_imgui = struct
     try renderer.device_dispatch.queueSubmit (renderer.graphics_queue, 1, &submit_info, vk.Fence.null_handle);
 
     try renderer.device_dispatch.deviceWaitIdle (renderer.logical_device);
-    imgui.igImGui_ImplVulkan_DestroyFontUploadObjects ();
+    imgui.cImGui_ImplVulkan_DestroyFontUploadObjects ();
 
     try log_app ("upload Imgui fonts OK", severity.DEBUG, .{});
   }
@@ -172,7 +169,7 @@ pub const context_imgui = struct
                       .CheckVkResultFn       = check_vk_result,
                     };
 
-    if (!imgui.igImGui_ImplVulkan_Init (@ptrCast (&init_info), @ptrFromInt (@intFromEnum (renderer.render_pass))))
+    if (!imgui.cImGui_ImplVulkan_Init (@ptrCast (&init_info), @ptrFromInt (@intFromEnum (renderer.render_pass))))
     {
       return ImguiContextError.InitVulkanFailure;
     }
@@ -188,21 +185,17 @@ pub const context_imgui = struct
     {
       self.glfw_win_size.height = framebuffer.height;
       const window_size = imgui.ImVec2 { .x = 0.0, .y = @floatFromInt (self.glfw_win_size.height), };
-      imgui.igSetNextWindowSize (window_size, 0);
+      imgui.ImGui_SetNextWindowSize (window_size, 0);
     }
 
     if (!self.init_window)
     {
-      const window_pos = imgui.ImVec2
-                         {
-                           .x = @floatFromInt (self.glfw_win_pos.x),
-                           .y = @floatFromInt (self.glfw_win_pos.y),
-                         };
+      const window_pos = imgui.ImVec2 { .x = 0.0, .y = 0.0, };
       const window_pivot = imgui.ImVec2 { .x = 0.0, .y = 0.0, };
-      imgui.igSetNextWindowPos (window_pos, 0, window_pivot);
+      imgui.ImGui_SetNextWindowPosEx (window_pos, 0, window_pivot);
 
       const window_size = imgui.ImVec2 { .x = 0.0, .y = @floatFromInt (self.glfw_win_size.height), };
-      imgui.igSetNextWindowSize (window_size, 0);
+      imgui.ImGui_SetNextWindowSize (window_size, 0);
 
       self.init_window = true;
     }
@@ -214,11 +207,11 @@ pub const context_imgui = struct
 
     if (last_displayed_fps.* == null or (try std.time.Instant.now ()).since (last_displayed_fps.*.?) > std.time.ns_per_s)
     {
-      fps.* = imgui.igGetIO ().*.Framerate;
+      fps.* = imgui.ImGui_GetIO ().*.Framerate;
       last_displayed_fps.* = try std.time.Instant.now ();
     }
 
-    imgui.igText ("Average %.3f ms/frame (%.1f FPS)", 1000.0 / fps.*, fps.*);
+    imgui.ImGui_Text ("Average %.3f ms/frame (%.1f FPS)", 1000.0 / fps.*, fps.*);
   }
 
   fn prepare_seed (self: Self, tweak_me: anytype) void
@@ -227,11 +220,11 @@ pub const context_imgui = struct
 
     const button_size = imgui.ImVec2 { .x = 0, .y = 0, };
 
-    if (imgui.igButton ("New seed", button_size)) tweak_me.seed.* = @intCast (@mod (std.time.milliTimestamp (), @as (i64, @intCast (std.math.maxInt (u32)))));
+    if (imgui.ImGui_ButtonEx ("New seed", button_size)) tweak_me.seed.* = @intCast (@mod (std.time.milliTimestamp (), @as (i64, @intCast (std.math.maxInt (u32)))));
     if (build.LOG_LEVEL > @intFromEnum (profile.DEFAULT))
     {
-      imgui.igSameLine (0.0, -1.0);
-      imgui.igText ("%u", tweak_me.seed.*);
+      imgui.ImGui_SameLineEx (0.0, -1.0);
+      imgui.ImGui_Text ("%u", tweak_me.seed.*);
     }
   }
 
@@ -294,7 +287,7 @@ pub const context_imgui = struct
     const button_size = imgui.ImVec2 { .x = 0, .y = 0, };
 
     // TODO: display window size
-    if (imgui.igButton ("Take a screenshot", button_size))
+    if (imgui.ImGui_ButtonEx ("Take a screenshot", button_size))
     {
       const filename = try self.find_available_filename (allocator);
       _ = filename;
@@ -305,15 +298,15 @@ pub const context_imgui = struct
 
   pub fn prepare (self: *Self, allocator: std.mem.Allocator, last_displayed_fps: *?std.time.Instant, fps: *f32, framebuffer: struct { width: u32, height: u32, }, tweak_me: anytype) !void
   {
-    imgui.igImGui_ImplVulkan_NewFrame ();
-    imgui.igImGui_ImplGlfw_NewFrame ();
-    imgui.igNewFrame ();
+    imgui.cImGui_ImplVulkan_NewFrame ();
+    imgui.cImGui_ImplGlfw_NewFrame ();
+    imgui.ImGui_NewFrame ();
 
     try self.prepare_pane (.{ .width = framebuffer.width, .height = framebuffer.height, });
 
     const window_flags = imgui.ImGuiWindowFlags_NoTitleBar | imgui.ImGuiWindowFlags_NoCollapse | imgui.ImGuiWindowFlags_NoResize | imgui.ImGuiWindowFlags_NoMove;
 
-    if (!imgui.igBegin ("Tweaker", null, window_flags))
+    if (!imgui.ImGui_Begin ("Tweaker", null, window_flags))
     {
       return ImguiContextError.BeginFailure;
     }
@@ -323,12 +316,10 @@ pub const context_imgui = struct
     try self.prepare_screenshot (allocator);
 
     // Return a boolean depending on the fact that the value of the variable changed or not
-    //_ = imgui.igSliderFloat ("Float", tweak_me.f, 0.0, 1.0, "%.3f", 0);
+    //_ = imgui.ImGui_SliderFloat ("Float", tweak_me.f, 0.0, 1.0, "%.3f", 0);
 
-
-    imgui.igEnd ();
-
-    imgui.igRender ();
+    imgui.ImGui_End ();
+    imgui.ImGui_Render ();
 
     try log_app ("start render Imgui OK", severity.DEBUG, .{});
   }
@@ -338,9 +329,7 @@ pub const context_imgui = struct
     _ = self;
 
     var pipeline = vk.Pipeline.null_handle;
-    imgui.igImGui_ImplVulkan_RenderDrawData (imgui.igGetDrawData (), @ptrFromInt (@intFromEnum (command_buffer)), @ptrFromInt (@intFromEnum (pipeline)));
-
-    imgui.igUpdatePlatformWindows ();
+    imgui.cImGui_ImplVulkan_RenderDrawDataEx (imgui.ImGui_GetDrawData (), @ptrFromInt (@intFromEnum (command_buffer)), @ptrFromInt (@intFromEnum (pipeline)));
 
     try log_app ("end render Imgui OK", severity.DEBUG, .{});
   }
@@ -349,9 +338,9 @@ pub const context_imgui = struct
   {
     _ = self;
 
-    imgui.igImGui_ImplVulkan_Shutdown ();
-    imgui.igImGui_ImplGlfw_Shutdown ();
-    imgui.igDestroyContext (null);
+    imgui.cImGui_ImplVulkan_Shutdown ();
+    imgui.cImGui_ImplGlfw_Shutdown ();
+    imgui.ImGui_DestroyContext (null);
 
     try log_app ("cleanup Imgui OK", severity.DEBUG, .{});
   }

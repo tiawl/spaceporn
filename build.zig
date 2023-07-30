@@ -8,14 +8,11 @@ const vk_gen = @import ("libs/vulkan-zig/generator/index.zig");
 
 fn gen_imgui_binding (allocator: std.mem.Allocator) !void
 {
-  var child = std.ChildProcess.init (&[_][] const u8
-                                     {
-                                       "./generator.sh", "-c", "glfw vulkan",
-                                     }, allocator);
+  var child = std.ChildProcess.init (&[_][] const u8 { "./gen_binding.sh", }, allocator);
   child.stdin_behavior = .Ignore;
   child.stdout_behavior = .Pipe;
   child.stderr_behavior = .Pipe;
-  child.cwd = "libs/cimgui/generator";
+  child.cwd = "libs";
 
   var stdout = std.ArrayList (u8).init (allocator);
   var stderr = std.ArrayList (u8).init (allocator);
@@ -23,91 +20,13 @@ fn gen_imgui_binding (allocator: std.mem.Allocator) !void
   try child.spawn ();
   try child.collectOutput (&stdout, &stderr, 50 * 1024);
 
-  var term = try child.wait ();
-
-  std.debug.print ("STDOUT: {s}\nSTDERR: {s}\n", .{ try stdout.toOwnedSlice (), try stderr.toOwnedSlice (), });
-
-  if (term != std.ChildProcess.Term.Exited)
-  {
-    std.log.err ("cimgui generator failed\n", .{});
-    std.process.exit (1);
-  }
-
-  child = std.ChildProcess.init (&[_][] const u8 { "./gen_binding.sh", }, allocator);
-  child.stdin_behavior = .Ignore;
-  child.stdout_behavior = .Pipe;
-  child.stderr_behavior = .Pipe;
-  child.cwd = "libs";
-
-  stdout = std.ArrayList (u8).init (allocator);
-  stderr = std.ArrayList (u8).init (allocator);
-
-  try child.spawn ();
-  try child.collectOutput (&stdout, &stderr, 50 * 1024);
-
-  term = try child.wait ();
+  const term = try child.wait ();
 
   std.debug.print ("STDOUT: {s}\nSTDERR: {s}\n", .{ try stdout.toOwnedSlice (), try stderr.toOwnedSlice (), });
 
   if (term != std.ChildProcess.Term.Exited)
   {
     std.log.err ("script failed\n", .{});
-    std.process.exit (1);
-  }
-}
-
-fn git_reset (allocator: std.mem.Allocator) !void
-{
-  var child = std.ChildProcess.init (&[_][] const u8
-                                     {
-                                       "git", "reset", "--hard",
-                                     }, allocator);
-  child.stdin_behavior = .Ignore;
-  child.stdout_behavior = .Pipe;
-  child.stderr_behavior = .Pipe;
-  child.cwd = "libs/cimgui";
-
-  var stdout = std.ArrayList (u8).init (allocator);
-  var stderr = std.ArrayList (u8).init (allocator);
-
-  try child.spawn ();
-  try child.collectOutput (&stdout, &stderr, 50 * 1024);
-
-  const term = try child.wait ();
-
-  std.debug.print ("STDOUT: {s}\nSTDERR: {s}\n", .{ try stdout.toOwnedSlice (), try stderr.toOwnedSlice (), });
-
-  if (term != std.ChildProcess.Term.Exited)
-  {
-    std.log.err ("git reset --hard failed\n", .{});
-    std.process.exit (1);
-  }
-}
-
-fn git_clean (allocator: std.mem.Allocator) !void
-{
-  var child = std.ChildProcess.init (&[_][] const u8
-                                     {
-                                       "git", "clean", "-f", "-x", "-d", ":/",
-                                     }, allocator);
-  child.stdin_behavior = .Ignore;
-  child.stdout_behavior = .Pipe;
-  child.stderr_behavior = .Pipe;
-  child.cwd = "libs/cimgui";
-
-  var stdout = std.ArrayList (u8).init (allocator);
-  var stderr = std.ArrayList (u8).init (allocator);
-
-  try child.spawn ();
-  try child.collectOutput (&stdout, &stderr, 50 * 1024);
-
-  const term = try child.wait ();
-
-  std.debug.print ("STDOUT: {s}\nSTDERR: {s}\n", .{ try stdout.toOwnedSlice (), try stderr.toOwnedSlice (), });
-
-  if (term != std.ChildProcess.Term.Exited)
-  {
-    std.log.err ("git clean -f -x -d :/ failed\n", .{});
     std.process.exit (1);
   }
 }
@@ -223,10 +142,8 @@ pub fn build (builder: *std.Build) !void
     std.process.exit (1);
   };
 
-  // cimgui
-  try gen_imgui_binding (builder.allocator);
-  try git_reset (builder.allocator);
-  try git_clean (builder.allocator);
+  // imgui binding
+  // try gen_imgui_binding (builder.allocator);
 
   exe.linkLibC ();
   exe.linkLibCpp ();
@@ -235,17 +152,19 @@ pub fn build (builder: *std.Build) !void
   const cflags = &.{ "-fno-sanitize=undefined" };
 
   exe.addIncludePath ("libs");
-  exe.addIncludePath ("libs/cimgui/imgui");
-  exe.addIncludePath ("libs/cimgui/imgui/backends");
+  exe.addIncludePath ("libs/imgui");
+  exe.addIncludePath ("libs/imgui/backends");
 
   exe.addCSourceFile ("libs/cimgui.cpp", cflags);
-  exe.addCSourceFile ("libs/cimgui/imgui/imgui.cpp", cflags);
-  exe.addCSourceFile ("libs/cimgui/imgui/imgui_demo.cpp", cflags);
-  exe.addCSourceFile ("libs/cimgui/imgui/imgui_draw.cpp", cflags);
-  exe.addCSourceFile ("libs/cimgui/imgui/imgui_tables.cpp", cflags);
-  exe.addCSourceFile ("libs/cimgui/imgui/imgui_widgets.cpp", cflags);
-  exe.addCSourceFile ("libs/cimgui/imgui/backends/imgui_impl_glfw.cpp", cflags);
-  exe.addCSourceFile ("libs/cimgui/imgui/backends/imgui_impl_vulkan.cpp", cflags);
+  exe.addCSourceFile ("libs/cimgui_impl_glfw.cpp", cflags);
+  exe.addCSourceFile ("libs/cimgui_impl_vulkan.cpp", cflags);
+  exe.addCSourceFile ("libs/imgui/imgui.cpp", cflags);
+  exe.addCSourceFile ("libs/imgui/imgui_demo.cpp", cflags);
+  exe.addCSourceFile ("libs/imgui/imgui_draw.cpp", cflags);
+  exe.addCSourceFile ("libs/imgui/imgui_tables.cpp", cflags);
+  exe.addCSourceFile ("libs/imgui/imgui_widgets.cpp", cflags);
+  exe.addCSourceFile ("libs/imgui/backends/imgui_impl_glfw.cpp", cflags);
+  exe.addCSourceFile ("libs/imgui/backends/imgui_impl_vulkan.cpp", cflags);
 
   // shader resources, to be compiled using glslc
   const shaders = vk_gen.ShaderCompileStep.create (builder, &[_][] const u8 { "glslc", "--target-env=vulkan1.2" }, "-o");

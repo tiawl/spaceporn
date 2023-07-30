@@ -7,6 +7,9 @@
 [submodule "libs/zig-datetime"]
 	path = libs/zig-datetime
 	url = https://github.com/frmdstryr/zig-datetime
-[submodule "libs/cimgui"]
-	path = libs/cimgui
-	url = https://github.com/cimgui/cimgui
+[submodule "libs/imgui"]
+	path = libs/imgui
+	url = https://github.com/ocornut/imgui
+[submodule "libs/dear_bindings"]
+	path = libs/dear_bindings
+	url = https://github.com/dearimgui/dear_bindings

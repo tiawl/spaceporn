@@ -103,4 +103,5 @@ pub const DeviceDispatch = vk.DeviceWrapper (
   .bindImageMemory             = true,
   .createSampler               = true,
   .destroySampler              = true,
+  .getImageSubresourceLayout   = true,
 });

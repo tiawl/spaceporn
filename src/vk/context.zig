@@ -795,7 +795,7 @@ pub const context_vk = struct
     const alloc_info = vk.MemoryAllocateInfo
                        {
                          .allocation_size   = memory_requirements.size,
-                         .memory_type_index = try find_memory_type (memory_requirements.memory_type_bits, vk.MemoryPropertyFlags { .device_local_bit = true, }),
+                         .memory_type_index = try find_memory_type (self.instance.dispatch, self.physical_device.?, memory_requirements.memory_type_bits, vk.MemoryPropertyFlags { .device_local_bit = true, }),
                        };
 
     self.offscreen_image_memory = try self.device_dispatch.allocateMemory (self.logical_device, &alloc_info, null);
@@ -1302,7 +1302,7 @@ pub const context_vk = struct
     const alloc_info = vk.MemoryAllocateInfo
                        {
                          .allocation_size   = memory_requirements.size,
-                         .memory_type_index = try find_memory_type (memory_requirements.memory_type_bits, properties),
+                         .memory_type_index = try find_memory_type (self.instance.dispatch, self.physical_device.?, memory_requirements.memory_type_bits, properties),
                        };
 
     // TODO: issue #68
@@ -1314,24 +1314,24 @@ pub const context_vk = struct
 
   fn copy_buffer (self: Self, src_buffer: vk.Buffer, dst_buffer: vk.Buffer, size: vk.DeviceSize) !void
   {
-    var command_buffer = [_] vk.CommandBuffer { undefined, };
+    var command_buffers = [_] vk.CommandBuffer { undefined, };
 
     const alloc_info = vk.CommandBufferAllocateInfo
                        {
                          .command_pool         = self.buffers_command_pool,
                          .level                = vk.CommandBufferLevel.primary,
-                         .command_buffer_count = command_buffer.len,
+                         .command_buffer_count = command_buffers.len,
                        };
 
-    try self.device_dispatch.allocateCommandBuffers (self.logical_device, &alloc_info, &command_buffer);
-    errdefer self.device_dispatch.freeCommandBuffers (self.logical_device, self.buffers_command_pool, 1, &command_buffer);
+    try self.device_dispatch.allocateCommandBuffers (self.logical_device, &alloc_info, &command_buffers);
+    errdefer self.device_dispatch.freeCommandBuffers (self.logical_device, self.buffers_command_pool, 1, &command_buffers);
 
     const begin_info = vk.CommandBufferBeginInfo
                        {
                          .flags = vk.CommandBufferUsageFlags { .one_time_submit_bit = true, },
                        };
 
-    try self.device_dispatch.beginCommandBuffer (command_buffer [0], &begin_info);
+    try self.device_dispatch.beginCommandBuffer (command_buffers [0], &begin_info);
 
     const region = [_] vk.BufferCopy
                    {
@@ -1343,22 +1343,22 @@ pub const context_vk = struct
                      },
                    };
 
-    self.device_dispatch.cmdCopyBuffer (command_buffer [0], src_buffer, dst_buffer, 1, &region);
-    try self.device_dispatch.endCommandBuffer (command_buffer [0]);
+    self.device_dispatch.cmdCopyBuffer (command_buffers [0], src_buffer, dst_buffer, 1, &region);
+    try self.device_dispatch.endCommandBuffer (command_buffers [0]);
 
     const submit_info = [_] vk.SubmitInfo
                         {
                           vk.SubmitInfo
                           {
-                            .command_buffer_count = command_buffer.len,
-                            .p_command_buffers    = &command_buffer,
+                            .command_buffer_count = command_buffers.len,
+                            .p_command_buffers    = &command_buffers,
                           },
                         };
 
     try self.device_dispatch.queueSubmit (self.graphics_queue, 1, &submit_info, vk.Fence.null_handle);
     try self.device_dispatch.queueWaitIdle (self.graphics_queue);
 
-    self.device_dispatch.freeCommandBuffers (self.logical_device, self.buffers_command_pool, 1, &command_buffer);
+    self.device_dispatch.freeCommandBuffers (self.logical_device, self.buffers_command_pool, 1, &command_buffers);
   }
 
   fn init_vertex_buffer (self: *Self) !void
@@ -1366,16 +1366,20 @@ pub const context_vk = struct
     const size = @sizeOf (@TypeOf (vertices));
     var staging_buffer: vk.Buffer = undefined;
     var staging_buffer_memory: vk.DeviceMemory = undefined;
+
     try self.init_buffer (size, vk.BufferUsageFlags { .transfer_src_bit = true, },
                                 vk.MemoryPropertyFlags
                                 {
                                   .host_visible_bit  = true,
                                   .host_coherent_bit = true,
                                 }, &staging_buffer, &staging_buffer_memory);
+    defer self.device_dispatch.destroyBuffer (self.logical_device, staging_buffer, null);
+    defer self.device_dispatch.freeMemory (self.logical_device, staging_buffer_memory, null);
 
     const data = try self.device_dispatch.mapMemory (self.logical_device, staging_buffer_memory, 0, size, vk.MemoryMapFlags {});
+    defer self.device_dispatch.unmapMemory (self.logical_device, staging_buffer_memory);
+
     @memcpy (@as ([*] u8, @ptrCast (data.?)) [0..size], std.mem.sliceAsBytes (&vertices));
-    self.device_dispatch.unmapMemory (self.logical_device, staging_buffer_memory);
 
     try self.init_buffer (size, vk.BufferUsageFlags
                                 {
@@ -1386,9 +1390,6 @@ pub const context_vk = struct
 
     try self.copy_buffer(staging_buffer, self.vertex_buffer, size);
 
-    self.device_dispatch.destroyBuffer (self.logical_device, staging_buffer, null);
-    self.device_dispatch.freeMemory (self.logical_device, staging_buffer_memory, null);
-
     try log_app ("init Vulkan vertexbuffer OK", severity.DEBUG, .{});
   }
 
@@ -1397,16 +1398,20 @@ pub const context_vk = struct
     const size = @sizeOf (@TypeOf (indices));
     var staging_buffer: vk.Buffer = undefined;
     var staging_buffer_memory: vk.DeviceMemory = undefined;
+
     try self.init_buffer (size, vk.BufferUsageFlags { .transfer_src_bit = true, },
                                 vk.MemoryPropertyFlags
                                 {
                                   .host_visible_bit = true,
                                   .host_coherent_bit = true,
                                 }, &staging_buffer, &staging_buffer_memory);
+    defer self.device_dispatch.destroyBuffer (self.logical_device, staging_buffer, null);
+    defer self.device_dispatch.freeMemory (self.logical_device, staging_buffer_memory, null);
 
     const data = try self.device_dispatch.mapMemory (self.logical_device, staging_buffer_memory, 0, size, vk.MemoryMapFlags {});
+    defer self.device_dispatch.unmapMemory (self.logical_device, staging_buffer_memory);
+
     @memcpy (@as ([*] u8, @ptrCast (data.?)) [0..size], std.mem.sliceAsBytes (&indices));
-    self.device_dispatch.unmapMemory (self.logical_device, staging_buffer_memory);
 
     try self.init_buffer (size, vk.BufferUsageFlags
                                 {
@@ -1415,9 +1420,6 @@ pub const context_vk = struct
                                 }, vk.MemoryPropertyFlags { .device_local_bit = true, }, &(self.index_buffer), &(self.index_buffer_memory));
 
     try self.copy_buffer(staging_buffer, self.index_buffer, size);
-
-    self.device_dispatch.destroyBuffer (self.logical_device, staging_buffer, null);
-    self.device_dispatch.freeMemory (self.logical_device, staging_buffer_memory, null);
 
     try log_app ("init Vulkan indexbuffer OK", severity.DEBUG, .{});
   }
@@ -1871,8 +1873,9 @@ pub const context_vk = struct
                 };
 
     var data = try self.device_dispatch.mapMemory (self.logical_device, self.uniform_buffers_memory [self.current_frame], 0, ubo_size, vk.MemoryMapFlags {});
+    defer self.device_dispatch.unmapMemory (self.logical_device, self.uniform_buffers_memory [self.current_frame]);
+
     @memcpy (@as ([*] u8, @ptrCast (data.?)) [0..ubo_size], std.mem.asBytes (&ubo));
-    self.device_dispatch.unmapMemory (self.logical_device, self.uniform_buffers_memory [self.current_frame]);
 
     if (self.render_offscreen)
     {
@@ -1884,8 +1887,9 @@ pub const context_vk = struct
                    };
 
       data = try self.device_dispatch.mapMemory (self.logical_device, self.offscreen_uniform_buffers_memory, 0, oubo_size, vk.MemoryMapFlags {});
+      defer self.device_dispatch.unmapMemory (self.logical_device, self.offscreen_uniform_buffers_memory);
+
       @memcpy (@as ([*] u8, @ptrCast (data.?)) [0..oubo_size], std.mem.asBytes (&oubo));
-      self.device_dispatch.unmapMemory (self.logical_device, self.offscreen_uniform_buffers_memory);
     }
   }
 
@@ -1901,11 +1905,13 @@ pub const context_vk = struct
                         },
                        .{
                           .device_dispatch    = self.device_dispatch,
+                          .instance_dispatch  = self.instance.dispatch,
                           .logical_device     = self.logical_device,
                           .image              = self.images [self.current_frame],
                           // TODO: check command pool
                           .command_pool       = self.command_pool,
-                          .blitting_supported = self.blitting_supported,
+                          .graphics_queue     = self.graphics_queue,
+                          .blitting_supported = self.candidate.blitting_supported,
                         },
                        .{
                           .seed = &(options.seed),

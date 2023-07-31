@@ -17,6 +17,7 @@ const imgui = @cImport ({
 
 const dispatch         = @import ("../vk/dispatch.zig");
 const DeviceDispatch   = dispatch.DeviceDispatch;
+const InstanceDispatch = dispatch.InstanceDispatch;
 
 const ImGui_ImplVulkan_InitInfo = extern struct
 {
@@ -37,9 +38,9 @@ const ImGui_ImplVulkan_InitInfo = extern struct
   CheckVkResultFn:       ?*const fn (c_int) callconv (.C) void,
 };
 
-pub fn find_memory_type (self: Self, type_filter: u32, properties: vk.MemoryPropertyFlags) !u32
+pub fn find_memory_type (instance_dispatch: InstanceDispatch, physical_device: vk.PhysicalDevice, type_filter: u32, properties: vk.MemoryPropertyFlags) !u32
 {
-  const memory_properties = self.instance.dispatch.getPhysicalDeviceMemoryProperties (self.physical_device.?);
+  const memory_properties = instance_dispatch.getPhysicalDeviceMemoryProperties (physical_device);
 
   for (memory_properties.memory_types [0..memory_properties.memory_type_count], 0..) |memory_type, index|
   {
@@ -67,6 +68,17 @@ pub const context_imgui = struct
                      command_pool:    vk.CommandPool,
                      command_buffer:  vk.CommandBuffer,
                    };
+
+  const ScreenshotRenderer = struct
+                             {
+                               device_dispatch:    DeviceDispatch,
+                               instance_dispatch:  InstanceDispatch,
+                               logical_device:     vk.Device,
+                               image:              vk.Image,
+                               command_pool:       vk.CommandPool,
+                               graphics_queue:     vk.Queue,
+                               blitting_supported: bool,
+                             };
 
   const ImguiContextError = error
                             {
@@ -294,10 +306,10 @@ pub const context_imgui = struct
     return filename;
   }
 
-  fn prepare_screenshot (self: Self, allocator: std.mem.Allocator,
-                         framebuffer: struct { width: u32, height: u32, },
-                         renderer: struct { device_dispatch: DeviceDispatch, logical_device:  vk.Device, image: vk.Image, command_pool: vk.CommandPool, blitting_supported: bool, }) !void
+  fn prepare_screenshot (self: Self, allocator: std.mem.Allocator, framebuffer: struct { width: u32, height: u32, }, renderer: ScreenshotRenderer) !void
   {
+    _ = renderer;
+    _ = framebuffer;
     const button_size = imgui.ImVec2 { .x = 0, .y = 0, };
 
     // TODO: display window size
@@ -325,13 +337,14 @@ pub const context_imgui = struct
                                 };
 
       const dst_image = try renderer.device_dispatch.createImage (renderer.logical_device, &image_create_info, null);
+      defer self.device_dispatch.destroyImage (self.logical_device, dst_image, null);
 
-      const memory_requirements = self.device_dispatch.getImageMemoryRequirements (self.logical_device, self.dst_image);
+      const memory_requirements = renderer.device_dispatch.getImageMemoryRequirements (renderer.logical_device, dst_image);
 
       const alloc_info = vk.MemoryAllocateInfo
                          {
                            .allocation_size   = memory_requirements.size,
-                           .memory_type_index = try find_memory_type (memory_requirements.memory_type_bits,
+                           .memory_type_index = try find_memory_type (renderer.instance_dispatch, renderer.physical_device, memory_requirements.memory_type_bits,
                                                                       vk.MemoryPropertyFlags
                                                                       {
                                                                         .host_visible_bit  = true,
@@ -339,10 +352,10 @@ pub const context_imgui = struct
                                                                       }),
                          };
 
-      const dst_image_memory = try self.device_dispatch.allocateMemory (self.logical_device, &alloc_info, null);
-      errdefer self.device_dispatch.freeMemory (self.logical_device, self.dst_image_memory, null);
+      const dst_image_memory = try renderer.device_dispatch.allocateMemory (renderer.logical_device, &alloc_info, null);
+      errdefer renderer.device_dispatch.freeMemory (renderer.logical_device, renderer.dst_image_memory, null);
 
-      try self.device_dispatch.bindImageMemory (self.logical_device, self.dst_image, self.dst_image_memory, 0);
+      try renderer.device_dispatch.bindImageMemory (renderer.logical_device, renderer.dst_image, renderer.dst_image_memory, 0);
 
       var command_buffers = [_] vk.CommandBuffer { undefined, };
 
@@ -353,12 +366,12 @@ pub const context_imgui = struct
                                    .command_buffer_count = command_buffers.len,
                                  };
 
-      try self.device_dispatch.allocateCommandBuffers (self.logical_device, &buffers_alloc_info, &command_buffers);
-      errdefer self.device_dispatch.freeCommandBuffers (self.logical_device, self.command_pool, 1, &command_buffers);
+      try renderer.device_dispatch.allocateCommandBuffers (renderer.logical_device, &buffers_alloc_info, &command_buffers);
+      errdefer renderer.device_dispatch.freeCommandBuffers (renderer.logical_device, renderer.command_pool, 1, &command_buffers);
 
       const begin_info = vk.CommandBufferBeginInfo {};
 
-      try self.device_dispatch.beginCommandBuffer (command_buffers [0], &begin_info);
+      try renderer.device_dispatch.beginCommandBuffer (command_buffers [0], &begin_info);
 
       const dst_image_to_transfer_dst_layout = vk.ImageMemoryBarrier
                                                {
@@ -378,7 +391,7 @@ pub const context_imgui = struct
                                                };
       vk.cmdPipelineBarrier (command_buffers [0],
                              vk.PipelineStageFlags { .transfer_bit = true, },
-                             vk.PipelineStageFlags { .transfer_bit = true, }
+                             vk.PipelineStageFlags { .transfer_bit = true, },
                              vk.DependencyFlags {},
                              0, null, 0, null, 1,
                              &dst_image_to_transfer_dst_layout);
@@ -401,7 +414,7 @@ pub const context_imgui = struct
                                                                   };
       vk.cmdPipelineBarrier (command_buffers [0],
                              vk.PipelineStageFlags { .transfer_bit = true, },
-                             vk.PipelineStageFlags { .transfer_bit = true, }
+                             vk.PipelineStageFlags { .transfer_bit = true, },
                              vk.DependencyFlags {},
                              0, null, 0, null, 1,
                              &swapchain_image_from_present_to_transfer_src_layout);
@@ -465,14 +478,91 @@ pub const context_imgui = struct
                          dst_image, vk.ImageLayout.transfer_dst_optimal,
                          1, &image_copy_region);
       }
+
+      const dst_image_to_general_layout = vk.ImageMemoryBarrier
+                                          {
+                                            .src_access_mask:   vk.AccessFlags { .transfer_write_bit = true, },
+                                            .dst_access_mask:   vk.AccessFlags { .memory_read_bit = true, },
+                                            .old_layout:        vk.ImageLayout.transfer_dst_optimal,
+                                            .new_layout:        vk.ImageLayout.general,
+                                            .image:             dst_image,
+                                            .subresource_range: vk.ImageSubresourceRange
+                                                                {
+                                                                  .aspect_mask      = vk.ImageAspectFlags { .color_bit = true },
+                                                                  .base_mip_level   = 0,
+                                                                  .level_count      = 1,
+                                                                  .base_array_layer = 0,
+                                                                  .layer_count      = 1,
+                                                                },
+                                          };
+      vk.cmdPipelineBarrier (command_buffers [0],
+                             vk.PipelineStageFlags { .transfer_bit = true, },
+                             vk.PipelineStageFlags { .transfer_bit = true, },
+                             vk.DependencyFlags {},
+                             0, null, 0, null, 1,
+                             &dst_image_to_general_layout);
+
+      const swapchain_image_after_blit = vk.ImageMemoryBarrier
+                                         {
+                                           .src_access_mask:   vk.AccessFlags { .transfer_read_bit = true, },
+                                           .dst_access_mask:   vk.AccessFlags { .memory_read_bit = true, },
+                                           .old_layout:        vk.ImageLayout.transfer_src_optimal,
+                                           .new_layout:        vk.ImageLayout.present_src_khr,
+                                           .image:             renderer.image,
+                                           .subresource_range: vk.ImageSubresourceRange
+                                                               {
+                                                                 .aspect_mask      = vk.ImageAspectFlags { .color_bit = true },
+                                                                 .base_mip_level   = 0,
+                                                                 .level_count      = 1,
+                                                                 .base_array_layer = 0,
+                                                                 .layer_count      = 1,
+                                                               },
+                                         };
+      vk.cmdPipelineBarrier (command_buffers [0],
+                             vk.PipelineStageFlags { .transfer_bit = true, },
+                             vk.PipelineStageFlags { .transfer_bit = true, },
+                             vk.DependencyFlags {},
+                             0, null, 0, null, 1,
+                             &swapchain_image_after_blit);
+
+      try renderer.device_dispatch.endCommandBuffer (command_buffers [0]);
+
+      const submit_info = [_] vk.SubmitInfo
+                          {
+                            vk.SubmitInfo
+                            {
+                              .command_buffer_count = command_buffers.len,
+                              .p_command_buffers    = &command_buffers,
+                            },
+                          };
+
+      const fence = try renderer.device_dispatch.createFence(renderer.logical_device, &vk.FenceCreateInfo {}, null);
+      defer renderer.device_dispatch.destroyFence (renderer.logical_device, fence, null);
+
+      try renderer.device_dispatch.queueSubmit (renderer.graphics_queue, 1, &submit_info, fence);
+
+      _ = try renderer.device_dispatch.waitForFences (renderer.logical_device, 1, &[_] vk.Fence { fence, }, vk.TRUE, std.math.maxInt (u64));
+
+      const subresource = vk.ImageSubresource
+                          {
+                            .aspect_mask = vk.ImageAspectFlags { .color_bit = true },
+                            .mip_level   = 0,
+                            .array_layer = 0,
+                          };
+
+      const subresource_layout = renderer.device_dispatch.getImageSubresourceLayout (renderer.logical_device, dst_image, &subresource);
+
+      var data = try self.device_dispatch.mapMemory (self.logical_device, dst_image_memory, 0, vk.WHOLE_SIZE, vk.MemoryMapFlags {});
+      defer self.device_dispatch.unmapMemory (self.logical_device, dst_image_memory);
+
+      data += subresource_layout.offset;
+
+      // TODO: ppm
     }
   }
 
-  pub fn prepare (self: *Self, allocator: std.mem.Allocator,
-                  last_displayed_fps: *?std.time.Instant, fps: *f32,
-                  framebuffer: struct { width: u32, height: u32, },
-                  renderer: struct { device_dispatch: DeviceDispatch, logical_device: vk.Device, image: vk.Image, command_pool: vk.CommandPool, blitting_supported: bool, },
-                  tweak_me: anytype) !void
+  pub fn prepare (self: *Self, allocator: std.mem.Allocator, last_displayed_fps: *?std.time.Instant, fps: *f32,
+                  framebuffer: struct { width: u32, height: u32, }, renderer: ScreenshotRenderer, tweak_me: anytype) !void
   {
     imgui.cImGui_ImplVulkan_NewFrame ();
     imgui.cImGui_ImplGlfw_NewFrame ();

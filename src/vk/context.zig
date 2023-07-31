@@ -5,6 +5,8 @@ const vk        = @import ("vulkan");
 
 const context_imgui = @import ("../imgui/context.zig").context_imgui;
 
+const find_memory_type = @import ("../imgui/context.zig").find_memory_type;
+
 const utils    = @import ("../utils.zig");
 const log_app  = utils.log_app;
 const profile  = utils.profile;
@@ -40,7 +42,7 @@ pub const context_vk = struct
   surface:                          vk.SurfaceKHR = undefined,
   device_dispatch:                  DeviceDispatch = undefined,
   physical_device:                  ?vk.PhysicalDevice = null,
-  candidate:                        struct { graphics_family: u32, present_family: u32, extensions: std.ArrayList ([*:0] const u8), } = undefined,
+  candidate:                        struct { graphics_family: u32, present_family: u32, extensions: std.ArrayList ([*:0] const u8), blitting_supported: bool, } = undefined,
   logical_device:                   vk.Device = undefined,
   graphics_queue:                   vk.Queue = undefined,
   present_queue:                    vk.Queue = undefined,
@@ -118,7 +120,6 @@ pub const context_vk = struct
   {
     NoDevice,
     NoSuitableDevice,
-    NoSuitableMemoryType,
     ImageAcquireFailed,
   };
 
@@ -402,7 +403,7 @@ pub const context_vk = struct
     return true;
   }
 
-  fn is_suitable (self: *Self, device: vk.PhysicalDevice, allocator: std.mem.Allocator) !?struct { graphics_family: u32, present_family: u32, score: u8, }
+  fn is_suitable (self: *Self, device: vk.PhysicalDevice, allocator: std.mem.Allocator) !?struct { graphics_family: u32, present_family: u32, score: u8, blitting_supported: bool, }
   {
     const properties = self.instance.dispatch.getPhysicalDeviceProperties (device);
     const features = self.instance.dispatch.getPhysicalDeviceFeatures (device);
@@ -449,12 +450,13 @@ pub const context_vk = struct
       {
         try log_app ("Vulkan device {s} is suitable", severity.DEBUG, .{ properties.device_name, });
         return .{
-                  .graphics_family = candidate.graphics_family,
-                  .present_family  = candidate.present_family,
-                  .score           = @as (u8, @intFromBool (blitting_supported)) * 8 +
-                                     @as (u8, @intFromBool (properties.device_type == vk.PhysicalDeviceType.discrete_gpu)) * 4 +
-                                     @as (u8, @intFromBool (candidate.graphics_family == candidate.present_family)) * 2 +
-                                     1,
+                  .graphics_family    = candidate.graphics_family,
+                  .present_family     = candidate.present_family,
+                  .score              = @as (u8, @intFromBool (blitting_supported)) * 8 +
+                                        @as (u8, @intFromBool (properties.device_type == vk.PhysicalDeviceType.discrete_gpu)) * 4 +
+                                        @as (u8, @intFromBool (candidate.graphics_family == candidate.present_family)) * 2 +
+                                        1,
+                  .blitting_supported = blitting_supported,
                 };
       }
     }
@@ -484,10 +486,11 @@ pub const context_vk = struct
       const candidate = try self.is_suitable (device, allocator);
       if (candidate != null and candidate.?.score > max_score)
       {
-        self.physical_device           = device;
-        self.candidate.graphics_family = candidate.?.graphics_family;
-        self.candidate.present_family  = candidate.?.present_family;
-        max_score                      = candidate.?.score;
+        self.physical_device              = device;
+        self.candidate.graphics_family    = candidate.?.graphics_family;
+        self.candidate.present_family     = candidate.?.present_family;
+        self.candidate.blitting_supported = candidate.?.blitting_supported;
+        max_score                         = candidate.?.score;
       }
       if (max_score == MAX_DEVICE_SCORE) break;
     }
@@ -792,7 +795,7 @@ pub const context_vk = struct
     const alloc_info = vk.MemoryAllocateInfo
                        {
                          .allocation_size   = memory_requirements.size,
-                         .memory_type_index = try self.find_memory_type (memory_requirements.memory_type_bits, vk.MemoryPropertyFlags { .device_local_bit = true, }),
+                         .memory_type_index = try find_memory_type (memory_requirements.memory_type_bits, vk.MemoryPropertyFlags { .device_local_bit = true, }),
                        };
 
     self.offscreen_image_memory = try self.device_dispatch.allocateMemory (self.logical_device, &alloc_info, null);
@@ -1281,21 +1284,6 @@ pub const context_vk = struct
     try log_app ("init Vulkan command pools OK", severity.DEBUG, .{});
   }
 
-  fn find_memory_type (self: Self, type_filter: u32, properties: vk.MemoryPropertyFlags) !u32
-  {
-    const memory_properties = self.instance.dispatch.getPhysicalDeviceMemoryProperties (self.physical_device.?);
-
-    for (memory_properties.memory_types [0..memory_properties.memory_type_count], 0..) |memory_type, index|
-    {
-      if (type_filter & (@as (u32, 1) << @truncate (index)) != 0 and memory_type.property_flags.contains (properties))
-      {
-        return @truncate (index);
-      }
-    }
-
-    return ContextError.NoSuitableMemoryType;
-  }
-
   fn init_buffer (self: Self, size: vk.DeviceSize, usage: vk.BufferUsageFlags, properties: vk.MemoryPropertyFlags, buffer: *vk.Buffer, buffer_memory: *vk.DeviceMemory) !void
   {
     const create_info = vk.BufferCreateInfo
@@ -1314,7 +1302,7 @@ pub const context_vk = struct
     const alloc_info = vk.MemoryAllocateInfo
                        {
                          .allocation_size   = memory_requirements.size,
-                         .memory_type_index = try self.find_memory_type (memory_requirements.memory_type_bits, properties),
+                         .memory_type_index = try find_memory_type (memory_requirements.memory_type_bits, properties),
                        };
 
     // TODO: issue #68
@@ -1326,10 +1314,7 @@ pub const context_vk = struct
 
   fn copy_buffer (self: Self, src_buffer: vk.Buffer, dst_buffer: vk.Buffer, size: vk.DeviceSize) !void
   {
-    var command_buffer = [_] vk.CommandBuffer
-                         {
-                           undefined,
-                         };
+    var command_buffer = [_] vk.CommandBuffer { undefined, };
 
     const alloc_info = vk.CommandBufferAllocateInfo
                        {
@@ -1381,13 +1366,23 @@ pub const context_vk = struct
     const size = @sizeOf (@TypeOf (vertices));
     var staging_buffer: vk.Buffer = undefined;
     var staging_buffer_memory: vk.DeviceMemory = undefined;
-    try self.init_buffer (size, vk.BufferUsageFlags { .transfer_src_bit = true, }, vk.MemoryPropertyFlags { .host_visible_bit = true, .host_coherent_bit = true, }, &staging_buffer, &staging_buffer_memory);
+    try self.init_buffer (size, vk.BufferUsageFlags { .transfer_src_bit = true, },
+                                vk.MemoryPropertyFlags
+                                {
+                                  .host_visible_bit  = true,
+                                  .host_coherent_bit = true,
+                                }, &staging_buffer, &staging_buffer_memory);
 
     const data = try self.device_dispatch.mapMemory (self.logical_device, staging_buffer_memory, 0, size, vk.MemoryMapFlags {});
     @memcpy (@as ([*] u8, @ptrCast (data.?)) [0..size], std.mem.sliceAsBytes (&vertices));
     self.device_dispatch.unmapMemory (self.logical_device, staging_buffer_memory);
 
-    try self.init_buffer (size, vk.BufferUsageFlags { .transfer_dst_bit = true, .vertex_buffer_bit = true, }, vk.MemoryPropertyFlags { .device_local_bit = true, }, &(self.vertex_buffer), &(self.vertex_buffer_memory));
+    try self.init_buffer (size, vk.BufferUsageFlags
+                                {
+                                  .transfer_dst_bit = true,
+                                  .vertex_buffer_bit = true,
+                                },
+                                vk.MemoryPropertyFlags { .device_local_bit = true, }, &(self.vertex_buffer), &(self.vertex_buffer_memory));
 
     try self.copy_buffer(staging_buffer, self.vertex_buffer, size);
 
@@ -1402,13 +1397,22 @@ pub const context_vk = struct
     const size = @sizeOf (@TypeOf (indices));
     var staging_buffer: vk.Buffer = undefined;
     var staging_buffer_memory: vk.DeviceMemory = undefined;
-    try self.init_buffer (size, vk.BufferUsageFlags { .transfer_src_bit = true, }, vk.MemoryPropertyFlags { .host_visible_bit = true, .host_coherent_bit = true, }, &staging_buffer, &staging_buffer_memory);
+    try self.init_buffer (size, vk.BufferUsageFlags { .transfer_src_bit = true, },
+                                vk.MemoryPropertyFlags
+                                {
+                                  .host_visible_bit = true,
+                                  .host_coherent_bit = true,
+                                }, &staging_buffer, &staging_buffer_memory);
 
     const data = try self.device_dispatch.mapMemory (self.logical_device, staging_buffer_memory, 0, size, vk.MemoryMapFlags {});
     @memcpy (@as ([*] u8, @ptrCast (data.?)) [0..size], std.mem.sliceAsBytes (&indices));
     self.device_dispatch.unmapMemory (self.logical_device, staging_buffer_memory);
 
-    try self.init_buffer (size, vk.BufferUsageFlags { .transfer_dst_bit = true, .index_buffer_bit = true, }, vk.MemoryPropertyFlags { .device_local_bit = true, }, &(self.index_buffer), &(self.index_buffer_memory));
+    try self.init_buffer (size, vk.BufferUsageFlags
+                                {
+                                  .transfer_dst_bit = true,
+                                  .index_buffer_bit = true,
+                                }, vk.MemoryPropertyFlags { .device_local_bit = true, }, &(self.index_buffer), &(self.index_buffer_memory));
 
     try self.copy_buffer(staging_buffer, self.index_buffer, size);
 
@@ -1427,7 +1431,13 @@ pub const context_vk = struct
 
     while (index < MAX_FRAMES_IN_FLIGHT)
     {
-      try self.init_buffer (@sizeOf (uniform_buffer_object_vk), vk.BufferUsageFlags { .uniform_buffer_bit = true, }, vk.MemoryPropertyFlags { .host_visible_bit = true, .host_coherent_bit = true, }, &(self.uniform_buffers [index]), &(self.uniform_buffers_memory [index]));
+      try self.init_buffer (@sizeOf (uniform_buffer_object_vk),
+                            vk.BufferUsageFlags { .uniform_buffer_bit = true, },
+                            vk.MemoryPropertyFlags
+                            {
+                              .host_visible_bit = true,
+                              .host_coherent_bit = true,
+                            }, &(self.uniform_buffers [index]), &(self.uniform_buffers_memory [index]));
       index += 1;
     }
 
@@ -1443,7 +1453,13 @@ pub const context_vk = struct
       }
     }
 
-    try self.init_buffer (@sizeOf (offscreen_uniform_buffer_object_vk), vk.BufferUsageFlags { .uniform_buffer_bit = true, }, vk.MemoryPropertyFlags { .host_visible_bit = true, .host_coherent_bit = true, }, &(self.offscreen_uniform_buffers), &(self.offscreen_uniform_buffers_memory));
+    try self.init_buffer (@sizeOf (offscreen_uniform_buffer_object_vk),
+                          vk.BufferUsageFlags { .uniform_buffer_bit = true, },
+                          vk.MemoryPropertyFlags
+                          {
+                            .host_visible_bit = true,
+                            .host_coherent_bit = true,
+                          }, &(self.offscreen_uniform_buffers), &(self.offscreen_uniform_buffers_memory));
 
     errdefer
     {
@@ -1878,7 +1894,19 @@ pub const context_vk = struct
     _ = try self.device_dispatch.waitForFences (self.logical_device, 1, &[_] vk.Fence { self.in_flight_fences [self.current_frame] }, vk.TRUE, std.math.maxInt (u64));
 
     const seed_before = options.seed;
-    try imgui.prepare (allocator.*, &(self.last_displayed_fps), &(self.fps), .{ .width = framebuffer.width, .height = framebuffer.height, },
+    try imgui.prepare (allocator.*, &(self.last_displayed_fps), &(self.fps),
+                       .{
+                          .width = framebuffer.width,
+                          .height = framebuffer.height,
+                        },
+                       .{
+                          .device_dispatch    = self.device_dispatch,
+                          .logical_device     = self.logical_device,
+                          .image              = self.images [self.current_frame],
+                          // TODO: check command pool
+                          .command_pool       = self.command_pool,
+                          .blitting_supported = self.blitting_supported,
+                        },
                        .{
                           .seed = &(options.seed),
                         });

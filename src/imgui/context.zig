@@ -37,6 +37,21 @@ const ImGui_ImplVulkan_InitInfo = extern struct
   CheckVkResultFn:       ?*const fn (c_int) callconv (.C) void,
 };
 
+pub fn find_memory_type (self: Self, type_filter: u32, properties: vk.MemoryPropertyFlags) !u32
+{
+  const memory_properties = self.instance.dispatch.getPhysicalDeviceMemoryProperties (self.physical_device.?);
+
+  for (memory_properties.memory_types [0..memory_properties.memory_type_count], 0..) |memory_type, index|
+  {
+    if (type_filter & (@as (u32, 1) << @truncate (index)) != 0 and memory_type.property_flags.contains (properties))
+    {
+      return @truncate (index);
+    }
+  }
+
+  return error.NoSuitableMemoryType;
+}
+
 pub const context_imgui = struct
 {
   const Renderer = struct
@@ -81,9 +96,6 @@ pub const context_imgui = struct
     {
       return ImguiContextError.InitFailure;
     }
-
-    var io = imgui.ImGui_GetIO ();
-    io.*.ConfigFlags |= imgui.ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
 
     imgui.ImGui_StyleColorsDark (null);
 
@@ -282,7 +294,9 @@ pub const context_imgui = struct
     return filename;
   }
 
-  fn prepare_screenshot (self: Self, allocator: std.mem.Allocator) !void
+  fn prepare_screenshot (self: Self, allocator: std.mem.Allocator,
+                         framebuffer: struct { width: u32, height: u32, },
+                         renderer: struct { device_dispatch: DeviceDispatch, logical_device:  vk.Device, image: vk.Image, command_pool: vk.CommandPool, blitting_supported: bool, }) !void
   {
     const button_size = imgui.ImVec2 { .x = 0, .y = 0, };
 
@@ -292,11 +306,173 @@ pub const context_imgui = struct
       const filename = try self.find_available_filename (allocator);
       _ = filename;
 
-      // TODO: make the screenshot
+      const image_create_info = vk.ImageCreateInfo
+                                {
+                                  .image_type     = vk.ImageType.@"2d",
+                                  .format         = vk.Format.r8g8b8a8_unorm,
+                                  .extent         = vk.Extent3D
+                                                    {
+                                                      .width  = framebuffer.width,
+                                                      .height = framebuffer.height,
+                                                      .depth  = 1,
+                                                    },
+                                  .mip_levels     = 1,
+                                  .array_layers   = 1,
+                                  .samples        = vk.SampleCountFlags { .@"1_bit" = true, },
+                                  .tiling         = vk.ImageTiling.linear,
+                                  .usage          = vk.ImageUsageFlags { .transfer_dst_bit = true, },
+                                  .initial_layout = vk.ImageLayout.undefined,
+                                };
+
+      const dst_image = try renderer.device_dispatch.createImage (renderer.logical_device, &image_create_info, null);
+
+      const memory_requirements = self.device_dispatch.getImageMemoryRequirements (self.logical_device, self.dst_image);
+
+      const alloc_info = vk.MemoryAllocateInfo
+                         {
+                           .allocation_size   = memory_requirements.size,
+                           .memory_type_index = try find_memory_type (memory_requirements.memory_type_bits,
+                                                                      vk.MemoryPropertyFlags
+                                                                      {
+                                                                        .host_visible_bit  = true,
+                                                                        .host_coherent_bit = true,
+                                                                      }),
+                         };
+
+      const dst_image_memory = try self.device_dispatch.allocateMemory (self.logical_device, &alloc_info, null);
+      errdefer self.device_dispatch.freeMemory (self.logical_device, self.dst_image_memory, null);
+
+      try self.device_dispatch.bindImageMemory (self.logical_device, self.dst_image, self.dst_image_memory, 0);
+
+      var command_buffers = [_] vk.CommandBuffer { undefined, };
+
+      const buffers_alloc_info = vk.CommandBufferAllocateInfo
+                                 {
+                                   .command_pool         = renderer.command_pool,
+                                   .level                = vk.CommandBufferLevel.primary,
+                                   .command_buffer_count = command_buffers.len,
+                                 };
+
+      try self.device_dispatch.allocateCommandBuffers (self.logical_device, &buffers_alloc_info, &command_buffers);
+      errdefer self.device_dispatch.freeCommandBuffers (self.logical_device, self.command_pool, 1, &command_buffers);
+
+      const begin_info = vk.CommandBufferBeginInfo {};
+
+      try self.device_dispatch.beginCommandBuffer (command_buffers [0], &begin_info);
+
+      const dst_image_to_transfer_dst_layout = vk.ImageMemoryBarrier
+                                               {
+                                                 .src_access_mask:   vk.AccessFlags {},
+                                                 .dst_access_mask:   vk.AccessFlags { .transfer_write_bit = true, },
+                                                 .old_layout:        vk.ImageLayout.undefined,
+                                                 .new_layout:        vk.ImageLayout.transfer_dst_optimal,
+                                                 .image:             dst_image,
+                                                 .subresource_range: vk.ImageSubresourceRange
+                                                                     {
+                                                                       .aspect_mask      = vk.ImageAspectFlags { .color_bit = true },
+                                                                       .base_mip_level   = 0,
+                                                                       .level_count      = 1,
+                                                                       .base_array_layer = 0,
+                                                                       .layer_count      = 1,
+                                                                     },
+                                               };
+      vk.cmdPipelineBarrier (command_buffers [0],
+                             vk.PipelineStageFlags { .transfer_bit = true, },
+                             vk.PipelineStageFlags { .transfer_bit = true, }
+                             vk.DependencyFlags {},
+                             0, null, 0, null, 1,
+                             &dst_image_to_transfer_dst_layout);
+
+      const swapchain_image_from_present_to_transfer_src_layout = vk.ImageMemoryBarrier
+                                                                  {
+                                                                    .src_access_mask:   vk.AccessFlags { .memory_read_bit = true, },
+                                                                    .dst_access_mask:   vk.AccessFlags { .transfer_read_bit = true, },
+                                                                    .old_layout:        vk.ImageLayout.present_src_khr,
+                                                                    .new_layout:        vk.ImageLayout.transfer_src_optimal,
+                                                                    .image:             renderer.image,
+                                                                    .subresource_range: vk.ImageSubresourceRange
+                                                                     {
+                                                                       .aspect_mask      = vk.ImageAspectFlags { .color_bit = true },
+                                                                       .base_mip_level   = 0,
+                                                                       .level_count      = 1,
+                                                                       .base_array_layer = 0,
+                                                                       .layer_count      = 1,
+                                                                     },
+                                                                  };
+      vk.cmdPipelineBarrier (command_buffers [0],
+                             vk.PipelineStageFlags { .transfer_bit = true, },
+                             vk.PipelineStageFlags { .transfer_bit = true, }
+                             vk.DependencyFlags {},
+                             0, null, 0, null, 1,
+                             &swapchain_image_from_present_to_transfer_src_layout);
+
+      if (renderer.blitting_supported)
+      {
+        const blit_size = [2] vk.Offset3D
+                          {
+                            vk.Offset3D
+                            {
+                              .x = framebuffer.width,
+                              .y = framebuffer.height,
+                              .z = 1,
+                            },
+                            undefined,
+                          };
+
+        const image_blit_region = vk.ImageBlit
+                                  {
+                                    .src_subresource: vk.ImageSubresourceLayers
+                                                      {
+                                                        .aspect_mask: vk.ImageAspectFlags { .color_bit = true, },
+                                                        .layer_count: 1,
+                                                      },
+                                    .src_offsets:     blit_size,
+                                    .dst_subresource: vk.ImageSubresourceLayers
+                                                      {
+                                                        .aspect_mask: vk.ImageAspectFlags { .color_bit = true, },
+                                                        .layer_count: 1,
+                                                      },
+                                    .dst_offsets:     blit_size,
+                                  };
+
+        vk.cmdBlitImage (command_buffer [0],
+                         renderer.image, vk.ImageLayout.transfer_src_optimal,
+                         dst_image, vk.ImageLayout.transfer_dst_optimal,
+                         1, &image_blit_region, vk.Filter.nearest);
+      } else {
+        const image_copy_region = vk.ImageCopy
+                                  {
+                                    .src_subresource: vk.ImageSubresourceLayers
+                                                      {
+                                                        .aspect_mask: vk.ImageAspectFlags { .color_bit = true, },
+                                                        .layer_count: 1,
+                                                      },
+                                    .dst_subresource: vk.ImageSubresourceLayers
+                                                      {
+                                                        .aspect_mask: vk.ImageAspectFlags { .color_bit = true, },
+                                                        .layer_count: 1,
+                                                      },
+                                    .extent: vk.Extent3D
+                                             {
+                                               .width  = framebuffer.width,
+                                               .height = framebuffer.height,
+                                               .depth  = 1,
+                                             },
+                                  };
+
+        vk.cmdCopyImage (command_buffer [0],
+                         renderer.image, vk.ImageLayout.transfer_src_optimal,
+                         dst_image, vk.ImageLayout.transfer_dst_optimal,
+                         1, &image_copy_region);
+      }
     }
   }
 
-  pub fn prepare (self: *Self, allocator: std.mem.Allocator, last_displayed_fps: *?std.time.Instant, fps: *f32, framebuffer: struct { width: u32, height: u32, }, tweak_me: anytype) !void
+  pub fn prepare (self: *Self, allocator: std.mem.Allocator,
+                  last_displayed_fps: *?std.time.Instant, fps: *f32,
+                  framebuffer: struct { width: u32, height: u32, },
+                  renderer: struct { device_dispatch: DeviceDispatch, logical_device: vk.Device, image: vk.Image, command_pool: vk.CommandPool, blitting_supported: bool, },
+                  tweak_me: anytype) !void
   {
     imgui.cImGui_ImplVulkan_NewFrame ();
     imgui.cImGui_ImplGlfw_NewFrame ();
@@ -313,7 +489,7 @@ pub const context_imgui = struct
 
     try self.prepare_fps (last_displayed_fps, fps);
     self.prepare_seed (tweak_me);
-    try self.prepare_screenshot (allocator);
+    try self.prepare_screenshot (allocator, .{ .width = framebuffer.width, .height = framebuffer.height, }, renderer);
 
     // Return a boolean depending on the fact that the value of the variable changed or not
     //_ = imgui.ImGui_SliderFloat ("Float", tweak_me.f, 0.0, 1.0, "%.3f", 0);

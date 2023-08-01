@@ -1906,6 +1906,7 @@ pub const context_vk = struct
                        .{
                           .device_dispatch    = self.device_dispatch,
                           .instance_dispatch  = self.instance.dispatch,
+                          .physical_device    = self.physical_device.?,
                           .logical_device     = self.logical_device,
                           .image              = self.images [self.current_frame],
                           // TODO: check command pool

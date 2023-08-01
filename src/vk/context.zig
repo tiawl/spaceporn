@@ -38,6 +38,33 @@ const offscreen_uniform_buffer_object_vk = struct
 
 pub const context_vk = struct
 {
+  const MAX_FRAMES_IN_FLIGHT: u32 = 2;
+  const DEVICE_CRITERIAS: u32 = 4;
+  const MAX_DEVICE_SCORE = std.math.pow (u32, 2, DEVICE_CRITERIAS) - 1;
+
+  const Self = @This ();
+
+  const vertices = [_] vertex_vk
+                   {
+                     vertex_vk { .pos = [_] f32 { -1.0, -1.0, }, },
+                     vertex_vk { .pos = [_] f32 {  3.0, -1.0, }, },
+                     vertex_vk { .pos = [_] f32 { -1.0,  3.0, }, },
+                   };
+
+  const indices = [_] u32 { 0, 1, 2, };
+
+  const required_device_extensions = [_][*:0] const u8
+  {
+    vk.extension_info.khr_swapchain.name,
+  };
+
+  const ContextError = error
+  {
+    NoDevice,
+    NoSuitableDevice,
+    ImageAcquireFailed,
+  };
+
   instance:                         instance_vk = undefined,
   surface:                          vk.SurfaceKHR = undefined,
   device_dispatch:                  DeviceDispatch = undefined,
@@ -66,7 +93,7 @@ pub const context_vk = struct
   image_available_semaphores:       [] vk.Semaphore = undefined,
   render_finished_semaphores:       [] vk.Semaphore = undefined,
   in_flight_fences:                 [] vk.Fence = undefined,
-  current_frame:                    u8 = 0,
+  current_frame:                    u32 = 0,
   vertex_buffer:                    vk.Buffer = undefined,
   vertex_buffer_memory:             vk.DeviceMemory = undefined,
   buffers_command_pool:             vk.CommandPool = undefined,
@@ -79,6 +106,7 @@ pub const context_vk = struct
   fps:                              f32 = undefined,
   descriptor_pool:                  vk.DescriptorPool = undefined,
   descriptor_sets:                  [] vk.DescriptorSet = undefined,
+  prefered_criterias:               [DEVICE_CRITERIAS] bool = undefined,
 
   offscreen_width:                  u32 = undefined,
   offscreen_height:                 u32 = undefined,
@@ -95,33 +123,6 @@ pub const context_vk = struct
   offscreen_views:                  [] vk.ImageView = undefined,
   offscreen_sampler:                vk.Sampler = undefined,
   render_offscreen:                 bool = true,
-
-  const Self = @This ();
-
-  const MAX_FRAMES_IN_FLIGHT = 2;
-  const DEVICE_CRITERIAS = 4;
-  const MAX_DEVICE_SCORE = std.math.pow (u32, 2, DEVICE_CRITERIAS) - 1;
-
-  const vertices = [_] vertex_vk
-                   {
-                     vertex_vk { .pos = [_] f32 { -1.0, -1.0, }, },
-                     vertex_vk { .pos = [_] f32 {  3.0, -1.0, }, },
-                     vertex_vk { .pos = [_] f32 { -1.0,  3.0, }, },
-                   };
-
-  const indices = [_] u32 { 0, 1, 2, };
-
-  const required_device_extensions = [_][*:0] const u8
-  {
-    vk.extension_info.khr_swapchain.name,
-  };
-
-  const ContextError = error
-  {
-    NoDevice,
-    NoSuitableDevice,
-    ImageAcquireFailed,
-  };
 
   fn find_queue_families (self: *Self, device: vk.PhysicalDevice, allocator: std.mem.Allocator) !?struct { graphics_family: u32, present_family: u32, }
   {
@@ -403,7 +404,21 @@ pub const context_vk = struct
     return true;
   }
 
-  fn is_suitable (self: *Self, device: vk.PhysicalDevice, allocator: std.mem.Allocator) !?struct { graphics_family: u32, present_family: u32, score: u8, blitting_supported: bool, }
+  fn compute_score (self: Self) u32
+  {
+    var score: u32 = 0;
+    var power = DEVICE_CRITERIAS - 1;
+
+    for (self.prefered_criterias) |criteria|
+    {
+      score += @intFromBool (criteria) * std.math.pow (@TypeOf (DEVICE_CRITERIAS), 2, power);
+      if (power > 0) power -= 1 else break;
+    }
+
+    return score;
+  }
+
+  fn is_suitable (self: *Self, device: vk.PhysicalDevice, allocator: std.mem.Allocator) !?struct { graphics_family: u32, present_family: u32, score: u32, blitting_supported: bool, }
   {
     const properties = self.instance.dispatch.getPhysicalDeviceProperties (device);
     const features = self.instance.dispatch.getPhysicalDeviceFeatures (device);
@@ -449,13 +464,19 @@ pub const context_vk = struct
       if (try self.find_queue_families (device, allocator)) |candidate|
       {
         try log_app ("Vulkan device {s} is suitable", severity.DEBUG, .{ properties.device_name, });
+
+        self.prefered_criterias = [DEVICE_CRITERIAS] bool
+                                  {
+                                    properties.device_type == vk.PhysicalDeviceType.discrete_gpu,
+                                    candidate.graphics_family == candidate.present_family,
+                                    blitting_supported,
+                                    true,
+                                  };
+
         return .{
                   .graphics_family    = candidate.graphics_family,
                   .present_family     = candidate.present_family,
-                  .score              = @as (u8, @intFromBool (blitting_supported)) * 8 +
-                                        @as (u8, @intFromBool (properties.device_type == vk.PhysicalDeviceType.discrete_gpu)) * 4 +
-                                        @as (u8, @intFromBool (candidate.graphics_family == candidate.present_family)) * 2 +
-                                        1,
+                  .score              = self.compute_score (),
                   .blitting_supported = blitting_supported,
                 };
       }
@@ -477,7 +498,7 @@ pub const context_vk = struct
     }
 
     var devices = try allocator.alloc (vk.PhysicalDevice, device_count);
-    var max_score: u8 = 0;
+    var max_score: u32 = 0;
 
     _ = try self.instance.dispatch.enumeratePhysicalDevices (self.instance.instance, &device_count, devices.ptr);
 

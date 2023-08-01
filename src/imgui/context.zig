@@ -253,21 +253,9 @@ pub const context_imgui = struct
     }
   }
 
-  fn find_available_file (self: Self, allocator: std.mem.Allocator) !std.fs.File
+  fn find_available_file (self: Self, allocator: std.mem.Allocator, dir: std.fs.Dir) ![] const u8
   {
     _ = self;
-
-    var screenshots_dir = std.fs.cwd ().openDir ("screenshots", .{}) catch |err| blk:
-                          {
-                            if (err == std.fs.Dir.OpenError.FileNotFound)
-                            {
-                              try std.fs.cwd ().makeDir ("screenshots");
-                              break :blk try std.fs.cwd ().openDir ("screenshots", .{});
-                            } else {
-                              return err;
-                            }
-                          };
-    defer screenshots_dir.close ();
 
     const now = datetime.Datetime.now ();
     var iterator = std.mem.tokenizeAny (u8, try now.formatISO8601 (allocator, true), ":.+");
@@ -285,7 +273,7 @@ pub const context_imgui = struct
     while (id < std.math.maxInt (u32))
     {
       filename = try std.fmt.allocPrint (allocator, "{s}{d}", .{ date, id, });
-      file = screenshots_dir.openFile (filename, .{}) catch |err|
+      file = dir.openFile (filename, .{}) catch |err|
              {
                if (err == std.fs.File.OpenError.FileNotFound)
                {
@@ -305,7 +293,7 @@ pub const context_imgui = struct
     }
 
     filename = try std.fmt.allocPrint (allocator, "{s}.ppm", .{ filename, });
-    return try screenshots_dir.createFile (filename, .{});
+    return filename;
   }
 
   fn prepare_screenshot (self: Self, allocator: std.mem.Allocator, framebuffer: struct { width: u32, height: u32, }, renderer: ScreenshotRenderer) !void
@@ -315,7 +303,23 @@ pub const context_imgui = struct
     // TODO: display window size
     if (imgui.ImGui_ButtonEx ("Take a screenshot", button_size))
     {
-      var file = try self.find_available_file (allocator);
+      try log_app ("generating ...", severity.INFO, .{});
+
+      // TODO: remove imgui window before screenshot
+      var screenshots_dir = std.fs.cwd ().openDir ("screenshots", .{}) catch |err| blk:
+                            {
+                              if (err == std.fs.Dir.OpenError.FileNotFound)
+                              {
+                                try std.fs.cwd ().makeDir ("screenshots");
+                                break :blk try std.fs.cwd ().openDir ("screenshots", .{});
+                              } else {
+                                return err;
+                              }
+                            };
+      defer screenshots_dir.close ();
+
+      const filename = try self.find_available_file (allocator, screenshots_dir);
+      var file = try screenshots_dir.createFile (filename, .{});
       defer file.close ();
 
       const image_create_info = vk.ImageCreateInfo
@@ -579,7 +583,7 @@ pub const context_imgui = struct
                                                    vk.PipelineStageFlags { .transfer_bit = true, },
                                                    vk.DependencyFlags {},
                                                    0, null, 0, null, 1,
-                             &swapchain_image_after_blit);
+                                                   &swapchain_image_after_blit);
 
       try renderer.device_dispatch.endCommandBuffer (command_buffers [0]);
 
@@ -592,7 +596,7 @@ pub const context_imgui = struct
                             },
                           };
 
-      const fence = try renderer.device_dispatch.createFence(renderer.logical_device, &vk.FenceCreateInfo {}, null);
+      const fence = try renderer.device_dispatch.createFence (renderer.logical_device, &vk.FenceCreateInfo {}, null);
       defer renderer.device_dispatch.destroyFence (renderer.logical_device, fence, null);
 
       try renderer.device_dispatch.queueSubmit (renderer.graphics_queue, 1, &submit_info, fence);
@@ -608,15 +612,47 @@ pub const context_imgui = struct
 
       const subresource_layout = renderer.device_dispatch.getImageSubresourceLayout (renderer.logical_device, dst_image, &subresource);
 
+      // TODO: change as ([*] u8, ...) depending of blit support + surface format
       var data = @as ([*] u8, @ptrCast ((try renderer.device_dispatch.mapMemory (renderer.logical_device, dst_image_memory, 0, vk.WHOLE_SIZE, vk.MemoryMapFlags {})).?));
       defer renderer.device_dispatch.unmapMemory (renderer.logical_device, dst_image_memory);
 
       data += subresource_layout.offset;
 
+      // TODO: change 255 depending of blit support + surface format (max: 65_536)
       const header = try std.fmt.allocPrint (allocator, "P6\n{d}\n{d}\n255\n", .{ framebuffer.width, framebuffer.height, });
       try file.writeAll (header);
 
-      // TODO: ppm
+      var x: u32 = 0;
+      var y: u32 = 0;
+      var color: [] u8 = undefined;
+
+      while (y < framebuffer.height)
+      {
+        x = 0;
+        while (x < framebuffer.width * 4)
+        {
+          if (renderer.blitting_supported)
+          {
+            color = try std.fmt.allocPrint (allocator, "{c}{c}{c}", .{ data [y * framebuffer.width * 4 + x], data [y * framebuffer.width * 4 + x + 1], data [y * framebuffer.width * 4 + x + 2], });
+            try file.writeAll (color);
+          } else {
+            // TODO: manage different format when blit is unsupported
+            // TODO: error message promoting for issue posting when using unsupported format
+            _ = color;
+          }
+
+          x += 4;
+        }
+
+        // TODO: add this line for unsupported blit ?
+        // data += subresource_layout.row_pitch;
+
+        y += 1;
+      }
+
+      try log_app ("screenshot saved into {s}", severity.INFO, .{ try screenshots_dir.realpathAlloc (allocator, filename), });
+
+      // TODO: add shader effect when screenshot finished.
     }
   }
 

@@ -263,20 +263,6 @@ pub const options = struct
     self.camera.zoom = (self.camera.zoom % (CAMERA_ZOOM_MAX - CAMERA_ZOOM_MIN + 1)) + CAMERA_ZOOM_MIN;
   }
 
-  fn show (self: Self) !void
-  {
-    try log_app ("seed: {d}", severity.INFO, .{ self.seed });
-    try log_app ("window: {any}", severity.INFO, .{ self.window });
-
-    try log_app ("camera dynamic: {}", severity.INFO, .{ self.camera.dynamic });
-    try log_app ("camera pixel: {d}", severity.INFO, .{ self.camera.pixel });
-    try log_app ("zoom: {d}", severity.INFO, .{ self.camera.zoom });
-
-    try log_app ("colors smooth transition: {}", severity.INFO, .{ self.colors.smooth });
-
-    try log_app ("stars dynamic transition: {}", severity.INFO, .{ self.stars.dynamic });
-  }
-
   pub fn init (allocator: std.mem.Allocator) !Self
   {
     var self = Self {};
@@ -309,7 +295,6 @@ pub const options = struct
     }
 
     self.fix_random ();
-    if (build.LOG_LEVEL > @intFromEnum (profile.TURBO)) try self.show ();
 
     return self;
   }

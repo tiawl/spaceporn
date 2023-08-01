@@ -106,7 +106,7 @@ pub const context_vk = struct
   fps:                              f32 = undefined,
   descriptor_pool:                  vk.DescriptorPool = undefined,
   descriptor_sets:                  [] vk.DescriptorSet = undefined,
-  prefered_criterias:               [DEVICE_CRITERIAS] bool = undefined,
+  prefered_criterias:               [DEVICE_CRITERIAS - 1] bool = undefined,
 
   offscreen_width:                  u32 = undefined,
   offscreen_height:                 u32 = undefined,
@@ -406,13 +406,13 @@ pub const context_vk = struct
 
   fn compute_score (self: Self) u32
   {
-    var score: u32 = 0;
-    var power = DEVICE_CRITERIAS - 1;
+    var score: u32 = 1;
+    var power: u32 = 1;
 
     for (self.prefered_criterias) |criteria|
     {
       score += @intFromBool (criteria) * std.math.pow (@TypeOf (DEVICE_CRITERIAS), 2, power);
-      if (power > 0) power -= 1 else break;
+      power += 1;
     }
 
     return score;
@@ -465,12 +465,12 @@ pub const context_vk = struct
       {
         try log_app ("Vulkan device {s} is suitable", severity.DEBUG, .{ properties.device_name, });
 
-        self.prefered_criterias = [DEVICE_CRITERIAS] bool
+        // from the least to the most important
+        self.prefered_criterias = [DEVICE_CRITERIAS - 1] bool
                                   {
-                                    properties.device_type == vk.PhysicalDeviceType.discrete_gpu,
-                                    candidate.graphics_family == candidate.present_family,
                                     blitting_supported,
-                                    true,
+                                    candidate.graphics_family == candidate.present_family,
+                                    properties.device_type == vk.PhysicalDeviceType.discrete_gpu,
                                   };
 
         return .{

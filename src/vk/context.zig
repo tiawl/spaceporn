@@ -2,10 +2,10 @@ const std       = @import ("std");
 const build     = @import ("build_options");
 const resources = @import ("resources");
 const vk        = @import ("vulkan");
+const datetime  = @import ("datetime").datetime;
 
 const context_imgui = @import ("../imgui/context.zig").context_imgui;
-
-const find_memory_type = @import ("../imgui/context.zig").find_memory_type;
+const ImguiPrepare  = context_imgui.ImguiPrepare;
 
 const utils    = @import ("../utils.zig");
 const log_app  = utils.log_app;
@@ -62,7 +62,9 @@ pub const context_vk = struct
   {
     NoDevice,
     NoSuitableDevice,
+    NoSuitableMemoryType,
     ImageAcquireFailed,
+    NoAvailableFilename,
   };
 
   instance:                         instance_vk = undefined,
@@ -107,6 +109,8 @@ pub const context_vk = struct
   descriptor_pool:                  vk.DescriptorPool = undefined,
   descriptor_sets:                  [] vk.DescriptorSet = undefined,
   prefered_criterias:               [DEVICE_CRITERIAS - 1] bool = undefined,
+  screenshot_frame:                 u32 = std.math.maxInt (u32),
+  screenshot_image_index:           u32 = undefined,
 
   offscreen_width:                  u32 = undefined,
   offscreen_height:                 u32 = undefined,
@@ -783,6 +787,21 @@ pub const context_vk = struct
     try log_app ("init Vulkan render pass OK", severity.DEBUG, .{});
   }
 
+  fn find_memory_type (self: Self, type_filter: u32, properties: vk.MemoryPropertyFlags) !u32
+  {
+    const memory_properties = self.instance.dispatch.getPhysicalDeviceMemoryProperties (self.physical_device.?);
+
+    for (memory_properties.memory_types [0..memory_properties.memory_type_count], 0..) |memory_type, index|
+    {
+      if (type_filter & (@as (u32, 1) << @truncate (index)) != 0 and memory_type.property_flags.contains (properties))
+      {
+        return @truncate (index);
+      }
+    }
+
+    return ContextError.NoSuitableMemoryType;
+  }
+
   fn init_offscreen (self: *Self, allocator: std.mem.Allocator) !void
   {
     const image_create_info = vk.ImageCreateInfo
@@ -816,7 +835,7 @@ pub const context_vk = struct
     const alloc_info = vk.MemoryAllocateInfo
                        {
                          .allocation_size   = memory_requirements.size,
-                         .memory_type_index = try find_memory_type (self.instance.dispatch, self.physical_device.?, memory_requirements.memory_type_bits, vk.MemoryPropertyFlags { .device_local_bit = true, }),
+                         .memory_type_index = try self.find_memory_type (memory_requirements.memory_type_bits, vk.MemoryPropertyFlags { .device_local_bit = true, }),
                        };
 
     self.offscreen_image_memory = try self.device_dispatch.allocateMemory (self.logical_device, &alloc_info, null);
@@ -1323,7 +1342,7 @@ pub const context_vk = struct
     const alloc_info = vk.MemoryAllocateInfo
                        {
                          .allocation_size   = memory_requirements.size,
-                         .memory_type_index = try find_memory_type (self.instance.dispatch, self.physical_device.?, memory_requirements.memory_type_bits, properties),
+                         .memory_type_index = try self.find_memory_type (memory_requirements.memory_type_bits, properties),
                        };
 
     // TODO: issue #68
@@ -1843,7 +1862,7 @@ pub const context_vk = struct
 
     self.device_dispatch.cmdDrawIndexed (command_buffer.*, indices.len, 1, 0, 0, 0);
 
-    try imgui.render (command_buffer.*);
+    if (self.screenshot_frame == std.math.maxInt (u32)) try imgui.render (command_buffer.*);
 
     self.device_dispatch.cmdEndRenderPass (command_buffer.*);
 
@@ -1914,31 +1933,427 @@ pub const context_vk = struct
     }
   }
 
+  fn find_available_file (self: Self, allocator: std.mem.Allocator, dir: std.fs.Dir) ![] const u8
+  {
+    _ = self;
+
+    const now = datetime.Datetime.now ();
+    var iterator = std.mem.tokenizeAny (u8, try now.formatISO8601 (allocator, true), ":.+");
+    var id: u32 = 0;
+    var filename: [] const u8 = undefined;
+    var file: std.fs.File = undefined;
+    var available = false;
+    var date: [] const u8 = "";
+
+    while (iterator.next ()) |token|
+    {
+      date = try std.fmt.allocPrint (allocator, "{s}{s}-", .{ date, token, });
+    }
+
+    while (id < std.math.maxInt (u32))
+    {
+      filename = try std.fmt.allocPrint (allocator, "{s}{d}", .{ date, id, });
+      file = dir.openFile (filename, .{}) catch |err|
+             {
+               if (err == std.fs.File.OpenError.FileNotFound)
+               {
+                 available = true;
+                 break;
+               } else {
+                 return err;
+               }
+             };
+      file.close ();
+      id += 1;
+    }
+
+    if (!available)
+    {
+      return ContextError.NoAvailableFilename;
+    }
+
+    filename = try std.fmt.allocPrint (allocator, "{s}.ppm", .{ filename, });
+    return filename;
+  }
+
+  fn save_screenshot_to_disk (self: Self, allocator: std.mem.Allocator, framebuffer: struct { width: u32, height: u32, }) !void
+  {
+    try log_app ("generating ...", severity.INFO, .{});
+
+    var screenshots_dir = std.fs.cwd ().openDir ("screenshots", .{}) catch |err| blk:
+                          {
+                            if (err == std.fs.Dir.OpenError.FileNotFound)
+                            {
+                              try std.fs.cwd ().makeDir ("screenshots");
+                              break :blk try std.fs.cwd ().openDir ("screenshots", .{});
+                            } else {
+                              return err;
+                            }
+                          };
+    defer screenshots_dir.close ();
+
+    const filename = try self.find_available_file (allocator, screenshots_dir);
+    var file = try screenshots_dir.createFile (filename, .{});
+    defer file.close ();
+
+    const image_create_info = vk.ImageCreateInfo
+                              {
+                                .image_type     = vk.ImageType.@"2d",
+                                .format         = vk.Format.r8g8b8a8_unorm,
+                                .extent         = vk.Extent3D
+                                                  {
+                                                    .width  = framebuffer.width,
+                                                    .height = framebuffer.height,
+                                                    .depth  = 1,
+                                                  },
+                                .mip_levels     = 1,
+                                .array_layers   = 1,
+                                .samples        = vk.SampleCountFlags { .@"1_bit" = true, },
+                                .tiling         = vk.ImageTiling.linear,
+                                .usage          = vk.ImageUsageFlags { .transfer_dst_bit = true, },
+                                .sharing_mode   = vk.SharingMode.exclusive,
+                                .initial_layout = vk.ImageLayout.undefined,
+                              };
+
+    const dst_image = try self.device_dispatch.createImage (self.logical_device, &image_create_info, null);
+    defer self.device_dispatch.destroyImage (self.logical_device, dst_image, null);
+
+    const memory_requirements = self.device_dispatch.getImageMemoryRequirements (self.logical_device, dst_image);
+
+    const alloc_info = vk.MemoryAllocateInfo
+                       {
+                         .allocation_size   = memory_requirements.size,
+                         .memory_type_index = try self.find_memory_type (memory_requirements.memory_type_bits,
+                                                                         vk.MemoryPropertyFlags
+                                                                         {
+                                                                           .host_visible_bit  = true,
+                                                                           .host_coherent_bit = true,
+                                                                         }),
+                       };
+
+    const dst_image_memory = try self.device_dispatch.allocateMemory (self.logical_device, &alloc_info, null);
+    errdefer self.device_dispatch.freeMemory (self.logical_device, dst_image_memory, null);
+
+    try self.device_dispatch.bindImageMemory (self.logical_device, dst_image, dst_image_memory, 0);
+
+    var command_buffers = [_] vk.CommandBuffer { undefined, };
+
+    const buffers_alloc_info = vk.CommandBufferAllocateInfo
+                               {
+                                 .command_pool         = self.command_pool,
+                                 .level                = vk.CommandBufferLevel.primary,
+                                 .command_buffer_count = command_buffers.len,
+                               };
+
+    try self.device_dispatch.allocateCommandBuffers (self.logical_device, &buffers_alloc_info, &command_buffers);
+    errdefer self.device_dispatch.freeCommandBuffers (self.logical_device, self.command_pool, 1, &command_buffers);
+
+    const begin_info = vk.CommandBufferBeginInfo {};
+
+    try self.device_dispatch.beginCommandBuffer (command_buffers [0], &begin_info);
+
+    const dst_image_to_transfer_dst_layout = [_] vk.ImageMemoryBarrier
+                                             {
+                                               vk.ImageMemoryBarrier
+                                               {
+                                                 .src_access_mask        = vk.AccessFlags {},
+                                                 .dst_access_mask        = vk.AccessFlags { .transfer_write_bit = true, },
+                                                 .old_layout             = vk.ImageLayout.undefined,
+                                                 .new_layout             = vk.ImageLayout.transfer_dst_optimal,
+                                                 .src_queue_family_index = vk.QUEUE_FAMILY_IGNORED,
+                                                 .dst_queue_family_index = vk.QUEUE_FAMILY_IGNORED,
+                                                 .image                  = dst_image,
+                                                 .subresource_range      = vk.ImageSubresourceRange
+                                                                           {
+                                                                             .aspect_mask      = vk.ImageAspectFlags { .color_bit = true },
+                                                                             .base_mip_level   = 0,
+                                                                             .level_count      = 1,
+                                                                             .base_array_layer = 0,
+                                                                             .layer_count      = 1,
+                                                                           },
+                                               },
+                                             };
+
+    self.device_dispatch.cmdPipelineBarrier (command_buffers [0],
+                                             vk.PipelineStageFlags { .transfer_bit = true, },
+                                             vk.PipelineStageFlags { .transfer_bit = true, },
+                                             vk.DependencyFlags {},
+                                             0, null, 0, null, 1,
+                                             &dst_image_to_transfer_dst_layout);
+
+    const swapchain_image_from_present_to_transfer_src_layout = [_] vk.ImageMemoryBarrier
+                                                                {
+                                                                  vk.ImageMemoryBarrier
+                                                                  {
+                                                                    .src_access_mask        = vk.AccessFlags { .memory_read_bit = true, },
+                                                                    .dst_access_mask        = vk.AccessFlags { .transfer_read_bit = true, },
+                                                                    .old_layout             = vk.ImageLayout.present_src_khr,
+                                                                    .new_layout             = vk.ImageLayout.transfer_src_optimal,
+                                                                    .src_queue_family_index = vk.QUEUE_FAMILY_IGNORED,
+                                                                    .dst_queue_family_index = vk.QUEUE_FAMILY_IGNORED,
+                                                                    .image                  = self.images [self.screenshot_image_index],
+                                                                    .subresource_range      = vk.ImageSubresourceRange
+                                                                                              {
+                                                                                                .aspect_mask      = vk.ImageAspectFlags { .color_bit = true },
+                                                                                                .base_mip_level   = 0,
+                                                                                                .level_count      = 1,
+                                                                                                .base_array_layer = 0,
+                                                                                                .layer_count      = 1,
+                                                                                              },
+                                                                  },
+                                                                };
+
+    self.device_dispatch.cmdPipelineBarrier (command_buffers [0],
+                                             vk.PipelineStageFlags { .transfer_bit = true, },
+                                             vk.PipelineStageFlags { .transfer_bit = true, },
+                                             vk.DependencyFlags {},
+                                             0, null, 0, null, 1,
+                                             &swapchain_image_from_present_to_transfer_src_layout);
+
+    if (self.candidate.blitting_supported)
+    {
+      const blit_size = [2] vk.Offset3D
+                        {
+                          vk.Offset3D
+                          {
+                            .x = 0,
+                            .y = 0,
+                            .z = 0,
+                          },
+                          vk.Offset3D
+                          {
+                            .x = @intCast (framebuffer.width),
+                            .y = @intCast (framebuffer.height),
+                            .z = 1,
+                          },
+                        };
+
+      const image_blit_region = [_] vk.ImageBlit
+                                {
+                                  vk.ImageBlit
+                                  {
+                                    .src_subresource = vk.ImageSubresourceLayers
+                                                       {
+                                                         .aspect_mask      = vk.ImageAspectFlags { .color_bit = true, },
+                                                         .base_array_layer = 0,
+                                                         .layer_count      = 1,
+                                                         .mip_level        = 0,
+                                                       },
+                                    .src_offsets     = blit_size,
+                                    .dst_subresource = vk.ImageSubresourceLayers
+                                                       {
+                                                         .aspect_mask      = vk.ImageAspectFlags { .color_bit = true, },
+                                                         .base_array_layer = 0,
+                                                         .layer_count      = 1,
+                                                         .mip_level        = 0,
+                                                       },
+                                    .dst_offsets     = blit_size,
+                                  },
+                                };
+
+      self.device_dispatch.cmdBlitImage (command_buffers [0],
+                                         self.images [self.screenshot_image_index], vk.ImageLayout.transfer_src_optimal,
+                                         dst_image, vk.ImageLayout.transfer_dst_optimal,
+                                         1, &image_blit_region, vk.Filter.nearest);
+    } else {
+      const image_copy_region = [_] vk.ImageCopy
+                                {
+                                  vk.ImageCopy
+                                  {
+                                    .src_subresource = vk.ImageSubresourceLayers
+                                                       {
+                                                         .aspect_mask      = vk.ImageAspectFlags { .color_bit = true, },
+                                                         .base_array_layer = 0,
+                                                         .layer_count      = 1,
+                                                         .mip_level        = 0,
+                                                       },
+                                    .src_offset      = vk.Offset3D
+                                                       {
+                                                         .x = 0,
+                                                         .y = 0,
+                                                         .z = 0,
+                                                       },
+                                    .dst_subresource = vk.ImageSubresourceLayers
+                                                       {
+                                                         .aspect_mask      = vk.ImageAspectFlags { .color_bit = true, },
+                                                         .base_array_layer = 0,
+                                                         .layer_count      = 1,
+                                                         .mip_level        = 0,
+                                                       },
+                                    .dst_offset      = vk.Offset3D
+                                                       {
+                                                         .x = 0,
+                                                         .y = 0,
+                                                         .z = 0,
+                                                       },
+                                    .extent          = vk.Extent3D
+                                                       {
+                                                         .width  = framebuffer.width,
+                                                         .height = framebuffer.height,
+                                                         .depth  = 1,
+                                                       },
+                                  },
+                                };
+
+      self.device_dispatch.cmdCopyImage (command_buffers [0],
+                                         self.images [self.screenshot_image_index], vk.ImageLayout.transfer_src_optimal,
+                                         dst_image, vk.ImageLayout.transfer_dst_optimal,
+                                         1, &image_copy_region);
+    }
+
+    const dst_image_to_general_layout = [_] vk.ImageMemoryBarrier
+                                        {
+                                          vk.ImageMemoryBarrier
+                                          {
+                                            .src_access_mask        = vk.AccessFlags { .transfer_write_bit = true, },
+                                            .dst_access_mask        = vk.AccessFlags { .memory_read_bit = true, },
+                                            .old_layout             = vk.ImageLayout.transfer_dst_optimal,
+                                            .new_layout             = vk.ImageLayout.general,
+                                            .src_queue_family_index = vk.QUEUE_FAMILY_IGNORED,
+                                            .dst_queue_family_index = vk.QUEUE_FAMILY_IGNORED,
+                                            .image                  = dst_image,
+                                            .subresource_range      = vk.ImageSubresourceRange
+                                                                      {
+                                                                        .aspect_mask      = vk.ImageAspectFlags { .color_bit = true },
+                                                                        .base_mip_level   = 0,
+                                                                        .level_count      = 1,
+                                                                        .base_array_layer = 0,
+                                                                        .layer_count      = 1,
+                                                                      },
+                                          },
+                                        };
+
+    self.device_dispatch.cmdPipelineBarrier (command_buffers [0],
+                                             vk.PipelineStageFlags { .transfer_bit = true, },
+                                             vk.PipelineStageFlags { .transfer_bit = true, },
+                                             vk.DependencyFlags {},
+                                             0, null, 0, null, 1,
+                                             &dst_image_to_general_layout);
+
+    const swapchain_image_after_blit = [_] vk.ImageMemoryBarrier
+                                       {
+                                         vk.ImageMemoryBarrier
+                                         {
+                                           .src_access_mask        = vk.AccessFlags { .transfer_read_bit = true, },
+                                           .dst_access_mask        = vk.AccessFlags { .memory_read_bit = true, },
+                                           .old_layout             = vk.ImageLayout.transfer_src_optimal,
+                                           .new_layout             = vk.ImageLayout.present_src_khr,
+                                           .src_queue_family_index = vk.QUEUE_FAMILY_IGNORED,
+                                           .dst_queue_family_index = vk.QUEUE_FAMILY_IGNORED,
+                                           .image                  = self.images [self.screenshot_image_index],
+                                           .subresource_range      = vk.ImageSubresourceRange
+                                                                     {
+                                                                       .aspect_mask      = vk.ImageAspectFlags { .color_bit = true },
+                                                                       .base_mip_level   = 0,
+                                                                       .level_count      = 1,
+                                                                       .base_array_layer = 0,
+                                                                       .layer_count      = 1,
+                                                                     },
+                                         },
+                                       };
+
+    self.device_dispatch.cmdPipelineBarrier (command_buffers [0],
+                                             vk.PipelineStageFlags { .transfer_bit = true, },
+                                             vk.PipelineStageFlags { .transfer_bit = true, },
+                                             vk.DependencyFlags {},
+                                             0, null, 0, null, 1,
+                                             &swapchain_image_after_blit);
+
+    try self.device_dispatch.endCommandBuffer (command_buffers [0]);
+
+    const submit_info = [_] vk.SubmitInfo
+                        {
+                          vk.SubmitInfo
+                          {
+                            .command_buffer_count   = command_buffers.len,
+                            .p_command_buffers      = &command_buffers,
+                          },
+                        };
+
+    const fence = try self.device_dispatch.createFence (self.logical_device, &vk.FenceCreateInfo {}, null);
+    defer self.device_dispatch.destroyFence (self.logical_device, fence, null);
+
+    try self.device_dispatch.queueSubmit (self.graphics_queue, 1, &submit_info, fence);
+
+    _ = try self.device_dispatch.waitForFences (self.logical_device, 1, &[_] vk.Fence { fence, }, vk.TRUE, std.math.maxInt (u64));
+
+    const subresource = vk.ImageSubresource
+                        {
+                          .aspect_mask = vk.ImageAspectFlags { .color_bit = true },
+                          .mip_level   = 0,
+                          .array_layer = 0,
+                        };
+
+    const subresource_layout = self.device_dispatch.getImageSubresourceLayout (self.logical_device, dst_image, &subresource);
+
+    // TODO: change as ([*] u8, ...) depending of blit support + surface format
+    var data = @as ([*] u8, @ptrCast ((try self.device_dispatch.mapMemory (self.logical_device, dst_image_memory, 0, vk.WHOLE_SIZE, vk.MemoryMapFlags {})).?));
+    defer self.device_dispatch.unmapMemory (self.logical_device, dst_image_memory);
+
+    data += subresource_layout.offset;
+
+    // TODO: change 255 depending of blit support + surface format (max: 65_536)
+    const header = try std.fmt.allocPrint (allocator, "P6\n{d}\n{d}\n255\n", .{ framebuffer.width, framebuffer.height, });
+    try file.writeAll (header);
+
+    var x: u32 = 0;
+    var y: u32 = 0;
+    var color: [] u8 = undefined;
+
+    while (y < framebuffer.height)
+    {
+      x = 0;
+      while (x < framebuffer.width * 4)
+      {
+        if (self.candidate.blitting_supported)
+        {
+          color = try std.fmt.allocPrint (allocator, "{c}{c}{c}", .{ data [y * framebuffer.width * 4 + x], data [y * framebuffer.width * 4 + x + 1], data [y * framebuffer.width * 4 + x + 2], });
+          try file.writeAll (color);
+        //} else {
+          // TODO: manage different format when blit is unsupported
+          // TODO: error message promoting for issue posting when using unsupported format
+        }
+
+        x += 4;
+      }
+
+      // TODO: add this line for unsupported blit ?
+      // data += subresource_layout.row_pitch;
+
+      y += 1;
+    }
+
+    try log_app ("screenshot saved into {s}", severity.INFO, .{ try screenshots_dir.realpathAlloc (allocator, filename), });
+  }
+
   fn draw_frame (self: *Self, imgui: *context_imgui, framebuffer: struct { resized: bool, width: u32, height: u32, }, arena: *std.heap.ArenaAllocator, allocator: *std.mem.Allocator, options: *opts) !void
   {
-    _ = try self.device_dispatch.waitForFences (self.logical_device, 1, &[_] vk.Fence { self.in_flight_fences [self.current_frame] }, vk.TRUE, std.math.maxInt (u64));
+    _ = try self.device_dispatch.waitForFences (self.logical_device, 1, &[_] vk.Fence { self.in_flight_fences [self.current_frame], }, vk.TRUE, std.math.maxInt (u64));
 
-    const seed_before = options.seed;
-    try imgui.prepare (allocator.*, &(self.last_displayed_fps), &(self.fps),
-                       .{
-                          .width = framebuffer.width,
-                          .height = framebuffer.height,
-                        },
-                       .{
-                          .device_dispatch    = self.device_dispatch,
-                          .instance_dispatch  = self.instance.dispatch,
-                          .physical_device    = self.physical_device.?,
-                          .logical_device     = self.logical_device,
-                          .image              = self.images [self.current_frame],
-                          // TODO: check command pool
-                          .command_pool       = self.command_pool,
-                          .graphics_queue     = self.graphics_queue,
-                          .blitting_supported = self.candidate.blitting_supported,
-                        },
-                       .{
-                          .seed = &(options.seed),
-                        });
-    self.render_offscreen = self.render_offscreen or (options.seed != seed_before);
+    if (self.screenshot_frame == self.current_frame)
+    {
+      try self.save_screenshot_to_disk (allocator.*, .{
+                                                        .width  = framebuffer.width,
+                                                        .height = framebuffer.height,
+                                                      });
+      self.screenshot_frame = std.math.maxInt (u32);
+    }
+
+    var prepare: ImguiPrepare = ImguiPrepare.Nothing;
+    if (self.screenshot_frame == std.math.maxInt (u32))
+    {
+      const seed_before = options.seed;
+      prepare = try imgui.prepare (&(self.last_displayed_fps), &(self.fps),
+                                        .{
+                                           .width = framebuffer.width,
+                                           .height = framebuffer.height,
+                                         },
+                                        .{
+                                           .seed = &(options.seed),
+                                         });
+      self.render_offscreen = self.render_offscreen or (options.seed != seed_before);
+      if (prepare == ImguiPrepare.Screenshot) self.screenshot_frame = self.current_frame;
+    }
 
     const acquire_result = self.device_dispatch.acquireNextImageKHR (self.logical_device, self.swapchain, std.math.maxInt(u64), self.image_available_semaphores [self.current_frame], vk.Fence.null_handle) catch |err| switch (err)
                            {
@@ -1958,6 +2373,7 @@ pub const context_vk = struct
       return ContextError.ImageAcquireFailed;
     }
 
+    if (prepare == ImguiPrepare.Screenshot) self.screenshot_image_index = acquire_result.image_index;
     try self.record_command_buffer (imgui, &(self.command_buffers [self.current_frame]), acquire_result.image_index);
 
     const wait_stage = [_] vk.PipelineStageFlags
@@ -2002,7 +2418,7 @@ pub const context_vk = struct
       try self.rebuild_swapchain (.{ .width = framebuffer.width, .height = framebuffer.height, }, arena, allocator);
     }
 
-    self.current_frame = (self.current_frame + 1) % MAX_FRAMES_IN_FLIGHT;
+    self.current_frame = @intFromBool (self.current_frame == 0);
   }
 
   pub fn loop (self: *Self, imgui: *context_imgui, framebuffer: struct { resized: bool, width: u32, height: u32, }, arena: *std.heap.ArenaAllocator, allocator: *std.mem.Allocator, options: *opts) !void

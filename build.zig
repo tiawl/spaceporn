@@ -143,7 +143,7 @@ pub fn build (builder: *std.Build) !void
   };
 
   // imgui binding
-  // try gen_imgui_binding (builder.allocator);
+  try gen_imgui_binding (builder.allocator);
 
   exe.linkLibC ();
   exe.linkLibCpp ();

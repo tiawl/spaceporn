@@ -15,12 +15,12 @@ pub const options = struct
   const DEFAULT_HELP = false;
   const SHORT_HELP   = "-h";
   const LONG_HELP    = "--help";
-  const HELP_FLAGS   = "  " ++ SHORT_HELP ++ ", " ++ LONG_HELP;
+  pub const HELP_FLAGS   = "  " ++ SHORT_HELP ++ ", " ++ LONG_HELP;
 
   const DEFAULT_VERSION = false;
   const SHORT_VERSION   = "-v";
   const LONG_VERSION    = "--version";
-  const VERSION_FLAGS   = "  " ++ SHORT_VERSION ++ ", " ++ LONG_VERSION;
+  pub const VERSION_FLAGS   = "  " ++ SHORT_VERSION ++ ", " ++ LONG_VERSION;
 
   const DEFAULT_SEED = 0;
 
@@ -44,7 +44,7 @@ pub const options = struct
   const MAX_FLAGS_LEN = blk:
                         {
                           var max: usize = 0;
-                          inline for (@typeInfo (Self).Struct.decls) |decl|
+                          inline for (std.meta.declarations (Self)) |decl|
                           {
                             if (std.mem.endsWith (u8, decl.name, "_FLAGS"))
                             {
@@ -100,7 +100,7 @@ pub const options = struct
   fn usage_version (self: *Self) void
   {
     _ = self;
-    std.debug.print ("{s}{s} - Report the version\n", .{ VERSION_FLAGS, " " ** (MAX_FLAGS_LEN - VERSION_FLAGS.len), });
+    std.debug.print ("{s}{s} - Print this help\n", .{ VERSION_FLAGS, " " ** (MAX_FLAGS_LEN - VERSION_FLAGS.len), });
   }
 
   fn usage_seed (self: *Self) void

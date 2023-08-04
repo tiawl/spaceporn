@@ -1,10 +1,11 @@
 const version         = @import ("builtin").zig_version;
-const min_zig_version = "0.10.1";
+const min_zig_version = "0.11.0";
 
 const std = @import ("std");
 
-const glfw   = @import ("libs/mach-glfw/build.zig");
 const vk_gen = @import ("libs/vulkan-zig/generator/index.zig");
+
+const glfwLink = @import ("build_machglfw.zig").glfwLink;
 
 fn gen_imgui_binding (allocator: std.mem.Allocator) !void
 {
@@ -43,10 +44,6 @@ pub fn build (builder: *std.Build) !void
                       .name = "vulkan",
                       .ptr = vk_gen.VkGenerateStep.create (builder, "libs/vulkan-zig/examples/vk.xml").getModule (),
                      },
-                    .{
-                      .name = "glfw",
-                      .ptr = glfw.module (builder),
-                     },
                   };
 
   const build_options = builder.addOptions ();
@@ -55,7 +52,7 @@ pub fn build (builder: *std.Build) !void
   const DEV = builder.option (bool, "DEV", "Build " ++ EXE ++ " in verbose mode.") orelse false;
   const TURBO = builder.option (bool, "TURBO", "Build " ++ EXE ++ " without logging feature. LOG build option is ignored.") orelse false;
 
-  if (version.order (std.SemanticVersion.parse (min_zig_version) catch unreachable) != .gt)
+  if (version.order (std.SemanticVersion.parse (min_zig_version) catch unreachable) == .lt)
   {
     std.log.err ("{s} needs at least Zig {s} to be build", .{ EXE, min_zig_version, });
     std.process.exit (1);
@@ -125,7 +122,7 @@ pub fn build (builder: *std.Build) !void
   exe.addOptions ("build_options", build_options);
 
   // Init a new install artifact step that will copy exe into destination directory
-  const install_exe = builder.addInstallArtifact (exe);
+  const install_exe = builder.addInstallArtifact (exe, .{});
 
   // Install step must be made after install artifact step is made
   builder.getInstallStep ().dependOn (&install_exe.step);
@@ -136,11 +133,7 @@ pub fn build (builder: *std.Build) !void
   }
 
   // mach-glfw
-  glfw.link (builder, exe, .{}) catch
-  {
-    std.log.err ("failed to link GLFW", .{});
-    std.process.exit (1);
-  };
+   glfwLink (builder, exe);
 
   // imgui binding
   try gen_imgui_binding (builder.allocator);
@@ -151,20 +144,20 @@ pub fn build (builder: *std.Build) !void
   exe.linkSystemLibrary ("vulkan");
   const cflags = &.{ "-fno-sanitize=undefined" };
 
-  exe.addIncludePath ("libs");
-  exe.addIncludePath ("libs/imgui");
-  exe.addIncludePath ("libs/imgui/backends");
+  exe.addIncludePath (std.build.LazyPath { .path = "libs", });
+  exe.addIncludePath (std.build.LazyPath { .path = "libs/imgui", });
+  exe.addIncludePath (std.build.LazyPath { .path = "libs/imgui/backends", });
 
-  exe.addCSourceFile ("libs/cimgui.cpp", cflags);
-  exe.addCSourceFile ("libs/cimgui_impl_glfw.cpp", cflags);
-  exe.addCSourceFile ("libs/cimgui_impl_vulkan.cpp", cflags);
-  exe.addCSourceFile ("libs/imgui/imgui.cpp", cflags);
-  exe.addCSourceFile ("libs/imgui/imgui_demo.cpp", cflags);
-  exe.addCSourceFile ("libs/imgui/imgui_draw.cpp", cflags);
-  exe.addCSourceFile ("libs/imgui/imgui_tables.cpp", cflags);
-  exe.addCSourceFile ("libs/imgui/imgui_widgets.cpp", cflags);
-  exe.addCSourceFile ("libs/imgui/backends/imgui_impl_glfw.cpp", cflags);
-  exe.addCSourceFile ("libs/imgui/backends/imgui_impl_vulkan.cpp", cflags);
+  exe.addCSourceFile (std.build.LibExeObjStep.CSourceFile { .file = std.build.LazyPath { .path = "libs/cimgui.cpp", }, .flags = cflags, });
+  exe.addCSourceFile (std.build.LibExeObjStep.CSourceFile { .file = std.build.LazyPath { .path = "libs/cimgui_impl_glfw.cpp", }, .flags = cflags, });
+  exe.addCSourceFile (std.build.LibExeObjStep.CSourceFile { .file = std.build.LazyPath { .path = "libs/cimgui_impl_vulkan.cpp", }, .flags = cflags, });
+  exe.addCSourceFile (std.build.LibExeObjStep.CSourceFile { .file = std.build.LazyPath { .path = "libs/imgui/imgui.cpp", }, .flags = cflags, });
+  exe.addCSourceFile (std.build.LibExeObjStep.CSourceFile { .file = std.build.LazyPath { .path = "libs/imgui/imgui_demo.cpp", }, .flags = cflags, });
+  exe.addCSourceFile (std.build.LibExeObjStep.CSourceFile { .file = std.build.LazyPath { .path = "libs/imgui/imgui_draw.cpp", }, .flags = cflags, });
+  exe.addCSourceFile (std.build.LibExeObjStep.CSourceFile { .file = std.build.LazyPath { .path = "libs/imgui/imgui_tables.cpp", }, .flags = cflags, });
+  exe.addCSourceFile (std.build.LibExeObjStep.CSourceFile { .file = std.build.LazyPath { .path = "libs/imgui/imgui_widgets.cpp", }, .flags = cflags, });
+  exe.addCSourceFile (std.build.LibExeObjStep.CSourceFile { .file = std.build.LazyPath { .path = "libs/imgui/backends/imgui_impl_glfw.cpp", }, .flags = cflags, });
+  exe.addCSourceFile (std.build.LibExeObjStep.CSourceFile { .file = std.build.LazyPath { .path = "libs/imgui/backends/imgui_impl_vulkan.cpp", }, .flags = cflags, });
 
   // shader resources, to be compiled using glslc
   const shaders = vk_gen.ShaderCompileStep.create (builder, &[_][] const u8 { "glslc", "--target-env=vulkan1.2" }, "-o");
@@ -182,7 +175,7 @@ pub fn build (builder: *std.Build) !void
   }
 
   const test_step = builder.step("test", "Run tests");
-  test_step.dependOn(&test_cmd.step);
+  test_step.dependOn (&test_cmd.step);
 
   // Init a new run artifact step that will run exe (invisible for user)
   const run_cmd = builder.addRunArtifact (exe);

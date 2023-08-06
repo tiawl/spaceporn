@@ -3,8 +3,6 @@ const min_zig_version = "0.11.0";
 
 const std = @import ("std");
 
-const vk_gen = @import ("libs/vulkan-zig/generator/index.zig");
-
 const glfwLink = @import ("build_machglfw.zig").glfwLink;
 
 fn gen_imgui_binding (allocator: std.mem.Allocator) !void
@@ -39,10 +37,6 @@ pub fn build (builder: *std.Build) !void
                     .{
                       .name = "datetime",
                       .ptr = builder.addModule ("datetime", .{ .source_file = .{ .path = "libs/zig-datetime/src/main.zig", },}),
-                     },
-                    .{
-                      .name = "vulkan",
-                      .ptr = vk_gen.VkGenerateStep.create (builder, "libs/vulkan-zig/examples/vk.xml").getModule (),
                      },
                   };
 
@@ -132,6 +126,9 @@ pub fn build (builder: *std.Build) !void
     exe.addModule (module.name, module.ptr);
   }
 
+  const vk_dep = builder.dependency ("vulkan-zig", .{ .registry = @as ([] const u8, builder.pathFromRoot ("libs/vulkan-zig/examples/vk.xml")) });
+  exe.addModule ("vulkan", vk_dep.module ("vulkan-zig"));
+
   // mach-glfw
    glfwLink (builder, exe);
 
@@ -160,7 +157,7 @@ pub fn build (builder: *std.Build) !void
   exe.addCSourceFile (std.build.LibExeObjStep.CSourceFile { .file = std.build.LazyPath { .path = "libs/imgui/backends/imgui_impl_vulkan.cpp", }, .flags = cflags, });
 
   // shader resources, to be compiled using glslc
-  const shaders = vk_gen.ShaderCompileStep.create (builder, &[_][] const u8 { "glslc", "--target-env=vulkan1.2" }, "-o");
+  const shaders = @import("vulkan-zig").ShaderCompileStep.create (builder, &[_][] const u8 { "glslc", "--target-env=vulkan1.2" }, "-o");
   shaders.add ("vert", "shaders/main.vert", .{});
   shaders.add ("frag", "shaders/main.frag", .{});
   shaders.add ("offscreen_frag", "shaders/offscreen.frag", .{});

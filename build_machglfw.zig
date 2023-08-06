@@ -1,7 +1,7 @@
 const std = @import ("std");
 
 pub fn glfwLink(b: *std.Build, step: *std.build.CompileStep) void {
-    const glfw_dep = b.dependency("mach_glfw", .{
+    const glfw_dep = b.dependency("mach-glfw", .{
         .target = step.target,
         .optimize = step.optimize,
     });

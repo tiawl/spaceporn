@@ -3,8 +3,6 @@ const min_zig_version = "0.11.0";
 
 const std = @import ("std");
 
-const glfwLink = @import ("build_machglfw.zig").glfwLink;
-
 fn gen_imgui_binding (allocator: std.mem.Allocator) !void
 {
   var child = std.ChildProcess.init (&[_][] const u8 { "./gen_binding.sh", }, allocator);
@@ -126,11 +124,16 @@ pub fn build (builder: *std.Build) !void
     exe.addModule (module.name, module.ptr);
   }
 
-  const vk_dep = builder.dependency ("vulkan-zig", .{ .registry = @as ([] const u8, builder.pathFromRoot ("libs/vulkan-zig/examples/vk.xml")) });
+  const vk_dep = builder.dependency ("vulkan-zig", .{ .registry = @as ([] const u8, builder.pathFromRoot ("libs/vulkan-headers/registry/vk.xml")) });
   exe.addModule ("vulkan", vk_dep.module ("vulkan-zig"));
 
   // mach-glfw
-   glfwLink (builder, exe);
+  const glfw_dep = builder.dependency ("mach-glfw", .{
+    .target = exe.target,
+    .optimize = exe.optimize,
+  });
+  exe.addModule ("glfw", glfw_dep.module ("mach-glfw"));
+  try @import ("mach-glfw").link (builder, exe);
 
   // imgui binding
   try gen_imgui_binding (builder.allocator);
@@ -157,7 +160,7 @@ pub fn build (builder: *std.Build) !void
   exe.addCSourceFile (std.build.LibExeObjStep.CSourceFile { .file = std.build.LazyPath { .path = "libs/imgui/backends/imgui_impl_vulkan.cpp", }, .flags = cflags, });
 
   // shader resources, to be compiled using glslc
-  const shaders = @import("vulkan-zig").ShaderCompileStep.create (builder, &[_][] const u8 { "glslc", "--target-env=vulkan1.2" }, "-o");
+  const shaders = @import ("vulkan-zig").ShaderCompileStep.create (builder, &[_][] const u8 { "glslc", "--target-env=vulkan1.2" }, "-o");
   shaders.add ("vert", "shaders/main.vert", .{});
   shaders.add ("frag", "shaders/main.frag", .{});
   shaders.add ("offscreen_frag", "shaders/offscreen.frag", .{});

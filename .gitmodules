@@ -7,3 +7,6 @@
 [submodule "libs/dear_bindings"]
 	path = libs/dear_bindings
 	url = https://github.com/dearimgui/dear_bindings
+[submodule "libs/vulkan-headers"]
+	path = libs/vulkan-headers
+	url = https://github.com/KhronosGroup/Vulkan-Headers.git

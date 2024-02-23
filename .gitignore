@@ -1,14 +1,6 @@
 .*.sw[a-z]
 Session.vim
-spaceporn.wiki/
 zig-cache/
 zig-out/
 log/
-screenshots/
-cimgui.h
-cimgui.cpp
-cimgui_impl_glfw.h
-cimgui_impl_glfw.cpp
-cimgui_impl_vulkan.h
-cimgui_impl_vulkan.cpp
 imgui.ini

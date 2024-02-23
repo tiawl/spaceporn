@@ -10,5 +10,9 @@
       .url = "https://github.com/tiawl/cimgui.zig/archive/refs/tags/v1.90.4.tar.gz",
       .hash = "1220699fcee14e23715342a2a09b4648076917b9e4da5cd6c66c9b3e2ce16215ae4d",
     },
+    .@"zig-datetime" = .{
+      .url = "https://github.com/frmdstryr/zig-datetime/archive/a9c75242dfc119a305c1381c2352d2fc16b2e0aa.tar.gz",
+      .hash = "122038b4b5df08d2af6daf81e5f18d4c244d807c9323224db826cc107ce3894f6fa9",
+    },
   },
 }

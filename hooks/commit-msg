@@ -1,0 +1,14 @@
+#!/bin/sh
+
+main ()
+{
+  regex='\[(update|typo|fix) #[0-9]+\] .+|\[merge\]|\[init\]'
+
+  if ! grep -E -i -q "${regex}" "${1}"
+  then
+    printf 'Commit message allows only one of those syntaxes:\n- "[<update|typo|fix> #<issue ID>] <message>"\n- "[merge]"\n- "[init]"\n' 1>&2
+    return 1
+  fi
+}
+
+main "${@}"

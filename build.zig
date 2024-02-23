@@ -1,6 +1,6 @@
 const std = @import ("std");
 
-pub fn build (builder: *std.Build) void
+pub fn build (builder: *std.Build) !void
 {
   const target = builder.standardTargetOptions (.{});
   const optimize = builder.standardOptimizeOption (.{});
@@ -11,6 +11,53 @@ pub fn build (builder: *std.Build) void
   });
   const cimgui = cimgui_dep.artifact ("cimgui");
 
+  const c = builder.createModule (.{
+                                    .root_source_file = .{ .path = "src/binding/import.zig", },
+                                    .target = target,
+                                    .optimize = optimize,
+                                   });
+  c.linkSystemLibrary ("glfw", .{});
+  c.linkSystemLibrary ("vulkan", .{});
+  c.linkLibrary (cimgui);
+  c.addIncludePath (cimgui_dep.path ("imgui"));
+
+  const datetime_dep = builder.dependency ("zig-datetime", .{
+    .target = target,
+    .optimize = optimize,
+  });
+
+  const modules: [] const struct { ptr: *std.Build.Module, name: [] const u8 } =
+    &.{
+       .{
+         .name = "datetime",
+         .ptr = datetime_dep.module ("zig-datetime"),
+        },
+       .{
+         .name = "glfw",
+         .ptr = builder.createModule (.{
+           .root_source_file = .{ .path = "src/binding/glfw.zig", },
+           .target = target,
+           .optimize = optimize,
+         }),
+        },
+       .{
+         .name = "vulkan",
+         .ptr = builder.createModule (.{
+           .root_source_file = .{ .path = "src/binding/vulkan.zig", },
+           .target = target,
+           .optimize = optimize,
+         }),
+        },
+       .{
+         .name = "imgui",
+         .ptr = builder.createModule (.{
+           .root_source_file = .{ .path = "src/binding/imgui.zig", },
+           .target = target,
+           .optimize = optimize,
+         }),
+        },
+      };
+
   const EXE = "spaceporn";
   const exe = builder.addExecutable (.{
     .name = EXE,
@@ -18,17 +65,12 @@ pub fn build (builder: *std.Build) void
     .target = target,
     .optimize = optimize,
   });
-  exe.linkSystemLibrary ("glfw");
-  exe.linkSystemLibrary ("vulkan");
-  exe.linkLibrary (cimgui);
 
-  // TODO: WHY ?
-  exe.addIncludePath (cimgui_dep.path ("imgui"));
-  //exe.linkLibC ();
-  //exe.linkLibCpp ();
-
-  //exe.root_module.addImport ("cimgui", cimgui_dep.module ("cimgui"));
-  exe.installLibraryHeaders (cimgui);
+  for (modules) |*module|
+  {
+    module.ptr.addImport ("c", c);
+    exe.root_module.addImport (module.name, module.ptr);
+  }
 
   builder.installArtifact (exe);
 

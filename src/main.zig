@@ -1,6 +1,7 @@
 const std = @import ("std");
 const builtin = @import ("builtin");
 
+const build = @import ("build");
 const glfw = @import ("glfw");
 const vk = @import ("vulkan");
 const imgui = @import ("imgui");
@@ -325,6 +326,8 @@ pub fn main () !void
   var arena = std.heap.ArenaAllocator.init (std.heap.page_allocator);
   defer arena.deinit ();
   const allocator = arena.allocator ();
+
+  std.debug.print ("{s} {s}\n", .{ build.name, build.version });
 
   _ = glfw.glfwSetErrorCallback (glfw_error_callback);
   if (glfw.glfwInit () == 0) return error.glfwInitFailure;

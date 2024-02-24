@@ -1,5 +1,5 @@
 #version 450
-#extension GL_EXT_debug_printf : enable
+//#extension GL_EXT_debug_printf : enable
 // debugPrintfEXT("My float is %f", myfloat);
 
 layout (binding = 0) uniform uniform_buffer_object_vk

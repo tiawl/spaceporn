@@ -86,13 +86,13 @@ pub const instance_vk = struct
 
     if (message_severity.verbose_bit_ext)
     {
-      sev = severity.DEBUG;
+      sev = .DEBUG;
     } else if (message_severity.info_bit_ext) {
-      sev = severity.INFO;
+      sev = .INFO;
     } else if (message_severity.warning_bit_ext) {
-      sev = severity.WARNING;
+      sev = .WARNING;
     } else if (message_severity.error_bit_ext) {
-      sev = severity.ERROR;
+      sev = .ERROR;
     }
 
     if (message_type.general_bit_ext)

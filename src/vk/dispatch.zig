@@ -1,24 +1,21 @@
-const build = @import ("build_options");
-
 const vk = @import ("vulkan");
 
-const utils    = @import ("../utils.zig");
-const profile  = utils.profile;
-const severity = utils.severity;
+const log     = @import ("../log.zig").Log;
+const Profile = log.Profile;
 
 pub const BaseDispatch = vk.BaseWrapper (
 .{
   .createInstance                       = true,
-  .enumerateInstanceLayerProperties     = build.LOG_LEVEL > @intFromEnum (profile.TURBO),
-  .enumerateInstanceExtensionProperties = build.LOG_LEVEL > @intFromEnum (profile.TURBO),
+  .enumerateInstanceLayerProperties     = log.level > @intFromEnum (Profile.TURBO),
+  .enumerateInstanceExtensionProperties = log.level > @intFromEnum (Profile.TURBO),
   .getInstanceProcAddr                  = true,
 });
 
 pub const InstanceDispatch = vk.InstanceWrapper (
 .{
   .destroyInstance                         = true,
-  .createDebugUtilsMessengerEXT            = build.LOG_LEVEL > @intFromEnum (profile.TURBO),
-  .destroyDebugUtilsMessengerEXT           = build.LOG_LEVEL > @intFromEnum (profile.TURBO),
+  .createDebugUtilsMessengerEXT            = log.level > @intFromEnum (Profile.TURBO),
+  .destroyDebugUtilsMessengerEXT           = log.level > @intFromEnum (Profile.TURBO),
   .destroySurfaceKHR                       = true,
   .getPhysicalDeviceSurfaceSupportKHR      = true,
   .getPhysicalDeviceSurfaceCapabilitiesKHR = true,

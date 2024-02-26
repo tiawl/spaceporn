@@ -1,10 +1,8 @@
 const std = @import ("std");
 const vk  = @import ("vulkan");
 
-const utils    = @import ("../utils.zig");
-const log_app  = utils.log_app;
-const exe      = utils.exe;
-const severity = utils.severity;
+const log = @import ("../log.zig").Log;
+const exe = log.exe;
 
 const dispatch_vk      = @import ("dispatch.zig");
 const BaseDispatch     = dispatch_vk.BaseDispatch;
@@ -18,17 +16,15 @@ pub const instance_vk = struct
   extensions:         [][*:0] const u8 = undefined,
   instance_proc_addr: *const fn (?*anyopaque, [*:0] const u8) callconv (.C) ?*const fn () callconv (.C) void = undefined,
 
-  const Self = @This ();
-
   pub const required_layers = [_][] const u8 {};
 
   pub fn init (extensions: *[][*:0] const u8,
     instance_proc_addr: *const fn (?*anyopaque, [*:0] const u8) callconv (.C) ?*const fn () callconv (.C) void,
-    allocator: std.mem.Allocator) !Self
+    allocator: std.mem.Allocator) !@This ()
   {
     _ = allocator;
 
-    var self = Self {};
+    var self: @This () = .{};
 
     self.extensions = extensions.*;
     self.instance_proc_addr = instance_proc_addr;
@@ -62,7 +58,7 @@ pub const instance_vk = struct
     return self;
   }
 
-  pub fn cleanup (self: Self) !void
+  pub fn cleanup (self: @This ()) !void
   {
     self.dispatch.destroyInstance (self.instance, null);
   }

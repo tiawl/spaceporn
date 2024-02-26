@@ -2,16 +2,14 @@ const vk = @import ("vulkan");
 
 pub const vertex_vk = struct
 {
-  pos:   [2] f32,
-
-  const Self = @This ();
+  pos: [2] f32,
 
   pub const binding_description = [_] vk.VertexInputBindingDescription
                                   {
                                     vk.VertexInputBindingDescription
                                     {
                                       .binding    = 0,
-                                      .stride     = @sizeOf (Self),
+                                      .stride     = @sizeOf (@This ()),
                                       .input_rate = vk.VertexInputRate.vertex,
                                     },
                                   };
@@ -23,7 +21,7 @@ pub const vertex_vk = struct
                                         .binding  = 0,
                                         .location = 0,
                                         .format   = vk.Format.r32g32_sfloat,
-                                        .offset   = @offsetOf (Self, "pos"),
+                                        .offset   = @offsetOf (@This (), "pos"),
                                       },
                                     };
 };

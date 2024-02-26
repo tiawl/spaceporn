@@ -1,0 +1,6 @@
+- check every payload capture => use pointer if necessary
+- check ziggit doc for tips
+- context module for each component
+- use pointers into functions
+- use Uppercase for structs/enums/unions
+- remove custom errors

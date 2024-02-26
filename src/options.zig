@@ -1,17 +1,11 @@
 const std = @import ("std");
 
-const build = @import ("build_options");
-
-const utils    = @import ("utils.zig");
-const exe      = utils.exe;
-const log_app  = utils.log_app;
-const profile  = utils.profile;
-const severity = utils.severity;
+const log     = @import ("log.zig").Log;
+const exe     = log.exe;
+const version = log.version;
 
 pub const options = struct
 {
-  const Self = @This ();
-
   const DEFAULT_HELP = false;
   const SHORT_HELP   = "-h";
   const LONG_HELP    = "--help";
@@ -44,11 +38,11 @@ pub const options = struct
   const MAX_FLAGS_LEN = blk:
                         {
                           var max: usize = 0;
-                          inline for (std.meta.declarations (Self)) |decl|
+                          for (std.meta.declarations (@This ())) |decl|
                           {
                             if (std.mem.endsWith (u8, decl.name, "_FLAGS"))
                             {
-                              max = @max (max, @field (Self, decl.name).len);
+                              max = @max (max, @field (@This (), decl.name).len);
                             }
                           }
                           break :blk max;
@@ -91,94 +85,94 @@ pub const options = struct
     Version,
   };
 
-  fn usage_help (self: *Self) void
+  fn usage_help (self: *@This ()) void
   {
     _ = self;
     std.debug.print ("{s}{s} - Print this help\n", .{ HELP_FLAGS, " " ** (MAX_FLAGS_LEN - HELP_FLAGS.len), });
   }
 
-  fn usage_version (self: *Self) void
+  fn usage_version (self: *@This ()) void
   {
     _ = self;
     std.debug.print ("{s}{s} - Print this help\n", .{ VERSION_FLAGS, " " ** (MAX_FLAGS_LEN - VERSION_FLAGS.len), });
   }
 
-  fn usage_seed (self: *Self) void
+  fn usage_seed (self: *@This ()) void
   {
     _ = self;
   }
 
-  fn usage_window (self: *Self) void
+  fn usage_window (self: *@This ()) void
   {
     _ = self;
   }
 
-  fn usage_camera_dynamic (self: *Self) void
+  fn usage_camera_dynamic (self: *@This ()) void
   {
     _ = self;
   }
 
-  fn usage_camera_pixel (self: *Self) void
+  fn usage_camera_pixel (self: *@This ()) void
   {
     _ = self;
   }
 
-  fn usage_camera_zoom (self: *Self) void
+  fn usage_camera_zoom (self: *@This ()) void
   {
     _ = self;
   }
 
-  fn usage_camera (self: *Self) void
+  fn usage_camera (self: *@This ()) void
   {
     inline for (std.meta.fields (@TypeOf (self.camera))) |field|
     {
-      @call (.auto, @field (Self, "usage_camera_" ++ field.name), .{ self });
+      @call (.auto, @field (@This (), "usage_camera_" ++ field.name), .{ self });
     }
   }
 
-  fn usage_colors_smooth (self: *Self) void
+  fn usage_colors_smooth (self: *@This ()) void
   {
     _ = self;
   }
 
-  fn usage_colors (self: *Self) void
+  fn usage_colors (self: *@This ()) void
   {
     inline for (std.meta.fields (@TypeOf (self.colors))) |field|
     {
-      @call (.auto, @field (Self, "usage_colors_" ++ field.name), .{ self });
+      @call (.auto, @field (@This (), "usage_colors_" ++ field.name), .{ self });
     }
   }
 
-  fn usage_stars_dynamic (self: *Self) void
+  fn usage_stars_dynamic (self: *@This ()) void
   {
     _ = self;
   }
 
-  fn usage_stars (self: *Self) void
+  fn usage_stars (self: *@This ()) void
   {
     inline for (std.meta.fields (@TypeOf (self.stars))) |field|
     {
-      @call (.auto, @field (Self, "usage_stars_" ++ field.name), .{ self });
+      @call (.auto, @field (@This (), "usage_stars_" ++ field.name), .{ self });
     }
   }
 
-  fn usage (self: *Self) void
+  fn usage (self: *@This ()) void
   {
-    std.debug.print ("\nUsage: {s} [OPTION] ...\n\nGenerator for space contemplators\n\nOptions:\n", .{ utils.exe });
+    std.debug.print ("\nUsage: {s} [OPTION] ...\n\nGenerator for space contemplators\n\nOptions:\n", .{ exe, });
     inline for (std.meta.fields (@TypeOf (self.*))) |field|
     {
-      @call (.auto, @field (Self, "usage_" ++ field.name), .{ self });
+      @call (.auto, @field (@This (), "usage_" ++ field.name), .{ self });
     }
-    std.debug.print ("\nThe {s} home page: http://www.github.com/tiawl/spaceporn\nReport {s} bugs to http://www.github.com/tiawl/spaceporn/issues\n\n", .{ utils.exe, utils.exe });
+    std.debug.print ("\nThe {s} home page: http://www.github.com/tiawl/spaceporn\nReport {s} bugs to http://www.github.com/tiawl/spaceporn/issues\n\n", .{ exe, exe, });
   }
 
-  fn print_version (self: Self) void
+  fn print_version (self: @This ()) void
   {
     _ = self;
-    std.debug.print ("{s} {s}\n", .{ exe, build.VERSION, });
+    std.debug.print ("{s} {s}\n", .{ exe, version, });
   }
 
-  fn parse (self: *Self, allocator: std.mem.Allocator, opts: *std.ArrayList ([] const u8)) !void
+  fn parse (self: *@This (), allocator: std.mem.Allocator, opts: *std.ArrayList ([] const u8)) !void
   {
     var index: usize = 0;
     var new_opt_used = false;
@@ -241,7 +235,7 @@ pub const options = struct
       // ---------------------------------------------------------------------
 
       } else {
-        try log_app ("unknown option: '{s}'", severity.ERROR, .{ opts.items [index] });
+        try log.app (.ERROR, "unknown option: '{s}'", .{ opts.items [index] });
         self.usage ();
         return OptionsError.UnknownOption;
       }
@@ -250,12 +244,12 @@ pub const options = struct
     }
   }
 
-  fn check (self: Self) !void
+  fn check (self: @This ()) !void
   {
     _ = self;
   }
 
-  fn fix_random (self: *Self) void
+  fn fix_random (self: *@This ()) void
   {
     self.seed = @intCast (@mod (std.time.milliTimestamp (), @as (i64, @intCast (std.math.maxInt (u32)))));
 
@@ -263,9 +257,9 @@ pub const options = struct
     self.camera.zoom = (self.camera.zoom % (CAMERA_ZOOM_MAX - CAMERA_ZOOM_MIN + 1)) + CAMERA_ZOOM_MIN;
   }
 
-  pub fn init (allocator: std.mem.Allocator) !Self
+  pub fn init (allocator: std.mem.Allocator) !@This ()
   {
-    var self = Self {};
+    var self: @This () = .{};
 
     var opts_iterator = try std.process.argsWithAllocator (allocator);
     defer opts_iterator.deinit();

@@ -1,42 +1,34 @@
 const std = @import ("std");
 
-const build   = @import ("build_options");
-const LOG_DIR = build.LOG_DIR;
+const log     = @import ("log.zig").Log;
+const Profile = log.Profile;
 
-const utils    = @import ("utils.zig");
-const log_app  = utils.log_app;
-const log_file = utils.log_file;
-const profile  = utils.profile;
-const severity = utils.severity;
-
-const context = @import ("context.zig").context;
+const Context = @import ("context.zig").Context;
 const opts    = @import ("options.zig").options;
 
 fn init_logfile () !void
 {
-  if (build.LOG_LEVEL > @intFromEnum (profile.TURBO) and build.LOG_DIR.len > 0)
+  if (log.level > @intFromEnum (Profile.TURBO) and log.dir.len > 0)
   {
-    var dir = std.fs.cwd ().openDir (LOG_DIR, .{}) catch |err|
+    var dir = std.fs.cwd ().openDir (log.dir, .{}) catch |err|
               {
                 if (err == std.fs.File.OpenError.FileNotFound)
-                {
-                  try log_app ("{s} does not exist, impossible to log execution.", severity.ERROR, .{ LOG_DIR });
-                }
+                  try log.app ("{s} does not exist, impossible to log execution.", .ERROR, .{ log.dir, });
                 return err;
               };
 
     defer dir.close ();
 
-    const file = std.fs.cwd ().openFile (log_file, .{}) catch |open_err| blk:
+    const file = std.fs.cwd ().openFile (log.file, .{}) catch |open_err| blk:
                  {
                    if (open_err != std.fs.File.OpenError.FileNotFound)
                    {
-                     try log_app ("failed to open log file", severity.ERROR, .{});
+                     try log.app ("failed to open log file", .ERROR, .{});
                      return open_err;
                    } else {
-                     const cfile = std.fs.cwd ().createFile (log_file, .{}) catch |create_err|
+                     const cfile = std.fs.cwd ().createFile (log.file, .{}) catch |create_err|
                      {
-                       try log_app ("failed to create log file", severity.ERROR, .{});
+                       try log.app ("failed to create log file", .ERROR, .{});
                        return create_err;
                      };
                      break :blk cfile;
@@ -45,14 +37,14 @@ fn init_logfile () !void
 
     defer file.close ();
   }
-  try log_app ("log file init OK", severity.DEBUG, .{});
+  try log.app (.DEBUG, "log file init OK", .{});
 }
 
 pub fn main () void
 {
   var arena = std.heap.ArenaAllocator.init (std.heap.page_allocator);
   defer arena.deinit ();
-  var allocator = arena.allocator ();
+  const allocator = arena.allocator ();
 
   init_logfile () catch
   {
@@ -64,7 +56,7 @@ pub fn main () void
                   std.process.exit (1);
                 };
 
-  var app = context.init (allocator, options) catch
+  var app = Context.init (allocator, options) catch
             {
               std.process.exit (1);
             };

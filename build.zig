@@ -16,19 +16,20 @@ const Profile = struct
   optimize: std.builtin.OptimizeMode,
   variables: *std.Build.Step.Options,
   options: Options,
+  command: [] const [] const u8,
 };
 
-pub fn build (builder: *std.Build) void
+pub fn build (builder: *std.Build) !void
 {
-  requirements ();
-  const profile = parse_options (builder);
-  run_exe (builder, &profile);
+  try requirements ();
+  const profile = try parse_options (builder);
+  try run_exe (builder, &profile);
   run_test (builder, &profile);
 }
 
-fn requirements () void
+fn requirements () !void
 {
-  if (zig_version.order (std.SemanticVersion.parse (zon.min_zig_version) catch std.debug.panic ("Failed to parse Zig minimal version requirement", .{})) == .lt)
+  if (zig_version.order (try std.SemanticVersion.parse (zon.min_zig_version)) == .lt)
     std.debug.panic ("{s} needs at least Zig {s} to be build", .{ zon.name, zon.min_zig_version, });
 }
 
@@ -37,9 +38,10 @@ fn turbo (profile: *Profile) void
   profile.optimize = std.builtin.Mode.ReleaseFast;
   profile.variables.addOption ([] const u8, "log_dir", "");
   profile.variables.addOption (u8, "log_level", 0);
+  profile.command = &.{ "glslc", "-O", "--target-env=vulkan1.2", };
 }
 
-fn verbose (builder: *std.Build, profile: *Profile) void
+fn verbose (builder: *std.Build, profile: *Profile) !void
 {
   const log_dir = "log";
 
@@ -47,13 +49,13 @@ fn verbose (builder: *std.Build, profile: *Profile) void
   builder.build_root.handle.makeDir (log_dir) catch |err|
   {
     // Do not return error if log directory already exists
-    if (err != std.fs.File.OpenError.PathAlreadyExists)
-      std.debug.panic ("failed to build {s}", .{ builder.pathFromRoot (log_dir) });
+    if (err != std.fs.File.OpenError.PathAlreadyExists) return err;
   };
 
   profile.optimize = std.builtin.Mode.Debug;
   profile.variables.addOption ([] const u8, "log_dir", builder.pathFromRoot (log_dir));
   profile.variables.addOption (u8, "log_level", 2);
+  profile.command = &.{ "glslc", "--target-env=vulkan1.2", };
 }
 
 fn default (builder: *std.Build, profile: *Profile, options: *const Options) void
@@ -61,9 +63,10 @@ fn default (builder: *std.Build, profile: *Profile, options: *const Options) voi
   profile.optimize = builder.standardOptimizeOption (.{});
   profile.variables.addOption ([] const u8, "log_dir", options.logdir);
   profile.variables.addOption (u8, "log_level", 1);
+  profile.command = &.{ "glslc", "--target-env=vulkan1.2", };
 }
 
-fn parse_options (builder: *std.Build) Profile
+fn parse_options (builder: *std.Build) !Profile
 {
   const options = Options {
     .verbose = builder.option (bool, std.meta.fieldInfo (Options, .verbose).name, "Build " ++ zon.name ++ " with full logging features.") orelse false,
@@ -84,82 +87,211 @@ fn parse_options (builder: *std.Build) Profile
   profile.options = options;
 
   if (options.turbo) turbo (&profile)
-  else if (options.verbose) verbose (builder, &profile)
+  else if (options.verbose) try verbose (builder, &profile)
   else default (builder, &profile, &options);
 
   return profile;
 }
 
-fn compile_shaders (builder: *std.Build, exe: *std.Build.Step.Compile, profile: *const Profile) [] const u8
+const Node = struct
 {
-  const glsl_dir = builder.build_root.handle.openDir ("shaders", .{ .iterate = true })
-    catch std.debug.panic ("Failed to open glsl shaders directory", .{});
+  name: [] const u8,
+  nodes: std.ArrayList (@This ()),
+  hash: [64] u8 = undefined,
+  depth: usize = 0,
+};
+
+// Create a hash from a shader's source contents.
+fn digest (profile: ?*const Profile, source: [] u8) [64] u8
+{
+  var hasher = std.crypto.hash.blake2.Blake2b384.init (.{});
+
+  // Make sure that there is no cache hit if the projet name has changed
+  hasher.update (zon.name);
+  // Make sure that there is no cache hit if the shader's source has changed.
+  hasher.update (source);
+  // Not only the shader source must be the same to ensure uniqueness the compile command, too.
+  if (profile) |p| for (p.command) |token| hasher.update (token);
+
+  // Create a base-64 hash digest from a hasher, which we can use as file name.
+  var hash_digest: [48] u8 = undefined;
+  hasher.final (&hash_digest);
+  var hash: [64] u8 = undefined;
+  _ = std.fs.base64_encoder.encode (&hash, &hash_digest);
+
+  return hash;
+}
+
+fn add_shader (builder: *std.Build, exe: *std.Build.Step.Compile, profile: *const Profile,
+  glsl: *std.fs.Dir, entry: *const std.fs.Dir.Walker.WalkerEntry,
+  dupe: [] const u8, ptr: *Node, depth: *usize) !void
+{
+  depth.* += 1;
+  if (std.mem.eql (u8, entry.basename, dupe))
+  {
+    const path = try builder.allocator.dupe (u8, entry.path);
+    const source = try glsl.readFileAlloc (builder.allocator, path, std.math.maxInt (usize));
+    try ptr.nodes.append (.{
+      .name = std.fs.path.extension (dupe) [1 ..],
+      .nodes = std.ArrayList (Node).init (builder.allocator),
+      .hash = digest (profile, source),
+      .depth = depth.*,
+    });
+
+    const out = try std.fs.path.join (builder.allocator, &.{
+      try builder.cache_root.join (builder.allocator, &.{ "shaders", }),
+      &ptr.nodes.items [ptr.nodes.items.len - 1].hash,
+    });
+    const in = try std.fs.path.join (builder.allocator, &.{
+      try builder.build_root.join (builder.allocator, &.{ "shaders", }), path,
+    });
+
+    // If we have a cache hit, we can save some compile time by not invoking the compile command.
+    shader_not_found: {
+      std.fs.accessAbsolute (out, .{}) catch |err| switch (err)
+      {
+        error.FileNotFound => break :shader_not_found,
+        else => return err,
+      };
+      return;
+    }
+
+    var command = std.ArrayList ([] const u8).init (builder.allocator);
+    try command.appendSlice (profile.command);
+    try command.appendSlice (&.{ "-o", out, in, });
+    std.debug.print ("{s}\n", .{ try std.mem.join (builder.allocator, " ", command.items), });
+    try exe.step.evalChildProcess (command.items);
+  }
+}
+
+fn write_index (builder: *std.Build, tree: *Node) ![] const u8
+{
+  var buffer = std.ArrayList (u8).init (builder.allocator);
+  const writer = buffer.writer ();
+
+  var stack = std.ArrayList (Node).init (builder.allocator);
+  try stack.appendSlice (tree.nodes.items);
+  var node: Node = undefined;
+
+  while (stack.items.len > 0)
+  {
+    node = stack.pop ();
+
+    try writer.print ("pub const @\"{s}\" ", .{ node.name, });
+
+    if (node.nodes.items.len == 0 and
+       (std.mem.eql (u8, node.name, "frag") or std.mem.eql (u8, node.name, "vert")))
+    {
+      try writer.print ("align(@alignOf(u32)) = @embedFile(\"{s}\").*;\n", .{ node.hash, });
+    } else try writer.print ("= struct {c}\n", .{ '{', });
+
+    for (node.nodes.items) |*child| try stack.append (child.*);
+
+    if (stack.getLastOrNull ()) |last|
+    {
+      if (node.depth > last.depth)
+        for (0 .. node.depth - last.depth) |_| try writer.print ("{c};\n", .{ '}', });
+    } else try writer.print ("{c};\n", .{ '}', });
+  }
+
+  try buffer.append (0);
+  const source = buffer.items [0 .. buffer.items.len - 1 :0];
+
+  const validated = try std.zig.Ast.parse (builder.allocator, source, std.zig.Ast.Mode.zig);
+  const formatted = try validated.render (builder.allocator);
+
+  const hash = &digest (null, formatted);
+  const path = try std.fs.path.join (builder.allocator, &.{
+    try builder.cache_root.join (builder.allocator, &.{ "shaders", }), hash,
+  });
+
+  std.fs.accessAbsolute (path, .{}) catch |err| switch (err)
+  {
+    error.FileNotFound => try builder.cache_root.handle.writeFile (path, formatted),
+    else => return err,
+  };
+
+  return path;
+}
+
+fn walk_through_shaders (builder: *std.Build, exe: *std.Build.Step.Compile,
+  profile: *const Profile, tree: *Node) !void
+{
+  var glsl = try builder.build_root.handle.openDir ("shaders", .{ .iterate = true });
+  defer glsl.close ();
+
+  var walker = try glsl.walk (builder.allocator);
+  defer walker.deinit ();
+  var depth: usize = undefined;
+
+  var ptr: *Node = undefined;
+
+  while (try walker.next ()) |*entry|
+  {
+    if (entry.kind == .file)
+    {
+      var it = try std.fs.path.componentIterator (entry.path);
+      ptr = tree;
+      depth = 0;
+      next: while (it.next ()) |*component|
+      {
+        const dupe = try builder.allocator.dupe (u8, component.name);
+        const stem = std.fs.path.stem (dupe);
+        for (ptr.nodes.items) |*node|
+        {
+          if (std.mem.eql (u8, node.name, stem))
+          {
+            ptr = node;
+            try add_shader (builder, exe, profile, &glsl, entry, dupe, ptr, &depth);
+            continue :next;
+          }
+        }
+        try ptr.nodes.append (.{ .name = stem, .nodes = std.ArrayList (Node).init (builder.allocator), .depth = depth, });
+        ptr = &ptr.nodes.items [ptr.nodes.items.len - 1];
+        try add_shader (builder, exe, profile, &glsl, entry, dupe, ptr, &depth);
+      }
+    }
+  }
+}
+
+fn compile_shaders (builder: *std.Build, exe: *std.Build.Step.Compile, profile: *const Profile) ![] const u8
+{
+  var tree: Node = .{ .name = "shaders", .nodes = std.ArrayList (Node).init (builder.allocator), };
 
   builder.cache_root.handle.makeDir ("shaders") catch |err|
   {
-    // Do not return error if spv shaders directory already exists
-    if (err != std.fs.File.OpenError.PathAlreadyExists)
-      std.debug.panic ("failed to build spv shaders cache directory", .{});
+    // Do not return error if directory already exists
+    if (err != std.fs.File.OpenError.PathAlreadyExists) return err;
   };
 
-  var index = std.ArrayList (u8).init (builder.allocator);
-  const writer = index.writer ();
-
-  var it = glsl_dir.iterate ();
-  while (it.next () catch std.debug.panic ("Failed to iterate shader directory", .{})) |node|
-  {
-    if (node.kind == .file)
-    {
-      const zig_name = std.mem.replaceOwned (u8, builder.allocator, node.name, ".", "_")
-        catch std.debug.panic ("Failed to replace '.' by '_' in {s}", .{ node.name });
-      const glsl = glsl_dir.realpathAlloc (builder.allocator, node.name)
-        catch std.debug.panic ("Failed to realpath glsl shaders directory", .{});
-      const spv_name = std.fmt.allocPrint (builder.allocator, "{s}.spv", .{ node.name })
-        catch std.debug.panic ("Failed to concat spv extension to ${s}", .{ node.name });
-      const spv = builder.cache_root.join (builder.allocator, &.{ "shaders", spv_name })
-        catch std.debug.panic ("Failed to join spv shaders cache directory", .{});
-
-      writer.print ("pub const {s} align (@alignOf (u32)) = @embedFile (\"{s}.spv\").*;\n", .{
-        zig_name, node.name }) catch std.debug.panic ("Writer failed", .{});
-
-      exe.step.evalChildProcess (
-        if (profile.options.turbo) &.{ "glslc", "-O", "--target-env=vulkan1.2", "-o", spv, glsl, }
-        else &.{ "glslc", "--target-env=vulkan1.2", "-o", spv, glsl, }
-      ) catch {};
-    }
-  }
-
-  const index_path = builder.cache_root.join (builder.allocator, &.{ "shaders", "index.zig" })
-    catch std.debug.panic ("Failed to join index shaders path", .{});
-  builder.cache_root.handle.writeFile (index_path, index.items)
-    catch std.debug.print ("Failed to write {s}", .{ index_path });
-  return index_path;
+  try walk_through_shaders (builder, exe, profile, &tree);
+  return try write_index (builder, &tree);
 }
 
 fn link (builder: *std.Build, profile: *const Profile) *std.Build.Module
 {
-  const cimgui_dep = builder.dependency ("cimgui", .{
+  const dep = builder.dependency ("cimgui", .{
     .target = profile.target,
     .optimize = profile.optimize,
   });
-  const cimgui = cimgui_dep.artifact ("cimgui");
+  const cimgui = dep.artifact ("cimgui");
 
-  const c = builder.createModule (.{
+  const binding = builder.createModule (.{
    .root_source_file = .{ .path = "src/binding/import.zig", },
    .target = profile.target,
    .optimize = profile.optimize,
   });
-  c.linkSystemLibrary ("glfw", .{});
-  c.linkSystemLibrary ("vulkan", .{});
-  c.linkLibrary (cimgui);
-  c.addIncludePath (cimgui_dep.path ("imgui"));
+  binding.linkSystemLibrary ("glfw", .{});
+  binding.linkSystemLibrary ("vulkan", .{});
+  binding.linkLibrary (cimgui);
+  binding.addIncludePath (dep.path ("imgui"));
 
-  return c;
+  return binding;
 }
 
-fn import (builder: *std.Build, exe: *std.Build.Step.Compile, profile: *const Profile) void
+fn import (builder: *std.Build, exe: *std.Build.Step.Compile, profile: *const Profile) !void
 {
-  const datetime_dep = builder.dependency ("zig-datetime", .{
+  const dep = builder.dependency ("zig-datetime", .{
     .target = profile.target,
     .optimize = profile.optimize,
   });
@@ -170,7 +302,7 @@ fn import (builder: *std.Build, exe: *std.Build.Step.Compile, profile: *const Pr
        .ptr = profile.variables.createModule (),
      }, .{
        .name = "datetime",
-       .ptr = datetime_dep.module ("zig-datetime"),
+       .ptr = dep.module ("zig-datetime"),
      }, .{
        .name = "glfw",
        .ptr = builder.createModule (.{
@@ -188,7 +320,7 @@ fn import (builder: *std.Build, exe: *std.Build.Step.Compile, profile: *const Pr
      }, .{
        .name = "shader",
        .ptr = builder.createModule (.{
-         .root_source_file = .{ .path = compile_shaders (builder, exe, profile), },
+         .root_source_file = .{ .path = try compile_shaders (builder, exe, profile), },
          .target = profile.target,
          .optimize = profile.optimize,
        }),
@@ -211,7 +343,7 @@ fn import (builder: *std.Build, exe: *std.Build.Step.Compile, profile: *const Pr
   }
 }
 
-fn run_exe (builder: *std.Build, profile: *const Profile) void
+fn run_exe (builder: *std.Build, profile: *const Profile) !void
 {
   const exe = builder.addExecutable (.{
     .name = zon.name,
@@ -220,7 +352,7 @@ fn run_exe (builder: *std.Build, profile: *const Profile) void
     .optimize = profile.optimize,
   });
 
-  import (builder, exe, profile);
+  try import (builder, exe, profile);
 
   builder.installArtifact (exe);
 

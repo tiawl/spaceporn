@@ -6,8 +6,6 @@ const glfw = @import ("glfw");
 const vk = @import ("vulkan");
 const imgui = @import ("imgui");
 
-const datetime = @import ("datetime.zig");
-
 var g_Allocator:        *vk.VkAllocationCallbacks   = undefined;
 var g_Instance:         vk.VkInstance               = undefined;
 var g_PhysicalDevice:   vk.VkPhysicalDevice         = undefined;
@@ -470,6 +468,4 @@ pub fn main () !void
 
   glfw.glfwDestroyWindow (window);
   glfw.glfwTerminate ();
-
-  std.debug.print ("{s}\n", .{ try datetime.now (allocator) });
 }

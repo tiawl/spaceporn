@@ -11,10 +11,6 @@ const imgui = @cImport ({
                           @cInclude ("cimgui_impl_vulkan.h");
                         });
 
-const dispatch         = @import ("../vk/dispatch.zig");
-const DeviceDispatch   = dispatch.DeviceDispatch;
-const InstanceDispatch = dispatch.InstanceDispatch;
-
 const ImGui_ImplVulkan_InitInfo = extern struct
 {
   Instance:              vk.Instance,

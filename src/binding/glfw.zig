@@ -1,15 +1,4 @@
-const c = @import ("c");
-
-pub const glfw = struct
-{
-  pub const Window = struct
-  {
-    pub const Size = struct
-    {
-      width: u32,
-      height: u32,
-    };
-  };
-};
-
-pub usingnamespace glfw;
+pub usingnamespace @import ("glfw/main.zig");
+pub usingnamespace @import ("glfw/error.zig");
+pub usingnamespace @import ("glfw/vulkan.zig");
+pub usingnamespace @import ("glfw/window.zig");

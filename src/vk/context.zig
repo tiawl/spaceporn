@@ -13,10 +13,6 @@ const Profile = log.Profile;
 
 const opts = @import ("../options.zig").options;
 
-const dispatch         = @import ("dispatch.zig");
-const InstanceDispatch = dispatch.InstanceDispatch;
-const DeviceDispatch   = dispatch.DeviceDispatch;
-
 const vertex_vk = @import ("vertex.zig").vertex_vk;
 
 const instance        = if (log.level == @intFromEnum (Profile.TURBO)) @import ("instance_turbo.zig") else @import ("instance_debug.zig");
@@ -65,19 +61,18 @@ pub const Context = struct
   };
 
   instance:                         instance_vk = undefined,
-  surface:                          vk.SurfaceKHR = undefined,
-  device_dispatch:                  DeviceDispatch = undefined,
+  surface:                          vk.KHR.Surface = undefined,
   physical_device:                  ?vk.PhysicalDevice = null,
   candidate:                        struct { graphics_family: u32, present_family: u32, extensions: std.ArrayList ([*:0] const u8), blitting_supported: bool, } = undefined,
   logical_device:                   vk.Device = undefined,
   graphics_queue:                   vk.Queue = undefined,
   present_queue:                    vk.Queue = undefined,
-  capabilities:                     vk.SurfaceCapabilitiesKHR = undefined,
-  formats:                          [] vk.SurfaceFormatKHR = undefined,
-  present_modes:                    [] vk.PresentModeKHR = undefined,
-  surface_format:                   vk.SurfaceFormatKHR = undefined,
+  capabilities:                     vk.KHR.SurfaceCapabilities = undefined,
+  formats:                          [] vk.KHR.SurfaceFormat = undefined,
+  present_modes:                    [] vk.KHR.PresentMode = undefined,
+  surface_format:                   vk.KHR.SurfaceFormat = undefined,
   extent:                           vk.Extent2D = undefined,
-  swapchain:                        vk.SwapchainKHR = undefined,
+  swapchain:                        vk.KHR.Swapchain = undefined,
   images:                           [] vk.Image = undefined,
   views:                            [] vk.ImageView = undefined,
   viewport:                         [1] vk.Viewport = undefined,
@@ -213,7 +208,7 @@ pub const Context = struct
 
     if (format_count > 0)
     {
-      self.formats = try allocator.alloc (vk.SurfaceFormatKHR, format_count);
+      self.formats = try allocator.alloc (vk.KHR.SurfaceFormat, format_count);
 
       _ = try self.instance.dispatch.getPhysicalDeviceSurfaceFormatsKHR (device, self.surface, &format_count, self.formats.ptr);
     }
@@ -224,7 +219,7 @@ pub const Context = struct
 
     if (present_mode_count > 0)
     {
-      self.present_modes = try allocator.alloc (vk.PresentModeKHR, present_mode_count);
+      self.present_modes = try allocator.alloc (vk.KHR.PresentMode, present_mode_count);
 
       _ = try self.instance.dispatch.getPhysicalDeviceSurfacePresentModesKHR (device, self.surface, &present_mode_count, self.present_modes.ptr);
     }
@@ -566,7 +561,6 @@ pub const Context = struct
 
     self.logical_device = try self.instance.dispatch.createDevice (self.physical_device.?, &device_create_info, null);
 
-    self.device_dispatch = try DeviceDispatch.load (self.logical_device, self.instance.dispatch.dispatch.vkGetDeviceProcAddr);
     errdefer self.device_dispatch.destroyDevice (self.logical_device, null);
 
     self.graphics_queue = self.device_dispatch.getDeviceQueue (self.logical_device, self.candidate.graphics_family, 0);
@@ -579,7 +573,7 @@ pub const Context = struct
   {
     for (self.formats) |format|
     {
-      if (format.format == vk.Format.b8g8r8a8_srgb and format.color_space == vk.ColorSpaceKHR.srgb_nonlinear_khr)
+      if (format.format == vk.Format.b8g8r8a8_srgb and format.color_space == vk.KHR.ColorSpace.srgb_nonlinear_khr)
       {
         self.surface_format = format;
       }
@@ -588,17 +582,17 @@ pub const Context = struct
     self.surface_format = self.formats [0];
   }
 
-  fn choose_swap_present_mode (self: @This ()) vk.PresentModeKHR
+  fn choose_swap_present_mode (self: @This ()) vk.KHR.PresentMode
   {
     for (self.present_modes) |present_mode|
     {
-      if (present_mode == vk.PresentModeKHR.mailbox_khr)
+      if (present_mode == vk.KHR.PresentMode.mailbox_khr)
       {
         return present_mode;
       }
     }
 
-    return vk.PresentModeKHR.fifo_khr;
+    return vk.KHR.PresentMode.fifo_khr;
   }
 
   fn choose_swap_extent (self: *@This (), framebuffer: struct { width: u32, height: u32, }) void
@@ -648,9 +642,9 @@ pub const Context = struct
                                    self.candidate.present_family,
                                  };
 
-    const create_info = vk.SwapchainCreateInfoKHR
+    const create_info = vk.KHR.SwapchainCreateInfo
                         {
-                          .flags                    = vk.SwapchainCreateFlagsKHR {},
+                          .flags                    = vk.Flags.KHR.SwapchainCreate {},
                           .surface                  = self.surface,
                           .min_image_count          = image_count,
                           .image_format             = self.surface_format.format,
@@ -667,7 +661,7 @@ pub const Context = struct
                           .queue_family_index_count = if (self.candidate.graphics_family != self.candidate.present_family) queue_family_indices.len else 0,
                           .p_queue_family_indices   = if (self.candidate.graphics_family != self.candidate.present_family) &queue_family_indices else null,
                           .pre_transform            = self.capabilities.current_transform,
-                          .composite_alpha          = vk.CompositeAlphaFlagsKHR { .opaque_bit_khr = true },
+                          .composite_alpha          = vk.Flags.KHR.CompositeAlpha { .opaque_bit_khr = true },
                           .present_mode             = present_mode,
                           .clipped                  = vk.TRUE,
                         };
@@ -1690,7 +1684,7 @@ pub const Context = struct
     try log.app ("init Vulkan semaphores and fence OK", .DEBUG, .{});
   }
 
-  pub fn get_surface (self: @This ()) struct { instance: vk.Instance, surface: vk.SurfaceKHR, success: i32, }
+  pub fn get_surface (self: @This ()) struct { instance: vk.Instance, surface: vk.KHR.Surface, success: i32, }
   {
     return .{
               .instance = self.instance.instance,
@@ -1699,7 +1693,7 @@ pub const Context = struct
             };
   }
 
-  pub fn set_surface (self: *@This (), surface: *vk.SurfaceKHR) void
+  pub fn set_surface (self: *@This (), surface: *vk.KHR.Surface) void
   {
     self.surface = surface.*;
   }
@@ -2394,12 +2388,12 @@ pub const Context = struct
 
     try self.device_dispatch.queueSubmit (self.graphics_queue, 1, &submit_info, self.in_flight_fences [self.current_frame]);
 
-    const present_info = vk.PresentInfoKHR
+    const present_info = vk.KHR.PresentInfo
                          {
                            .wait_semaphore_count = 1,
                            .p_wait_semaphores    = &[_] vk.Semaphore { self.render_finished_semaphores [self.current_frame] },
                            .swapchain_count      = 1,
-                           .p_swapchains         = &[_] vk.SwapchainKHR { self.swapchain },
+                           .p_swapchains         = &[_] vk.KHR.Swapchain { self.swapchain },
                            .p_image_indices      = &[_] u32 { acquire_result.image_index },
                            .p_results            = null,
                          };

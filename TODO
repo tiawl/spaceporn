@@ -4,3 +4,8 @@
 - use pointers into functions
 - use Uppercase for structs/enums/unions
 - remove custom errors
+- layers management: binding -> wrapper -> module
+- change function names: convert_error () => convertError ()
+- avoid relative path into @import: @import ("../log.zig") => @import ("log")
+- change wrapper/module functions: destroy () -> deinit ()
+- update GLFW

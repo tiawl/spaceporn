@@ -5,10 +5,6 @@ const log     = @import ("../log.zig");
 const exe     = log.exe;
 const Profile = log.Profile;
 
-const dispatch_vk      = @import ("dispatch.zig");
-const BaseDispatch     = dispatch_vk.BaseDispatch;
-const InstanceDispatch = dispatch_vk.InstanceDispatch;
-
 const ext_vk = struct
 {
   name: [*:0] const u8,
@@ -17,12 +13,10 @@ const ext_vk = struct
 
 pub const instance_vk = struct
 {
-  base_dispatch:      BaseDispatch = undefined,
-  dispatch:           InstanceDispatch = undefined,
   instance:           vk.Instance = undefined,
   extensions:         [][*:0] const u8 = undefined,
   instance_proc_addr: *const fn (?*anyopaque, [*:0] const u8) callconv (.C) ?*const fn () callconv (.C) void = undefined,
-  debug_messenger:    vk.DebugUtilsMessengerEXT = undefined,
+  debug_messenger:    vk.EXT.DebugUtilsMessenger = undefined,
 
   pub const required_layers = [_][*:0] const u8
   {
@@ -294,12 +288,9 @@ pub const instance_vk = struct
     self.extensions = extensions.*;
     self.instance_proc_addr = instance_proc_addr;
 
-    self.base_dispatch = try BaseDispatch.load (@as(vk.PfnGetInstanceProcAddr, @ptrCast (self.instance_proc_addr)));
-
     try check_layer_properties (&self, allocator);
     try check_extension_properties (&self, &debug_info, allocator);
 
-    self.dispatch = try InstanceDispatch.load (self.instance, self.base_dispatch.dispatch.vkGetInstanceProcAddr);
     errdefer self.dispatch.destroyInstance (self.instance, null);
 
     init_debug_info (&debug_info);

@@ -5,36 +5,12 @@ const vk   = @import ("vulkan");
 const log     = @import ("../log.zig").Log;
 const Profile = log.Profile;
 
-const imgui = @cImport ({
-                          @cInclude ("cimgui.h");
-                          @cInclude ("cimgui_impl_glfw.h");
-                          @cInclude ("cimgui_impl_vulkan.h");
-                        });
-
-const ImGui_ImplVulkan_InitInfo = extern struct
-{
-  Instance:              vk.Instance,
-  PhysicalDevice:        vk.PhysicalDevice,
-  Device:                vk.Device,
-  QueueFamily:           u32,
-  Queue:                 vk.Queue,
-  PipelineCache:         vk.PipelineCache,
-  DescriptorPool:        vk.DescriptorPool,
-  Subpass:               u32,
-  MinImageCount:         u32,
-  ImageCount:            u32,
-  MSAASamples:           c_uint,
-  UseDynamicRendering:   bool,
-  ColorAttachmentFormat: i32,
-  Allocator:             [*c] const vk.AllocationCallbacks,
-  CheckVkResultFn:       ?*const fn (c_int) callconv (.C) void,
-};
+const imgui = @import ("imgui");
 
 pub const Context = struct
 {
   const Renderer = struct
                    {
-                     device_dispatch: DeviceDispatch,
                      instance:        vk.Instance,
                      physical_device: vk.PhysicalDevice,
                      logical_device:  vk.Device,
@@ -144,7 +120,7 @@ pub const Context = struct
   {
     const sample = vk.SampleCountFlags { .@"1_bit" = true, };
     const format = vk.Format.undefined;
-    var init_info = ImGui_ImplVulkan_InitInfo
+    var init_info = imgui.vulkan.InitInfo
                     {
                       .Instance              = renderer.instance,
                       .PhysicalDevice        = renderer.physical_device,

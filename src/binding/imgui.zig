@@ -1,8 +1,8 @@
-const c = @import ("c");
+pub const c = @import ("c").c;
 
 const vk = @import ("vulkan");
 
-pub usingnamespace imgui;
+//pub usingnamespace imgui;
 
 pub const imgui = struct
 {

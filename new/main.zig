@@ -2,15 +2,15 @@ const std = @import ("std");
 const builtin = @import ("builtin");
 
 const build = @import ("build");
-const glfw = @import ("glfw");
-const vk = @import ("vulkan");
-const imgui = @import ("imgui");
+const glfw = @import ("glfw").c;
+const vk = @import ("vulkan").c;
+const imgui = @import ("imgui").c;
 
 var g_Allocator:        *vk.VkAllocationCallbacks   = undefined;
 var g_Instance:         vk.VkInstance               = undefined;
 var g_PhysicalDevice:   vk.VkPhysicalDevice         = undefined;
 var g_Device:           vk.VkDevice                 = undefined;
-var g_QueueFamily:      ?u32                       = null;
+var g_QueueFamily:      ?u32                        = null;
 var g_Queue:            vk.VkQueue                  = undefined;
 var g_DebugReport:      vk.VkDebugReportCallbackEXT = undefined;
 var g_PipelineCache:    vk.VkPipelineCache          = undefined;
@@ -28,6 +28,11 @@ fn glfw_error_callback (err: c_int, description: [*c] const u8) callconv (.C) vo
 fn get_vulkan_instance_func (comptime PFN: type, instance: vk.VkInstance, name: [*c] const u8) PFN
 {
   return @ptrCast (glfw.glfwGetInstanceProcAddress (instance, name));
+}
+
+fn loader (name: [*c] const u8, instance: ?*anyopaque) callconv (.C) ?*const fn () callconv (.C) void
+{
+  return glfw.glfwGetInstanceProcAddress (@ptrCast (instance), name);
 }
 
 fn check_vk_result (err: vk.VkResult) callconv (.C) void
@@ -379,6 +384,7 @@ pub fn main () !void
   init_info.MSAASamples = vk.VK_SAMPLE_COUNT_1_BIT;
   init_info.Allocator = g_Allocator;
   init_info.CheckVkResultFn = check_vk_result;
+  if (!imgui.cImGui_ImplVulkan_LoadFunctions (loader)) return error.ImGuiVulkanLoadFailure;
   if (!imgui.cImGui_ImplVulkan_Init (&init_info)) return error.ImGuiVulkanInitFailure;
 
   // Our state

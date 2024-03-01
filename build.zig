@@ -270,21 +270,27 @@ fn compile_shaders (builder: *std.Build, exe: *std.Build.Step.Compile, profile: 
 
 fn link (builder: *std.Build, profile: *const Profile) *std.Build.Module
 {
-  const dep = builder.dependency ("cimgui", .{
+  const glfw_dep = builder.dependency ("glfw", .{
     .target = profile.target,
     .optimize = profile.optimize,
   });
-  const cimgui = dep.artifact ("cimgui");
+  const glfw = glfw_dep.artifact ("glfw");
+
+  const imgui_dep = builder.dependency ("cimgui", .{
+    .target = profile.target,
+    .optimize = profile.optimize,
+  });
+  const cimgui = imgui_dep.artifact ("cimgui");
 
   const binding = builder.createModule (.{
-   .root_source_file = .{ .path = "src/binding/import.zig", },
-   .target = profile.target,
-   .optimize = profile.optimize,
+    // TODO
+    .root_source_file = .{ .path = "src/binding/import.zig", },
+    .target = profile.target,
+    .optimize = profile.optimize,
   });
-  binding.linkSystemLibrary ("glfw", .{});
-  binding.linkSystemLibrary ("vulkan", .{});
+  binding.linkLibrary (glfw);
   binding.linkLibrary (cimgui);
-  binding.addIncludePath (dep.path ("imgui"));
+  binding.addIncludePath (imgui_dep.path ("imgui"));
 
   return binding;
 }
@@ -306,6 +312,7 @@ fn import (builder: *std.Build, exe: *std.Build.Step.Compile, profile: *const Pr
      }, .{
        .name = "glfw",
        .ptr = builder.createModule (.{
+         // TODO
          .root_source_file = .{ .path = "src/binding/glfw.zig", },
          .target = profile.target,
          .optimize = profile.optimize,
@@ -313,6 +320,7 @@ fn import (builder: *std.Build, exe: *std.Build.Step.Compile, profile: *const Pr
      }, .{
        .name = "vulkan",
        .ptr = builder.createModule (.{
+         // TODO
          .root_source_file = .{ .path = "src/binding/vulkan.zig", },
          .target = profile.target,
          .optimize = profile.optimize,
@@ -327,6 +335,7 @@ fn import (builder: *std.Build, exe: *std.Build.Step.Compile, profile: *const Pr
      }, .{
        .name = "imgui",
        .ptr = builder.createModule (.{
+         // TODO
          .root_source_file = .{ .path = "src/binding/imgui.zig", },
          .target = profile.target,
          .optimize = profile.optimize,
@@ -347,6 +356,7 @@ fn run_exe (builder: *std.Build, profile: *const Profile) !void
 {
   const exe = builder.addExecutable (.{
     .name = zon.name,
+    // TODO
     .root_source_file = .{ .path = "src/main.zig" },
     .target = profile.target,
     .optimize = profile.optimize,
@@ -368,7 +378,9 @@ fn run_test (builder: *std.Build, profile: *const Profile) void
   const unit_tests = builder.addTest (.{
     .target = profile.target,
     .optimize = profile.optimize,
+    // TODO
     .test_runner = "test/runner.zig",
+    // TODO
     .root_source_file = .{ .path = "test/main.zig" },
   });
   unit_tests.step.dependOn (builder.getInstallStep ());

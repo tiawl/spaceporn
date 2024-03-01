@@ -1,6 +1,7 @@
-const c = @import ("c");
+pub const c = @import ("c").c;
+//pub usingnamespace c;
 
-pub usingnamespace vk;
+//pub usingnamespace vk;
 
 pub const vk = struct
 {

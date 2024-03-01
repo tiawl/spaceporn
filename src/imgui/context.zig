@@ -61,6 +61,8 @@ pub const Context = struct
     style.*.WindowRounding = 0;
     style.*.Colors [imgui.ImGuiCol_WindowBg].w = 1;
 
+    if (!imgui.ImGui_ImplVulkan_LoadFunctions ()) return error.ImGuiVulkanLoadFunctionsFailure;
+
     if (!imgui.cImGui_ImplGlfw_InitForVulkan (@ptrCast (window.handle), true))
     {
       return ContextError.InitGlfwFailure;

@@ -44,37 +44,38 @@ pub const Error = struct
     };
   }
 
-  pub fn getString () ?[:0] const u8
+  pub const String = struct
   {
-    var desc: [*c] const u8 = null;
-    const code = c.glfwGetError (&desc);
-    if (code != c.GLFW_NO_ERROR)
-      return std.mem.sliceTo (desc, 0);
-    return null;
-  }
-
-  pub fn mustGetString () [:0] const u8
-  {
-    return getString () orelse std.debug.panic ("glfw.Error.{s} () called but no error is present", .{ @src ().fn_name, });
-  }
-
-  pub fn setCallback (comptime callback: ?fn (Code, [:0] const u8) void) void
-  {
-    if (callback) |user_callback|
+    pub fn get () ?[:0] const u8
     {
-      const Wrapper = struct
-      {
-        pub fn errorCallbackWrapper (int: c_int, description: [*c] const u8) callconv (.C) void
-        {
-          convert (int) catch |err|
-          {
-            user_callback (err, std.mem.sliceTo (description, 0));
-          };
-        }
-      };
+      var desc: [*c] const u8 = null;
+      const code = c.glfwGetError (&desc);
+      if (code != c.GLFW_NO_ERROR)
+        return std.mem.sliceTo (desc, 0);
+      return null;
+    }
+  };
 
-      _ = c.glfwSetErrorCallback (Wrapper.errorCallbackWrapper);
-      return;
-    } else _ = c.glfwSetErrorCallback (null);
-  }
+  pub const Callback = struct
+  {
+    pub fn set (comptime callback: ?fn (Code, [:0] const u8) void) void
+    {
+      if (callback) |user_callback|
+      {
+        const Wrapper = struct
+        {
+          pub fn errorCallbackWrapper (int: c_int, description: [*c] const u8) callconv (.C) void
+          {
+            convert (int) catch |err|
+            {
+              user_callback (err, std.mem.sliceTo (description, 0));
+            };
+          }
+        };
+
+        _ = c.glfwSetErrorCallback (Wrapper.errorCallbackWrapper);
+        return;
+      } else _ = c.glfwSetErrorCallback (null);
+    }
+  };
 };

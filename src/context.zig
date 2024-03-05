@@ -22,7 +22,7 @@ pub const Context = struct
 
     self.glfw = try GlfwContext.init (&(self.imgui), options);
 
-    self.vk = try VkContext.init_instance (&self.glfw.extensions, self.glfw.instance_proc_addr, allocator);
+    self.vk = try VkContext.init_instance (&self.glfw.extensions, allocator);
 
     var wrapper = self.vk.get_surface ();
     try self.glfw.init_surface (wrapper.instance, &wrapper.surface, wrapper.success);

@@ -1,27 +1,23 @@
 const std = @import ("std");
-const vk  = @import ("vulkan");
+const vk  = @import ("vk");
 
 const log = @import ("../log.zig").Log;
 const exe = log.exe;
 
 pub const instance_vk = struct
 {
-  instance:           vk.Instance = undefined,
-  extensions:         [][*:0] const u8 = undefined,
-  instance_proc_addr: *const fn (?*anyopaque, [*:0] const u8) callconv (.C) ?*const fn () callconv (.C) void = undefined,
+  instance:   vk.Instance = undefined,
+  extensions: [][*:0] const u8 = undefined,
 
   pub const required_layers = [_][] const u8 {};
 
-  pub fn init (extensions: *[][*:0] const u8,
-    instance_proc_addr: *const fn (?*anyopaque, [*:0] const u8) callconv (.C) ?*const fn () callconv (.C) void,
-    allocator: std.mem.Allocator) !@This ()
+  pub fn init (extensions: *[][*:0] const u8, allocator: std.mem.Allocator) !@This ()
   {
     _ = allocator;
 
     var self: @This () = .{};
 
     self.extensions = extensions.*;
-    self.instance_proc_addr = instance_proc_addr;
 
     const app_info = vk.ApplicationInfo
                      {

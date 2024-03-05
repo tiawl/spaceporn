@@ -1,6 +1,6 @@
 const std    = @import ("std");
 const shader = @import ("shader");
-const vk     = @import ("vulkan");
+const vk     = @import ("vk");
 
 // TODO: why ?
 const datetime = @import ("datetime").datetime;
@@ -67,39 +67,39 @@ pub const Context = struct
   logical_device:                   vk.Device = undefined,
   graphics_queue:                   vk.Queue = undefined,
   present_queue:                    vk.Queue = undefined,
-  capabilities:                     vk.KHR.SurfaceCapabilities = undefined,
-  formats:                          [] vk.KHR.SurfaceFormat = undefined,
+  capabilities:                     vk.KHR.Surface.Capabilities = undefined,
+  formats:                          [] vk.KHR.Surface.Format = undefined,
   present_modes:                    [] vk.KHR.PresentMode = undefined,
-  surface_format:                   vk.KHR.SurfaceFormat = undefined,
+  surface_format:                   vk.KHR.Surface.Format = undefined,
   extent:                           vk.Extent2D = undefined,
   swapchain:                        vk.KHR.Swapchain = undefined,
   images:                           [] vk.Image = undefined,
-  views:                            [] vk.ImageView = undefined,
+  views:                            [] vk.Image.View = undefined,
   viewport:                         [1] vk.Viewport = undefined,
   scissor:                          [1] vk.Rect2D = undefined,
   render_pass:                      vk.RenderPass = undefined,
-  descriptor_set_layout:            [] vk.DescriptorSetLayout = undefined,
-  pipeline_layout:                  vk.PipelineLayout = undefined,
+  descriptor_set_layout:            [] vk.Descriptor.Set.Layout = undefined,
+  pipeline_layout:                  vk.Pipeline.Layout = undefined,
   pipelines:                        [] vk.Pipeline = undefined,
   framebuffers:                     [] vk.Framebuffer = undefined,
-  command_pool:                     vk.CommandPool = undefined,
-  command_buffers:                  [] vk.CommandBuffer = undefined,
+  command_pool:                     vk.Command.Pool = undefined,
+  command_buffers:                  [] vk.Command.Buffer = undefined,
   image_available_semaphores:       [] vk.Semaphore = undefined,
   render_finished_semaphores:       [] vk.Semaphore = undefined,
   in_flight_fences:                 [] vk.Fence = undefined,
   current_frame:                    u32 = 0,
   vertex_buffer:                    vk.Buffer = undefined,
-  vertex_buffer_memory:             vk.DeviceMemory = undefined,
-  buffers_command_pool:             vk.CommandPool = undefined,
+  vertex_buffer_memory:             vk.Device.Memory = undefined,
+  buffers_command_pool:             vk.Command.Pool = undefined,
   index_buffer:                     vk.Buffer = undefined,
-  index_buffer_memory:              vk.DeviceMemory = undefined,
+  index_buffer_memory:              vk.Device.Memory = undefined,
   uniform_buffers:                  [] vk.Buffer = undefined,
-  uniform_buffers_memory:           [] vk.DeviceMemory = undefined,
+  uniform_buffers_memory:           [] vk.Device.Memory = undefined,
   start_time:                       std.time.Instant,
   last_displayed_fps:               ?std.time.Instant = null,
   fps:                              f32 = undefined,
-  descriptor_pool:                  vk.DescriptorPool = undefined,
-  descriptor_sets:                  [] vk.DescriptorSet = undefined,
+  descriptor_pool:                  vk.Descriptor.Pool = undefined,
+  descriptor_sets:                  [] vk.Descriptor.Set = undefined,
   prefered_criterias:               [DEVICE_CRITERIAS - 1] bool = undefined,
   screenshot_frame:                 u32 = std.math.maxInt (u32),
   screenshot_image_index:           u32 = undefined,
@@ -107,16 +107,16 @@ pub const Context = struct
   offscreen_width:                  u32 = undefined,
   offscreen_height:                 u32 = undefined,
   offscreen_render_pass:            vk.RenderPass = undefined,
-  offscreen_descriptor_set_layout:  [] vk.DescriptorSetLayout = undefined,
-  offscreen_pipeline_layout:        vk.PipelineLayout = undefined,
+  offscreen_descriptor_set_layout:  [] vk.Descriptor.Set.Layout = undefined,
+  offscreen_pipeline_layout:        vk.Pipeline.Layout = undefined,
   offscreen_pipelines:              [] vk.Pipeline = undefined,
   offscreen_framebuffer:            vk.Framebuffer = undefined,
   offscreen_uniform_buffers:        vk.Buffer = undefined,
-  offscreen_uniform_buffers_memory: vk.DeviceMemory = undefined,
-  offscreen_descriptor_sets:        [] vk.DescriptorSet = undefined,
+  offscreen_uniform_buffers_memory: vk.Device.Memory = undefined,
+  offscreen_descriptor_sets:        [] vk.Descriptor.Set = undefined,
   offscreen_image:                  vk.Image = undefined,
-  offscreen_image_memory:           vk.DeviceMemory = undefined,
-  offscreen_views:                  [] vk.ImageView = undefined,
+  offscreen_image_memory:           vk.Device.Memory = undefined,
+  offscreen_views:                  [] vk.Image.View = undefined,
   offscreen_sampler:                vk.Sampler = undefined,
   render_offscreen:                 bool = true,
 
@@ -1698,13 +1698,11 @@ pub const Context = struct
     self.surface = surface.*;
   }
 
-  pub fn init_instance (extensions: *[][*:0] const u8,
-    instance_proc_addr: *const fn (?*anyopaque, [*:0] const u8) callconv (.C) ?*const fn () callconv (.C) void,
-    allocator: std.mem.Allocator) !@This ()
+  pub fn init_instance (extensions: *[][*:0] const u8, allocator: std.mem.Allocator) !@This ()
   {
     var self: @This () = .{ .start_time = try std.time.Instant.now (), };
 
-    self.instance = try instance_vk.init (extensions, instance_proc_addr, allocator);
+    self.instance = try instance_vk.init (extensions, allocator);
 
     try log.app ("init Vulkan instance OK", .DEBUG, .{});
     return self;

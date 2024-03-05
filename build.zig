@@ -1,7 +1,7 @@
 const std = @import ("std");
 const zig_version = @import ("builtin").zig_version;
 
-const zon = .{ .name = "spaceporn", .version = "0.0.0", .min_zig_version = "0.11.0" };
+const zon = .{ .name = "spaceporn", .version = "0.0.0", .min_zig_version = "0.11.0", };
 
 const Options = struct
 {
@@ -24,7 +24,7 @@ pub fn build (builder: *std.Build) !void
   try requirements ();
   const profile = try parse_options (builder);
   try run_exe (builder, &profile);
-  run_test (builder, &profile);
+  try run_test (builder, &profile);
 }
 
 fn requirements () !void
@@ -217,7 +217,7 @@ fn write_index (builder: *std.Build, tree: *Node) ![] const u8
 fn walk_through_shaders (builder: *std.Build, exe: *std.Build.Step.Compile,
   profile: *const Profile, tree: *Node) !void
 {
-  var glsl = try builder.build_root.handle.openDir ("shaders", .{ .iterate = true });
+  var glsl = try builder.build_root.handle.openDir ("shaders", .{ .iterate = true, });
   defer glsl.close ();
 
   var walker = try glsl.walk (builder.allocator);
@@ -268,7 +268,7 @@ fn compile_shaders (builder: *std.Build, exe: *std.Build.Step.Compile, profile: 
   return try write_index (builder, &tree);
 }
 
-fn link (builder: *std.Build, profile: *const Profile) *std.Build.Module
+fn link (builder: *std.Build, profile: *const Profile) !*std.Build.Module
 {
   const glfw_dep = builder.dependency ("glfw", .{
     .target = profile.target,
@@ -283,8 +283,7 @@ fn link (builder: *std.Build, profile: *const Profile) *std.Build.Module
   const cimgui = imgui_dep.artifact ("cimgui");
 
   const binding = builder.createModule (.{
-    // TODO
-    .root_source_file = .{ .path = "src/binding/import.zig", },
+    .root_source_file = .{ .path = try builder.build_root.join (builder.allocator, &.{ "src", "binding", "raw.zig", }), },
     .target = profile.target,
     .optimize = profile.optimize,
   });
@@ -302,7 +301,9 @@ fn import (builder: *std.Build, exe: *std.Build.Step.Compile, profile: *const Pr
     .optimize = profile.optimize,
   });
 
-  const modules: [] const struct { ptr: *std.Build.Module, name: [] const u8 } = &.{
+  // TODO: parse src/binding/vk to extract function names
+
+  const modules: [] const struct { ptr: *std.Build.Module, name: [] const u8, } = &.{
     .{
        .name = "build",
        .ptr = profile.variables.createModule (),
@@ -310,54 +311,54 @@ fn import (builder: *std.Build, exe: *std.Build.Step.Compile, profile: *const Pr
        .name = "datetime",
        .ptr = dep.module ("zig-datetime"),
      }, .{
-       .name = "glfw",
-       .ptr = builder.createModule (.{
-         // TODO
-         .root_source_file = .{ .path = "src/binding/glfw.zig", },
-         .target = profile.target,
-         .optimize = profile.optimize,
-       }),
-     }, .{
-       .name = "vulkan",
-       .ptr = builder.createModule (.{
-         // TODO
-         .root_source_file = .{ .path = "src/binding/vulkan.zig", },
-         .target = profile.target,
-         .optimize = profile.optimize,
-       }),
-     }, .{
        .name = "shader",
        .ptr = builder.createModule (.{
          .root_source_file = .{ .path = try compile_shaders (builder, exe, profile), },
          .target = profile.target,
          .optimize = profile.optimize,
        }),
-     }, .{
-       .name = "imgui",
-       .ptr = builder.createModule (.{
-         // TODO
-         .root_source_file = .{ .path = "src/binding/imgui.zig", },
-         .target = profile.target,
-         .optimize = profile.optimize,
-       }),
      },
   };
 
-  const c = link (builder, profile);
-
   for (modules) |*module|
   {
-    module.ptr.addImport ("c", c);
     exe.root_module.addImport (module.name, module.ptr);
   }
+
+  const c = try link (builder, profile);
+
+  const glfw = builder.createModule (.{
+    .root_source_file = .{ .path = try builder.build_root.join (builder.allocator, &.{ "src", "binding", "glfw.zig", }), },
+    .target = profile.target,
+    .optimize = profile.optimize,
+  });
+  glfw.addImport ("c", c);
+
+  const vk = builder.createModule (.{
+    .root_source_file = .{ .path = try builder.build_root.join (builder.allocator, &.{ "src", "binding", "vk.zig", }), },
+    .target = profile.target,
+    .optimize = profile.optimize,
+  });
+  vk.addImport ("c", c);
+
+  const imgui = builder.createModule (.{
+    .root_source_file = .{ .path = try builder.build_root.join (builder.allocator, &.{ "src", "binding", "imgui.zig", }), },
+    .target = profile.target,
+    .optimize = profile.optimize,
+  });
+  imgui.addImport ("c", c);
+  imgui.addImport ("glfw", glfw);
+
+  exe.root_module.addImport ("glfw", glfw);
+  exe.root_module.addImport ("vk", vk);
+  exe.root_module.addImport ("imgui", imgui);
 }
 
 fn run_exe (builder: *std.Build, profile: *const Profile) !void
 {
   const exe = builder.addExecutable (.{
     .name = zon.name,
-    // TODO
-    .root_source_file = .{ .path = "src/main.zig" },
+    .root_source_file = .{ .path = try builder.build_root.join (builder.allocator, &.{ "src", "main.zig", }), },
     .target = profile.target,
     .optimize = profile.optimize,
   });
@@ -373,15 +374,13 @@ fn run_exe (builder: *std.Build, profile: *const Profile) !void
   run_step.dependOn (&run_cmd.step);
 }
 
-fn run_test (builder: *std.Build, profile: *const Profile) void
+fn run_test (builder: *std.Build, profile: *const Profile) !void
 {
   const unit_tests = builder.addTest (.{
     .target = profile.target,
     .optimize = profile.optimize,
-    // TODO
-    .test_runner = "test/runner.zig",
-    // TODO
-    .root_source_file = .{ .path = "test/main.zig" },
+    .test_runner = try builder.build_root.join (builder.allocator, &.{ "test", "runner.zig", }),
+    .root_source_file = .{ .path = try builder.build_root.join (builder.allocator, &.{ "test", "main.zig", }), },
   });
   unit_tests.step.dependOn (builder.getInstallStep ());
 

@@ -1,5 +1,5 @@
 const std = @import ("std");
-const vk  = @import ("vulkan");
+const vk  = @import ("vk");
 
 const log     = @import ("../log.zig");
 const exe     = log.exe;
@@ -13,10 +13,9 @@ const ext_vk = struct
 
 pub const instance_vk = struct
 {
-  instance:           vk.Instance = undefined,
-  extensions:         [][*:0] const u8 = undefined,
-  instance_proc_addr: *const fn (?*anyopaque, [*:0] const u8) callconv (.C) ?*const fn () callconv (.C) void = undefined,
-  debug_messenger:    vk.EXT.DebugUtilsMessenger = undefined,
+  instance:        vk.Instance = undefined,
+  extensions:      [][*:0] const u8 = undefined,
+  debug_messenger: vk.EXT.DebugUtils.Messenger = undefined,
 
   pub const required_layers = [_][*:0] const u8
   {
@@ -278,15 +277,12 @@ pub const instance_vk = struct
     try log.app ("check Vulkan extension properties initializer OK", .DEBUG, .{});
   }
 
-  pub fn init (extensions: *[][*:0] const u8,
-    instance_proc_addr: *const fn (?*anyopaque, [*:0] const u8) callconv (.C) ?*const fn () callconv (.C) void,
-    allocator: std.mem.Allocator) !@This ()
+  pub fn init (extensions: *[][*:0] const u8, allocator: std.mem.Allocator) !@This ()
   {
     var self: @This () = .{};
-    var debug_info: vk.DebugUtilsMessengerCreateInfoEXT = undefined;
+    var debug_info: vk.EXT.DebugUtils.Messenger.Create.Info = undefined;
 
     self.extensions = extensions.*;
-    self.instance_proc_addr = instance_proc_addr;
 
     try check_layer_properties (&self, allocator);
     try check_extension_properties (&self, &debug_info, allocator);

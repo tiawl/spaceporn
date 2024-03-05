@@ -1,4 +1,4 @@
-const vk = @import ("vulkan");
+const vk = @import ("vk");
 
 pub const vertex_vk = struct
 {

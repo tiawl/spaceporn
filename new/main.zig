@@ -2,9 +2,9 @@ const std = @import ("std");
 const builtin = @import ("builtin");
 
 const build = @import ("build");
-const glfw = @import ("glfw").c;
-const vk = @import ("vulkan").c;
-const imgui = @import ("imgui").c;
+const glfw = @import ("glfw");
+const vk = @import ("vulkan");
+const imgui = @import ("imgui");
 
 var g_Allocator:        *vk.VkAllocationCallbacks   = undefined;
 var g_Instance:         vk.VkInstance               = undefined;

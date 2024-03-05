@@ -1,6 +1,6 @@
 const std  = @import ("std");
 const glfw = @import ("glfw");
-const vk   = @import ("vulkan");
+const vk   = @import ("vk");
 
 const log     = @import ("../log.zig").Log;
 const Profile = log.Profile;
@@ -22,15 +22,6 @@ pub const Context = struct
                      command_buffer:  vk.CommandBuffer,
                    };
 
-  const ContextError = error
-                       {
-                         InitFailure,
-                         InitGlfwFailure,
-                         InitVulkanFailure,
-                         CreateFontsTextureFailure,
-                         BeginFailure,
-                       };
-
   pub const ImguiPrepare = enum
                            {
                              Nothing,
@@ -41,37 +32,36 @@ pub const Context = struct
   init_window:   bool = false,
   screenshot:    bool = false,
 
+  // TODO: remove this:
   pub fn init () @This ()
   {
     return .{};
   }
 
-  pub fn init_glfw (self: *@This (), window: glfw.Window) !void
+  // TODO: remove this:
+  pub fn init_glfw (self: *@This ()) !void
   {
-    self.glfw_win_size = window.getFramebufferSize ();
+    self.glfw_win_size = try glfw.Window.Framebuffer.Size.get ();
 
-    if (imgui.ImGui_CreateContext (null) == null)
-    {
-      return ContextError.InitFailure;
-    }
+    try imgui.Context.create ();
 
-    imgui.ImGui_StyleColorsDark (null);
+    imgui.Style.colorsDark ();
 
-    const style = imgui.ImGui_GetStyle ();
-    style.*.WindowRounding = 0;
-    style.*.Colors [imgui.ImGuiCol_WindowBg].w = 1;
+    imgui.Style.set (&.{
+                        .{ .window_rounding = 0, },
+                        .{ .colors = .{
+                                        .index = imgui.Col.WindowBg,
+                                        .channel = "w",
+                                        .value = 1,
+                                      }, },
+    });
 
-    if (!imgui.ImGui_ImplVulkan_LoadFunctions ()) return error.ImGuiVulkanLoadFunctionsFailure;
+    try imgui.glfw.init ();
 
-    if (!imgui.cImGui_ImplGlfw_InitForVulkan (@ptrCast (window.handle), true))
-    {
-      return ContextError.InitGlfwFailure;
-    }
-
-    try log.app ("init Imgui GLFW OK", .DEBUG, .{});
+    try log.app (.DEBUG, "init Imgui GLFW OK", .{});
   }
 
-  fn check_vk_result (err: c_int) callconv(.C) void
+  fn check_vk_result (err: c_int) callconv (.C) void
   {
     if (err == 0) return;
     std.debug.print ("[vulkan ERROR from Imgui] VkResult = {d}\n", .{ err, });
@@ -95,10 +85,7 @@ pub const Context = struct
 
     try renderer.device_dispatch.beginCommandBuffer (command_buffers [0], &begin_info);
 
-    if (!imgui.cImGui_ImplVulkan_CreateFontsTexture (@ptrFromInt (@intFromEnum (renderer.command_buffer))))
-    {
-      return ContextError.CreateFontsTextureFailure;
-    }
+    if (!imgui.cImGui_ImplVulkan_CreateFontsTexture (@ptrFromInt (@intFromEnum (renderer.command_buffer)))) return error.ImGuiVulkanCreateFontsTextureFailure;
 
     const submit_info = [_] vk.SubmitInfo
                         {
@@ -115,14 +102,14 @@ pub const Context = struct
     try renderer.device_dispatch.deviceWaitIdle (renderer.logical_device);
     imgui.cImGui_ImplVulkan_DestroyFontUploadObjects ();
 
-    try log.app ("upload Imgui fonts OK", .DEBUG, .{});
+    try log.app (.DEBUG, "upload Imgui fonts OK", .{});
   }
 
   pub fn init_vk (self: @This (), renderer: Renderer) !void
   {
     const sample = vk.SampleCountFlags { .@"1_bit" = true, };
     const format = vk.Format.undefined;
-    var init_info = imgui.vulkan.InitInfo
+    var init_info = imgui.vk.InitInfo
                     {
                       .Instance              = renderer.instance,
                       .PhysicalDevice        = renderer.physical_device,
@@ -141,14 +128,12 @@ pub const Context = struct
                       .CheckVkResultFn       = check_vk_result,
                     };
 
-    if (!imgui.cImGui_ImplVulkan_Init (@ptrCast (&init_info), @ptrFromInt (@intFromEnum (renderer.render_pass))))
-    {
-      return ContextError.InitVulkanFailure;
-    }
+    if (!imgui.cImGui_ImplVulkan_LoadFunctions ()) return error.ImGuiVulkanLoadFunctionsFailure;
+    if (!imgui.cImGui_ImplVulkan_Init (@ptrCast (&init_info), @ptrFromInt (@intFromEnum (renderer.render_pass)))) return error.ImGuiVulkanInitFailure;
 
     try self.upload_fonts (renderer);
 
-    try log.app ("init Imgui Vulkan OK", .DEBUG, .{});
+    try log.app (.DEBUG, "init Imgui Vulkan OK", .{});
   }
 
   fn prepare_pane (self: *@This (), framebuffer: struct { width: u32, height: u32, }) !void
@@ -219,10 +204,7 @@ pub const Context = struct
 
     const window_flags = imgui.ImGuiWindowFlags_NoTitleBar | imgui.ImGuiWindowFlags_NoCollapse | imgui.ImGuiWindowFlags_NoResize | imgui.ImGuiWindowFlags_NoMove;
 
-    if (!imgui.ImGui_Begin ("Tweaker", null, window_flags))
-    {
-      return ContextError.BeginFailure;
-    }
+    if (!imgui.ImGui_Begin ("Tweaker", null, window_flags)) return error.ImGuiBeginFailure;
 
     try self.prepare_fps (last_displayed_fps, fps);
     self.prepare_seed (tweak_me);
@@ -234,7 +216,7 @@ pub const Context = struct
     imgui.ImGui_End ();
     imgui.ImGui_Render ();
 
-    try log.app ("start render Imgui OK", .DEBUG, .{});
+    try log.app (.DEBUG, "start render Imgui OK", .{});
     return if (self.screenshot) ImguiPrepare.Screenshot else ImguiPrepare.Nothing;
   }
 
@@ -245,7 +227,7 @@ pub const Context = struct
     const pipeline = vk.Pipeline.null_handle;
     imgui.cImGui_ImplVulkan_RenderDrawDataEx (imgui.ImGui_GetDrawData (), @ptrFromInt (@intFromEnum (command_buffer)), @ptrFromInt (@intFromEnum (pipeline)));
 
-    try log.app ("end render Imgui OK", .DEBUG, .{});
+    try log.app (.DEBUG, "end render Imgui OK", .{});
   }
 
   pub fn cleanup (self: @This ()) void
@@ -256,6 +238,6 @@ pub const Context = struct
     imgui.cImGui_ImplGlfw_Shutdown ();
     imgui.ImGui_DestroyContext (null);
 
-    try log.app ("cleanup Imgui OK", .DEBUG, .{});
+    try log.app (.DEBUG, "cleanup Imgui OK", .{});
   }
 };

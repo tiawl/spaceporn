@@ -1,11 +1,66 @@
-const std     = @import ("std");
-const builtin = @import ("builtin");
-const c       = @import ("c");
+const std        = @import ("std");
+const builtin    = @import ("builtin");
+const c          = @import ("c");
+const prototypes = @import ("prototypes");
 
 pub usingnamespace vk;
 
+const API = struct
+{
+  const Structless = struct
+  {
+    const Dispatch = dispatch: {
+      @setEvalBranchQuota (10_000);
+      const size = @typeInfo (prototypes.structless).Enum.fields.len;
+      var fields: [size] std.builtin.Type.StructField = undefined;
+      for (@typeInfo (prototypes.structless).Enum.fields, 0 ..) |field, i|
+      {
+        //const pfn = @field (c, "PFN_" ++ field.name);
+        const pfn = @TypeOf (@field (c, field.name));
+        fields [i] = .{
+          .name = field.name,
+          .type = pfn,
+          .default_value = null,
+          .is_comptime = false,
+          .alignment = @alignOf (pfn),
+        };
+      }
+      break :dispatch @Type (.{
+        .Struct = .{
+          .layout = .Auto,
+          .fields = &fields,
+          .decls = &[_] std.builtin.Type.Declaration {},
+          .is_tuple = false,
+        },
+      });
+    };
+
+    dispatch: Dispatch = dispatch: {
+      var dispatch: Dispatch = undefined;
+      for (std.meta.fields (Dispatch)) |field|
+      {
+        const name: [*:0] const u8 = @ptrCast (field.name ++ "\x00");
+        const loader: *const fn (vk.Instance, [*:0] const u8) callconv (vk.call_conv) ?*const fn () callconv (vk.call_conv) void = @ptrCast (&c.glfwGetInstanceProcAddress);
+        const pointer = loader (vk.Instance.null_handle, name) orelse @compileError ("Command load failure: " ++ name);
+        @field (dispatch, field.name) = @ptrCast (pointer);
+        @compileLog ("Structless '" ++ name ++ "' command loaded");
+      }
+      break :dispatch dispatch;
+    },
+  };
+
+  structless: Structless = .{},
+  //instance: API.Instance = .{};
+  //device: API.Device = .{};
+};
+
+const api: API = .{};
+
 pub const vk = struct
 {
+  pub const MAX_EXTENSION_NAME_SIZE = c.VK_MAX_EXTENSION_NAME_SIZE;
+  pub const MAX_DESCRIPTION_SIZE = c.VK_MAX_DESCRIPTION_SIZE;
+
   pub const call_conv: std.builtin.CallingConvention = if (builtin.os.tag == .windows and builtin.cpu.arch == .x86)
     .Stdcall
   else if (builtin.abi == .android and (builtin.cpu.arch.isARM () or builtin.cpu.arch.isThumb ()) and std.Target.arm.featureSetHas (builtin.cpu.features, .has_v7) and builtin.cpu.arch.ptrBitWidth () == 32)
@@ -74,7 +129,30 @@ pub const vk = struct
     pub const View = enum (u64) { null_handle = 0, _, };
   };
 
-  pub const Instance = enum (usize) { null_handle = 0, _, };
+  pub const Instance = enum (usize)
+  {
+    null_handle = 0, _,
+    pub const LayerProperties = struct
+    {
+      pub fn enumerate (p_property_count: *u32, p_properties: ?[*] vk.LayerProperties) !void
+      {
+        const result = api.structless.dispatch.vkEnumerateInstanceLayerProperties (p_property_count, p_properties);
+        if (result > 0)
+        {
+          std.debug.print ("{s} failed with {} status code\n", .{ result, });
+          return error.vkEnumerateInstanceLayerProperties;
+        }
+      }
+    };
+  };
+
+  pub const LayerProperties = struct
+  {
+    layer_name: [MAX_EXTENSION_NAME_SIZE] u8,
+    spec_version: u32,
+    implementation_version: u32,
+    description: [MAX_DESCRIPTION_SIZE] u8,
+  };
 
   pub const ObjectType = enum (i32)
   {

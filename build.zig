@@ -211,6 +211,7 @@ fn write_index (builder: *std.Build, tree: *Node) ![] const u8
     else => return err,
   };
 
+  std.debug.print ("{s} used\n", .{ path, });
   return path;
 }
 
@@ -224,31 +225,31 @@ fn walk_through_shaders (builder: *std.Build, exe: *std.Build.Step.Compile,
   defer walker.deinit ();
   var depth: usize = undefined;
 
-  var ptr: *Node = undefined;
+  var pointer: *Node = undefined;
 
   while (try walker.next ()) |*entry|
   {
     if (entry.kind == .file)
     {
-      var it = try std.fs.path.componentIterator (entry.path);
-      ptr = tree;
+      var iterator = try std.fs.path.componentIterator (entry.path);
+      pointer = tree;
       depth = 0;
-      next: while (it.next ()) |*component|
+      next: while (iterator.next ()) |*component|
       {
         const dupe = try builder.allocator.dupe (u8, component.name);
         const stem = std.fs.path.stem (dupe);
-        for (ptr.nodes.items) |*node|
+        for (pointer.nodes.items) |*node|
         {
           if (std.mem.eql (u8, node.name, stem))
           {
-            ptr = node;
-            try add_shader (builder, exe, profile, &glsl, entry, dupe, ptr, &depth);
+            pointer = node;
+            try add_shader (builder, exe, profile, &glsl, entry, dupe, pointer, &depth);
             continue :next;
           }
         }
-        try ptr.nodes.append (.{ .name = stem, .nodes = std.ArrayList (Node).init (builder.allocator), .depth = depth, });
-        ptr = &ptr.nodes.items [ptr.nodes.items.len - 1];
-        try add_shader (builder, exe, profile, &glsl, entry, dupe, ptr, &depth);
+        try pointer.nodes.append (.{ .name = stem, .nodes = std.ArrayList (Node).init (builder.allocator), .depth = depth, });
+        pointer = &pointer.nodes.items [pointer.nodes.items.len - 1];
+        try add_shader (builder, exe, profile, &glsl, entry, dupe, pointer, &depth);
       }
     }
   }
@@ -260,12 +261,107 @@ fn compile_shaders (builder: *std.Build, exe: *std.Build.Step.Compile, profile: 
 
   builder.cache_root.handle.makeDir ("shaders") catch |err|
   {
-    // Do not return error if directory already exists
     if (err != std.fs.File.OpenError.PathAlreadyExists) return err;
   };
 
   try walk_through_shaders (builder, exe, profile, &tree);
   return try write_index (builder, &tree);
+}
+
+fn generate_prototypes (builder: *std.Build) ![] const u8
+{
+  builder.cache_root.handle.makeDir ("prototypes") catch |err|
+  {
+    if (err != std.fs.File.OpenError.PathAlreadyExists) return err;
+  };
+
+  var binding: struct { path: [] const u8, buffer: std.ArrayList (u8), source: [] u8, } = undefined;
+  binding.path = try std.fs.path.join (builder.allocator, &.{ "src", "binding", "vk.zig", });
+  binding.buffer = std.ArrayList (u8).init (builder.allocator);
+  binding.source = try builder.build_root.handle.readFileAlloc (builder.allocator, binding.path, std.math.maxInt (usize));
+
+  try binding.buffer.appendSlice (binding.source);
+  try binding.buffer.append (0);
+
+  var iterator = std.zig.Tokenizer.init (binding.buffer.items [0 .. binding.buffer.items.len - 1 :0]);
+  var token = iterator.next ();
+  var precedent: [6] ?std.zig.Token = .{ null, } ** 6;
+
+  var prototypes: struct { buffer: std.ArrayList (u8), source: [:0] const u8,
+    path: [] const u8, structless: std.ArrayList ([] const u8),
+    instance: std.ArrayList ([] const u8), device: std.ArrayList ([] const u8), } = undefined;
+  prototypes.structless = std.ArrayList ([] const u8).init (builder.allocator);
+  prototypes.instance = std.ArrayList ([] const u8).init (builder.allocator);
+  prototypes.device = std.ArrayList ([] const u8).init (builder.allocator);
+  prototypes.buffer = std.ArrayList (u8).init (builder.allocator);
+
+  while (token.tag != .eof)
+  {
+    //std.debug.print ("{any}: \"{s}\"\n", .{ token, buffer.items [token.loc.start .. token.loc.end], });
+    if (precedent [0] != null and precedent [1] != null and precedent [2] != null and
+        precedent [3] != null and precedent [4] != null and precedent [5] != null)
+    {
+      if (std.mem.startsWith (u8, binding.buffer.items [token.loc.start .. token.loc.end], "vk") and
+          precedent [0].?.tag == .period and
+          std.mem.eql (u8, binding.buffer.items [precedent [1].?.loc.start .. precedent [1].?.loc.end], "dispatch") and
+          precedent [2].?.tag == .period and precedent [4].?.tag == .period and
+          std.mem.eql (u8, binding.buffer.items [precedent [5].?.loc.start .. precedent [5].?.loc.end], "api"))
+      {
+        inline for (@typeInfo (@TypeOf (prototypes)).Struct.fields) |field|
+        {
+          if (field.type == std.ArrayList ([] const u8))
+          {
+            if (std.mem.eql (u8, binding.buffer.items [precedent [3].?.loc.start .. precedent [3].?.loc.end], field.name))
+            {
+              try @field (prototypes, field.name).append (binding.buffer.items [token.loc.start .. token.loc.end]);
+              break;
+            }
+          }
+        }
+      }
+    }
+
+    precedent [5] = precedent [4];
+    precedent [4] = precedent [3];
+    precedent [3] = precedent [2];
+    precedent [2] = precedent [1];
+    precedent [1] = precedent [0];
+    precedent [0] = token;
+    token = iterator.next ();
+  }
+
+  const writer = prototypes.buffer.writer ();
+
+  inline for (@typeInfo (@TypeOf (prototypes)).Struct.fields) |field|
+  {
+    if (field.type == std.ArrayList ([] const u8))
+    {
+      try writer.print ("pub const {s} = enum {c}", .{ field.name, '{', });
+      for (@field (prototypes, field.name).items) |prototype|
+        try writer.print ("  {s},\n", .{ prototype, });
+      try writer.print ("{c};", .{ '}', });
+    }
+  }
+
+  try prototypes.buffer.append (0);
+  prototypes.source = prototypes.buffer.items [0 .. prototypes.buffer.items.len - 1 :0];
+
+  const validated = try std.zig.Ast.parse (builder.allocator, prototypes.source, std.zig.Ast.Mode.zig);
+  const formatted = try validated.render (builder.allocator);
+
+  const hash = &digest (null, formatted);
+  prototypes.path = try std.fs.path.join (builder.allocator, &.{
+    try builder.cache_root.join (builder.allocator, &.{ "prototypes", }), hash,
+  });
+
+  std.fs.accessAbsolute (prototypes.path, .{}) catch |err| switch (err)
+  {
+    error.FileNotFound => try builder.cache_root.handle.writeFile (prototypes.path, formatted),
+    else => return err,
+  };
+
+  std.debug.print ("{s} used\n", .{ prototypes.path, });
+  return prototypes.path;
 }
 
 fn link (builder: *std.Build, profile: *const Profile) !*std.Build.Module
@@ -301,18 +397,16 @@ fn import (builder: *std.Build, exe: *std.Build.Step.Compile, profile: *const Pr
     .optimize = profile.optimize,
   });
 
-  // TODO: parse src/binding/vk to extract function names
-
-  const modules: [] const struct { ptr: *std.Build.Module, name: [] const u8, } = &.{
+  const modules: [] const struct { pointer: *std.Build.Module, name: [] const u8, } = &.{
     .{
        .name = "build",
-       .ptr = profile.variables.createModule (),
+       .pointer = profile.variables.createModule (),
      }, .{
        .name = "datetime",
-       .ptr = dep.module ("zig-datetime"),
+       .pointer = dep.module ("zig-datetime"),
      }, .{
        .name = "shader",
-       .ptr = builder.createModule (.{
+       .pointer = builder.createModule (.{
          .root_source_file = .{ .path = try compile_shaders (builder, exe, profile), },
          .target = profile.target,
          .optimize = profile.optimize,
@@ -322,7 +416,7 @@ fn import (builder: *std.Build, exe: *std.Build.Step.Compile, profile: *const Pr
 
   for (modules) |*module|
   {
-    exe.root_module.addImport (module.name, module.ptr);
+    exe.root_module.addImport (module.name, module.pointer);
   }
 
   const c = try link (builder, profile);
@@ -334,12 +428,19 @@ fn import (builder: *std.Build, exe: *std.Build.Step.Compile, profile: *const Pr
   });
   glfw.addImport ("c", c);
 
+  const prototypes = builder.createModule (.{
+    .root_source_file = .{ .path = try generate_prototypes (builder), },
+    .target = profile.target,
+    .optimize = profile.optimize,
+  });
+
   const vk = builder.createModule (.{
     .root_source_file = .{ .path = try builder.build_root.join (builder.allocator, &.{ "src", "binding", "vk.zig", }), },
     .target = profile.target,
     .optimize = profile.optimize,
   });
   vk.addImport ("c", c);
+  vk.addImport ("prototypes", prototypes);
 
   const imgui = builder.createModule (.{
     .root_source_file = .{ .path = try builder.build_root.join (builder.allocator, &.{ "src", "binding", "imgui.zig", }), },

@@ -95,15 +95,15 @@ pub const instance_vk = struct
     return true;
   }
 
-  fn check_layer_properties (self: *@This (), allocator: std.mem.Allocator) !void
+  fn check_layer_properties (_: *@This (), allocator: std.mem.Allocator) !void
   {
     var available_layers_count: u32 = undefined;
 
-    _ = try self.base_dispatch.enumerateInstanceLayerProperties (&available_layers_count, null);
+    try vk.Instance.LayerProperties.enumerate (&available_layers_count, null);
 
     var available_layers = try allocator.alloc (vk.LayerProperties, available_layers_count);
 
-    _ = try self.base_dispatch.enumerateInstanceLayerProperties (&available_layers_count, available_layers.ptr);
+    try vk.Instance.LayerProperties.enumerate (&available_layers_count, available_layers.ptr);
 
     var i: usize = 0;
     var found: bool = undefined;

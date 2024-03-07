@@ -211,7 +211,7 @@ fn write_index (builder: *std.Build, tree: *Node) ![] const u8
     else => return err,
   };
 
-  std.debug.print ("{s} used\n", .{ path, });
+  std.debug.print ("{s}\n", .{ path, });
   return path;
 }
 
@@ -285,7 +285,7 @@ fn generate_prototypes (builder: *std.Build) ![] const u8
 
   var iterator = std.zig.Tokenizer.init (binding.buffer.items [0 .. binding.buffer.items.len - 1 :0]);
   var token = iterator.next ();
-  var precedent: [6] ?std.zig.Token = .{ null, } ** 6;
+  var precedent: [8] ?std.zig.Token = .{ null, } ** 8;
 
   var prototypes: struct { buffer: std.ArrayList (u8), source: [:0] const u8,
     path: [] const u8, structless: std.ArrayList ([] const u8),
@@ -299,13 +299,16 @@ fn generate_prototypes (builder: *std.Build) ![] const u8
   {
     //std.debug.print ("{any}: \"{s}\"\n", .{ token, buffer.items [token.loc.start .. token.loc.end], });
     if (precedent [0] != null and precedent [1] != null and precedent [2] != null and
-        precedent [3] != null and precedent [4] != null and precedent [5] != null)
+        precedent [3] != null and precedent [4] != null and precedent [5] != null and
+        precedent [6] != null and precedent [7] != null)
     {
       if (std.mem.startsWith (u8, binding.buffer.items [token.loc.start .. token.loc.end], "vk") and
           precedent [0].?.tag == .period and
           std.mem.eql (u8, binding.buffer.items [precedent [1].?.loc.start .. precedent [1].?.loc.end], "dispatch") and
           precedent [2].?.tag == .period and precedent [4].?.tag == .period and
-          std.mem.eql (u8, binding.buffer.items [precedent [5].?.loc.start .. precedent [5].?.loc.end], "api"))
+          std.mem.eql (u8, binding.buffer.items [precedent [5].?.loc.start .. precedent [5].?.loc.end], "raw") and
+          precedent [6].?.tag == .period and
+          std.mem.eql (u8, binding.buffer.items [precedent [7].?.loc.start .. precedent [7].?.loc.end], "vk"))
       {
         inline for (@typeInfo (@TypeOf (prototypes)).Struct.fields) |field|
         {
@@ -321,6 +324,8 @@ fn generate_prototypes (builder: *std.Build) ![] const u8
       }
     }
 
+    precedent [7] = precedent [6];
+    precedent [6] = precedent [5];
     precedent [5] = precedent [4];
     precedent [4] = precedent [3];
     precedent [3] = precedent [2];
@@ -360,7 +365,7 @@ fn generate_prototypes (builder: *std.Build) ![] const u8
     else => return err,
   };
 
-  std.debug.print ("{s} used\n", .{ prototypes.path, });
+  std.debug.print ("{s}\n", .{ prototypes.path, });
   return prototypes.path;
 }
 

@@ -99,6 +99,8 @@ pub const instance_vk = struct
   {
     var available_layers_count: u32 = undefined;
 
+    try vk.load ();
+
     try vk.Instance.LayerProperties.enumerate (&available_layers_count, null);
 
     var available_layers = try allocator.alloc (vk.LayerProperties, available_layers_count);

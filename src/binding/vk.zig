@@ -9,14 +9,60 @@ const API = struct
 {
   const Structless = struct
   {
-    const Dispatch = dispatch: {
+    dispatch: Dispatch,
+
+    fn cast (comptime T: type) type
+    {
+      var info = @typeInfo (T);
+      return switch (info)
+      {
+        .Struct  => if (info.Struct.layout == .Auto) T else @field (vk, @typeName (T) [17 ..]),
+        .Pointer => blk: { info.Pointer.child = cast (info.Pointer.child); break :blk @Type (info); },
+        else     => T,
+      };
+    }
+
+    const Dispatch = blk: {
       @setEvalBranchQuota (10_000);
       const size = @typeInfo (prototypes.structless).Enum.fields.len;
       var fields: [size] std.builtin.Type.StructField = undefined;
-      for (@typeInfo (prototypes.structless).Enum.fields, 0 ..) |field, i|
+      for (@typeInfo (prototypes.structless).Enum.fields, 0 ..) |*field, i|
       {
-        //const pfn = @field (c, "PFN_" ++ field.name);
-        const pfn = @TypeOf (@field (c, field.name));
+        const pfn = pfn: {
+          const raw = @typeInfo (@TypeOf (@field (c, field.name)));
+          var params: [raw.Fn.params.len] std.builtin.Type.Fn.Param = undefined;
+          for (raw.Fn.params, 0 ..) |*param, j|
+          {
+            params [j] = .{
+              .is_generic = param.is_generic,
+              .is_noalias = param.is_noalias,
+              .type = cast (param.type orelse @compileError ("Param type is null for " ++ field.name)),
+            };
+          }
+          break :pfn @Type (.{
+            .Pointer = .{
+              .size = .One,
+              .is_const = true,
+              .is_volatile = false,
+              .alignment = 1,
+              .address_space = .generic,
+              .child = @Type (.{
+                .Fn = .{
+                  .calling_convention = vk.call_conv,
+                  .alignment = raw.Fn.alignment,
+                  .is_generic = raw.Fn.is_generic,
+                  .is_var_args = raw.Fn.is_var_args,
+                  .return_type = cast (raw.Fn.return_type orelse @compileError ("Return type is null for " ++ field.name)),
+                  .params = &params,
+                },
+              }),
+              .is_allowzero = false,
+              .sentinel = null,
+            },
+          });
+        };
+
+        @compileLog (field.name ++ ": " ++ @typeName (pfn));
         fields [i] = .{
           .name = field.name,
           .type = pfn,
@@ -25,7 +71,7 @@ const API = struct
           .alignment = @alignOf (pfn),
         };
       }
-      break :dispatch @Type (.{
+      break :blk @Type (.{
         .Struct = .{
           .layout = .Auto,
           .fields = &fields,
@@ -34,33 +80,15 @@ const API = struct
         },
       });
     };
-
-    dispatch: Dispatch = dispatch: {
-      var dispatch: Dispatch = undefined;
-      for (std.meta.fields (Dispatch)) |field|
-      {
-        const name: [*:0] const u8 = @ptrCast (field.name ++ "\x00");
-        const loader: *const fn (vk.Instance, [*:0] const u8) callconv (vk.call_conv) ?*const fn () callconv (vk.call_conv) void = @ptrCast (&c.glfwGetInstanceProcAddress);
-        const pointer = loader (vk.Instance.null_handle, name) orelse @compileError ("Command load failure: " ++ name);
-        @field (dispatch, field.name) = @ptrCast (pointer);
-        @compileLog ("Structless '" ++ name ++ "' command loaded");
-      }
-      break :dispatch dispatch;
-    },
   };
 
-  structless: Structless = .{},
+  structless: Structless,
   //instance: API.Instance = .{};
   //device: API.Device = .{};
 };
 
-const api: API = .{};
-
 pub const vk = struct
 {
-  pub const MAX_EXTENSION_NAME_SIZE = c.VK_MAX_EXTENSION_NAME_SIZE;
-  pub const MAX_DESCRIPTION_SIZE = c.VK_MAX_DESCRIPTION_SIZE;
-
   pub const call_conv: std.builtin.CallingConvention = if (builtin.os.tag == .windows and builtin.cpu.arch == .x86)
     .Stdcall
   else if (builtin.abi == .android and (builtin.cpu.arch.isARM () or builtin.cpu.arch.isThumb ()) and std.Target.arm.featureSetHas (builtin.cpu.features, .has_v7) and builtin.cpu.arch.ptrBitWidth () == 32)
@@ -72,16 +100,32 @@ pub const vk = struct
   else
     .C;
 
+  var raw: API = undefined;
+
+  pub fn load () !void
+  {
+    const loader: *const fn (vk.Instance, [*:0] const u8) callconv (vk.call_conv) ?*const fn () callconv (vk.call_conv) void = @ptrCast (&c.glfwGetInstanceProcAddress);
+    inline for (std.meta.fields (API.Structless.Dispatch)) |field|
+    {
+      const name: [*:0] const u8 = @ptrCast (field.name ++ "\x00");
+      const pointer = loader (vk.Instance.null_handle, name) orelse return error.CommandLoadFailure;
+      @field (vk.raw.structless.dispatch, field.name) = @ptrCast (pointer);
+    }
+  }
+
+  pub const MAX_EXTENSION_NAME_SIZE = c.VK_MAX_EXTENSION_NAME_SIZE;
+  pub const MAX_DESCRIPTION_SIZE = c.VK_MAX_DESCRIPTION_SIZE;
+
   pub const Bool32 = u32;
   pub const Buffer = enum (u64) { null_handle = 0, _, };
 
-  pub const Command = struct
+  pub const Command = extern struct
   {
     pub const Buffer = enum (usize) { null_handle = 0, _, };
     pub const Pool = enum (u64) { null_handle = 0, _, };
   };
 
-  pub const Descriptor = struct
+  pub const Descriptor = extern struct
   {
     pub const Pool = enum (u64) { null_handle = 0, _, };
     pub const Set = enum (u64)
@@ -97,7 +141,7 @@ pub const vk = struct
     pub const Memory = enum (u64) { null_handle = 0, _, };
   };
 
-  pub const Extent2D = struct
+  pub const Extent2D = extern struct
   {
     width: u32,
     height: u32,
@@ -118,9 +162,9 @@ pub const vk = struct
   {
     null_handle = 0, _,
 
-    pub const Usage = struct
+    pub const Usage = extern struct
     {
-      pub const Flags = struct
+      pub const Flags = extern struct
       {
         pub const transfer_src_bit = c.VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
       };
@@ -132,11 +176,11 @@ pub const vk = struct
   pub const Instance = enum (usize)
   {
     null_handle = 0, _,
-    pub const LayerProperties = struct
+    pub const LayerProperties = extern struct
     {
       pub fn enumerate (p_property_count: *u32, p_properties: ?[*] vk.LayerProperties) !void
       {
-        const result = api.structless.dispatch.vkEnumerateInstanceLayerProperties (p_property_count, p_properties);
+        const result = vk.raw.structless.dispatch.vkEnumerateInstanceLayerProperties (p_property_count, p_properties);
         if (result > 0)
         {
           std.debug.print ("{s} failed with {} status code\n", .{ result, });
@@ -146,12 +190,12 @@ pub const vk = struct
     };
   };
 
-  pub const LayerProperties = struct
+  pub const LayerProperties = extern struct
   {
-    layer_name: [MAX_EXTENSION_NAME_SIZE] u8,
+    layer_name: [vk.MAX_EXTENSION_NAME_SIZE] u8,
     spec_version: u32,
     implementation_version: u32,
-    description: [MAX_DESCRIPTION_SIZE] u8,
+    description: [vk.MAX_DESCRIPTION_SIZE] u8,
   };
 
   pub const ObjectType = enum (i32)
@@ -159,7 +203,7 @@ pub const vk = struct
     unknown = 0,
   };
 
-  pub const Offset2D = struct
+  pub const Offset2D = extern struct
   {
     x: i32,
     y: i32,
@@ -175,7 +219,7 @@ pub const vk = struct
 
   pub const Queue = enum (usize) { null_handle = 0, _, };
 
-  pub const Rect2D = struct
+  pub const Rect2D = extern struct
   {
     offset: vk.Offset2D,
     extent: vk.Extent2D,
@@ -193,7 +237,7 @@ pub const vk = struct
     debug_utils_object_name_info_ext = c.VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT,
   };
 
-  pub const Viewport = struct
+  pub const Viewport = extern struct
   {
     x: f32,
     y: f32,
@@ -203,11 +247,11 @@ pub const vk = struct
     max_depth: f32,
   };
 
-  pub const EXT = struct
+  pub const EXT = extern struct
   {
-    pub const DebugUtils = struct
+    pub const DebugUtils = extern struct
     {
-      pub const Label = struct
+      pub const Label = extern struct
       {
         s_type: vk.StructureType = .debug_utils_label_ext,
         p_next: ?*const anyopaque = null,
@@ -215,16 +259,16 @@ pub const vk = struct
         color: [4] f32,
       };
 
-      pub const Message = struct
+      pub const Message = extern struct
       {
-        pub const Severity = struct
+        pub const Severity = extern struct
         {
-          pub const Flags = struct {};
+          pub const Flags = extern struct {};
         };
 
-        pub const Type = struct
+        pub const Type = extern struct
         {
-          pub const Flags = struct {};
+          pub const Flags = extern struct {};
         };
       };
 
@@ -232,9 +276,9 @@ pub const vk = struct
       {
         null_handle = 0, _,
 
-        pub const Callback = struct
+        pub const Callback = extern struct
         {
-          pub const Data = struct
+          pub const Data = extern struct
           {
             s_type: vk.StructureType = .debug_utils_messenger_callback_data_ext,
             p_next: ?*const anyopaque = null,
@@ -249,7 +293,7 @@ pub const vk = struct
             object_count: u32 = 0,
             p_objects: ?[*] const vk.EXT.DebugUtils.ObjectNameInfo = null,
 
-            pub const Flags = struct {};
+            pub const Flags = extern struct {};
           };
 
           pub const Pfn = ?*const fn (
@@ -260,11 +304,11 @@ pub const vk = struct
           ) callconv (vk.call_conv) vk.Bool32;
         };
 
-        pub const Create = struct
+        pub const Create = extern struct
         {
-          pub const Flags = struct {};
+          pub const Flags = extern struct {};
 
-          pub const Info = struct
+          pub const Info = extern struct
           {
             s_type: vk.StructureType = .debug_utils_messenger_create_info_ext,
             p_next: ?*const anyopaque = null,
@@ -277,7 +321,7 @@ pub const vk = struct
         };
       };
 
-      pub const ObjectNameInfo = struct
+      pub const ObjectNameInfo = extern struct
       {
         s_type: vk.StructureType = .debug_utils_object_name_info_ext,
         p_next: ?*const anyopaque = null,
@@ -288,16 +332,16 @@ pub const vk = struct
     };
   };
 
-  pub const KHR = struct
+  pub const KHR = extern struct
   {
     pub const ColorSpace = enum (i32)
     {
       srgb_nonlinear_khr = c.VK_COLOR_SPACE_SRGB_NONLINEAR_KHR,
     };
 
-    pub const CompositeAlpha = struct
+    pub const CompositeAlpha = extern struct
     {
-      pub const Flags = struct
+      pub const Flags = extern struct
       {
         pub const opaque_bit_khr = c.VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
       };
@@ -311,7 +355,7 @@ pub const vk = struct
     pub const Surface = enum (u64)
     {
       null_handle = 0, _,
-      pub const Capabilities = struct
+      pub const Capabilities = extern struct
       {
         min_image_count: u32,
         max_image_count: u32,
@@ -325,15 +369,15 @@ pub const vk = struct
         supported_usage_flags: vk.Image.Usage.Flags,
       };
 
-      pub const Format = struct
+      pub const Format = extern struct
       {
         format: vk.Format,
         color_space: vk.KHR.ColorSpace,
       };
 
-      pub const Transform = struct
+      pub const Transform = extern struct
       {
-        pub const Flags = struct
+        pub const Flags = extern struct
         {
           pub const identity_bit_khr = c.VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
         };

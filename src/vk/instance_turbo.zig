@@ -1,7 +1,7 @@
 const std = @import ("std");
 const vk  = @import ("vk");
 
-const log = @import ("../log.zig").Log;
+const log = @import ("../log.zig");
 const exe = log.exe;
 
 pub const instance_vk = struct

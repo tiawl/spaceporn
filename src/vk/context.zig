@@ -8,14 +8,13 @@ const datetime = @import ("datetime").datetime;
 const ImguiContext = @import ("../imgui/context.zig").Context;
 const ImguiPrepare = ImguiContext.ImguiPrepare;
 
-const log     = @import ("../log.zig").Log;
-const Profile = log.Profile;
+const log = @import ("../log.zig").Log;
 
 const opts = @import ("../options.zig").options;
 
 const vertex_vk = @import ("vertex.zig").vertex_vk;
 
-const instance        = if (log.level == @intFromEnum (Profile.TURBO)) @import ("instance_turbo.zig") else @import ("instance_debug.zig");
+const instance        = if (log.profile.eql (.TURBO)) @import ("instance_turbo.zig") else @import ("instance_debug.zig");
 const instance_vk     = instance.instance_vk;
 const required_layers = instance_vk.required_layers;
 

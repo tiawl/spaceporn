@@ -1,14 +1,13 @@
 const std = @import ("std");
 
-const log     = @import ("log.zig").Log;
-const Profile = log.Profile;
+const log = @import ("log.zig");
 
 const Context = @import ("context.zig").Context;
 const opts    = @import ("options.zig").options;
 
 fn init_logfile () !void
 {
-  if (log.level > @intFromEnum (Profile.TURBO) and log.dir.len > 0)
+  if (log.profile.gt (.TURBO) and log.dir.len > 0)
   {
     var dir = std.fs.cwd ().openDir (log.dir, .{}) catch |err|
               {

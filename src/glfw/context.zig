@@ -3,7 +3,7 @@ const glfw = @import ("glfw");
 
 const ImguiContext = @import ("../imgui/context.zig").Context;
 
-const log = @import ("../log.zig").Log;
+const log = @import ("../log.zig");
 const exe = log.exe;
 
 const opts = @import ("../options.zig").options;

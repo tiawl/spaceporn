@@ -2,8 +2,7 @@ const std  = @import ("std");
 const glfw = @import ("glfw");
 const vk   = @import ("vk");
 
-const log     = @import ("../log.zig").Log;
-const Profile = log.Profile;
+const log = @import ("../log.zig");
 
 const imgui = @import ("imgui");
 
@@ -178,7 +177,7 @@ pub const Context = struct
     const button_size = imgui.ImVec2 { .x = 0, .y = 0, };
 
     if (imgui.ImGui_ButtonEx ("New seed", button_size)) tweak_me.seed.* = @intCast (@mod (std.time.milliTimestamp (), @as (i64, @intCast (std.math.maxInt (u32)))));
-    if (log.level > @intFromEnum (Profile.DEFAULT))
+    if (log.profile.eql (.DEFAULT))
     {
       imgui.ImGui_SameLineEx (0.0, -1.0);
       imgui.ImGui_Text ("%u", tweak_me.seed.*);

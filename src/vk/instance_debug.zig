@@ -1,9 +1,8 @@
 const std = @import ("std");
 const vk  = @import ("vk");
 
-const log     = @import ("../log.zig");
-const exe     = log.exe;
-const Profile = log.Profile;
+const log = @import ("../log.zig");
+const exe = log.exe;
 
 const ext_vk = struct
 {
@@ -30,7 +29,7 @@ pub const instance_vk = struct
 
   var optional_extensions = blk:
                             {
-                              if (log.level > @intFromEnum (Profile.DEFAULT))
+                              if (log.profile.gt (.DEFAULT))
                               {
                                 break :blk [_] ext_vk
                                            {
@@ -126,16 +125,16 @@ pub const instance_vk = struct
 
       if (found)
       {
-        try log.app ("{s} required layer is available", .DEBUG, .{ layer });
+        try log.app (.DEBUG, "{s} required layer is available", .{ layer });
       } else {
-        try log.app ("{s} required layer is not available", .ERROR, .{ layer });
+        try log.app (.ERROR, "{s} required layer is not available", .{ layer });
         return InitVkError.LayerNotAvailable;
       }
 
       flag = false;
     }
 
-    try log.app ("check Vulkan layer properties initializer OK", .DEBUG, .{});
+    try log.app (.DEBUG, "check Vulkan layer properties initializer OK", .{});
   }
 
   fn init_debug_info (debug_info: *vk.DebugUtilsMessengerCreateInfoEXT) void
@@ -169,7 +168,7 @@ pub const instance_vk = struct
                    {
                      .message_severity  = vk.DebugUtilsMessageSeverityFlagsEXT
                                           {
-                                            .verbose_bit_ext = (log.level > @intFromEnum (Profile.DEFAULT)),
+                                            .verbose_bit_ext = (log.profile.gt (.DEFAULT)),
                                             .info_bit_ext    = true,
                                             .warning_bit_ext = true,
                                             .error_bit_ext   = true,
@@ -189,7 +188,7 @@ pub const instance_vk = struct
                                                                                 }
                                                                                 break :blk false;
                                                                               },
-                                            .performance_bit_ext            = (log.level > @intFromEnum (Profile.DEFAULT)),
+                                            .performance_bit_ext            = (log.profile.gt (.DEFAULT)),
                                           },
                      .pfn_user_callback = @ptrCast (&debug_callback),
                      .p_next            = if (use_features) @ptrCast (&features) else null,
@@ -220,14 +219,14 @@ pub const instance_vk = struct
         if (std.mem.eql (u8, supported_ext.extension_name [0..std.mem.indexOfScalar (u8, &(supported_ext.extension_name), 0).?], std.mem.span (required_ext)))
         {
           try extensions.append (@ptrCast (required_ext));
-          try log.app ("{s} required extension is supported", .DEBUG, .{ required_ext });
+          try log.app (.DEBUG, "{s} required extension is supported", .{ required_ext });
           supported = true;
           break;
         }
       }
       if (!supported)
       {
-        try log.app ("{s} required extension is not supported", .ERROR, .{ required_ext });
+        try log.app (.ERROR, "{s} required extension is not supported", .{ required_ext });
         return InitVkError.ExtensionNotSupported;
       }
     }
@@ -239,14 +238,14 @@ pub const instance_vk = struct
         if (std.mem.eql (u8, supported_ext.extension_name [0..std.mem.indexOfScalar (u8, &(supported_ext.extension_name), 0).?], std.mem.span (optional_ext.name)))
         {
           try extensions.append (@ptrCast (optional_ext.name));
-          try log.app ("{s} optional extension is supported", .DEBUG, .{ optional_ext.name });
+          try log.app (.DEBUG, "{s} optional extension is supported", .{ optional_ext.name });
           optional_ext.supported = true;
           break;
         }
       }
       if (!optional_ext.supported)
       {
-        try log.app ("{s} optional extension is not supported", .WARNING, .{ optional_ext.name });
+        try log.app (.WARNING, "{s} optional extension is not supported", .{ optional_ext.name });
       }
     }
 
@@ -276,7 +275,7 @@ pub const instance_vk = struct
 
     self.instance = try self.base_dispatch.createInstance (&create_info, null);
 
-    try log.app ("check Vulkan extension properties initializer OK", .DEBUG, .{});
+    try log.app (.DEBUG, "check Vulkan extension properties initializer OK", .{});
   }
 
   pub fn init (extensions: *[][*:0] const u8, allocator: std.mem.Allocator) !@This ()
@@ -295,7 +294,7 @@ pub const instance_vk = struct
     self.debug_messenger = try self.dispatch.createDebugUtilsMessengerEXT (self.instance, &debug_info, null);
     errdefer self.dispatch.destroyDebugUtilsMessengerEXT (self.instance, self.debug_messenger, null);
 
-    try log.app ("init Vulkan initializer instance OK", .DEBUG, .{});
+    try log.app (.DEBUG, "init Vulkan initializer instance OK", .{});
     return self;
   }
 
@@ -304,6 +303,6 @@ pub const instance_vk = struct
     self.dispatch.destroyDebugUtilsMessengerEXT (self.instance, self.debug_messenger, null);
     self.dispatch.destroyInstance (self.instance, null);
 
-    try log.app ("cleanup Vulkan initializer OK", .DEBUG, .{});
+    try log.app (.DEBUG, "cleanup Vulkan initializer OK", .{});
   }
 };

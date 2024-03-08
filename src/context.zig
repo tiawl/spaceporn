@@ -4,7 +4,7 @@ const ImguiContext = @import ("imgui/context.zig").Context;
 const GlfwContext  = @import ("glfw/context.zig").Context;
 const VkContext    = @import ("vk/context.zig").Context;
 
-const log = @import ("log.zig").Log;
+const log = @import ("log.zig");
 
 const opts = @import ("options.zig").options;
 

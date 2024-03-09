@@ -1,9 +1,9 @@
 const std = @import ("std");
 const vk  = @import ("vk");
 
-const log = @import ("../log.zig");
-const exe = log.exe;
+const Logger = @import ("logger").Logger;
 
+// TODO: why ?
 const ext_vk = struct
 {
   name: [*:0] const u8,
@@ -15,6 +15,7 @@ pub const instance_vk = struct
   instance:        vk.Instance = undefined,
   extensions:      [][*:0] const u8 = undefined,
   debug_messenger: vk.EXT.DebugUtils.Messenger = undefined,
+  logger:          *const Logger = undefined,
 
   pub const required_layers = [_][*:0] const u8
   {
@@ -27,31 +28,7 @@ pub const instance_vk = struct
     vk.extension_info.ext_debug_utils.name,
   };
 
-  var optional_extensions = blk:
-                            {
-                              if (log.profile.gt (.DEFAULT))
-                              {
-                                break :blk [_] ext_vk
-                                           {
-                                             .{
-                                                .name = vk.extension_info.ext_device_address_binding_report.name,
-                                              },
-                                             .{
-                                                .name = vk.extension_info.khr_shader_non_semantic_info.name,
-                                              },
-                                             .{
-                                                .name = vk.extension_info.ext_validation_features.name,
-                                              },
-                                           };
-                              } else {
-                                break :blk [_] ext_vk
-                                           {
-                                             .{
-                                                .name = vk.extension_info.ext_device_address_binding_report.name,
-                                              },
-                                           };
-                              }
-                            };
+  var optional_extensions: [] const ext_vk = undefined;
 
   const InitVkError = error
   {
@@ -65,7 +42,7 @@ pub const instance_vk = struct
     p_callback_data:  ?*const vk.DebugUtilsMessengerCallbackDataEXT,
     p_user_data:      ?*anyopaque) bool
   {
-    _ = p_user_data;
+    const self = @as (?*instance_vk, @ptrCast (@alignCast (p_user_data)));
 
     var event: [] const u8 = undefined;
 
@@ -82,19 +59,19 @@ pub const instance_vk = struct
 
     if (message_severity.verbose_bit_ext)
     {
-      log.vk ("{s}", .DEBUG, event, .{ p_callback_data.?.p_message }) catch return false;
+      self.logger.vk ("{s}", .DEBUG, event, .{ p_callback_data.?.p_message }) catch return false;
     } else if (message_severity.info_bit_ext) {
-      log.vk ("{s}", .INFO, event, .{ p_callback_data.?.p_message }) catch return false;
+      self.logger.vk ("{s}", .INFO, event, .{ p_callback_data.?.p_message }) catch return false;
     } else if (message_severity.warning_bit_ext) {
-      log.vk ("{s}", .WARNING, event, .{ p_callback_data.?.p_message }) catch return false;
+      self.logger.vk ("{s}", .WARNING, event, .{ p_callback_data.?.p_message }) catch return false;
     } else if (message_severity.error_bit_ext) {
-      log.vk ("{s}", .ERROR, event, .{ p_callback_data.?.p_message }) catch return false;
+      self.logger.vk ("{s}", .ERROR, event, .{ p_callback_data.?.p_message }) catch return false;
     }
 
     return true;
   }
 
-  fn check_layer_properties (_: *@This (), allocator: std.mem.Allocator) !void
+  fn check_layer_properties (self: *@This ()) !void
   {
     var available_layers_count: u32 = undefined;
 
@@ -102,7 +79,7 @@ pub const instance_vk = struct
 
     try vk.Instance.LayerProperties.enumerate (&available_layers_count, null);
 
-    var available_layers = try allocator.alloc (vk.LayerProperties, available_layers_count);
+    var available_layers = try self.logger.allocator.alloc (vk.LayerProperties, available_layers_count);
 
     try vk.Instance.LayerProperties.enumerate (&available_layers_count, available_layers.ptr);
 
@@ -125,19 +102,19 @@ pub const instance_vk = struct
 
       if (found)
       {
-        try log.app (.DEBUG, "{s} required layer is available", .{ layer });
+        try self.logger.app (.DEBUG, "{s} required layer is available", .{ layer });
       } else {
-        try log.app (.ERROR, "{s} required layer is not available", .{ layer });
+        try self.logger.app (.ERROR, "{s} required layer is not available", .{ layer });
         return InitVkError.LayerNotAvailable;
       }
 
       flag = false;
     }
 
-    try log.app (.DEBUG, "check Vulkan layer properties initializer OK", .{});
+    try self.logger.app (.DEBUG, "check Vulkan layer properties initializer OK", .{});
   }
 
-  fn init_debug_info (debug_info: *vk.DebugUtilsMessengerCreateInfoEXT) void
+  fn init_debug_info (self: @This (), debug_info: *vk.DebugUtilsMessengerCreateInfoEXT) void
   {
     const use_features = blk:
                          {
@@ -168,7 +145,7 @@ pub const instance_vk = struct
                    {
                      .message_severity  = vk.DebugUtilsMessageSeverityFlagsEXT
                                           {
-                                            .verbose_bit_ext = (log.profile.gt (.DEFAULT)),
+                                            .verbose_bit_ext = (self.logger.profile.gt (.DEFAULT)),
                                             .info_bit_ext    = true,
                                             .warning_bit_ext = true,
                                             .error_bit_ext   = true,
@@ -188,16 +165,17 @@ pub const instance_vk = struct
                                                                                 }
                                                                                 break :blk false;
                                                                               },
-                                            .performance_bit_ext            = (log.profile.gt (.DEFAULT)),
+                                            .performance_bit_ext            = (self.logger.profile.gt (.DEFAULT)),
                                           },
                      .pfn_user_callback = @ptrCast (&debug_callback),
+                     .p_user_data       = &self,
                      .p_next            = if (use_features) @ptrCast (&features) else null,
                    };
   }
 
-  fn check_extension_properties (self: *@This (), debug_info: *vk.DebugUtilsMessengerCreateInfoEXT, allocator: std.mem.Allocator) !void
+  fn check_extension_properties (self: *@This (), debug_info: *vk.DebugUtilsMessengerCreateInfoEXT) !void
   {
-    var extensions = try std.ArrayList ([*:0] const u8).initCapacity (allocator, self.extensions.len + required_extensions.len + optional_extensions.len);
+    var extensions = try std.ArrayList ([*:0] const u8).initCapacity (self.logger.allocator.*, self.extensions.len + required_extensions.len + optional_extensions.len);
 
     try extensions.appendSlice(self.extensions);
 
@@ -205,7 +183,7 @@ pub const instance_vk = struct
 
     _ = try self.base_dispatch.enumerateInstanceExtensionProperties (null, &supported_extensions_count, null);
 
-    const supported_extensions = try allocator.alloc (vk.ExtensionProperties, supported_extensions_count);
+    const supported_extensions = try self.logger.allocator.alloc (vk.ExtensionProperties, supported_extensions_count);
 
     _ = try self.base_dispatch.enumerateInstanceExtensionProperties (null, &supported_extensions_count, supported_extensions.ptr);
 
@@ -219,14 +197,14 @@ pub const instance_vk = struct
         if (std.mem.eql (u8, supported_ext.extension_name [0..std.mem.indexOfScalar (u8, &(supported_ext.extension_name), 0).?], std.mem.span (required_ext)))
         {
           try extensions.append (@ptrCast (required_ext));
-          try log.app (.DEBUG, "{s} required extension is supported", .{ required_ext });
+          try self.logger.app (.DEBUG, "{s} required extension is supported", .{ required_ext });
           supported = true;
           break;
         }
       }
       if (!supported)
       {
-        try log.app (.ERROR, "{s} required extension is not supported", .{ required_ext });
+        try self.logger.app (.ERROR, "{s} required extension is not supported", .{ required_ext });
         return InitVkError.ExtensionNotSupported;
       }
     }
@@ -238,24 +216,24 @@ pub const instance_vk = struct
         if (std.mem.eql (u8, supported_ext.extension_name [0..std.mem.indexOfScalar (u8, &(supported_ext.extension_name), 0).?], std.mem.span (optional_ext.name)))
         {
           try extensions.append (@ptrCast (optional_ext.name));
-          try log.app (.DEBUG, "{s} optional extension is supported", .{ optional_ext.name });
+          try self.logger.app (.DEBUG, "{s} optional extension is supported", .{ optional_ext.name });
           optional_ext.supported = true;
           break;
         }
       }
       if (!optional_ext.supported)
       {
-        try log.app (.WARNING, "{s} optional extension is not supported", .{ optional_ext.name });
+        try self.logger.app (.WARNING, "{s} optional extension is not supported", .{ optional_ext.name });
       }
     }
 
     self.extensions = extensions.items;
 
-    init_debug_info (debug_info);
+    self.init_debug_info (debug_info);
 
     const app_info = vk.ApplicationInfo
                      {
-                       .p_application_name  = exe,
+                       .p_application_name  = self.logger.binary.name,
                        .application_version = vk.makeApiVersion (0, 1, 2, 0),
                        .p_engine_name       = "No Engine",
                        .engine_version      = vk.makeApiVersion (0, 1, 2, 0),
@@ -275,26 +253,38 @@ pub const instance_vk = struct
 
     self.instance = try self.base_dispatch.createInstance (&create_info, null);
 
-    try log.app (.DEBUG, "check Vulkan extension properties initializer OK", .{});
+    try self.logger.app (.DEBUG, "check Vulkan extension properties initializer OK", .{});
   }
 
-  pub fn init (extensions: *[][*:0] const u8, allocator: std.mem.Allocator) !@This ()
+  pub fn init (extensions: *[][*:0] const u8, logger: *const Logger) !@This ()
   {
-    var self: @This () = .{};
+    var self: @This () = .{ .logger = logger, };
+
+    optional_extensions = if (self.logger.profile.gt (.DEFAULT))
+                            &.{
+                                .{ .name = vk.extension_info.ext_device_address_binding_report.name, },
+                                .{ .name = vk.extension_info.khr_shader_non_semantic_info.name, },
+                                .{ .name = vk.extension_info.ext_validation_features.name, },
+                              }
+                          else
+                            &.{
+                                .{ .name = vk.extension_info.ext_device_address_binding_report.name, },
+                              };
+
     var debug_info: vk.EXT.DebugUtils.Messenger.Create.Info = undefined;
 
     self.extensions = extensions.*;
 
-    try check_layer_properties (&self, allocator);
-    try check_extension_properties (&self, &debug_info, allocator);
+    try check_layer_properties (&self);
+    try check_extension_properties (&self, &debug_info);
 
     errdefer self.dispatch.destroyInstance (self.instance, null);
 
-    init_debug_info (&debug_info);
+    self.init_debug_info (&debug_info);
     self.debug_messenger = try self.dispatch.createDebugUtilsMessengerEXT (self.instance, &debug_info, null);
     errdefer self.dispatch.destroyDebugUtilsMessengerEXT (self.instance, self.debug_messenger, null);
 
-    try log.app (.DEBUG, "init Vulkan initializer instance OK", .{});
+    try self.logger.app (.DEBUG, "init Vulkan initializer instance OK", .{});
     return self;
   }
 
@@ -303,6 +293,6 @@ pub const instance_vk = struct
     self.dispatch.destroyDebugUtilsMessengerEXT (self.instance, self.debug_messenger, null);
     self.dispatch.destroyInstance (self.instance, null);
 
-    try log.app (.DEBUG, "cleanup Vulkan initializer OK", .{});
+    try self.logger.app (.DEBUG, "cleanup Vulkan initializer OK", .{});
   }
 };

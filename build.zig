@@ -45,7 +45,7 @@ fn verbose (builder: *std.Build, profile: *Profile) !void
 {
   const log_dir = "log";
 
-  // Make log directory if not present
+  // Make log directory if not present only in verbose mode
   builder.build_root.handle.makeDir (log_dir) catch |err|
   {
     // Do not return error if log directory already exists
@@ -53,7 +53,7 @@ fn verbose (builder: *std.Build, profile: *Profile) !void
   };
 
   profile.optimize = std.builtin.Mode.Debug;
-  profile.variables.addOption ([] const u8, "log_dir", builder.pathFromRoot (log_dir));
+  profile.variables.addOption ([] const u8, "log_dir", try builder.build_root.join (builder.allocator, &.{ log_dir, }));
   profile.variables.addOption (u8, "log_level", 2);
   profile.command = &.{ "glslc", "--target-env=vulkan1.2", };
 }
@@ -71,7 +71,7 @@ fn parse_options (builder: *std.Build) !Profile
   const options = Options {
     .verbose = builder.option (bool, std.meta.fieldInfo (Options, .verbose).name, "Build " ++ zon.name ++ " with full logging features.") orelse false,
     .turbo = builder.option (bool, std.meta.fieldInfo (Options, .turbo).name, "Build " ++ zon.name ++ " with optimized features.") orelse false,
-    .logdir = builder.option ([] const u8, std.meta.fieldInfo (Options, .logdir).name, "Log directory. If not specified, logs are not registered in a file.") orelse "",
+    .logdir = builder.option ([] const u8, std.meta.fieldInfo (Options, .logdir).name, "Absolute path to log directory. If not specified, logs are not registered in a file.") orelse "",
   };
 
   if (options.turbo and options.verbose)
@@ -397,32 +397,17 @@ fn link (builder: *std.Build, profile: *const Profile) !*std.Build.Module
 
 fn import (builder: *std.Build, exe: *std.Build.Step.Compile, profile: *const Profile) !void
 {
-  const dep = builder.dependency ("zig-datetime", .{
+  const datetime_dep = builder.dependency ("zig-datetime", .{
     .target = profile.target,
     .optimize = profile.optimize,
   });
+  const datetime = datetime_dep.module ("zig-datetime");
 
-  const modules: [] const struct { pointer: *std.Build.Module, name: [] const u8, } = &.{
-    .{
-       .name = "build",
-       .pointer = profile.variables.createModule (),
-     }, .{
-       .name = "datetime",
-       .pointer = dep.module ("zig-datetime"),
-     }, .{
-       .name = "shader",
-       .pointer = builder.createModule (.{
-         .root_source_file = .{ .path = try compile_shaders (builder, exe, profile), },
-         .target = profile.target,
-         .optimize = profile.optimize,
-       }),
-     },
-  };
-
-  for (modules) |*module|
-  {
-    exe.root_module.addImport (module.name, module.pointer);
-  }
+  const shader = builder.createModule (.{
+    .root_source_file = .{ .path = try compile_shaders (builder, exe, profile), },
+    .target = profile.target,
+    .optimize = profile.optimize,
+  });
 
   const c = try link (builder, profile);
 
@@ -455,9 +440,31 @@ fn import (builder: *std.Build, exe: *std.Build.Step.Compile, profile: *const Pr
   imgui.addImport ("c", c);
   imgui.addImport ("glfw", glfw);
 
+  const build_options = profile.variables.createModule ();
+  const logger = builder.createModule (.{
+    .root_source_file = .{ .path = try builder.build_root.join (builder.allocator, &.{ "src", "logger.zig", }), },
+    .target = profile.target,
+    .optimize = profile.optimize,
+  });
+  logger.addImport ("build", build_options);
+  logger.addImport ("datetime", datetime);
+
+  const instance = builder.createModule (.{
+    .root_source_file = .{ .path = try builder.build_root.join (builder.allocator,
+      &.{ "src", "vk", "instance", if (profile.options.turbo) "turbo.zig" else "default.zig", }), },
+    .target = profile.target,
+    .optimize = profile.optimize,
+  });
+  instance.addImport ("logger", logger);
+  instance.addImport ("vk", vk);
+
+  exe.root_module.addImport ("datetime", datetime);
+  exe.root_module.addImport ("shader", shader);
   exe.root_module.addImport ("glfw", glfw);
   exe.root_module.addImport ("vk", vk);
   exe.root_module.addImport ("imgui", imgui);
+  exe.root_module.addImport ("logger", logger);
+  exe.root_module.addImport ("instance", instance);
 }
 
 fn run_exe (builder: *std.Build, profile: *const Profile) !void

@@ -1,8 +1,7 @@
 const std = @import ("std");
 const vk  = @import ("vk");
 
-const log = @import ("../log.zig");
-const exe = log.exe;
+const Logger = @import ("logger").Logger;
 
 pub const instance_vk = struct
 {
@@ -11,17 +10,15 @@ pub const instance_vk = struct
 
   pub const required_layers = [_][] const u8 {};
 
-  pub fn init (extensions: *[][*:0] const u8, allocator: std.mem.Allocator) !@This ()
+  pub fn init (extensions: *[][*:0] const u8, logger: *const Logger) !@This ()
   {
-    _ = allocator;
-
     var self: @This () = .{};
 
     self.extensions = extensions.*;
 
     const app_info = vk.ApplicationInfo
                      {
-                       .p_application_name  = exe,
+                       .p_application_name  = logger.binary.name,
                        .application_version = vk.makeApiVersion (0, 1, 2, 0),
                        .p_engine_name       = "No Engine",
                        .engine_version      = vk.makeApiVersion (0, 1, 2, 0),

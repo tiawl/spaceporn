@@ -3,20 +3,21 @@ const glfw = @import ("glfw");
 
 const ImguiContext = @import ("../imgui/context.zig").Context;
 
-const log = @import ("../log.zig");
-const exe = log.exe;
+const Logger = @import ("logger").Logger;
 
-const opts = @import ("../options.zig").options;
+const Options = @import ("../options.zig").Options;
 
 pub const Context = struct
 {
   window:              glfw.Window = undefined,
   extensions:          [][*:0] const u8 = undefined,
   framebuffer_resized: bool = undefined,
+  logger:              *const Logger = undefined,
 
   fn error_callback (code: glfw.Error.Code, description: [:0] const u8) void
   {
-    log.app (.ERROR, "GLFW: {}: {s}", .{ code, description, }) catch std.process.exit (1);
+    var self = glfw.Window.UserPointer.get (Context) catch std.debug.panic ("glfw.Window.UserPointer failed", .{});
+    self.?.logger.app (.ERROR, "GLFW: {}: {s}", .{ code, description, }) catch std.process.exit (1);
   }
 
   fn framebuffer_resize_callback (_: glfw.Window, _: u32, _: u32) void
@@ -28,14 +29,14 @@ pub const Context = struct
   const MIN_WINDOW_WIDTH  = 800;
   const MIN_WINDOW_HEIGHT = 600;
 
-  pub fn init (imgui: *ImguiContext, options: opts) !@This ()
+  pub fn init (imgui: *ImguiContext, logger: *const Logger, options: *const Options) !@This ()
   {
-    var self: @This () = .{};
+    var self: @This () = .{ .logger = logger, };
 
     glfw.Error.Callback.set (error_callback);
     if (!glfw.init ())
     {
-      try log.app (.ERROR, "failed to initialize GLFW: {?s}", .{ glfw.Error.String.get (), });
+      try self.logger.app (.ERROR, "failed to initialize GLFW: {?s}", .{ glfw.Error.String.get (), });
       return error.ContextInitFailed;
     }
     errdefer glfw.terminate ();
@@ -48,9 +49,9 @@ pub const Context = struct
                     .{ .resizable = .@"false", },
                   };
 
-    self.window = glfw.Window.create (options.window.width.?, options.window.height.?, exe, null, null, &hints) catch |err|
+    self.window = glfw.Window.create (options.window.width.?, options.window.height.?, self.logger.binary.name, null, null, &hints) catch |err|
     {
-      try log.app (.ERROR, "failed to initialize GLFW window: {?s}", .{ glfw.Error.String.get () });
+      try self.logger.app (.ERROR, "failed to initialize GLFW window: {?s}", .{ glfw.Error.String.get () });
       return err;
     };
     errdefer self.window.destroy ();
@@ -76,14 +77,14 @@ pub const Context = struct
 
     self.extensions = glfw.vk.Instance.RequiredExtensions.get () orelse
     {
-      try log.app (.ERROR, "failed to get required vulkan instance extensions: error={s}", .{ glfw.Error.String.get () orelse std.debug.panic ("no Glfw error", .{}), });
+      try self.logger.app (.ERROR, "failed to get required vulkan instance extensions: error={s}", .{ glfw.Error.String.get () orelse std.debug.panic ("no Glfw error", .{}), });
       return error.RequiredInstanceExtensionsFailed;
     };
 
     // TODO: remove this:
     try imgui.init_glfw ();
 
-    try log.app (.DEBUG, "init GLFW OK", .{});
+    try self.logger.app (.DEBUG, "init GLFW OK", .{});
 
     return self;
   }
@@ -91,7 +92,7 @@ pub const Context = struct
   pub fn init_surface (self: @This (), instance: anytype, surface: anytype, success: i32) !void
   {
     if (glfw.Window.Surface.create (instance, self.window, null, surface) != success) return error.SurfaceInitFailed;
-    try log.app (.DEBUG, "init GLFW surface OK", .{});
+    try self.logger.app (.DEBUG, "init GLFW surface OK", .{});
   }
 
   pub fn get_framebuffer_size (self: *@This ()) struct { resized: bool, width: u32, height: u32, }
@@ -128,15 +129,14 @@ pub const Context = struct
 
   pub fn loop (self: @This ()) !void
   {
-    _ = self;
     glfw.Events.poll ();
-    try log.app (.DEBUG, "loop GLFW OK", .{});
+    try self.logger.app (.DEBUG, "loop GLFW OK", .{});
   }
 
   pub fn cleanup (self: @This ()) !void
   {
     self.window.destroy ();
     glfw.terminate ();
-    try log.app (.DEBUG, "cleanup GLFW OK", .{});
+    try self.logger.app (.DEBUG, "cleanup GLFW OK", .{});
   }
 };

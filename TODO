@@ -8,6 +8,8 @@
 - change function names: convert_error () => convertError ()
 - avoid relative path into @import: @import ("../log.zig") => @import ("log")
 - change wrapper/module functions: destroy () -> deinit ()
+- use std.fs.createFileAbsolute () instead of std.fs.cwd ().
+- usage () and parse_options () should be Logger methods
 
 - binding: vkCreateInstance () => vk.Instance.create ()
 - dynamic dispatch in cache ???

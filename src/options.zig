@@ -1,15 +1,13 @@
 const std = @import ("std");
 
-const log     = @import ("log.zig").Log;
-const exe     = log.exe;
-const version = log.version;
+const Logger = @import ("logger").Logger;
 
-pub const options = struct
+pub const Options = struct
 {
   const DEFAULT_HELP = false;
   const SHORT_HELP   = "-h";
   const LONG_HELP    = "--help";
-  pub const HELP_FLAGS   = "  " ++ SHORT_HELP ++ ", " ++ LONG_HELP;
+  pub const HELP_FLAGS  = "  " ++ SHORT_HELP ++ ", " ++ LONG_HELP;
 
   const DEFAULT_VERSION = false;
   const SHORT_VERSION   = "-v";
@@ -156,87 +154,81 @@ pub const options = struct
     }
   }
 
-  fn usage (self: *@This ()) void
+  fn usage (self: *@This (), logger: *const Logger) void
   {
-    std.debug.print ("\nUsage: {s} [OPTION] ...\n\nGenerator for space contemplators\n\nOptions:\n", .{ exe, });
+    std.debug.print ("\nUsage: {s} [OPTION] ...\n\nGenerator for space contemplators\n\nOptions:\n", .{ logger.binary.name, });
     inline for (std.meta.fields (@TypeOf (self.*))) |field|
     {
       @call (.auto, @field (@This (), "usage_" ++ field.name), .{ self });
     }
-    std.debug.print ("\nThe {s} home page: http://www.github.com/tiawl/spaceporn\nReport {s} bugs to http://www.github.com/tiawl/spaceporn/issues\n\n", .{ exe, exe, });
+    std.debug.print ("\nThe {s} home page: http://www.github.com/tiawl/spaceporn\nReport {s} bugs to http://www.github.com/tiawl/spaceporn/issues\n\n", .{ logger.binary.name, logger.binary.name, });
   }
 
-  fn print_version (self: @This ()) void
-  {
-    _ = self;
-    std.debug.print ("{s} {s}\n", .{ exe, version, });
-  }
-
-  fn parse (self: *@This (), allocator: std.mem.Allocator, opts: *std.ArrayList ([] const u8)) !void
+  fn parse (self: *@This (), logger: *const Logger, options: *std.ArrayList ([] const u8)) !void
   {
     var index: usize = 0;
     var new_opt_used = false;
     var new_opt: [] const u8 = undefined;
 
-    while (index < opts.items.len)
+    while (index < options.items.len)
     {
       // Handle '-abc' the same as '-a -bc' for short-form no-arg options
-      if (opts.items [index][0] == '-' and opts.items [index].len > 2
-          and (opts.items [index][1] == SHORT_HELP [1]
-            or opts.items [index][1] == SHORT_VERSION [1]
+      if (options.items [index][0] == '-' and options.items [index].len > 2
+          and (options.items [index][1] == SHORT_HELP [1]
+            or options.items [index][1] == SHORT_VERSION [1]
               )
          )
       {
-        try opts.insert (index + 1, opts.items [index][0..2]);
-        new_opt = try std.fmt.allocPrint (allocator, "-{s}", .{ opts.items [index][2..] });
+        try options.insert (index + 1, options.items [index][0..2]);
+        new_opt = try std.fmt.allocPrint (logger.allocator.*, "-{s}", .{ options.items [index][2..] });
         new_opt_used = true;
-        try opts.insert (index + 2, new_opt);
-        _ = opts.orderedRemove (index);
+        try options.insert (index + 2, new_opt);
+        _ = options.orderedRemove (index);
         continue;
       }
 
       // /!\ KEEP THIS FOR POTENTIAL REUSE /!\
       // Handle '-foo' the same as '-f oo' for short-form 1-arg options
-      // if (opts.items [index][0] == '-' and opts.items [index].len > 2
-      //     and (opts.items [index][1] == SHORT_OUTPUT [1]
-      //       or opts.items [index][1] == SHORT_SEED [1]
+      // if (options.items [index][0] == '-' and options.items [index].len > 2
+      //     and (options.items [index][1] == SHORT_OUTPUT [1]
+      //       or options.items [index][1] == SHORT_SEED [1]
       //         )
       //    )
       // {
-      //   try opts.insert (index + 1, opts.items [index][0..2]);
-      //   try opts.insert (index + 2, opts.items [index][2..]);
-      //   _ = opts.orderedRemove (index);
+      //   try options.insert (index + 1, options.items [index][0..2]);
+      //   try options.insert (index + 2, options.items [index][2..]);
+      //   _ = options.orderedRemove (index);
       //   continue;
       // }
       // /!\ KEEP THIS FOR POTENTIAL REUSE /!\
 
       // /!\ KEEP THIS FOR POTENTIAL REUSE /!\
       // Handle '--file=file1' the same as '--file file1' for long-form 1-arg options
-      // if (    std.mem.startsWith (u8, opts.items [index], CAMERA_PIXEL ++ "=")
-      //      or std.mem.startsWith (u8, opts.items [index], CAMERA_ZOOM ++ "=")
+      // if (    std.mem.startsWith (u8, options.items [index], CAMERA_PIXEL ++ "=")
+      //      or std.mem.startsWith (u8, options.items [index], CAMERA_ZOOM ++ "=")
       //    )
       // {
-      //   const eq_index = std.mem.indexOf (u8, opts.items [index], "=").?;
-      //   try opts.insert (index + 1, opts.items [index][0..eq_index]);
-      //   try opts.insert (index + 2, opts.items [index][(eq_index + 1)..]);
-      //   _ = opts.orderedRemove (index);
+      //   const eq_index = std.mem.indexOf (u8, options.items [index], "=").?;
+      //   try options.insert (index + 1, options.items [index][0..eq_index]);
+      //   try options.insert (index + 2, options.items [index][(eq_index + 1)..]);
+      //   _ = options.orderedRemove (index);
       //   continue;
       // }
       // /!\ KEEP THIS FOR POTENTIAL REUSE /!\
 
       // help option
-      if (std.mem.eql (u8, opts.items [index], SHORT_HELP) or std.mem.eql (u8, opts.items [index], LONG_HELP))
+      if (std.mem.eql (u8, options.items [index], SHORT_HELP) or std.mem.eql (u8, options.items [index], LONG_HELP))
       {
         self.help = true;
       // version option
-      } else if (std.mem.eql (u8, opts.items [index], SHORT_VERSION) or std.mem.eql (u8, opts.items [index], LONG_VERSION)) {
+      } else if (std.mem.eql (u8, options.items [index], SHORT_VERSION) or std.mem.eql (u8, options.items [index], LONG_VERSION)) {
         self.version = true;
 
       // ---------------------------------------------------------------------
 
       } else {
-        try log.app (.ERROR, "unknown option: '{s}'", .{ opts.items [index] });
-        self.usage ();
+        try logger.app (.ERROR, "unknown option: '{s}'", .{ options.items [index] });
+        self.usage (logger);
         return OptionsError.UnknownOption;
       }
 
@@ -257,34 +249,34 @@ pub const options = struct
     self.camera.zoom = (self.camera.zoom % (CAMERA_ZOOM_MAX - CAMERA_ZOOM_MIN + 1)) + CAMERA_ZOOM_MIN;
   }
 
-  pub fn init (allocator: std.mem.Allocator) !@This ()
+  pub fn init (logger: *const Logger) !@This ()
   {
     var self: @This () = .{};
 
-    var opts_iterator = try std.process.argsWithAllocator (allocator);
-    defer opts_iterator.deinit();
+    var options_iterator = try std.process.argsWithAllocator (logger.allocator.*);
+    defer options_iterator.deinit();
 
-    _ = opts_iterator.next () orelse
+    _ = options_iterator.next () orelse
         {
           return OptionsError.NoExecutableName;
         };
 
-    var opts = std.ArrayList ([] const u8).init (allocator);
+    var options = std.ArrayList ([] const u8).init (logger.allocator.*);
 
-    while (opts_iterator.next ()) |opt|
+    while (options_iterator.next ()) |opt|
     {
-      try opts.append (opt);
+      try options.append (opt);
     }
 
-    try self.parse (allocator, &opts);
+    try self.parse (logger, &options);
     try self.check ();
 
     if (self.help)
     {
-      self.usage ();
+      self.usage (logger);
       return OptionsError.Help;
     } else if (self.version) {
-      self.print_version ();
+      logger.version ();
       return OptionsError.Version;
     }
 

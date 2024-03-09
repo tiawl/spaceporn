@@ -2,7 +2,7 @@ const std  = @import ("std");
 const glfw = @import ("glfw");
 const vk   = @import ("vk");
 
-const log = @import ("../log.zig");
+const Logger = @import ("logger").Logger;
 
 const imgui = @import ("imgui");
 
@@ -30,11 +30,12 @@ pub const Context = struct
   glfw_win_size: glfw.Window.Size = undefined,
   init_window:   bool = false,
   screenshot:    bool = false,
+  logger:        *const Logger = undefined,
 
   // TODO: remove this:
-  pub fn init () @This ()
+  pub fn init (logger: *const Logger) @This ()
   {
-    return .{};
+    return .{ .logger = logger, };
   }
 
   // TODO: remove this:
@@ -57,7 +58,7 @@ pub const Context = struct
 
     try imgui.glfw.init ();
 
-    try log.app (.DEBUG, "init Imgui GLFW OK", .{});
+    try self.logger.app (.DEBUG, "init Imgui GLFW OK", .{});
   }
 
   fn check_vk_result (err: c_int) callconv (.C) void
@@ -69,8 +70,6 @@ pub const Context = struct
 
   fn upload_fonts (self: @This (), renderer: Renderer) !void
   {
-    _ = self;
-
     try renderer.device_dispatch.resetCommandPool (renderer.logical_device, renderer.command_pool, vk.CommandPoolResetFlags {});
     const begin_info = vk.CommandBufferBeginInfo
                        {
@@ -101,7 +100,7 @@ pub const Context = struct
     try renderer.device_dispatch.deviceWaitIdle (renderer.logical_device);
     imgui.cImGui_ImplVulkan_DestroyFontUploadObjects ();
 
-    try log.app (.DEBUG, "upload Imgui fonts OK", .{});
+    try self.logger.app (.DEBUG, "upload Imgui fonts OK", .{});
   }
 
   pub fn init_vk (self: @This (), renderer: Renderer) !void
@@ -132,7 +131,7 @@ pub const Context = struct
 
     try self.upload_fonts (renderer);
 
-    try log.app (.DEBUG, "init Imgui Vulkan OK", .{});
+    try self.logger.app (.DEBUG, "init Imgui Vulkan OK", .{});
   }
 
   fn prepare_pane (self: *@This (), framebuffer: struct { width: u32, height: u32, }) !void
@@ -157,10 +156,8 @@ pub const Context = struct
     }
   }
 
-  fn prepare_fps (self: @This (), last_displayed_fps: *?std.time.Instant, fps: *f32) !void
+  fn prepare_fps (_: @This (), last_displayed_fps: *?std.time.Instant, fps: *f32) !void
   {
-    _ = self;
-
     if (last_displayed_fps.* == null or (try std.time.Instant.now ()).since (last_displayed_fps.*.?) > std.time.ns_per_s)
     {
       fps.* = imgui.ImGui_GetIO ().*.Framerate;
@@ -172,12 +169,10 @@ pub const Context = struct
 
   fn prepare_seed (self: @This (), tweak_me: anytype) void
   {
-    _ = self;
-
     const button_size = imgui.ImVec2 { .x = 0, .y = 0, };
 
     if (imgui.ImGui_ButtonEx ("New seed", button_size)) tweak_me.seed.* = @intCast (@mod (std.time.milliTimestamp (), @as (i64, @intCast (std.math.maxInt (u32)))));
-    if (log.profile.eql (.DEFAULT))
+    if (self.logger.profile.eql (.DEFAULT))
     {
       imgui.ImGui_SameLineEx (0.0, -1.0);
       imgui.ImGui_Text ("%u", tweak_me.seed.*);
@@ -215,28 +210,24 @@ pub const Context = struct
     imgui.ImGui_End ();
     imgui.ImGui_Render ();
 
-    try log.app (.DEBUG, "start render Imgui OK", .{});
+    try self.logger.app (.DEBUG, "start render Imgui OK", .{});
     return if (self.screenshot) ImguiPrepare.Screenshot else ImguiPrepare.Nothing;
   }
 
   pub fn render (self: @This (), command_buffer: vk.CommandBuffer) !void
   {
-    _ = self;
-
     const pipeline = vk.Pipeline.null_handle;
     imgui.cImGui_ImplVulkan_RenderDrawDataEx (imgui.ImGui_GetDrawData (), @ptrFromInt (@intFromEnum (command_buffer)), @ptrFromInt (@intFromEnum (pipeline)));
 
-    try log.app (.DEBUG, "end render Imgui OK", .{});
+    try self.logger.app (.DEBUG, "end render Imgui OK", .{});
   }
 
   pub fn cleanup (self: @This ()) void
   {
-    _ = self;
-
     imgui.cImGui_ImplVulkan_Shutdown ();
     imgui.cImGui_ImplGlfw_Shutdown ();
     imgui.ImGui_DestroyContext (null);
 
-    try log.app (.DEBUG, "cleanup Imgui OK", .{});
+    try self.logger.app (.DEBUG, "cleanup Imgui OK", .{});
   }
 };

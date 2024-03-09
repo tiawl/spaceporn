@@ -10,7 +10,4 @@
 - change wrapper/module functions: destroy () -> deinit ()
 - use std.fs.createFileAbsolute () instead of std.fs.cwd ().
 - usage () and parse_options () should be Logger methods
-
-- binding: vkCreateInstance () => vk.Instance.create ()
-- dynamic dispatch in cache ???
-- use glfwGetProcAdress pointer into imgui & vk bindings
+- replace == by std.mem.eql () for string

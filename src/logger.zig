@@ -5,7 +5,7 @@ const stderr = std.io.getStdErr ().writer ();
 const build = @import ("build");
 
 const LevelInt = u8;
-pub const Level = enum (LevelInt)
+const Level = enum (LevelInt)
 {
   DEBUG = 0, INFO, WARNING, ERROR,
 
@@ -35,7 +35,7 @@ fn create_file (path: [] const u8) !void
 }
 
 const ProfileInt = u8;
-pub const Profile = enum (ProfileInt)
+const Profile = enum (ProfileInt)
 {
   TURBO = 0, DEFAULT, DEV,
 
@@ -44,7 +44,7 @@ pub const Profile = enum (ProfileInt)
   pub fn gt (self: @This (), other: @This ()) bool { return self.int () > other.int (); }
 };
 
-pub const Event = enum { GENERAL, VALIDATION, PERFORMANCE, @"DEVICE ADDR BINDING", };
+const Event = enum { GENERAL, VALIDATION, PERFORMANCE, @"DEVICE ADDR BINDING", };
 
 pub const Logger = struct
 {
@@ -52,6 +52,8 @@ pub const Logger = struct
   profile: Profile,
   binary: struct { name: [*:0] const u8, version: [] const u8, },
   file: ?struct { path: [*:0] const u8, handle: std.fs.File, } = null,
+
+  pub const optional_extensions = build.optional_extensions;
 
   pub fn init (allocator: *const std.mem.Allocator) !@This ()
   {

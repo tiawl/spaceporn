@@ -139,6 +139,12 @@ pub const Device = enum (usize)
   pub const Memory = enum (u64) { null_handle = 0, _, };
 };
 
+pub const ExtensionProperties = extern struct
+{
+  extension_name: [vk.MAX_EXTENSION_NAME_SIZE] u8,
+  spec_version: u32,
+};
+
 pub const Extent2D = extern struct
 {
   width: u32,
@@ -174,6 +180,19 @@ pub const Image = enum (u64)
 pub const Instance = enum (usize)
 {
   null_handle = 0, _,
+  pub const ExtensionProperties = extern struct
+  {
+    pub fn enumerate (p_layer_name: ?[*:0] const u8, p_property_count: *u32, p_properties: ?[*] vk.ExtensionProperties) !void
+    {
+      const result = vk.raw.structless.dispatch.vkEnumerateInstanceExtensionProperties (p_layer_name, p_property_count, p_properties);
+      if (result > 0)
+      {
+        std.debug.print ("{s} failed with {} status code\n", .{ @src ().fn_name, result, });
+        return error.vkEnumerateInstanceExtensionProperties;
+      }
+    }
+  };
+
   pub const LayerProperties = extern struct
   {
     pub fn enumerate (p_property_count: *u32, p_properties: ?[*] vk.LayerProperties) !void
@@ -181,7 +200,7 @@ pub const Instance = enum (usize)
       const result = vk.raw.structless.dispatch.vkEnumerateInstanceLayerProperties (p_property_count, p_properties);
       if (result > 0)
       {
-        std.debug.print ("{s} failed with {} status code\n", .{ result, });
+        std.debug.print ("{s} failed with {} status code\n", .{ @src ().fn_name, result, });
         return error.vkEnumerateInstanceLayerProperties;
       }
     }
@@ -247,6 +266,11 @@ pub const Viewport = extern struct
 
 pub const EXT = extern struct
 {
+  pub const DEVICE_ADDRESS_BINDING_REPORT = c.VK_EXT_DEVICE_ADDRESS_BINDING_REPORT_EXTENSION_NAME;
+  pub const DEBUG_REPORT = c.VK_EXT_DEBUG_REPORT_EXTENSION_NAME;
+  pub const DEBUG_UTILS = c.VK_EXT_DEBUG_UTILS_EXTENSION_NAME;
+  pub const VALIDATION_FEATURES = c.VK_EXT_VALIDATION_FEATURES_EXTENSION_NAME;
+
   pub const DebugUtils = extern struct
   {
     pub const Label = extern struct
@@ -332,6 +356,7 @@ pub const EXT = extern struct
 
 pub const KHR = extern struct
 {
+  pub const SHADER_NON_SEMANTIC_INFO = c.VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME;
   pub const ColorSpace = enum (i32)
   {
     srgb_nonlinear_khr = c.VK_COLOR_SPACE_SRGB_NONLINEAR_KHR,

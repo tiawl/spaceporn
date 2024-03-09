@@ -55,6 +55,8 @@ fn verbose (builder: *std.Build, profile: *Profile) !void
   profile.optimize = std.builtin.Mode.Debug;
   profile.variables.addOption ([] const u8, "log_dir", try builder.build_root.join (builder.allocator, &.{ log_dir, }));
   profile.variables.addOption (u8, "log_level", 2);
+  profile.variables.addOption ([] const [2][] const u8, "optional_extensions", &.{ [_][] const u8 { "EXT", "DEVICE_ADDRESS_BINDING_REPORT", },
+   [_][] const u8 { "EXT", "VALIDATION_FEATURES", }, [_][] const u8 { "KHR", "SHADER_NON_SEMANTIC_INFO", }, });
   profile.command = &.{ "glslc", "--target-env=vulkan1.2", };
 }
 
@@ -63,6 +65,7 @@ fn default (builder: *std.Build, profile: *Profile, options: *const Options) voi
   profile.optimize = builder.standardOptimizeOption (.{});
   profile.variables.addOption ([] const u8, "log_dir", options.logdir);
   profile.variables.addOption (u8, "log_level", 1);
+  profile.variables.addOption ([] const [2][] const u8, "optional_extensions", &.{ [_][] const u8 { "EXT", "DEVICE_ADDRESS_BINDING_REPORT", }, });
   profile.command = &.{ "glslc", "--target-env=vulkan1.2", };
 }
 
@@ -458,13 +461,12 @@ fn import (builder: *std.Build, exe: *std.Build.Step.Compile, profile: *const Pr
   instance.addImport ("logger", logger);
   instance.addImport ("vk", vk);
 
-  exe.root_module.addImport ("datetime", datetime);
-  exe.root_module.addImport ("shader", shader);
-  exe.root_module.addImport ("glfw", glfw);
-  exe.root_module.addImport ("vk", vk);
-  exe.root_module.addImport ("imgui", imgui);
-  exe.root_module.addImport ("logger", logger);
-  exe.root_module.addImport ("instance", instance);
+  for ([_] struct { name: [] const u8, ptr: *std.Build.Module, } {
+    .{ .name = "datetime", .ptr = datetime, }, .{ .name = "shader", .ptr = shader, },
+    .{ .name = "glfw", .ptr = glfw, }, .{ .name = "vk", .ptr = vk, },
+    .{ .name = "imgui", .ptr = imgui, }, .{ .name = "logger", .ptr = logger, },
+    .{ .name = "instance", .ptr = instance, },
+  }) |module| exe.root_module.addImport (module.name, module.ptr);
 }
 
 fn run_exe (builder: *std.Build, profile: *const Profile) !void

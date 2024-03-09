@@ -24,11 +24,18 @@ pub const instance_vk = struct
 
   const required_extensions = [_][*:0] const u8
   {
-    vk.extension_info.ext_debug_report.name,
-    vk.extension_info.ext_debug_utils.name,
+    vk.EXT.DEBUG_REPORT,
+    vk.EXT.DEBUG_UTILS,
   };
 
-  var optional_extensions: [] const ext_vk = undefined;
+  var optional_extensions: [] ext_vk = blk:
+    {
+      const size = Logger.optional_extensions.len;
+      var optionals: [size] ext_vk = undefined;
+      for (Logger.optional_extensions, 0 ..) |ext, i|
+        optionals [i] = .{ .name = @field (@field (vk, ext [0]), ext [1]), };
+      break :blk &optionals;
+    };
 
   const InitVkError = error
   {
@@ -37,36 +44,23 @@ pub const instance_vk = struct
   };
 
   fn debug_callback (
-    message_severity: vk.DebugUtilsMessageSeverityFlagsEXT,
-    message_type:     vk.DebugUtilsMessageTypeFlagsEXT,
-    p_callback_data:  ?*const vk.DebugUtilsMessengerCallbackDataEXT,
+    message_severity: vk.EXT.DebugUtils.Message.Severity.Flags,
+    message_type:     vk.EXT.DebugUtils.Message.Type.Flags,
+    p_callback_data:  ?*const vk.EXT.DebugUtils.Messenger.Callback.Data,
     p_user_data:      ?*anyopaque) bool
   {
     const self = @as (?*instance_vk, @ptrCast (@alignCast (p_user_data)));
 
-    var event: [] const u8 = undefined;
-
-    if (message_type.general_bit_ext)
-    {
-      event = " GENERAL";
-    } else if (message_type.validation_bit_ext) {
-      event = " VALIDATION";
-    } else if (message_type.performance_bit_ext) {
-      event = " PERFORMANCE";
-    } else if (message_type.device_address_binding_bit_ext) {
-      event = " DEVICE ADDR BINDING";
-    }
-
-    if (message_severity.verbose_bit_ext)
-    {
-      self.logger.vk ("{s}", .DEBUG, event, .{ p_callback_data.?.p_message }) catch return false;
-    } else if (message_severity.info_bit_ext) {
-      self.logger.vk ("{s}", .INFO, event, .{ p_callback_data.?.p_message }) catch return false;
-    } else if (message_severity.warning_bit_ext) {
-      self.logger.vk ("{s}", .WARNING, event, .{ p_callback_data.?.p_message }) catch return false;
-    } else if (message_severity.error_bit_ext) {
-      self.logger.vk ("{s}", .ERROR, event, .{ p_callback_data.?.p_message }) catch return false;
-    }
+    self.logger.vk ("{s}",
+      if (message_severity.verbose_bit_ext) .DEBUG
+      else if (message_severity.info_bit_ext) .INFO
+      else if (message_severity.warning_bit_ext) .WARNING
+      else if (message_severity.error_bit_ext) .ERROR,
+      if (message_type.general_bit_ext) .GENERAL
+      else if (message_type.validation_bit_ext) .VALIDATION
+      else if (message_type.performance_bit_ext) .PERFORMANCE
+      else if (message_type.device_address_binding_bit_ext) .@"DEVICE ADDR BINDING",
+      .{ p_callback_data.?.p_message }) catch return false;
 
     return true;
   }
@@ -114,19 +108,15 @@ pub const instance_vk = struct
     try self.logger.app (.DEBUG, "check Vulkan layer properties initializer OK", .{});
   }
 
-  fn init_debug_info (self: @This (), debug_info: *vk.DebugUtilsMessengerCreateInfoEXT) void
+  fn init_debug_info (self: @This (), debug_info: *vk.EXT.DebugUtils.Messenger.Create.Info) void
   {
     const use_features = blk:
                          {
                            var i: u8 = 0;
                            for (optional_extensions) |ext|
                            {
-                             if (ext.name == vk.extension_info.khr_shader_non_semantic_info.name.ptr and ext.supported)
-                             {
-                               i += 1;
-                             } else if (ext.name == vk.extension_info.ext_validation_features.name.ptr and ext.supported) {
-                               i += 1;
-                             }
+                             if (std.mem.eql (u8, std.mem.sliceTo (ext.name, 0), vk.KHR.SHADER_NON_SEMANTIC_INFO) and ext.supported) i += 1
+                             else if (std.mem.eql (u8, std.mem.sliceTo (ext.name, 0), vk.EXT.VALIDATION_FEATURES) and ext.supported) i += 1;
                            }
                            break :blk (i == 2);
                          };
@@ -141,11 +131,11 @@ pub const instance_vk = struct
                        .p_disabled_validation_features    = null,
                      };
 
-    debug_info.* = vk.DebugUtilsMessengerCreateInfoEXT
+    debug_info.* = vk.EXT.DebugUtils.Messenger.Create.Info
                    {
                      .message_severity  = vk.DebugUtilsMessageSeverityFlagsEXT
                                           {
-                                            .verbose_bit_ext = (self.logger.profile.gt (.DEFAULT)),
+                                            .verbose_bit_ext = self.logger.profile.eql (.DEV),
                                             .info_bit_ext    = true,
                                             .warning_bit_ext = true,
                                             .error_bit_ext   = true,
@@ -154,18 +144,15 @@ pub const instance_vk = struct
                                           {
                                             .general_bit_ext                = true,
                                             .validation_bit_ext             = true,
+                                            .performance_bit_ext            = self.logger.profile.eql (.DEV),
                                             .device_address_binding_bit_ext = blk:
-                                                                              {
-                                                                                for (optional_extensions) |ext|
-                                                                                {
-                                                                                  if (ext.name == vk.extension_info.ext_device_address_binding_report.name.ptr and ext.supported)
-                                                                                  {
-                                                                                    break :blk true;
-                                                                                  }
-                                                                                }
-                                                                                break :blk false;
-                                                                              },
-                                            .performance_bit_ext            = (self.logger.profile.gt (.DEFAULT)),
+                                            {
+                                              for (optional_extensions) |ext|
+                                              {
+                                                if (std.mem.eql (u8, std.mem.sliceTo (ext.name, 0), vk.EXT.DEVICE_ADDRESS_BINDING_REPORT) and ext.supported) break :blk true;
+                                              }
+                                              break :blk false;
+                                            },
                                           },
                      .pfn_user_callback = @ptrCast (&debug_callback),
                      .p_user_data       = &self,
@@ -173,7 +160,7 @@ pub const instance_vk = struct
                    };
   }
 
-  fn check_extension_properties (self: *@This (), debug_info: *vk.DebugUtilsMessengerCreateInfoEXT) !void
+  fn check_extension_properties (self: *@This (), debug_info: *vk.EXT.DebugUtils.Messenger.Create.Info) !void
   {
     var extensions = try std.ArrayList ([*:0] const u8).initCapacity (self.logger.allocator.*, self.extensions.len + required_extensions.len + optional_extensions.len);
 
@@ -181,11 +168,11 @@ pub const instance_vk = struct
 
     var supported_extensions_count: u32 = undefined;
 
-    _ = try self.base_dispatch.enumerateInstanceExtensionProperties (null, &supported_extensions_count, null);
+    try vk.Instance.ExtensionProperties.enumerate (null, &supported_extensions_count, null);
 
     const supported_extensions = try self.logger.allocator.alloc (vk.ExtensionProperties, supported_extensions_count);
 
-    _ = try self.base_dispatch.enumerateInstanceExtensionProperties (null, &supported_extensions_count, supported_extensions.ptr);
+    try vk.Instance.ExtensionProperties.enumerate (null, &supported_extensions_count, supported_extensions.ptr);
 
     var supported: bool = undefined;
 
@@ -209,7 +196,7 @@ pub const instance_vk = struct
       }
     }
 
-    for (&optional_extensions) |*optional_ext|
+    for (optional_extensions) |*optional_ext|
     {
       for (supported_extensions) |supported_ext|
       {
@@ -259,17 +246,6 @@ pub const instance_vk = struct
   pub fn init (extensions: *[][*:0] const u8, logger: *const Logger) !@This ()
   {
     var self: @This () = .{ .logger = logger, };
-
-    optional_extensions = if (self.logger.profile.gt (.DEFAULT))
-                            &.{
-                                .{ .name = vk.extension_info.ext_device_address_binding_report.name, },
-                                .{ .name = vk.extension_info.khr_shader_non_semantic_info.name, },
-                                .{ .name = vk.extension_info.ext_validation_features.name, },
-                              }
-                          else
-                            &.{
-                                .{ .name = vk.extension_info.ext_device_address_binding_report.name, },
-                              };
 
     var debug_info: vk.EXT.DebugUtils.Messenger.Create.Info = undefined;
 

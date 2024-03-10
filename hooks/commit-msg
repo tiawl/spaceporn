@@ -2,40 +2,41 @@
 
 main ()
 {
-  done_def='DONE - commit linked to a task and close it'
-  progress_def='PROGRESS - commit linked to a task and do not close it'
+  done_def='DONE - commit linked to an opened task and close it'
+  progress_def='PROGRESS - commit linked to an opened task and do not close it'
   fix_def='FIX - commit linked to a closed task'
   one_task_headers='done\|progress\|fix'
 
-  one_task_syntax='[<DONE|PROGRESS|FIX> #<task ID>] <message>'
+  one_task_syntax='[<DONE|PROGRESS|FIX> #<task ID>] <body>'
   one_task_commit='\[\('"${one_task_headers}"'\) #[0-9]\+\] .\+'
 
-  update_def='UPDATE - commit not linked to a task or linked to several tasks'
-  typo_def='TYPO - commit with insignificant content'
-  no_task_headers='update\|typo'
+  update_def='UPDATE - commit not linked to an opened task'
+  revert_def='REVERT - cancel problematic commit(s) (with ID(s) in <body>)'
+  no_task_headers='update\|revert'
 
-  no_task_syntax='[<UPDATE|TYPO>] <message>'
+  no_task_syntax='[<UPDATE|REVERT>] <body>'
   no_task_commit='\[\('"${no_task_headers}"'\)\] .\+'
 
   release_def='RELEASE - commit related to a major/minor release'
   patch_def='PATCH - commit related to a patch'
   milestone_headers='release\|patch'
 
-  milestone_syntax='[<RELEASE|PATCH>] <message>'
+  milestone_syntax='[<RELEASE|PATCH>] <body>'
   milestone_commit='\[\('"${milestone_headers}"'\)\] .\+'
 
   merge_def='MERGE - solve conflicts'
   init_def='INIT - first commit'
-  special_headers='merge\|init'
+  typo_def='TYPO - commit with insignificant content'
+  specific_headers='merge\|init\|typo'
 
-  special_syntax='[<MERGE|INIT>]'
-  special_commit='\[\('"${special_headers}"'\)\]'
+  specific_syntax='[<MERGE|INIT|TYPO>]'
+  specific_commit='\[\('"${specific_headers}"'\)\]'
 
-  warning='Commit message allows only one of those syntaxes:'
+  first_line='Commit message allows only one of these syntaxes:'
 
   replace_me='@@@'
 
-  message="${warning}
+  error="${first_line}
 ${replace_me}
 ${one_task_syntax}
 
@@ -46,26 +47,51 @@ ${replace_me}
 ${no_task_syntax}
 
   ${update_def}
-  ${typo_def}
+  ${revert_def}
 ${replace_me}
 ${milestone_syntax}
 
   ${release_def}
   ${patch_def}
 ${replace_me}
-${special_syntax}
+${specific_syntax}
 
   ${merge_def}
   ${init_def}
+  ${typo_def}
 "
 
-  dashes="$(printf %"$(printf '%s' "${message}" | awk "{ print length }" | sort -n | tail -n1)"s | tr ' ' '-')"
+  reset='\033[m'
+  bold='\033[1m'
+  red='\033[38;5;11m'
+  orange='\033[38;5;214m'
+  yellow='\033[38;5;9m'
+  apple='\033[38;5;10m'
+  green='\033[38;5;42m'
+  cyan='\033[38;5;51m'
+  blue='\033[38;5;69m'
+  navy='\033[38;5;21m'
+  purple='\033[38;5;129m'
+  pink='\033[38;5;201m'
 
-  match="${one_task_commit}"'\|'"${no_task_commit}"'\|'"${milestone_commit}"'\|'"${special_commit}"
+  done_color="${apple}"
+  progress_color="${yellow}"
+  fix_color="${red}"
+  update_color="${orange}"
+  revert_color="${pink}"
+  release_color="${navy}"
+  patch_color="${purple}"
+  merge_color="${green}"
+  init_color="${cyan}"
+  typo_color="${blue}"
+
+  dashes="$(printf %"$(printf '%s' "${error}" | awk "{ print length }" | sort -n | tail -n1)"s | tr ' ' '-')"
+
+  match="${one_task_commit}"'\|'"${no_task_commit}"'\|'"${milestone_commit}"'\|'"${specific_commit}"
 
   if ! grep -q "${match}" "${1}"
   then
-    printf '%s' "${message}" | sed 's/^'"${replace_me}"'$/'"${dashes}"'/;'"$(printf 's/DONE/\033[1m\033[38;5;10mdone\033[m/;s/PROGRESS/\033[1m\033[38;5;11mprogress\033[m/;s/FIX/\033[1m\033[38;5;9mfix\033[m/;s/UPDATE/\033[1m\033[38;5;214mupdate\033[m/;s/TYPO/\033[1m\033[38;5;201mtypo\033[m/;s/RELEASE/\033[1m\033[38;5;21mrelease\033[m/;s/PATCH/\033[1m\033[38;5;129mpatch\033[m/;s/MERGE/\033[1m\033[38;5;42mmerge\033[m/;s/INIT/\033[1m\033[38;5;51minit\033[m/')" 1>&2
+    printf '%s' "${error}" | sed 's/^'"${replace_me}"'$/'"${dashes}"'/;'"$(printf "s/DONE/${bold}${done_color}done${reset}/;s/PROGRESS/${bold}${progress_color}progress${reset}/;s/FIX/${bold}${fix_color}fix${reset}/;s/UPDATE/${bold}${update_color}update${reset}/;s/REVERT/${bold}${revert_color}revert${reset}/;s/RELEASE/${bold}${release_color}release${reset}/;s/PATCH/${bold}${patch_color}patch${reset}/;s/MERGE/${bold}${merge_color}merge${reset}/;s/INIT/${bold}${init_color}init${reset}/;s/TYPO/${bold}${typo_color}typo${reset}/")" 1>&2
     return 1
   fi
 }

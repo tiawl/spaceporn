@@ -55,8 +55,11 @@ fn verbose (builder: *std.Build, profile: *Profile) !void
   profile.optimize = std.builtin.Mode.Debug;
   profile.variables.addOption ([] const u8, "log_dir", try builder.build_root.join (builder.allocator, &.{ log_dir, }));
   profile.variables.addOption (u8, "log_level", 2);
-  profile.variables.addOption ([] const [2][] const u8, "optional_extensions", &.{ [_][] const u8 { "EXT", "DEVICE_ADDRESS_BINDING_REPORT", },
-   [_][] const u8 { "EXT", "VALIDATION_FEATURES", }, [_][] const u8 { "KHR", "SHADER_NON_SEMANTIC_INFO", }, });
+  profile.variables.addOption ([] const [] const [] const u8, "optional_extensions", &.{
+    &.{ "EXT", "DEVICE_ADDRESS_BINDING_REPORT", },
+    &.{ "EXT", "VALIDATION_FEATURES", },
+    &.{ "KHR", "SHADER_NON_SEMANTIC_INFO", },
+  });
   profile.command = &.{ "glslc", "--target-env=vulkan1.2", };
 }
 
@@ -65,7 +68,9 @@ fn default (builder: *std.Build, profile: *Profile, options: *const Options) voi
   profile.optimize = builder.standardOptimizeOption (.{});
   profile.variables.addOption ([] const u8, "log_dir", options.logdir);
   profile.variables.addOption (u8, "log_level", 1);
-  profile.variables.addOption ([] const [2][] const u8, "optional_extensions", &.{ [_][] const u8 { "EXT", "DEVICE_ADDRESS_BINDING_REPORT", }, });
+  profile.variables.addOption ([] const [] const [] const u8, "optional_extensions", &.{
+    &.{ "EXT", "DEVICE_ADDRESS_BINDING_REPORT", },
+  });
   profile.command = &.{ "glslc", "--target-env=vulkan1.2", };
 }
 

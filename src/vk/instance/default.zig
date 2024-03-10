@@ -28,12 +28,16 @@ pub const instance_vk = struct
     vk.EXT.DEBUG_UTILS,
   };
 
-  var optional_extensions: [] ext_vk = blk:
+  var optional_extensions = blk:
     {
       const size = Logger.optional_extensions.len;
       var optionals: [size] ext_vk = undefined;
-      for (Logger.optional_extensions, 0 ..) |ext, i|
-        optionals [i] = .{ .name = @field (@field (vk, ext [0]), ext [1]), };
+      for (Logger.optional_extensions, 0 ..) |*ext, i|
+      {
+        var fld = vk;
+        for (0 .. ext.len - 1) |j| fld = @field (fld, ext.* [j]);
+        optionals [i] = .{ .name = @field (fld, ext.* [ext.len - 1]), };
+      }
       break :blk &optionals;
     };
 

@@ -2,11 +2,70 @@
 
 main ()
 {
-  regex='\[(update|typo|fix) #[0-9]+\] .+|\[merge\]|\[init\]'
+  done_def='DONE - commit linked to a task and close it'
+  progress_def='PROGRESS - commit linked to a task and do not close it'
+  fix_def='FIX - commit linked to a closed task'
+  one_task_headers='done\|progress\|fix'
 
-  if ! grep -E -i -q "${regex}" "${1}"
+  one_task_syntax='[<DONE|PROGRESS|FIX> #<task ID>] <message>'
+  one_task_commit='\[\('"${one_task_headers}"'\) #[0-9]\+\] .\+'
+
+  update_def='UPDATE - commit not linked to a task or linked to several tasks'
+  typo_def='TYPO - commit with insignificant content'
+  no_task_headers='update\|typo'
+
+  no_task_syntax='[<UPDATE|TYPO>] <message>'
+  no_task_commit='\[\('"${no_task_headers}"'\)\] .\+'
+
+  release_def='RELEASE - commit related to a major/minor release'
+  patch_def='PATCH - commit related to a patch'
+  milestone_headers='release\|patch'
+
+  milestone_syntax='[<RELEASE|PATCH>] <message>'
+  milestone_commit='\[\('"${milestone_headers}"'\)\] .\+'
+
+  merge_def='MERGE - solve conflicts'
+  init_def='INIT - first commit'
+  special_headers='merge\|init'
+
+  special_syntax='[<MERGE|INIT>]'
+  special_commit='\[\('"${special_headers}"'\)\]'
+
+  warning='Commit message allows only one of those syntaxes:'
+
+  replace_me='@@@'
+
+  message="${warning}
+${replace_me}
+${one_task_syntax}
+
+  ${done_def}
+  ${progress_def}
+  ${fix_def}
+${replace_me}
+${no_task_syntax}
+
+  ${update_def}
+  ${typo_def}
+${replace_me}
+${milestone_syntax}
+
+  ${release_def}
+  ${patch_def}
+${replace_me}
+${special_syntax}
+
+  ${merge_def}
+  ${init_def}
+"
+
+  dashes="$(printf %"$(printf '%s' "${message}" | awk "{ print length }" | sort -n | tail -n1)"s | tr ' ' '-')"
+
+  match="${one_task_commit}"'\|'"${no_task_commit}"'\|'"${milestone_commit}"'\|'"${special_commit}"
+
+  if ! grep -q "${match}" "${1}"
   then
-    printf 'Commit message allows only one of those syntaxes:\n- "[<update|typo|fix> #<issue ID>] <message>"\n- "[merge]"\n- "[init]"\n' 1>&2
+    printf '%s' "${message}" | sed 's/^'"${replace_me}"'$/'"${dashes}"'/;'"$(printf 's/DONE/\033[1m\033[38;5;10mdone\033[m/;s/PROGRESS/\033[1m\033[38;5;11mprogress\033[m/;s/FIX/\033[1m\033[38;5;9mfix\033[m/;s/UPDATE/\033[1m\033[38;5;214mupdate\033[m/;s/TYPO/\033[1m\033[38;5;201mtypo\033[m/;s/RELEASE/\033[1m\033[38;5;21mrelease\033[m/;s/PATCH/\033[1m\033[38;5;129mpatch\033[m/;s/MERGE/\033[1m\033[38;5;42mmerge\033[m/;s/INIT/\033[1m\033[38;5;51minit\033[m/')" 1>&2
     return 1
   fi
 }

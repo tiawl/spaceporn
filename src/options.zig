@@ -154,14 +154,14 @@ pub const Options = struct
     }
   }
 
-  fn usage (self: *@This (), logger: *const Logger) void
+  fn usage (self: *@This ()) void
   {
-    std.debug.print ("\nUsage: {s} [OPTION] ...\n\nGenerator for space contemplators\n\nOptions:\n", .{ logger.binary.name, });
+    std.debug.print ("\nUsage: {s} [OPTION] ...\n\nGenerator for space contemplators\n\nOptions:\n", .{ Logger.build.binary.name, });
     inline for (std.meta.fields (@TypeOf (self.*))) |field|
     {
       @call (.auto, @field (@This (), "usage_" ++ field.name), .{ self });
     }
-    std.debug.print ("\nThe {s} home page: http://www.github.com/tiawl/spaceporn\nReport {s} bugs to http://www.github.com/tiawl/spaceporn/issues\n\n", .{ logger.binary.name, logger.binary.name, });
+    std.debug.print ("\nThe {s} home page: http://www.github.com/tiawl/spaceporn\nReport {s} bugs to http://www.github.com/tiawl/spaceporn/issues\n\n", .{ Logger.build.binary.name, Logger.build.binary.name, });
   }
 
   fn parse (self: *@This (), logger: *const Logger, options: *std.ArrayList ([] const u8)) !void
@@ -228,7 +228,7 @@ pub const Options = struct
 
       } else {
         try logger.app (.ERROR, "unknown option: '{s}'", .{ options.items [index] });
-        self.usage (logger);
+        self.usage ();
         return OptionsError.UnknownOption;
       }
 
@@ -273,10 +273,10 @@ pub const Options = struct
 
     if (self.help)
     {
-      self.usage (logger);
+      self.usage ();
       return OptionsError.Help;
     } else if (self.version) {
-      logger.version ();
+      Logger.version ();
       return OptionsError.Version;
     }
 

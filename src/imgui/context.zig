@@ -167,12 +167,12 @@ pub const Context = struct
     imgui.ImGui_Text ("Average %.3f ms/frame (%.1f FPS)", 1000.0 / fps.*, fps.*);
   }
 
-  fn prepare_seed (self: @This (), tweak_me: anytype) void
+  fn prepare_seed (tweak_me: anytype) void
   {
     const button_size = imgui.ImVec2 { .x = 0, .y = 0, };
 
     if (imgui.ImGui_ButtonEx ("New seed", button_size)) tweak_me.seed.* = @intCast (@mod (std.time.milliTimestamp (), @as (i64, @intCast (std.math.maxInt (u32)))));
-    if (self.logger.profile.eql (.DEFAULT))
+    if (Logger.build.profile.eql (.DEFAULT))
     {
       imgui.ImGui_SameLineEx (0.0, -1.0);
       imgui.ImGui_Text ("%u", tweak_me.seed.*);

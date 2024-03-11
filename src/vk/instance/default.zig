@@ -30,13 +30,13 @@ pub const instance_vk = struct
 
   var optional_extensions = blk:
     {
-      const size = Logger.optional_extensions.len;
+      const size = Logger.build.vk.optional_extensions.len;
       var optionals: [size] ext_vk = undefined;
-      for (Logger.optional_extensions, 0 ..) |*ext, i|
+      for (Logger.build.vk.optional_extensions, 0 ..) |*ext, i|
       {
-        var fld = vk;
-        for (0 .. ext.len - 1) |j| fld = @field (fld, ext.* [j]);
-        optionals [i] = .{ .name = @field (fld, ext.* [ext.len - 1]), };
+        var field = vk;
+        for (0 .. ext.len - 1) |j| field = @field (field, ext.* [j]);
+        optionals [i] = .{ .name = @field (field, ext.* [ext.len - 1]), };
       }
       break :blk &optionals;
     };
@@ -55,16 +55,16 @@ pub const instance_vk = struct
   {
     const self = @as (?*instance_vk, @ptrCast (@alignCast (p_user_data)));
 
-    self.logger.vk ("{s}",
-      if (message_severity.verbose_bit_ext) .DEBUG
-      else if (message_severity.info_bit_ext) .INFO
-      else if (message_severity.warning_bit_ext) .WARNING
-      else if (message_severity.error_bit_ext) .ERROR,
-      if (message_type.general_bit_ext) .GENERAL
-      else if (message_type.validation_bit_ext) .VALIDATION
-      else if (message_type.performance_bit_ext) .PERFORMANCE
-      else if (message_type.device_address_binding_bit_ext) .@"DEVICE ADDR BINDING",
-      .{ p_callback_data.?.p_message }) catch return false;
+    self.?.logger.vk (
+      if (vk.EXT.DebugUtils.Message.Severity.Bit.VERBOSE.in (message_severity)) .DEBUG
+      else if (vk.EXT.DebugUtils.Message.Severity.Bit.INFO.in (message_severity)) .INFO
+      else if (vk.EXT.DebugUtils.Message.Severity.Bit.WARNING.in (message_severity)) .WARNING
+      else .ERROR,
+      if (vk.EXT.DebugUtils.Message.Type.Bit.GENERAL.in (message_type)) .GENERAL
+      else if (vk.EXT.DebugUtils.Message.Type.Bit.VALIDATION.in (message_type)) .VALIDATION
+      else if (vk.EXT.DebugUtils.Message.Type.Bit.PERFORMANCE.in (message_type)) .PERFORMANCE
+      else .@"DEVICE ADDR BINDING",
+      "{s}", .{ p_callback_data.?.p_message }) catch return false;
 
     return true;
   }
@@ -112,7 +112,7 @@ pub const instance_vk = struct
     try self.logger.app (.DEBUG, "check Vulkan layer properties initializer OK", .{});
   }
 
-  fn init_debug_info (self: @This (), debug_info: *vk.EXT.DebugUtils.Messenger.Create.Info) void
+  fn init_debug_info (self: *@This (), debug_info: *vk.EXT.DebugUtils.Messenger.Create.Info) void
   {
     const use_features = blk:
                          {
@@ -125,9 +125,9 @@ pub const instance_vk = struct
                            break :blk (i == 2);
                          };
 
-    const enabled_features = [_] vk.ValidationFeatureEnableEXT { .debug_printf_ext, .best_practices_ext, };
+    const enabled_features = [_] vk.EXT.ValidationFeature.Enable { .DEBUG_PRINTF, .BEST_PRACTICES, };
 
-    const features = vk.ValidationFeaturesEXT
+    const features = vk.EXT.ValidationFeatures
                      {
                        .enabled_validation_feature_count  = enabled_features.len,
                        .p_enabled_validation_features     = &enabled_features,
@@ -137,29 +137,22 @@ pub const instance_vk = struct
 
     debug_info.* = vk.EXT.DebugUtils.Messenger.Create.Info
                    {
-                     .message_severity  = vk.DebugUtilsMessageSeverityFlagsEXT
-                                          {
-                                            .verbose_bit_ext = self.logger.profile.eql (.DEV),
-                                            .info_bit_ext    = true,
-                                            .warning_bit_ext = true,
-                                            .error_bit_ext   = true,
-                                          },
-                     .message_type      = vk.DebugUtilsMessageTypeFlagsEXT
-                                          {
-                                            .general_bit_ext                = true,
-                                            .validation_bit_ext             = true,
-                                            .performance_bit_ext            = self.logger.profile.eql (.DEV),
-                                            .device_address_binding_bit_ext = blk:
+                     .message_severity  = (@intFromEnum (vk.EXT.DebugUtils.Message.Severity.Bit.VERBOSE) & @intFromBool (Logger.build.profile.eql (.DEV))) |
+                                          @intFromEnum (vk.EXT.DebugUtils.Message.Severity.Bit.INFO) |
+                                          @intFromEnum (vk.EXT.DebugUtils.Message.Severity.Bit.WARNING) |
+                                          @intFromEnum (vk.EXT.DebugUtils.Message.Severity.Bit.ERROR),
+                     .message_type      = @intFromEnum (vk.EXT.DebugUtils.Message.Type.Bit.GENERAL) |
+                                          @intFromEnum (vk.EXT.DebugUtils.Message.Type.Bit.VALIDATION) |
+                                          (@intFromEnum (vk.EXT.DebugUtils.Message.Type.Bit.PERFORMANCE) & @intFromBool (Logger.build.profile.eql (.DEV))) | blk:
                                             {
                                               for (optional_extensions) |ext|
                                               {
-                                                if (std.mem.eql (u8, std.mem.sliceTo (ext.name, 0), vk.EXT.DEVICE_ADDRESS_BINDING_REPORT) and ext.supported) break :blk true;
+                                                if (std.mem.eql (u8, std.mem.sliceTo (ext.name, 0), vk.EXT.DEVICE_ADDRESS_BINDING_REPORT) and ext.supported) break :blk 0;
                                               }
-                                              break :blk false;
+                                              break :blk @intFromEnum (vk.EXT.DebugUtils.Message.Type.Bit.DEVICE_ADDRESS_BINDING);
                                             },
-                                          },
                      .pfn_user_callback = @ptrCast (&debug_callback),
-                     .p_user_data       = &self,
+                     .p_user_data       = self,
                      .p_next            = if (use_features) @ptrCast (&features) else null,
                    };
   }
@@ -224,16 +217,15 @@ pub const instance_vk = struct
 
     const app_info = vk.ApplicationInfo
                      {
-                       .p_application_name  = self.logger.binary.name,
-                       .application_version = vk.makeApiVersion (0, 1, 2, 0),
+                       .p_application_name  = Logger.build.binary.name,
+                       .application_version = @field (vk.API_VERSION.@"1", Logger.build.vk.minor),
                        .p_engine_name       = "No Engine",
-                       .engine_version      = vk.makeApiVersion (0, 1, 2, 0),
-                       .api_version         = vk.API_VERSION_1_2,
+                       .engine_version      = @field (vk.API_VERSION.@"1", Logger.build.vk.minor),
+                       .api_version         = @field (vk.API_VERSION.@"1", Logger.build.vk.minor),
                      };
 
-    const create_info = vk.InstanceCreateInfo
+    const create_info = vk.Instance.Create.Info
                         {
-                          .flags                      = vk.InstanceCreateFlags {},
                           .enabled_layer_count        = required_layers.len,
                           .pp_enabled_layer_names     = required_layers [0..].ptr,
                           .p_next                     = debug_info,
@@ -242,7 +234,7 @@ pub const instance_vk = struct
                           .pp_enabled_extension_names = self.extensions [0..].ptr,
                         };
 
-    self.instance = try self.base_dispatch.createInstance (&create_info, null);
+    self.instance = try vk.Instance.create (&create_info, null);
 
     try self.logger.app (.DEBUG, "check Vulkan extension properties initializer OK", .{});
   }

@@ -49,7 +49,7 @@ pub const Context = struct
                     .{ .resizable = .@"false", },
                   };
 
-    self.window = glfw.Window.create (options.window.width.?, options.window.height.?, self.logger.binary.name, null, null, &hints) catch |err|
+    self.window = glfw.Window.create (options.window.width.?, options.window.height.?, Logger.build.binary.name, null, null, &hints) catch |err|
     {
       try self.logger.app (.ERROR, "failed to initialize GLFW window: {?s}", .{ glfw.Error.String.get () });
       return err;

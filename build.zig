@@ -5,9 +5,12 @@ const zon = .{ .name = "spaceporn", .version = "0.0.0", .min_zig_version = "0.11
 
 const Options = struct
 {
-  verbose: bool,
-  turbo: bool,
-  logdir: [] const u8,
+  verbose: bool = false,
+  turbo: bool = false,
+  logdir: [] const u8 = "",
+  vkminor: [] const u8 = "2",
+
+  const default: @This () = .{};
 };
 
 const Profile = struct
@@ -33,12 +36,12 @@ fn requirements () !void
     std.debug.panic ("{s} needs at least Zig {s} to be build", .{ zon.name, zon.min_zig_version, });
 }
 
-fn turbo (profile: *Profile) void
+fn turbo (builder: *std.Build, profile: *Profile) !void
 {
   profile.optimize = std.builtin.Mode.ReleaseFast;
   profile.variables.addOption ([] const u8, "log_dir", "");
   profile.variables.addOption (u8, "log_level", 0);
-  profile.command = &.{ "glslc", "-O", "--target-env=vulkan1.2", };
+  profile.command = &.{ "glslc", "-O", try std.fmt.allocPrint (builder.allocator, "--target-env=vulkan1.{s}", .{ profile.options.vkminor, }), };
 }
 
 fn verbose (builder: *std.Build, profile: *Profile) !void
@@ -55,32 +58,39 @@ fn verbose (builder: *std.Build, profile: *Profile) !void
   profile.optimize = std.builtin.Mode.Debug;
   profile.variables.addOption ([] const u8, "log_dir", try builder.build_root.join (builder.allocator, &.{ log_dir, }));
   profile.variables.addOption (u8, "log_level", 2);
-  profile.variables.addOption ([] const [] const [] const u8, "optional_extensions", &.{
+  profile.variables.addOption ([] const [] const [] const u8, "vk_optional_extensions", &.{
     &.{ "EXT", "DEVICE_ADDRESS_BINDING_REPORT", },
     &.{ "EXT", "VALIDATION_FEATURES", },
     &.{ "KHR", "SHADER_NON_SEMANTIC_INFO", },
   });
-  profile.command = &.{ "glslc", "--target-env=vulkan1.2", };
+  profile.command = &.{ "glslc", try std.fmt.allocPrint (builder.allocator, "--target-env=vulkan1.{s}", .{ profile.options.vkminor, }), };
 }
 
-fn default (builder: *std.Build, profile: *Profile, options: *const Options) void
+fn default (builder: *std.Build, profile: *Profile) !void
 {
   profile.optimize = builder.standardOptimizeOption (.{});
-  profile.variables.addOption ([] const u8, "log_dir", options.logdir);
+  profile.variables.addOption ([] const u8, "log_dir", profile.options.logdir);
   profile.variables.addOption (u8, "log_level", 1);
-  profile.variables.addOption ([] const [] const [] const u8, "optional_extensions", &.{
+  profile.variables.addOption ([] const [] const [] const u8, "vk_optional_extensions", &.{
     &.{ "EXT", "DEVICE_ADDRESS_BINDING_REPORT", },
   });
-  profile.command = &.{ "glslc", "--target-env=vulkan1.2", };
+  profile.command = &.{ "glslc", try std.fmt.allocPrint (builder.allocator, "--target-env=vulkan1.{s}", .{ profile.options.vkminor, }), };
 }
 
 fn parse_options (builder: *std.Build) !Profile
 {
   const options = Options {
-    .verbose = builder.option (bool, std.meta.fieldInfo (Options, .verbose).name, "Build " ++ zon.name ++ " with full logging features.") orelse false,
-    .turbo = builder.option (bool, std.meta.fieldInfo (Options, .turbo).name, "Build " ++ zon.name ++ " with optimized features.") orelse false,
-    .logdir = builder.option ([] const u8, std.meta.fieldInfo (Options, .logdir).name, "Absolute path to log directory. If not specified, logs are not registered in a file.") orelse "",
+    .verbose = builder.option (bool, std.meta.fieldInfo (Options, .verbose).name, "Build " ++ zon.name ++ " with full logging features. Default: " ++ (if (@field (Options.default, std.meta.fieldInfo (Options, .verbose).name)) "enabled" else "disabled") ++ ".")
+      orelse @field (Options.default, std.meta.fieldInfo (Options, .verbose).name),
+    .turbo = builder.option (bool, std.meta.fieldInfo (Options, .turbo).name, "Build " ++ zon.name ++ " with optimized features. Default: " ++ (if (@field (Options.default, std.meta.fieldInfo (Options, .turbo).name)) "enabled" else "disabled") ++ ".")
+      orelse @field (Options.default, std.meta.fieldInfo (Options, .turbo).name),
+    .logdir = builder.option ([] const u8, std.meta.fieldInfo (Options, .logdir).name, "Absolute path to log directory. If not specified, logs are not registered in a file.")
+      orelse @field (Options.default, std.meta.fieldInfo (Options, .logdir).name),
+    .vkminor = builder.option ([] const u8, std.meta.fieldInfo (Options, .vkminor).name, "Vulkan minor version to use: Possible values: 0, 1, 2 or 3. Default value: " ++ @field (Options.default, std.meta.fieldInfo (Options, .vkminor).name) ++ ".")
+      orelse @field (Options.default, std.meta.fieldInfo (Options, .vkminor).name),
   };
+
+  _ = std.fmt.parseInt (u2, options.vkminor, 10) catch std.debug.panic ("-D{s} value should be 0, 1, 2 or 3", .{ std.meta.fieldInfo (Options, .vkminor).name, });
 
   if (options.turbo and options.verbose)
     std.debug.panic ("-D{s} and -D{s} can not be used together", .{ std.meta.fieldInfo (Options, .turbo).name, std.meta.fieldInfo (Options, .verbose).name, })
@@ -89,14 +99,15 @@ fn parse_options (builder: *std.Build) !Profile
 
   var profile: Profile = undefined;
   profile.target = builder.standardTargetOptions (.{});
+  profile.options = options;
   profile.variables = builder.addOptions ();
   profile.variables.addOption ([] const u8, std.meta.fieldInfo (@TypeOf (zon), .name).name, zon.name);
   profile.variables.addOption ([] const u8, std.meta.fieldInfo (@TypeOf (zon), .version).name, zon.version);
-  profile.options = options;
+  profile.variables.addOption ([] const u8, "vk_minor", profile.options.vkminor);
 
-  if (options.turbo) turbo (&profile)
-  else if (options.verbose) try verbose (builder, &profile)
-  else default (builder, &profile, &options);
+  if (profile.options.turbo) try turbo (builder, &profile)
+  else if (profile.options.verbose) try verbose (builder, &profile)
+  else try default (builder, &profile);
 
   return profile;
 }

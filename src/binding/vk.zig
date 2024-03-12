@@ -7,128 +7,133 @@ const vk = @This ();
 
 const Raw = struct
 {
-  const Structless = struct
+  fn basename (raw_name: [] const u8) [] const u8
   {
-    dispatch: Dispatch,
+    var res = raw_name;
+    if (std.mem.indexOf (u8, res, "_Vk")) |index| res = res [index + 3 ..];
+    if (std.mem.lastIndexOfScalar (u8, res, '_')) |index| res = res [0 .. index];
+    return res;
+  }
 
-    fn basename (raw_name: [] const u8) [] const u8
+  fn ziggify (raw_name: [] const u8) type
+  {
+    var name = basename (raw_name);
+    var field = vk;
+    for ([_][] const u8 { "EXT", "KHR", }) |prefix|
     {
-      var res = raw_name;
-      if (std.mem.indexOf (u8, res, "_Vk")) |index| res = res [index + 3 ..];
-      if (std.mem.lastIndexOfScalar (u8, res, '_')) |index| res = res [0 .. index];
-      return res;
-    }
-
-    fn ziggify (raw_name: [] const u8) type
-    {
-      const name = basename (raw_name);
-      var field = vk;
-      var start: usize = 0;
-      var end = name.len;
-      while (start < end)
+      if (std.mem.endsWith (u8, name, prefix))
       {
-        if (@hasDecl (field, name [start .. end]))
-        {
-          field = @field (field, name [start .. end]);
-          start = end;
-          end = name.len;
-        } else end = std.mem.lastIndexOfAny (u8, name [0 .. end - 1], "ABCDEFGHIJKLMNOPQRSTUVWXYZ")
-          orelse std.debug.panic ("Undefined \"{s}\" into vk binding from \"{s}\"", .{ name [start .. end], name, });
+        name = name [0 .. name.len - prefix.len];
+        field = @field (vk, prefix);
+        break;
       }
-
-      return field;
+    }
+    var start: usize = 0;
+    var end = name.len;
+    while (start < end)
+    {
+      if (@hasDecl (field, name [start .. end]))
+      {
+        field = @field (field, name [start .. end]);
+        start = end;
+        end = name.len;
+      } else end = std.mem.lastIndexOfAny (u8, name [0 .. end - 1], "ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+        orelse std.debug.panic ("Undefined \"{s}\" into vk binding from \"{s}\"", .{ name [start .. end], name, });
     }
 
-    fn cast_rec (comptime T: type, is_opaque: *bool) type
+    return field;
+  }
+
+  fn cast_rec (comptime T: type, is_opaque: *bool) type
+  {
+    var info = @typeInfo (T);
+    return switch (info)
     {
-      var info = @typeInfo (T);
-      return switch (info)
-      {
-        .Opaque   => blk: { is_opaque.* = true; break :blk ziggify (@typeName (T)); },
-        .Optional => blk: {
-                       const child = cast_rec (info.Optional.child, is_opaque);
-                       if (is_opaque.*) { is_opaque.* = false; break :blk child; }
-                       else { info.Optional.child = child; break :blk @Type (info); }
-                     },
-        .Pointer  => blk: {
-                       const child = cast_rec (info.Pointer.child, is_opaque);
-                       if (is_opaque.*) break :blk child
-                       else { info.Pointer.child = child; break :blk @Type (info); }
-                     },
-        .Struct   => if (info.Struct.layout == .Auto) T else ziggify (@typeName (T)),
-        else      => T,
+      .Opaque   => blk: { is_opaque.* = true; break :blk ziggify (@typeName (T)); },
+      .Optional => blk: {
+                     const child = cast_rec (info.Optional.child, is_opaque);
+                     if (is_opaque.*) { is_opaque.* = false; break :blk child; }
+                     else { info.Optional.child = child; break :blk @Type (info); }
+                   },
+      .Pointer  => blk: {
+                     const child = cast_rec (info.Pointer.child, is_opaque);
+                     if (is_opaque.*) break :blk child
+                     else { info.Pointer.child = child; break :blk @Type (info); }
+                   },
+      .Struct   => if (info.Struct.layout == .Auto) T else ziggify (@typeName (T)),
+      else      => T,
+    };
+  }
+
+  fn cast (comptime T: type) type
+  {
+    var is_opaque = false;
+    return cast_rec (T, &is_opaque);
+  }
+
+  fn Dispatch (comptime T: std.meta.DeclEnum (prototypes)) type
+  {
+    @setEvalBranchQuota (10_000);
+    const size = @typeInfo (@field (prototypes, @tagName (T))).Enum.fields.len;
+    var fields: [size] std.builtin.Type.StructField = undefined;
+    for (@typeInfo (@field (prototypes, @tagName (T))).Enum.fields, 0 ..) |*field, i|
+    {
+      const pfn = pfn: {
+        const pointer = @typeInfo (@TypeOf (@field (c, field.name)));
+        var params: [pointer.Fn.params.len] std.builtin.Type.Fn.Param = undefined;
+        for (pointer.Fn.params, 0 ..) |*param, j|
+        {
+          params [j] = .{
+            .is_generic = param.is_generic,
+            .is_noalias = param.is_noalias,
+            .type = cast (param.type orelse @compileError ("Param type is null for " ++ field.name)),
+          };
+        }
+        break :pfn @Type (.{
+          .Pointer = .{
+            .size = .One,
+            .is_const = true,
+            .is_volatile = false,
+            .alignment = 1,
+            .address_space = .generic,
+            .child = @Type (.{
+              .Fn = .{
+                .calling_convention = vk.call_conv,
+                .alignment = pointer.Fn.alignment,
+                .is_generic = pointer.Fn.is_generic,
+                .is_var_args = pointer.Fn.is_var_args,
+                .return_type = cast (pointer.Fn.return_type orelse @compileError ("Return type is null for " ++ field.name)),
+                .params = &params,
+              },
+            }),
+            .is_allowzero = false,
+            .sentinel = null,
+          },
+        });
+      };
+
+      @compileLog (field.name ++ ": " ++ @typeName (pfn));
+      fields [i] = .{
+        .name = field.name,
+        .type = pfn,
+        .default_value = null,
+        .is_comptime = false,
+        .alignment = @alignOf (pfn),
       };
     }
+    return @Type (.{
+      .Struct = .{
+        .layout = .Auto,
+        .fields = &fields,
+        .decls = &[_] std.builtin.Type.Declaration {},
+        .is_tuple = false,
+      },
+    });
+  }
 
-    fn cast (comptime T: type) type
-    {
-      var is_opaque = false;
-      return cast_rec (T, &is_opaque);
-    }
-
-    const Dispatch = blk: {
-      @setEvalBranchQuota (10_000);
-      const size = @typeInfo (prototypes.structless).Enum.fields.len;
-      var fields: [size] std.builtin.Type.StructField = undefined;
-      for (@typeInfo (prototypes.structless).Enum.fields, 0 ..) |*field, i|
-      {
-        const pfn = pfn: {
-          const pointer = @typeInfo (@TypeOf (@field (c, field.name)));
-          var params: [pointer.Fn.params.len] std.builtin.Type.Fn.Param = undefined;
-          for (pointer.Fn.params, 0 ..) |*param, j|
-          {
-            params [j] = .{
-              .is_generic = param.is_generic,
-              .is_noalias = param.is_noalias,
-              .type = cast (param.type orelse @compileError ("Param type is null for " ++ field.name)),
-            };
-          }
-          break :pfn @Type (.{
-            .Pointer = .{
-              .size = .One,
-              .is_const = true,
-              .is_volatile = false,
-              .alignment = 1,
-              .address_space = .generic,
-              .child = @Type (.{
-                .Fn = .{
-                  .calling_convention = vk.call_conv,
-                  .alignment = pointer.Fn.alignment,
-                  .is_generic = pointer.Fn.is_generic,
-                  .is_var_args = pointer.Fn.is_var_args,
-                  .return_type = cast (pointer.Fn.return_type orelse @compileError ("Return type is null for " ++ field.name)),
-                  .params = &params,
-                },
-              }),
-              .is_allowzero = false,
-              .sentinel = null,
-            },
-          });
-        };
-
-        @compileLog (field.name ++ ": " ++ @typeName (pfn));
-        fields [i] = .{
-          .name = field.name,
-          .type = pfn,
-          .default_value = null,
-          .is_comptime = false,
-          .alignment = @alignOf (pfn),
-        };
-      }
-      break :blk @Type (.{
-        .Struct = .{
-          .layout = .Auto,
-          .fields = &fields,
-          .decls = &[_] std.builtin.Type.Declaration {},
-          .is_tuple = false,
-        },
-      });
-    };
-  };
-
-  structless: vk.Raw.Structless,
-  //instance: vk.Raw.Instance = .{};
-  //device: vk.Raw.Device = .{};
+  structless: vk.Raw.Dispatch (.structless),
+  instance: vk.Raw.Dispatch (.instance),
+  device: vk.Raw.Dispatch (.device),
 };
 
 pub const call_conv: std.builtin.CallingConvention = if (builtin.os.tag == .windows and builtin.cpu.arch == .x86)
@@ -147,11 +152,11 @@ var raw: vk.Raw = undefined;
 pub fn load () !void
 {
   const loader: *const fn (vk.Instance, [*:0] const u8) callconv (vk.call_conv) ?*const fn () callconv (vk.call_conv) void = @ptrCast (&c.glfwGetInstanceProcAddress);
-  inline for (std.meta.fields (vk.Raw.Structless.Dispatch)) |field|
+  inline for (std.meta.fields (@TypeOf (vk.raw.structless))) |field|
   {
     const name: [*:0] const u8 = @ptrCast (field.name ++ "\x00");
     const pointer = loader (vk.Instance.NULL_HANDLE, name) orelse return error.CommandLoadFailure;
-    @field (vk.raw.structless.dispatch, field.name) = @ptrCast (pointer);
+    @field (vk.raw.structless, field.name) = @ptrCast (pointer);
   }
 }
 
@@ -213,6 +218,17 @@ pub const Device = enum (usize)
 {
   NULL_HANDLE = 0, _,
   pub const Memory = enum (u64) { NULL_HANDLE = 0, _, };
+
+  pub fn load (self: @This ()) !void
+  {
+    const loader: *const fn (vk.Device, [*:0] const u8) callconv (vk.call_conv) ?*const fn () callconv (vk.call_conv) void = @ptrCast (&vk.raw.instance.vkGetDeviceProcAddr);
+    inline for (std.meta.fields (@TypeOf (vk.raw.device))) |field|
+    {
+      const name: [*:0] const u8 = @ptrCast (field.name ++ "\x00");
+      const pointer = loader (self, name) orelse return error.CommandLoadFailure;
+      @field (vk.raw.device, field.name) = @ptrCast (pointer);
+    }
+  }
 };
 
 pub const ExtensionProperties = extern struct
@@ -257,16 +273,32 @@ pub const Instance = enum (usize)
 {
   NULL_HANDLE = 0, _,
 
-  pub fn create (p_create_info: *const vk.Instance.Create.Info, p_allocator: ?*const vk.AllocationCallbacks) !vk.Instance
+  pub fn create (p_create_info: *const vk.Instance.Create.Info, p_allocator: ?*const vk.AllocationCallbacks) !@This ()
   {
     var instance: vk.Instance = undefined;
-    const result = vk.raw.structless.dispatch.vkCreateInstance (p_create_info, p_allocator, &instance);
+    const result = vk.raw.structless.vkCreateInstance (p_create_info, p_allocator, &instance);
     if (result > 0)
     {
-      std.debug.print ("{s} failed with {} status code\n", .{ @src ().fn_name, result, });
-      return error.vkCreateInstance;
+      std.debug.print ("{s} failed with {} status code\n", .{ @typeName (@This ()) ++ "." ++ @src ().fn_name, result, });
+      return error.UnexpectedResult;
     }
     return instance;
+  }
+
+  pub fn destroy (self: @This (), p_allocator: ?*const vk.AllocationCallbacks) void
+  {
+    vk.raw.instance.vkDestroyInstance (self, p_allocator);
+  }
+
+  pub fn load (self: @This ()) !void
+  {
+    const loader: *const fn (vk.Instance, [*:0] const u8) callconv (vk.call_conv) ?*const fn () callconv (vk.call_conv) void = @ptrCast (&vk.raw.structless.vkGetInstanceProcAddr);
+    inline for (std.meta.fields (@TypeOf (vk.raw.instance))) |field|
+    {
+      const name: [*:0] const u8 = @ptrCast (field.name ++ "\x00");
+      const pointer = loader (self, name) orelse return error.CommandLoadFailure;
+      @field (vk.raw.instance, field.name) = @ptrCast (pointer);
+    }
   }
 
   pub const Create = extern struct
@@ -289,11 +321,11 @@ pub const Instance = enum (usize)
   {
     pub fn enumerate (p_layer_name: ?[*:0] const u8, p_property_count: *u32, p_properties: ?[*] vk.ExtensionProperties) !void
     {
-      const result = vk.raw.structless.dispatch.vkEnumerateInstanceExtensionProperties (p_layer_name, p_property_count, p_properties);
+      const result = vk.raw.structless.vkEnumerateInstanceExtensionProperties (p_layer_name, p_property_count, p_properties);
       if (result > 0)
       {
-        std.debug.print ("{s} failed with {} status code\n", .{ @src ().fn_name, result, });
-        return error.vkEnumerateInstanceExtensionProperties;
+        std.debug.print ("{s} failed with {} status code\n", .{ @typeName (@This ()) ++ "." ++ @src ().fn_name, result, });
+        return error.UnexpectedResult;
       }
     }
   };
@@ -302,11 +334,11 @@ pub const Instance = enum (usize)
   {
     pub fn enumerate (p_property_count: *u32, p_properties: ?[*] vk.LayerProperties) !void
     {
-      const result = vk.raw.structless.dispatch.vkEnumerateInstanceLayerProperties (p_property_count, p_properties);
+      const result = vk.raw.structless.vkEnumerateInstanceLayerProperties (p_property_count, p_properties);
       if (result > 0)
       {
-        std.debug.print ("{s} failed with {} status code\n", .{ @src ().fn_name, result, });
-        return error.vkEnumerateInstanceLayerProperties;
+        std.debug.print ("{s} failed with {} status code\n", .{ @typeName (@This ()) ++ "." ++ @src ().fn_name, result, });
+        return error.UnexpectedResult;
       }
     }
   };
@@ -435,6 +467,23 @@ pub const EXT = extern struct
     pub const Messenger = enum (u64)
     {
       NULL_HANDLE = 0, _,
+
+      pub fn create (instance: vk.Instance, p_create_info: *const vk.EXT.DebugUtils.Messenger.Create.Info, p_allocator: ?*const vk.AllocationCallbacks) !@This ()
+      {
+        var messenger: vk.EXT.DebugUtils.Messenger = undefined;
+        const result = vk.raw.instance.vkCreateDebugUtilsMessengerEXT (instance, p_create_info, p_allocator, &messenger);
+        if (result > 0)
+        {
+          std.debug.print ("{s} failed with {} status code\n", .{ @typeName (@This ()) ++ "." ++ @src ().fn_name, result, });
+          return error.UnexpectedResult;
+        }
+        return messenger;
+      }
+
+      pub fn destroy (self: @This (), instance: vk.Instance, p_allocator: ?*const vk.AllocationCallbacks) void
+      {
+        vk.raw.instance.vkDestroyDebugUtilsMessengerEXT (instance, self, p_allocator);
+      }
 
       pub const Callback = extern struct
       {

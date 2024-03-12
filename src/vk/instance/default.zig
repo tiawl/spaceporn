@@ -250,11 +250,12 @@ pub const instance_vk = struct
     try check_layer_properties (&self);
     try check_extension_properties (&self, &debug_info);
 
-    errdefer self.dispatch.destroyInstance (self.instance, null);
+    try self.instance.load ();
+    errdefer self.instance.destroy (null);
 
     self.init_debug_info (&debug_info);
-    self.debug_messenger = try self.dispatch.createDebugUtilsMessengerEXT (self.instance, &debug_info, null);
-    errdefer self.dispatch.destroyDebugUtilsMessengerEXT (self.instance, self.debug_messenger, null);
+    self.debug_messenger = try vk.EXT.DebugUtils.Messenger.create (self.instance, &debug_info, null);
+    errdefer self.debug_messenger.destroy (self.instance, null);
 
     try self.logger.app (.DEBUG, "init Vulkan initializer instance OK", .{});
     return self;
@@ -262,8 +263,8 @@ pub const instance_vk = struct
 
   pub fn cleanup (self: @This ()) !void
   {
-    self.dispatch.destroyDebugUtilsMessengerEXT (self.instance, self.debug_messenger, null);
-    self.dispatch.destroyInstance (self.instance, null);
+    self.debug_messenger.destroy (self.instance, null);
+    self.instance.destroy (null);
 
     try self.logger.app (.DEBUG, "cleanup Vulkan initializer OK", .{});
   }

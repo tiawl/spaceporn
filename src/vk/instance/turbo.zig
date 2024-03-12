@@ -10,7 +10,7 @@ pub const instance_vk = struct
 
   pub const required_layers = [_][] const u8 {};
 
-  pub fn init (extensions: *[][*:0] const u8, logger: *const Logger) !@This ()
+  pub fn init (extensions: *[][*:0] const u8, _: *const Logger) !@This ()
   {
     var self: @This () = .{};
 
@@ -18,16 +18,15 @@ pub const instance_vk = struct
 
     const app_info = vk.ApplicationInfo
                      {
-                       .p_application_name  = logger.binary.name,
-                       .application_version = vk.makeApiVersion (0, 1, 2, 0),
+                       .p_application_name  = Logger.build.binary.name,
+                       .application_version = @field (vk.API_VERSION.@"1", Logger.build.vk.minor),
                        .p_engine_name       = "No Engine",
-                       .engine_version      = vk.makeApiVersion (0, 1, 2, 0),
-                       .api_version         = vk.API_VERSION_1_2,
+                       .engine_version      = @field (vk.API_VERSION.@"1", Logger.build.vk.minor),
+                       .api_version         = @field (vk.API_VERSION.@"1", Logger.build.vk.minor),
                      };
 
-    const create_info = vk.InstanceCreateInfo
+    const create_info = vk.Instance.Create.Info
                         {
-                          .flags                      = vk.InstanceCreateFlags {},
                           .enabled_layer_count        = 0,
                           .pp_enabled_layer_names     = undefined,
                           .p_application_info         = &app_info,
@@ -35,14 +34,16 @@ pub const instance_vk = struct
                           .pp_enabled_extension_names = @ptrCast (self.extensions),
                         };
 
-    self.instance = try self.base_dispatch.createInstance (&create_info, null);
-    errdefer self.dispatch.destroyInstance (self.instance, null);
+    self.instance = try vk.Instance.create (&create_info, null);
+    errdefer self.instance.destroy (null);
+
+    try self.instance.load ();
 
     return self;
   }
 
   pub fn cleanup (self: @This ()) !void
   {
-    self.dispatch.destroyInstance (self.instance, null);
+    self.instance.destroy (null);
   }
 };

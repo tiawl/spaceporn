@@ -1,13 +1,13 @@
 const std = @import ("std");
 const zig_version = @import ("builtin").zig_version;
 
-const zon = .{ .name = "spaceporn", .version = "0.0.0", .min_zig_version = "0.11.0", };
+const zon = .{ .name = "spaceporn", .version = "0.1.0", .min_zig_version = "0.11.0", };
 
 const Options = struct
 {
   verbose: bool = false,
-  turbo: bool = false,
-  logdir: [] const u8 = "",
+  turbo:   bool = false,
+  logdir:  [] const u8 = "",
   vkminor: [] const u8 = "2",
 
   const default: @This () = .{};
@@ -296,17 +296,15 @@ fn generate_prototypes (builder: *std.Build) ![] const u8
   };
 
   var binding: struct { path: [] const u8, buffer: std.ArrayList (u8), source: [] u8, } = undefined;
-  binding.path = try std.fs.path.join (builder.allocator, &.{ "src", "binding", "vk.zig", });
-  binding.buffer = std.ArrayList (u8).init (builder.allocator);
-  binding.source = try builder.build_root.handle.readFileAlloc (builder.allocator, binding.path, std.math.maxInt (usize));
 
-  try binding.buffer.appendSlice (binding.source);
-  try binding.buffer.append (0);
+  var vk: struct { path: [] const u8, dir: std.fs.Dir, } = undefined;
+  vk.path = try std.fs.path.join (builder.allocator, &.{ "src", "binding", "vk", });
 
-  var iterator = std.zig.Tokenizer.init (binding.buffer.items [0 .. binding.buffer.items.len - 1 :0]);
-  var token = iterator.next ();
-  const size: usize = 6;
-  var precedent: [size] ?std.zig.Token = .{ null, } ** size;
+  vk.dir = try builder.build_root.handle.openDir (vk.path, .{ .iterate = true, });
+  defer vk.dir.close ();
+
+  var walker = try vk.dir.walk (builder.allocator);
+  defer walker.deinit ();
 
   var prototypes: struct { buffer: std.ArrayList (u8), source: [:0] const u8,
     path: [] const u8, structless: std.ArrayList ([] const u8),
@@ -316,38 +314,49 @@ fn generate_prototypes (builder: *std.Build) ![] const u8
   prototypes.device = std.ArrayList ([] const u8).init (builder.allocator);
   prototypes.buffer = std.ArrayList (u8).init (builder.allocator);
 
-  while (token.tag != .eof)
+  while (try walker.next ()) |*entry|
   {
-    if (precedent [0] != null and precedent [1] != null and precedent [2] != null and
-        precedent [3] != null and precedent [4] != null and precedent [5] != null)
+    if (entry.kind != .file) continue;
+
+    binding.path = try std.fs.path.join (builder.allocator, &.{ vk.path, entry.path, });
+    binding.buffer = std.ArrayList (u8).init (builder.allocator);
+    binding.source = try builder.build_root.handle.readFileAlloc (builder.allocator, binding.path, std.math.maxInt (usize));
+
+    try binding.buffer.appendSlice (binding.source);
+    try binding.buffer.append (0);
+
+    var iterator = std.zig.Tokenizer.init (binding.buffer.items [0 .. binding.buffer.items.len - 1 :0]);
+    var token = iterator.next ();
+    const size: usize = 6;
+    var precedent: [size] ?std.zig.Token = .{ null, } ** size;
+
+    while (token.tag != .eof)
     {
-      if (std.mem.startsWith (u8, binding.buffer.items [token.loc.start .. token.loc.end], "vk") and
-          precedent [0].?.tag == .period and precedent [2].?.tag == .period and
-          std.mem.eql (u8, binding.buffer.items [precedent [3].?.loc.start .. precedent [3].?.loc.end], "raw") and
-          precedent [4].?.tag == .period and
-          std.mem.eql (u8, binding.buffer.items [precedent [5].?.loc.start .. precedent [5].?.loc.end], "vk"))
+      if (precedent [precedent.len - 1] != null)
       {
-        inline for (@typeInfo (@TypeOf (prototypes)).Struct.fields) |field|
+        if (std.mem.startsWith (u8, binding.buffer.items [token.loc.start .. token.loc.end], "vk") and
+            precedent [0].?.tag == .period and precedent [2].?.tag == .period and precedent [4].?.tag == .period and
+            std.mem.eql (u8, binding.buffer.items [precedent [3].?.loc.start .. precedent [3].?.loc.end], "prototypes") and
+            std.mem.eql (u8, binding.buffer.items [precedent [5].?.loc.start .. precedent [5].?.loc.end], "raw"))
         {
-          if (field.type == std.ArrayList ([] const u8))
+          inline for (@typeInfo (@TypeOf (prototypes)).Struct.fields) |field|
           {
-            if (std.mem.eql (u8, binding.buffer.items [precedent [1].?.loc.start .. precedent [1].?.loc.end], field.name))
+            if (field.type == std.ArrayList ([] const u8))
             {
-              try @field (prototypes, field.name).append (binding.buffer.items [token.loc.start .. token.loc.end]);
-              break;
+              if (std.mem.eql (u8, binding.buffer.items [precedent [1].?.loc.start .. precedent [1].?.loc.end], field.name))
+              {
+                try @field (prototypes, field.name).append (binding.buffer.items [token.loc.start .. token.loc.end]);
+                break;
+              }
             }
           }
         }
       }
-    }
 
-    precedent [5] = precedent [4];
-    precedent [4] = precedent [3];
-    precedent [3] = precedent [2];
-    precedent [2] = precedent [1];
-    precedent [1] = precedent [0];
-    precedent [0] = token;
-    token = iterator.next ();
+      for (1 .. precedent.len) |i| precedent [precedent.len - i] = precedent [precedent.len - i - 1];
+      precedent [0] = token;
+      token = iterator.next ();
+    }
   }
 
   const writer = prototypes.buffer.writer ();
@@ -427,7 +436,7 @@ fn import (builder: *std.Build, exe: *std.Build.Step.Compile, profile: *const Pr
   const c = try link (builder, profile);
 
   const glfw = builder.createModule (.{
-    .root_source_file = .{ .path = try builder.build_root.join (builder.allocator, &.{ "src", "binding", "glfw.zig", }), },
+    .root_source_file = .{ .path = try builder.build_root.join (builder.allocator, &.{ "src", "binding", "glfw", "glfw.zig", }), },
     .target = profile.target,
     .optimize = profile.optimize,
   });
@@ -440,7 +449,7 @@ fn import (builder: *std.Build, exe: *std.Build.Step.Compile, profile: *const Pr
   });
 
   const vk = builder.createModule (.{
-    .root_source_file = .{ .path = try builder.build_root.join (builder.allocator, &.{ "src", "binding", "vk.zig", }), },
+    .root_source_file = .{ .path = try builder.build_root.join (builder.allocator, &.{ "src", "binding", "vk", "vk.zig", }), },
     .target = profile.target,
     .optimize = profile.optimize,
   });

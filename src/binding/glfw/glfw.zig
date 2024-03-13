@@ -1,5 +1,10 @@
 const c = @import ("c");
 
+pub const Context = @import ("context.zig").Context;
+pub const Error = @import ("error.zig").Error;
+pub const vk = @import ("vk.zig").vk;
+pub const Window = @import ("window.zig").Window;
+
 pub const Bool = enum (c_int)
 {
   @"true" = c.GLFW_TRUE,

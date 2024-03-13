@@ -1,6 +1,8 @@
 const c = @import ("c");
 const std = @import ("std");
 
+const glfw = @This ();
+
 pub const Error = struct
 {
   pub const Code = error
@@ -26,20 +28,20 @@ pub const Error = struct
     return switch (int)
     {
       c.GLFW_NO_ERROR => {},
-      c.GLFW_NOT_INITIALIZED => Code.NotInitialized,
-      c.GLFW_NO_CURRENT_CONTEXT => Code.NoCurrentContext,
-      c.GLFW_INVALID_ENUM => Code.InvalidEnum,
-      c.GLFW_INVALID_VALUE => Code.InvalidValue,
-      c.GLFW_OUT_OF_MEMORY => Code.OutOfMemory,
-      c.GLFW_API_UNAVAILABLE => Code.APIUnavailable,
-      c.GLFW_VERSION_UNAVAILABLE => Code.VersionUnavailable,
-      c.GLFW_PLATFORM_ERROR => Code.PlatformError,
-      c.GLFW_FORMAT_UNAVAILABLE => Code.FormatUnavailable,
-      c.GLFW_NO_WINDOW_CONTEXT => Code.NoWindowContext,
-      c.GLFW_CURSOR_UNAVAILABLE => Code.CursorUnavailable,
-      c.GLFW_FEATURE_UNAVAILABLE => Code.FeatureUnavailable,
-      c.GLFW_FEATURE_UNIMPLEMENTED => Code.FeatureUnimplemented,
-      c.GLFW_PLATFORM_UNAVAILABLE => Code.PlatformUnavailable,
+      c.GLFW_NOT_INITIALIZED => glfw.Error.Code.NotInitialized,
+      c.GLFW_NO_CURRENT_CONTEXT => glfw.Error.Code.NoCurrentContext,
+      c.GLFW_INVALID_ENUM => glfw.Error.Code.InvalidEnum,
+      c.GLFW_INVALID_VALUE => glfw.Error.Code.InvalidValue,
+      c.GLFW_OUT_OF_MEMORY => glfw.Error.Code.OutOfMemory,
+      c.GLFW_API_UNAVAILABLE => glfw.Error.Code.APIUnavailable,
+      c.GLFW_VERSION_UNAVAILABLE => glfw.Error.Code.VersionUnavailable,
+      c.GLFW_PLATFORM_ERROR => glfw.Error.Code.PlatformError,
+      c.GLFW_FORMAT_UNAVAILABLE => glfw.Error.Code.FormatUnavailable,
+      c.GLFW_NO_WINDOW_CONTEXT => glfw.Error.Code.NoWindowContext,
+      c.GLFW_CURSOR_UNAVAILABLE => glfw.Error.Code.CursorUnavailable,
+      c.GLFW_FEATURE_UNAVAILABLE => glfw.Error.Code.FeatureUnavailable,
+      c.GLFW_FEATURE_UNIMPLEMENTED => glfw.Error.Code.FeatureUnimplemented,
+      c.GLFW_PLATFORM_UNAVAILABLE => glfw.Error.Code.PlatformUnavailable,
       else => unreachable,
     };
   }

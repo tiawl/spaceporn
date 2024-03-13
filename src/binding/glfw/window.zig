@@ -1,11 +1,7 @@
 const c = @import ("c");
 const std = @import ("std");
 
-const main = @import ("main.zig");
-const Bool = main.Bool;
-const Monitor = main.Monitor;
-
-const Context = @import ("context.zig").Context;
+const glfw = @import ("glfw.zig");
 
 pub const Window = struct
 {
@@ -29,8 +25,8 @@ pub const Window = struct
       no_api = c.GLFW_NO_API,
     };
 
-    resizable: Bool,
-    client_api: ClientAPI,
+    resizable: glfw.Bool,
+    client_api: glfw.Window.Hint.ClientAPI,
 
     fn tag (self: @This ()) c_int
     {
@@ -55,14 +51,14 @@ pub const Window = struct
 
     pub const Limits = struct
     {
-      pub fn set (min: Optional, max: Optional) !void
+      pub fn set (min: glfw.Window.Size.Optional, max: glfw.Window.Size.Optional) !void
       {
         if (min.width != null and max.width != null)
           std.debug.assert (min.width.? <= max.width.?);
         if (min.height != null and max.height != null)
           std.debug.assert (min.height.? <= max.height.?);
 
-        const window = try Context.get ();
+        const window = try glfw.Context.get ();
         c.glfwSetWindowSizeLimits (window,
           if (min.width) |min_width| @as (c_int, @intCast (min_width)) else c.GLFW_DONT_CARE,
           if (min.height) |min_height| @as (c_int, @intCast (min_height)) else c.GLFW_DONT_CARE,
@@ -73,7 +69,7 @@ pub const Window = struct
   };
 
   pub fn create (width: u32, height: u32, title: [*:0] const u8,
-    monitor: ?Monitor, share: ?@This (), hints: [] const Hint) !@This ()
+    monitor: ?glfw.Monitor, share: ?@This (), hints: [] const glfw.Window.Hint) !@This ()
   {
     for (hints) |hint| c.glfwWindowHint (hint.tag (), @intFromEnum (std.meta.activeTag (hint)));
     if (c.glfwCreateWindow (@as (c_int, @intCast (width)), @as (c_int, @intCast (height)),
@@ -92,7 +88,7 @@ pub const Window = struct
   {
     pub fn get (comptime T: type) !?*T
     {
-      const window = try Context.get ();
+      const window = try glfw.Context.get ();
       if (c.glfwGetWindowUserPointer (window)) |user_pointer|
         return @as (?*T, @ptrCast (@alignCast (user_pointer)));
       return null;
@@ -100,7 +96,7 @@ pub const Window = struct
 
     pub fn set (pointer: ?*anyopaque) !void
     {
-      const window = try Context.get ();
+      const window = try glfw.Context.get ();
       c.glfwSetWindowUserPointer (window, pointer);
     }
   };
@@ -109,9 +105,9 @@ pub const Window = struct
   {
     pub const Size = struct
     {
-      pub fn get () !Window.Size
+      pub fn get () !glfw.Window.Size
       {
-        const window = try Context.get ();
+        const window = try glfw.Context.get ();
         var width: c_int = 0;
         var height: c_int = 0;
         c.glfwGetFramebufferSize (window, &width, &height);
@@ -123,9 +119,9 @@ pub const Window = struct
 
       pub const Callback = struct
       {
-        pub fn set (comptime callback: ?fn (Window, u32, u32) void) !void
+        pub fn set (comptime callback: ?fn (glfw.Window, u32, u32) void) !void
         {
-          const window = try Context.get ();
+          const window = try glfw.Context.get ();
           if (callback) |user_callback|
           {
             const Wrapper = struct

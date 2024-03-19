@@ -68,6 +68,24 @@ pub const Window = struct
     };
   };
 
+  pub const Surface = struct
+  {
+    pub fn create (vk_instance: anytype, window: Window, vk_allocation_callbacks: anytype, vk_surface_khr: anytype) !void
+    {
+      const instance: c.VkInstance = @as (c.VkInstance, @ptrFromInt (@intFromEnum (vk_instance)));
+
+      const result = c.glfwCreateWindowSurface (instance, window.handle,
+        if (vk_allocation_callbacks == null) null else @as (*const c.VkAllocationCallbacks, @ptrCast (@alignCast (vk_allocation_callbacks))),
+        @as (*c.VkSurfaceKHR, @ptrCast (@alignCast (vk_surface_khr))));
+
+      if (result > 0)
+      {
+        std.debug.print ("{s} failed with {} status code\n", .{ @typeName (@This ()) ++ "." ++ @src ().fn_name, result, });
+        return error.UnexpectedResult;
+      }
+    }
+  };
+
   pub fn create (width: u32, height: u32, title: [*:0] const u8,
     monitor: ?glfw.Monitor, share: ?@This (), hints: [] const glfw.Window.Hint) !@This ()
   {

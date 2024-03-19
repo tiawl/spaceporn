@@ -411,8 +411,8 @@ pub const Context = struct
 
   fn is_suitable (self: *@This (), device: vk.PhysicalDevice) !?struct { graphics_family: u32, present_family: u32, score: u32, blitting_supported: bool, }
   {
-    const properties = self.instance.dispatch.getPhysicalDeviceProperties (device);
-    const features = self.instance.dispatch.getPhysicalDeviceFeatures (device);
+    const properties = vk.PhysicalDevice.Properties.get (device);
+    const features = vk.PhysicalDevice.Features.get (device);
 
     if (!try self.check_device_extension_support (device, properties.device_name))
     {
@@ -481,7 +481,7 @@ pub const Context = struct
   {
     var device_count: u32 = undefined;
 
-    _ = try self.instance.dispatch.enumeratePhysicalDevices (self.instance.instance, &device_count, null);
+    _ = try vk.PhysicalDevices.enumerate (self.instance.instance, &device_count, null);
 
     if (device_count == 0)
     {
@@ -491,7 +491,7 @@ pub const Context = struct
     const devices = try self.logger.allocator.alloc (vk.PhysicalDevice, device_count);
     var max_score: u32 = 0;
 
-    _ = try self.instance.dispatch.enumeratePhysicalDevices (self.instance.instance, &device_count, devices.ptr);
+    _ = try vk.PhysicalDevices.enumerate (self.instance.instance, &device_count, devices.ptr);
 
     for (devices) |device|
     {
@@ -1680,13 +1680,9 @@ pub const Context = struct
     try self.logger.app (.DEBUG, "init Vulkan semaphores and fence OK", .{});
   }
 
-  pub fn get_surface (self: @This ()) struct { instance: vk.Instance, surface: vk.KHR.Surface, success: i32, }
+  pub fn get_surface (self: @This ()) struct { instance: vk.Instance, surface: vk.KHR.Surface, }
   {
-    return .{
-              .instance = self.instance.instance,
-              .surface  = self.surface,
-              .success  = @intFromEnum (vk.Result.success),
-            };
+    return .{ .instance = self.instance.instance, .surface = self.surface, };
   }
 
   pub fn set_surface (self: *@This (), surface: *vk.KHR.Surface) void

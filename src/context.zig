@@ -24,11 +24,11 @@ pub const Context = struct
     self.vk = try VkContext.init_instance (self.logger, &self.glfw.extensions);
 
     var wrapper = self.vk.get_surface ();
-    try self.glfw.init_surface (wrapper.instance, &wrapper.surface, wrapper.success);
+    try self.glfw.init_surface (wrapper.instance, &wrapper.surface);
     self.vk.set_surface (&wrapper.surface);
 
-    const framebuffer = self.glfw.get_framebuffer_size ();
-    try self.vk.init (self.imgui, .{ .width = framebuffer.width, .height = framebuffer.height, }, self.logger);
+    const framebuffer = try self.glfw.get_framebuffer_size ();
+    try self.vk.init (self.imgui, .{ .width = framebuffer.width, .height = framebuffer.height, });
 
     try self.logger.app ("init OK", .DEBUG, .{});
     return self;

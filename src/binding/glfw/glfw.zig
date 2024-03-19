@@ -11,6 +11,14 @@ pub const Bool = enum (c_int)
   @"false" = c.GLFW_FALSE,
 };
 
+pub const Events = struct
+{
+  pub fn wait () void
+  {
+    c.glfwWaitEvents ();
+  }
+};
+
 pub const Monitor = struct
 {
   handle: *c.GLFWmonitor,

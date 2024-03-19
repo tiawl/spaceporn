@@ -89,24 +89,24 @@ pub const Context = struct
     return self;
   }
 
-  pub fn init_surface (self: @This (), instance: anytype, surface: anytype, success: i32) !void
+  pub fn init_surface (self: @This (), instance: anytype, surface: anytype) !void
   {
-    if (glfw.Window.Surface.create (instance, self.window, null, surface) != success) return error.SurfaceInitFailed;
+    try glfw.Window.Surface.create (instance, self.window, null, surface);
     try self.logger.app (.DEBUG, "init GLFW surface OK", .{});
   }
 
-  pub fn get_framebuffer_size (self: *@This ()) struct { resized: bool, width: u32, height: u32, }
+  pub fn get_framebuffer_size (self: *@This ()) !struct { resized: bool, width: u32, height: u32, }
   {
     const resized = self.framebuffer_resized;
 
     if (resized) self.framebuffer_resized = false;
 
-    var size = self.window.Framebuffer.Size.get ();
+    var size = try glfw.Window.Framebuffer.Size.get ();
 
     while (size.width == 0 or size.height == 0)
     {
       glfw.Events.wait ();
-      size = self.window.Framebuffer.Size.get ();
+      size = try glfw.Window.Framebuffer.Size.get ();
     }
 
     return .{

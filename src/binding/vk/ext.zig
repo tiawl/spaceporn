@@ -87,7 +87,7 @@ pub const EXT = extern struct
         {
           s_type: vk.StructureType = .DEBUG_UTILS_MESSENGER_CALLBACK_DATA_EXT,
           p_next: ?*const anyopaque = null,
-          flags: vk.EXT.DebugUtils.Messenger.Callback.Data.Flags = .{},
+          flags: vk.EXT.DebugUtils.Messenger.Callback.Data.Flags = 0,
           p_message_id_name: ?[*:0] const u8 = null,
           message_id_number: i32,
           p_message: [*:0] const u8,
@@ -98,7 +98,7 @@ pub const EXT = extern struct
           object_count: u32 = 0,
           p_objects: ?[*] const vk.EXT.DebugUtils.ObjectNameInfo = null,
 
-          pub const Flags = extern struct {};
+          pub const Flags = u32;
         };
 
         pub const Pfn = ?*const fn (
@@ -111,13 +111,13 @@ pub const EXT = extern struct
 
       pub const Create = extern struct
       {
-        pub const Flags = extern struct {};
+        pub const Flags = u32;
 
         pub const Info = extern struct
         {
           s_type: vk.StructureType = .DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT,
           p_next: ?*const anyopaque = null,
-          flags: vk.EXT.DebugUtils.Messenger.Create.Flags = .{},
+          flags: vk.EXT.DebugUtils.Messenger.Create.Flags = 0,
           message_severity: vk.EXT.DebugUtils.Message.Severity.Flags,
           message_type: vk.EXT.DebugUtils.Message.Type.Flags,
           pfn_user_callback: vk.EXT.DebugUtils.Messenger.Callback.Pfn,

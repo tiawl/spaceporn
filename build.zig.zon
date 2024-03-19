@@ -8,11 +8,11 @@
   .dependencies = .{
     .cimgui = .{
       .url = "https://github.com/tiawl/cimgui.zig/archive/refs/tags/v1.90.4.tar.gz",
-      .hash = "122099e64cc8f424471bbfb8ab4ea1c6d82e3a5bf8bb3264b645a6b126fa83f31142",
+      .hash = "12202d5ba1fe72d0052d850357baaaa346c6b9b3c042d6a4dd96e389ba30dae4d0ea",
     },
     .glfw = .{
       .url = "https://github.com/tiawl/glfw.zig/archive/refs/tags/3.4.tar.gz",
-      .hash = "122068297b8b00f0a23a82bb15d928986f6a7548036e0e57d4ca0c56da75e96e9953",
+      .hash = "1220852152a03963090bd03203a1dea76c5e1eed3d3e6c8bf9787e62d16ac54ed715",
     },
     .@"zig-datetime" = .{
       .url = "https://github.com/frmdstryr/zig-datetime/archive/a9c75242dfc119a305c1381c2352d2fc16b2e0aa.tar.gz",

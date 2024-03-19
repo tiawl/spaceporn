@@ -47,7 +47,7 @@ pub const Context = struct
 
   const required_device_extensions = [_][*:0] const u8
   {
-    vk.extension_info.khr_swapchain.name,
+    vk.KHR.SWAPCHAIN,
   };
 
   const ContextError = error
@@ -124,11 +124,11 @@ pub const Context = struct
   {
     var queue_family_count: u32 = undefined;
 
-    self.instance.dispatch.getPhysicalDeviceQueueFamilyProperties (device, &queue_family_count, null);
+    vk.PhysicalDevice.Queue.FamilyProperties.get (device, &queue_family_count, null);
 
-    const queue_families = try self.logger.allocator.alloc (vk.QueueFamilyProperties, queue_family_count);
+    const queue_families = try self.logger.allocator.alloc (vk.Queue.FamilyProperties, queue_family_count);
 
-    self.instance.dispatch.getPhysicalDeviceQueueFamilyProperties (device, &queue_family_count, queue_families.ptr);
+    vk.PhysicalDevice.Queue.FamilyProperties.get (device, &queue_family_count, queue_families.ptr);
 
     var present_family: ?u32 = null;
     var graphics_family: ?u32 = null;
@@ -137,16 +137,16 @@ pub const Context = struct
     {
       const family: u32 = @intCast(index);
 
-      if (properties.queue_flags.graphics_bit and try self.instance.dispatch.getPhysicalDeviceSurfaceSupportKHR (device, family, self.surface) == vk.TRUE)
+      if (vk.Queue.Bit.GRAPHICS.in (properties.queue_flags) and try vk.KHR.PhysicalDevice.Surface.Support.get (device, family, self.surface) == vk.TRUE)
       {
         graphics_family = family;
         present_family = family;
         break;
       }
 
-      if (graphics_family == null and properties.queue_flags.graphics_bit) graphics_family = family;
+      if (graphics_family == null and vk.Queue.Bit.GRAPHICS.in (properties.queue_flags)) graphics_family = family;
 
-      if (present_family == null and try self.instance.dispatch.getPhysicalDeviceSurfaceSupportKHR (device, family, self.surface) == vk.TRUE)
+      if (present_family == null and try vk.KHR.PhysicalDevice.Surface.Support.get (device, family, self.surface) == vk.TRUE)
         present_family = family;
     }
 
@@ -164,11 +164,11 @@ pub const Context = struct
   {
     var supported_device_extensions_count: u32 = undefined;
 
-    _ = try self.instance.dispatch.enumerateDeviceExtensionProperties (device, null, &supported_device_extensions_count, null);
+    _ = try vk.Device.ExtensionProperties.enumerate (device, null, &supported_device_extensions_count, null);
 
     const supported_device_extensions = try self.logger.allocator.alloc (vk.ExtensionProperties, supported_device_extensions_count);
 
-    _ = try self.instance.dispatch.enumerateDeviceExtensionProperties (device, null, &supported_device_extensions_count, supported_device_extensions.ptr);
+    _ = try vk.Device.ExtensionProperties.enumerate (device, null, &supported_device_extensions_count, supported_device_extensions.ptr);
 
     for (required_device_extensions) |required_ext|
     {
@@ -195,34 +195,34 @@ pub const Context = struct
 
   fn query_swapchain_support (self: *@This (), device: vk.PhysicalDevice) !void
   {
-    self.capabilities = try self.instance.dispatch.getPhysicalDeviceSurfaceCapabilitiesKHR (device, self.surface);
+    self.capabilities = try vk.KHR.PhysicalDevice.Surface.Capabilities.get (device, self.surface);
 
     var format_count: u32 = undefined;
 
-    _ = try self.instance.dispatch.getPhysicalDeviceSurfaceFormatsKHR (device, self.surface, &format_count, null);
+    _ = try vk.KHR.PhysicalDevice.Surface.Formats.get (device, self.surface, &format_count, null);
 
     if (format_count > 0)
     {
-      self.formats = try self.logger.allocator.alloc (vk.KHR.SurfaceFormat, format_count);
+      self.formats = try self.logger.allocator.alloc (vk.KHR.Surface.Format, format_count);
 
-      _ = try self.instance.dispatch.getPhysicalDeviceSurfaceFormatsKHR (device, self.surface, &format_count, self.formats.ptr);
+      _ = try vk.KHR.PhysicalDevice.Surface.Formats.get (device, self.surface, &format_count, self.formats.ptr);
     }
 
     var present_mode_count: u32 = undefined;
 
-    _ = try self.instance.dispatch.getPhysicalDeviceSurfacePresentModesKHR (device, self.surface, &present_mode_count, null);
+    _ = try vk.KHR.PhysicalDevice.Surface.PresentModes.get (device, self.surface, &present_mode_count, null);
 
     if (present_mode_count > 0)
     {
       self.present_modes = try self.logger.allocator.alloc (vk.KHR.PresentMode, present_mode_count);
 
-      _ = try self.instance.dispatch.getPhysicalDeviceSurfacePresentModesKHR (device, self.surface, &present_mode_count, self.present_modes.ptr);
+      _ = try vk.KHR.PhysicalDevice.Surface.PresentModes.get (device, self.surface, &present_mode_count, self.present_modes.ptr);
     }
 
     try self.logger.app (.DEBUG, "query Vulkan swapchain support OK", .{});
   }
 
-  fn check_device_features_properties (self: @This (), features: vk.PhysicalDeviceFeatures, properties: vk.PhysicalDeviceProperties) !bool
+  fn check_device_features_properties (self: @This (), features: vk.PhysicalDevice.Features, properties: vk.PhysicalDevice.Properties) !bool
   {
     if (features.sampler_anisotropy != vk.TRUE)
     {
@@ -426,23 +426,23 @@ pub const Context = struct
 
     for (self.formats) |supported_format|
     {
-      if (selected_format == vk.Format.b8g8r8a8_unorm)
+      if (selected_format == vk.Format.B8G8R8A8_UNORM)
       {
         break;
       }
 
-      if (supported_format.format == vk.Format.b8g8r8a8_unorm)
+      if (supported_format.format == vk.Format.B8G8R8A8_UNORM)
       {
         selected_format = supported_format.format;
-      } else if (supported_format.format == vk.Format.r8g8b8a8_unorm and selected_format != vk.Format.r8g8b8a8_unorm) {
+      } else if (supported_format.format == vk.Format.R8G8B8A8_UNORM and selected_format != vk.Format.R8G8B8A8_UNORM) {
         selected_format = supported_format.format;
-      } else if (supported_format.format == vk.Format.a8b8g8r8_unorm_pack32 and selected_format != vk.Format.r8g8b8a8_unorm and selected_format != vk.Format.a8b8g8r8_unorm_pack32) {
+      } else if (supported_format.format == vk.Format.A8B8G8R8_UNORM_PACK32 and selected_format != vk.Format.R8G8B8A8_UNORM and selected_format != vk.Format.A8B8G8R8_UNORM_PACK32) {
         selected_format = supported_format.format;
       }
     }
 
-    const blitting_supported = self.instance.dispatch.getPhysicalDeviceFormatProperties (device, selected_format).optimal_tiling_features.blit_src_bit and
-                               self.instance.dispatch.getPhysicalDeviceFormatProperties (device, vk.Format.r8g8b8a8_unorm).linear_tiling_features.blit_dst_bit;
+    const blitting_supported = vk.Format.Feature.Bit.BLIT_SRC.in (vk.PhysicalDevice.Format.Properties.get (device, selected_format).optimal_tiling_features)
+      and vk.Format.Feature.Bit.BLIT_DST.in (vk.PhysicalDevice.Format.Properties.get (device, vk.Format.R8G8B8A8_UNORM).linear_tiling_features);
 
     if (!try self.check_device_features_properties (features, properties))
     {
@@ -461,7 +461,7 @@ pub const Context = struct
                                   {
                                     blitting_supported,
                                     candidate.graphics_family == candidate.present_family,
-                                    properties.device_type == vk.PhysicalDeviceType.discrete_gpu,
+                                    properties.device_type == vk.PhysicalDevice.Type.DISCRETE_GPU,
                                   };
 
         return .{
@@ -569,7 +569,7 @@ pub const Context = struct
   {
     for (self.formats) |format|
     {
-      if (format.format == vk.Format.b8g8r8a8_srgb and format.color_space == vk.KHR.ColorSpace.srgb_nonlinear_khr)
+      if (format.format == vk.Format.B8G8R8A8_SRGB and format.color_space == vk.KHR.ColorSpace.srgb_nonlinear_khr)
       {
         self.surface_format = format;
       }
@@ -794,7 +794,7 @@ pub const Context = struct
     const image_create_info = vk.ImageCreateInfo
                               {
                                 .image_type     = vk.ImageType.@"2d",
-                                .format         = vk.Format.r8g8b8a8_unorm,
+                                .format         = vk.Format.R8G8B8A8_UNORM,
                                 .extent         = vk.Extent3D
                                                   {
                                                     .width  = self.offscreen_width,
@@ -833,7 +833,7 @@ pub const Context = struct
     const view_create_info = vk.ImageViewCreateInfo
                              {
                                .view_type         = vk.ImageViewType.@"2d",
-                               .format            = vk.Format.r8g8b8a8_unorm,
+                               .format            = vk.Format.R8G8B8A8_UNORM,
                                .subresource_range = vk.ImageSubresourceRange
                                                     {
                                                       .aspect_mask      = vk.ImageAspectFlags { .color_bit = true },
@@ -884,7 +884,7 @@ pub const Context = struct
                               vk.AttachmentDescription
                               {
                                 .flags            = vk.AttachmentDescriptionFlags {},
-                                .format           = vk.Format.r8g8b8a8_unorm,
+                                .format           = vk.Format.R8G8B8A8_UNORM,
                                 .samples          = vk.SampleCountFlags { .@"1_bit" = true },
                                 .load_op          = vk.AttachmentLoadOp.clear,
                                 .store_op         = vk.AttachmentStoreOp.store,
@@ -1980,7 +1980,7 @@ pub const Context = struct
     const image_create_info = vk.ImageCreateInfo
                               {
                                 .image_type     = vk.ImageType.@"2d",
-                                .format         = vk.Format.r8g8b8a8_unorm,
+                                .format         = vk.Format.R8G8B8A8_UNORM,
                                 .extent         = vk.Extent3D
                                                   {
                                                     .width  = framebuffer.width,

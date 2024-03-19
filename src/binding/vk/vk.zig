@@ -105,6 +105,19 @@ pub const Device = enum (usize)
       @field (raw.prototypes.device, field.name) = @ptrCast (pointer);
     }
   }
+
+  pub const ExtensionProperties = extern struct
+  {
+    pub fn enumerate (physical_device: PhysicalDevice, p_layer_name: ?[*:0] const u8, p_property_count: *u32, p_properties: ?[*] vk.ExtensionProperties) !void
+    {
+      const result = raw.prototypes.structless.vkEnumerateDeviceExtensionProperties (physical_device, p_layer_name, p_property_count, p_properties);
+      if (result > 0)
+      {
+        std.debug.print ("{s} failed with {} status code\n", .{ @typeName (@This ()) ++ "." ++ @src ().fn_name, result, });
+        return error.UnexpectedResult;
+      }
+    }
+  };
 };
 
 pub const ExtensionProperties = extern struct
@@ -119,13 +132,45 @@ pub const Extent2D = extern struct
   height: u32,
 };
 
+pub const Extent3D = extern struct
+{
+  width: u32,
+  height: u32,
+  depth: u32,
+};
+
 pub const Fence = enum (u64) { NULL_HANDLE = 0, _, };
 
-pub const Format = enum (i32)
+pub const Format = enum (u32)
 {
-  UNDEFINED = c.VK_FORMAT_UNDEFINED,
-  R4G4_UNORM_PACK8 = c.VK_FORMAT_R4G4_UNORM_PACK8,
+  A8B8G8R8_UNORM_PACK32 = c.VK_FORMAT_A8B8G8R8_UNORM_PACK32,
+  B8G8R8A8_UNORM = c.VK_FORMAT_B8G8R8A8_UNORM,
+  R8G8B8_UNORM = c.VK_FORMAT_R8G8B8_UNORM,
+  R8G8B8A8_UNORM = c.VK_FORMAT_R8G8B8A8_UNORM,
   _,
+
+  pub const Feature = extern struct
+  {
+    pub const Flags = u32;
+
+    pub const Bit = enum (vk.Format.Feature.Flags)
+    {
+      BLIT_SRC = c.VK_FORMAT_FEATURE_BLIT_SRC_BIT,
+      BLIT_DST = c.VK_FORMAT_FEATURE_BLIT_DST_BIT,
+
+      pub fn in (self: @This (), flags: vk.Format.Feature.Flags) bool
+      {
+        return (flags & @intFromEnum (self)) == @intFromEnum (self);
+      }
+    };
+  };
+
+  pub const Properties = extern struct
+  {
+    linear_tiling_features: vk.Format.Feature.Flags = 0,
+    optimal_tiling_features: vk.Format.Feature.Flags = 0,
+    buffer_features: vk.Format.Feature.Flags = 0,
+  };
 };
 
 pub const Framebuffer = enum (u64) { NULL_HANDLE = 0, _, };
@@ -311,6 +356,19 @@ pub const PhysicalDevice = enum (usize)
     }
   };
 
+  pub const Format = extern struct
+  {
+    pub const Properties = extern struct
+    {
+      pub fn get (physical_device: vk.PhysicalDevice, format: vk.Format) vk.Format.Properties
+      {
+        var format_properties: vk.Format.Properties = undefined;
+        raw.prototypes.instance.vkGetPhysicalDeviceFormatProperties (physical_device, @intFromEnum (format), &format_properties);
+        return format_properties;
+      }
+    };
+  };
+
   pub const Limits = extern struct
   {
     max_image_dimension_1d: u32,
@@ -441,6 +499,17 @@ pub const PhysicalDevice = enum (usize)
     }
   };
 
+  pub const Queue = extern struct
+  {
+    pub const FamilyProperties = extern struct
+    {
+      pub fn get (physical_device: vk.PhysicalDevice, p_queue_family_property_count: *u32, p_queue_family_properties: ?[*] vk.Queue.FamilyProperties) void
+      {
+        raw.prototypes.instance.vkGetPhysicalDeviceQueueFamilyProperties (physical_device, p_queue_family_property_count, p_queue_family_properties);
+      }
+    };
+  };
+
   pub const SparseProperties = extern struct
   {
     residency_standard_2d_block_shape: vk.Bool32,
@@ -450,7 +519,10 @@ pub const PhysicalDevice = enum (usize)
     residency_non_resident_strict: vk.Bool32,
   };
 
-  pub const Type = enum (i32) {};
+  pub const Type = enum (i32)
+  {
+    DISCRETE_GPU = c.VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU,
+  };
 };
 
 pub const PhysicalDevices = extern struct
@@ -472,7 +544,30 @@ pub const Pipeline = enum (u64)
   pub const Layout = enum (u64) { NULL_HANDLE = 0, _, };
 };
 
-pub const Queue = enum (usize) { NULL_HANDLE = 0, _, };
+pub const Queue = enum (usize)
+{
+  NULL_HANDLE = 0, _,
+
+  pub const Flags = u32;
+
+  pub const Bit = enum (vk.Queue.Flags)
+  {
+    GRAPHICS = c.VK_QUEUE_GRAPHICS_BIT,
+
+    pub fn in (self: @This (), flags: vk.Queue.Flags) bool
+    {
+      return (flags & @intFromEnum (self)) == @intFromEnum (self);
+    }
+  };
+
+  pub const FamilyProperties = extern struct
+  {
+    queue_flags: vk.Queue.Flags = 0,
+    queue_count: u32,
+    timestamp_valid_bits: u32,
+    min_image_transfer_granularity: vk.Extent3D,
+  };
+};
 
 pub const Rect2D = extern struct
 {

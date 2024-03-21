@@ -79,6 +79,22 @@ pub const Command = extern struct
   pub const Pool = enum (u64) { NULL_HANDLE = 0, _, };
 };
 
+pub const Component = extern struct
+{
+  pub const Mapping = extern struct
+  {
+    r: vk.Component.Swizzle,
+    g: vk.Component.Swizzle,
+    b: vk.Component.Swizzle,
+    a: vk.Component.Swizzle,
+  };
+
+  pub const Swizzle = enum (i32)
+  {
+    IDENTITY = c.VK_COMPONENT_SWIZZLE_IDENTITY,
+  };
+};
+
 pub const Descriptor = extern struct
 {
   pub const Pool = enum (u64) { NULL_HANDLE = 0, _, };
@@ -106,6 +122,41 @@ pub const Device = enum (usize)
     }
   }
 
+  pub fn create (physical_device: vk.PhysicalDevice, p_create_info: *const vk.Device.Create.Info, p_allocator: ?*const vk.AllocationCallbacks) !vk.Device
+  {
+    var device: Device = undefined;
+    const result = raw.prototypes.instance.vkCreateDevice (physical_device, p_create_info, p_allocator, &device);
+    if (result > 0)
+    {
+      std.debug.print ("{s} failed with {} status code\n", .{ @typeName (@This ()) ++ "." ++ @src ().fn_name, result, });
+      return error.UnexpectedResult;
+    }
+    return device;
+  }
+
+  pub fn destroy (self: @This (), p_allocator: ?*const vk.AllocationCallbacks) void
+  {
+    raw.prototypes.device.vkDestroyDevice (self, p_allocator);
+  }
+
+  pub const Create = extern struct
+  {
+    pub const Flags = u32;
+    pub const Info = extern struct
+    {
+      s_type: vk.StructureType = .DEVICE_CREATE_INFO,
+      p_next: ?*const anyopaque = null,
+      flags: vk.Device.Create.Flags = 0,
+      queue_create_info_count: u32,
+      p_queue_create_infos: [*] const vk.Device.Queue.Create.Info,
+      enabled_layer_count: u32 = 0,
+      pp_enabled_layer_names: ?[*] const [*:0] const u8 = null,
+      enabled_extension_count: u32 = 0,
+      pp_enabled_extension_names: ?[*] const [*:0]const u8 = null,
+      p_enabled_features: ?*const vk.PhysicalDevice.Features = null,
+    };
+  };
+
   pub const ExtensionProperties = extern struct
   {
     pub fn enumerate (physical_device: PhysicalDevice, p_layer_name: ?[*:0] const u8, p_property_count: *u32, p_properties: ?[*] vk.ExtensionProperties) !void
@@ -117,6 +168,31 @@ pub const Device = enum (usize)
         return error.UnexpectedResult;
       }
     }
+  };
+
+  pub const Queue = extern struct
+  {
+    pub fn get (device: vk.Device, queue_family_index: u32, queue_index: u32) vk.Queue
+    {
+      var queue: vk.Queue = undefined;
+      raw.prototypes.device.vkGetDeviceQueue (device, queue_family_index, queue_index, &queue);
+      return queue;
+    }
+
+    pub const Create = extern struct
+    {
+      pub const Flags = u32;
+
+      pub const Info = extern struct
+      {
+        s_type: vk.StructureType = .DEVICE_QUEUE_CREATE_INFO,
+        p_next: ?*const anyopaque = null,
+        flags: vk.Device.Queue.Create.Flags = 0,
+        queue_family_index: u32,
+        queue_count: u32,
+        p_queue_priorities: [*] const f32,
+      };
+    };
   };
 };
 
@@ -144,6 +220,7 @@ pub const Fence = enum (u64) { NULL_HANDLE = 0, _, };
 pub const Format = enum (u32)
 {
   A8B8G8R8_UNORM_PACK32 = c.VK_FORMAT_A8B8G8R8_UNORM_PACK32,
+  B8G8R8A8_SRGB = c.VK_FORMAT_B8G8R8A8_SRGB,
   B8G8R8A8_UNORM = c.VK_FORMAT_B8G8R8A8_UNORM,
   R8G8B8_UNORM = c.VK_FORMAT_R8G8B8_UNORM,
   R8G8B8A8_UNORM = c.VK_FORMAT_R8G8B8A8_UNORM,
@@ -179,15 +256,80 @@ pub const Image = enum (u64)
 {
   NULL_HANDLE = 0, _,
 
-  pub const Usage = extern struct
+  pub const Aspect = extern struct
   {
-    pub const Flags = extern struct
+    pub const Flags = u32;
+
+    pub const Bit = enum (vk.Image.Aspect.Flags)
     {
-      pub const TRANSFER_SRC_BIT = c.VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+      COLOR = c.VK_IMAGE_ASPECT_COLOR_BIT,
     };
   };
 
-  pub const View = enum (u64) { NULL_HANDLE = 0, _, };
+  pub const SubresourceRange = extern struct
+  {
+    aspect_mask: vk.Image.Aspect.Flags,
+    base_mip_level: u32,
+    level_count: u32,
+    base_array_layer: u32,
+    layer_count: u32,
+  };
+
+  pub const Usage = extern struct
+  {
+    pub const Flags = u32;
+
+    pub const Bit = enum (vk.Image.Usage.Flags)
+    {
+      COLOR_ATTACHMENT = c.VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+      TRANSFER_DST = c.VK_IMAGE_USAGE_TRANSFER_DST_BIT,
+      TRANSFER_SRC = c.VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
+    };
+  };
+
+  pub const View = enum (u64)
+  {
+    NULL_HANDLE = 0, _,
+
+    pub fn create (device: vk.Device, p_create_info: *const vk.Image.View.Create.Info, p_allocator: ?*const vk.AllocationCallbacks) !vk.Image.View
+    {
+      var view: vk.Image.View = undefined;
+      const result = raw.prototypes.device.vkCreateImageView (device, p_create_info, p_allocator, &view);
+      if (result > 0)
+      {
+        std.debug.print ("{s} failed with {} status code\n", .{ @typeName (@This ()) ++ "." ++ @src ().fn_name, result, });
+        return error.UnexpectedResult;
+      }
+      return view;
+    }
+
+    pub fn destroy (device: vk.Device, image_view: vk.Image.View, p_allocator: ?*const vk.AllocationCallbacks) void
+    {
+      raw.prototypes.device.vkDestroyImageView (device, image_view, p_allocator);
+    }
+
+    pub const Create = extern struct
+    {
+      pub const Flags = u32;
+
+      pub const Info = extern struct
+      {
+        s_type: vk.StructureType = .IMAGE_VIEW_CREATE_INFO,
+        p_next: ?*const anyopaque = null,
+        flags: vk.Image.View.Create.Flags = 0,
+        image: vk.Image,
+        view_type: vk.Image.View.Type,
+        format: vk.Format,
+        components: vk.Component.Mapping,
+        subresource_range: vk.Image.SubresourceRange,
+      };
+    };
+
+    pub const Type = enum (i32)
+    {
+      @"2D" = c.VK_IMAGE_VIEW_TYPE_2D,
+    };
+  };
 };
 
 pub const Instance = enum (usize)
@@ -584,6 +726,11 @@ pub const SampleCount = extern struct
 };
 
 pub const Semaphore = enum (u64) { NULL_HANDLE = 0, _, };
+pub const SharingMode = enum (i32)
+{
+  EXCLUSIVE = c.VK_SHARING_MODE_EXCLUSIVE,
+  CONCURRENT = c.VK_SHARING_MODE_CONCURRENT,
+};
 
 pub const StructureType = enum (i32)
 {
@@ -592,7 +739,11 @@ pub const StructureType = enum (i32)
   DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT = c.VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT,
   DEBUG_UTILS_MESSENGER_CALLBACK_DATA_EXT = c.VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CALLBACK_DATA_EXT,
   DEBUG_UTILS_OBJECT_NAME_INFO_EXT = c.VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT,
+  DEVICE_CREATE_INFO = c.VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
+  DEVICE_QUEUE_CREATE_INFO = c.VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+  IMAGE_VIEW_CREATE_INFO = c.VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
   INSTANCE_CREATE_INFO = c.VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
+  SWAPCHAIN_CREATE_INFO_KHR = c.VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
   VALIDATION_FEATURES_EXT = c.VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT,
 };
 

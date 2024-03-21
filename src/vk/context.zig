@@ -517,34 +517,25 @@ pub const Context = struct
 
   fn init_logical_device (self: *@This ()) !void
   {
-    const priority = [_] f32 {1};
-    const queue_create_info = [_] vk.DeviceQueueCreateInfo
+    const priority = [_] f32 { 1, };
+    const queue_create_info = [_] vk.Device.Queue.Create.Info
                               {
-                                vk.DeviceQueueCreateInfo
-                                {
-                                  .flags              = vk.DeviceQueueCreateFlags {},
-                                  .queue_family_index = self.candidate.graphics_family,
-                                  .queue_count        = 1,
-                                  .p_queue_priorities = &priority,
-                                },
-                                vk.DeviceQueueCreateInfo
-                                {
-                                  .flags              = vk.DeviceQueueCreateFlags {},
-                                  .queue_family_index = self.candidate.present_family,
-                                  .queue_count        = 1,
-                                  .p_queue_priorities = &priority,
-                                },
+                                .{
+                                   .queue_family_index = self.candidate.graphics_family,
+                                   .queue_count        = 1,
+                                   .p_queue_priorities = &priority,
+                                 }, .{
+                                   .queue_family_index = self.candidate.present_family,
+                                   .queue_count        = 1,
+                                   .p_queue_priorities = &priority,
+                                 },
                               };
     const queue_count: u32 = if (self.candidate.graphics_family == self.candidate.present_family) 1 else 2;
 
-    const device_features = vk.PhysicalDeviceFeatures
-                            {
-                              .sampler_anisotropy = vk.TRUE,
-                            };
+    const device_features: vk.PhysicalDevice.Features = .{ .sampler_anisotropy = vk.TRUE, };
 
-    const device_create_info = vk.DeviceCreateInfo
+    const device_create_info = vk.Device.Create.Info
                                {
-                                 .flags                      = vk.DeviceCreateFlags {},
                                  .p_queue_create_infos       = &queue_create_info,
                                  .queue_create_info_count    = queue_count,
                                  .enabled_layer_count        = required_layers.len,
@@ -554,13 +545,13 @@ pub const Context = struct
                                  .p_enabled_features         = &device_features,
                                };
 
-    self.logical_device = try self.instance.dispatch.createDevice (self.physical_device.?, &device_create_info, null);
+    self.logical_device = try vk.Device.create (self.physical_device.?, &device_create_info, null);
 
     try self.logical_device.load ();
-    errdefer self.device_dispatch.destroyDevice (self.logical_device, null);
+    errdefer self.logical_device.destroy (null);
 
-    self.graphics_queue = self.device_dispatch.getDeviceQueue (self.logical_device, self.candidate.graphics_family, 0);
-    self.present_queue = self.device_dispatch.getDeviceQueue (self.logical_device, self.candidate.present_family, 0);
+    self.graphics_queue = vk.Device.Queue.get (self.logical_device, self.candidate.graphics_family, 0);
+    self.present_queue = vk.Device.Queue.get (self.logical_device, self.candidate.present_family, 0);
 
     try self.logger.app (.DEBUG, "init Vulkan logical device OK", .{});
   }
@@ -569,10 +560,7 @@ pub const Context = struct
   {
     for (self.formats) |format|
     {
-      if (format.format == vk.Format.B8G8R8A8_SRGB and format.color_space == vk.KHR.ColorSpace.srgb_nonlinear_khr)
-      {
-        self.surface_format = format;
-      }
+      if (format.format == .B8G8R8A8_SRGB and format.color_space == .SRGB_NONLINEAR) self.surface_format = format;
     }
 
     self.surface_format = self.formats [0];
@@ -582,13 +570,10 @@ pub const Context = struct
   {
     for (self.present_modes) |present_mode|
     {
-      if (present_mode == vk.KHR.PresentMode.mailbox_khr)
-      {
-        return present_mode;
-      }
+      if (present_mode == .MAILBOX) return present_mode;
     }
 
-    return vk.KHR.PresentMode.fifo_khr;
+    return .FIFO;
   }
 
   fn choose_swap_extent (self: *@This (), framebuffer: struct { width: u32, height: u32, }) void
@@ -609,12 +594,12 @@ pub const Context = struct
   {
     var image_count: u32 = undefined;
 
-    _ = try self.device_dispatch.getSwapchainImagesKHR (self.logical_device, self.swapchain, &image_count, null);
+    _ = try vk.KHR.Swapchain.Images.get (self.logical_device, self.swapchain, &image_count, null);
 
     self.images = try self.logger.allocator.alloc (vk.Image, image_count);
-    self.views = try self.logger.allocator.alloc (vk.ImageView, image_count);
+    self.views = try self.logger.allocator.alloc (vk.Image.View, image_count);
 
-    _ = try self.device_dispatch.getSwapchainImagesKHR (self.logical_device, self.swapchain, &image_count, self.images.ptr);
+    _ = try vk.KHR.Swapchain.Images.get (self.logical_device, self.swapchain, &image_count, self.images.ptr);
 
     try self.logger.app (.DEBUG, "init Vulkan swapchain images OK", .{});
   }
@@ -638,32 +623,28 @@ pub const Context = struct
                                    self.candidate.present_family,
                                  };
 
-    const create_info = vk.KHR.SwapchainCreateInfo
+    const create_info = vk.KHR.Swapchain.Create.Info
                         {
-                          .flags                    = vk.Flags.KHR.SwapchainCreate {},
                           .surface                  = self.surface,
                           .min_image_count          = image_count,
                           .image_format             = self.surface_format.format,
                           .image_color_space        = self.surface_format.color_space,
                           .image_extent             = self.extent,
                           .image_array_layers       = 1,
-                          .image_usage              = vk.ImageUsageFlags
-                                                      {
-                                                        .color_attachment_bit = true,
-                                                        .transfer_src_bit     = true,
-                                                        .transfer_dst_bit     = true,
-                                                      },
-                          .image_sharing_mode       = if (self.candidate.graphics_family != self.candidate.present_family) .concurrent else .exclusive,
+                          .image_usage              = @intFromEnum (vk.Image.Usage.Bit.COLOR_ATTACHMENT) |
+                                                      @intFromEnum (vk.Image.Usage.Bit.TRANSFER_SRC) |
+                                                      @intFromEnum (vk.Image.Usage.Bit.TRANSFER_DST),
+                          .image_sharing_mode       = if (self.candidate.graphics_family != self.candidate.present_family) .CONCURRENT else .EXCLUSIVE,
                           .queue_family_index_count = if (self.candidate.graphics_family != self.candidate.present_family) queue_family_indices.len else 0,
                           .p_queue_family_indices   = if (self.candidate.graphics_family != self.candidate.present_family) &queue_family_indices else null,
                           .pre_transform            = self.capabilities.current_transform,
-                          .composite_alpha          = vk.Flags.KHR.CompositeAlpha { .opaque_bit_khr = true },
+                          .composite_alpha          = @intFromEnum (vk.KHR.CompositeAlpha.Bit.OPAQUE),
                           .present_mode             = present_mode,
                           .clipped                  = vk.TRUE,
                         };
 
-    self.swapchain = try self.device_dispatch.createSwapchainKHR (self.logical_device, &create_info, null);
-    errdefer self.device_dispatch.destroySwapchainKHR (self.logical_device, self.swapchain, null);
+    self.swapchain = try vk.KHR.Swapchain.create (self.logical_device, &create_info, null);
+    errdefer vk.KHR.Swapchain.destroy (self.logical_device, self.swapchain, null);
 
     try self.init_swapchain_images ();
 
@@ -672,35 +653,27 @@ pub const Context = struct
 
   fn init_image_views (self: *@This ()) !void
   {
-    var create_info: vk.ImageViewCreateInfo = undefined;
+    var create_info: vk.Image.View.Create.Info = undefined;
 
     for (self.images, 0..) |image, index|
     {
-      create_info = vk.ImageViewCreateInfo
+      create_info = vk.Image.View.Create.Info
                     {
-                      .flags             = vk.ImageViewCreateFlags {},
                       .image             = image,
-                      .view_type         = vk.ImageViewType.@"2d",
+                      .view_type         = .@"2D",
                       .format            = self.surface_format.format,
-                      .components        = vk.ComponentMapping
-                                           {
-                                             .r = vk.ComponentSwizzle.identity,
-                                             .g = vk.ComponentSwizzle.identity,
-                                             .b = vk.ComponentSwizzle.identity,
-                                             .a = vk.ComponentSwizzle.identity,
-                                           },
-                      .subresource_range = vk.ImageSubresourceRange
-                                           {
-                                             .aspect_mask      = vk.ImageAspectFlags { .color_bit = true },
-                                             .base_mip_level   = 0,
-                                             .level_count      = 1,
-                                             .base_array_layer = 0,
-                                             .layer_count      = 1,
-                                           },
+                      .components        = .{ .r = .IDENTITY, .g = .IDENTITY, .b = .IDENTITY, .a = .IDENTITY, },
+                      .subresource_range = .{
+                                              .aspect_mask      = @intFromEnum (vk.Image.Aspect.Bit.COLOR),
+                                              .base_mip_level   = 0,
+                                              .level_count      = 1,
+                                              .base_array_layer = 0,
+                                              .layer_count      = 1,
+                                            },
                     };
 
-      self.views [index] = try self.device_dispatch.createImageView (self.logical_device, &create_info, null);
-      errdefer self.device_dispatch.destroyImageView (self.logical_device, self.views [index], null);
+      self.views [index] = try vk.Image.View.create (self.logical_device, &create_info, null);
+      errdefer vk.Image.View.destroy (self.logical_device, self.views [index], null);
     }
 
     try self.logger.app (.DEBUG, "init Vulkan swapchain image views OK", .{});

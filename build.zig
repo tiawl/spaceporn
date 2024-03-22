@@ -1,26 +1,14 @@
 const std = @import ("std");
 const zig_version = @import ("builtin").zig_version;
 
-const zon = .{ .name = "spaceporn", .version = "0.1.0", .min_zig_version = "0.11.0", };
+const glfw = @import ("build/glfw.zig");
+const vk = @import ("build/vk.zig");
+const shaders = @import ("build/shaders.zig");
 
-const Options = struct
-{
-  verbose: bool = false,
-  turbo:   bool = false,
-  logdir:  [] const u8 = "",
-  vkminor: [] const u8 = "2",
-
-  const default: @This () = .{};
-};
-
-const Profile = struct
-{
-  target: std.Build.ResolvedTarget,
-  optimize: std.builtin.OptimizeMode,
-  variables: *std.Build.Step.Options,
-  options: Options,
-  command: [] const [] const u8,
-};
+const utils = @import ("build/utils.zig");
+const Options = utils.Options;
+const Profile = utils.Profile;
+const zon = utils.zon;
 
 pub fn build (builder: *std.Build) !void
 {
@@ -113,293 +101,9 @@ fn parse_options (builder: *std.Build) !Profile
   return profile;
 }
 
-const Node = struct
-{
-  name: [] const u8,
-  nodes: std.ArrayList (@This ()),
-  hash: [64] u8 = undefined,
-  depth: usize = 0,
-};
-
-// Create a hash from a shader's source contents.
-fn digest (profile: ?*const Profile, source: [] u8) [64] u8
-{
-  var hasher = std.crypto.hash.blake2.Blake2b384.init (.{});
-
-  // Make sure that there is no cache hit if the projet name has changed
-  hasher.update (zon.name);
-  // Make sure that there is no cache hit if the shader's source has changed.
-  hasher.update (source);
-  // Not only the shader source must be the same to ensure uniqueness the compile command, too.
-  if (profile) |p| for (p.command) |token| hasher.update (token);
-
-  // Create a base-64 hash digest from a hasher, which we can use as file name.
-  var hash_digest: [48] u8 = undefined;
-  hasher.final (&hash_digest);
-  var hash: [64] u8 = undefined;
-  _ = std.fs.base64_encoder.encode (&hash, &hash_digest);
-
-  return hash;
-}
-
-fn add_shader (builder: *std.Build, exe: *std.Build.Step.Compile, profile: *const Profile,
-  glsl: *std.fs.Dir, entry: *const std.fs.Dir.Walker.WalkerEntry,
-  dupe: [] const u8, ptr: *Node, depth: *usize) !void
-{
-  depth.* += 1;
-  if (std.mem.eql (u8, entry.basename, dupe))
-  {
-    const path = try builder.allocator.dupe (u8, entry.path);
-    const source = try glsl.readFileAlloc (builder.allocator, path, std.math.maxInt (usize));
-    try ptr.nodes.append (.{
-      .name = std.fs.path.extension (dupe) [1 ..],
-      .nodes = std.ArrayList (Node).init (builder.allocator),
-      .hash = digest (profile, source),
-      .depth = depth.*,
-    });
-
-    const out = try std.fs.path.join (builder.allocator, &.{
-      try builder.cache_root.join (builder.allocator, &.{ "shaders", }),
-      &ptr.nodes.items [ptr.nodes.items.len - 1].hash,
-    });
-    const in = try std.fs.path.join (builder.allocator, &.{
-      try builder.build_root.join (builder.allocator, &.{ "shaders", }), path,
-    });
-
-    // If we have a cache hit, we can save some compile time by not invoking the compile command.
-    shader_not_found: {
-      std.fs.accessAbsolute (out, .{}) catch |err| switch (err)
-      {
-        error.FileNotFound => break :shader_not_found,
-        else => return err,
-      };
-      return;
-    }
-
-    var command = std.ArrayList ([] const u8).init (builder.allocator);
-    try command.appendSlice (profile.command);
-    try command.appendSlice (&.{ "-o", out, in, });
-    std.debug.print ("{s}\n", .{ try std.mem.join (builder.allocator, " ", command.items), });
-    try exe.step.evalChildProcess (command.items);
-  }
-}
-
-fn write_index (builder: *std.Build, tree: *Node) ![] const u8
-{
-  var buffer = std.ArrayList (u8).init (builder.allocator);
-  const writer = buffer.writer ();
-
-  var stack = std.ArrayList (Node).init (builder.allocator);
-  try stack.appendSlice (tree.nodes.items);
-  var node: Node = undefined;
-
-  while (stack.items.len > 0)
-  {
-    node = stack.pop ();
-
-    try writer.print ("pub const @\"{s}\" ", .{ node.name, });
-
-    if (node.nodes.items.len == 0 and
-       (std.mem.eql (u8, node.name, "frag") or std.mem.eql (u8, node.name, "vert")))
-    {
-      try writer.print ("align(@alignOf(u32)) = @embedFile(\"{s}\").*;\n", .{ node.hash, });
-    } else try writer.print ("= struct {c}\n", .{ '{', });
-
-    for (node.nodes.items) |*child| try stack.append (child.*);
-
-    if (stack.getLastOrNull ()) |last|
-    {
-      if (node.depth > last.depth)
-        for (0 .. node.depth - last.depth) |_| try writer.print ("{c};\n", .{ '}', });
-    } else try writer.print ("{c};\n", .{ '}', });
-  }
-
-  try buffer.append (0);
-  const source = buffer.items [0 .. buffer.items.len - 1 :0];
-
-  const validated = try std.zig.Ast.parse (builder.allocator, source, std.zig.Ast.Mode.zig);
-  const formatted = try validated.render (builder.allocator);
-
-  const hash = &digest (null, formatted);
-  const path = try std.fs.path.join (builder.allocator, &.{
-    try builder.cache_root.join (builder.allocator, &.{ "shaders", }), hash,
-  });
-
-  std.fs.accessAbsolute (path, .{}) catch |err| switch (err)
-  {
-    error.FileNotFound => try builder.cache_root.handle.writeFile (path, formatted),
-    else => return err,
-  };
-
-  std.debug.print ("{s}\n", .{ path, });
-  return path;
-}
-
-fn walk_through_shaders (builder: *std.Build, exe: *std.Build.Step.Compile,
-  profile: *const Profile, tree: *Node) !void
-{
-  var glsl = try builder.build_root.handle.openDir ("shaders", .{ .iterate = true, });
-  defer glsl.close ();
-
-  var walker = try glsl.walk (builder.allocator);
-  defer walker.deinit ();
-  var depth: usize = undefined;
-
-  var pointer: *Node = undefined;
-
-  while (try walker.next ()) |*entry|
-  {
-    if (entry.kind == .file)
-    {
-      var iterator = try std.fs.path.componentIterator (entry.path);
-      pointer = tree;
-      depth = 0;
-      next: while (iterator.next ()) |*component|
-      {
-        const dupe = try builder.allocator.dupe (u8, component.name);
-        const stem = std.fs.path.stem (dupe);
-        for (pointer.nodes.items) |*node|
-        {
-          if (std.mem.eql (u8, node.name, stem))
-          {
-            pointer = node;
-            try add_shader (builder, exe, profile, &glsl, entry, dupe, pointer, &depth);
-            continue :next;
-          }
-        }
-        try pointer.nodes.append (.{ .name = stem, .nodes = std.ArrayList (Node).init (builder.allocator), .depth = depth, });
-        pointer = &pointer.nodes.items [pointer.nodes.items.len - 1];
-        try add_shader (builder, exe, profile, &glsl, entry, dupe, pointer, &depth);
-      }
-    }
-  }
-}
-
-fn compile_shaders (builder: *std.Build, exe: *std.Build.Step.Compile, profile: *const Profile) ![] const u8
-{
-  var tree: Node = .{ .name = "shaders", .nodes = std.ArrayList (Node).init (builder.allocator), };
-
-  builder.cache_root.handle.makeDir ("shaders") catch |err|
-  {
-    if (err != std.fs.File.OpenError.PathAlreadyExists) return err;
-  };
-
-  try walk_through_shaders (builder, exe, profile, &tree);
-  return try write_index (builder, &tree);
-}
-
-fn generate_literals_prototypes (builder: *std.Build) ![] const u8
-{
-  builder.cache_root.handle.makeDir ("prototypes") catch |err|
-  {
-    if (err != std.fs.File.OpenError.PathAlreadyExists) return err;
-  };
-
-  var binding: struct { path: [] const u8, buffer: std.ArrayList (u8), source: [] u8, } = undefined;
-
-  var vk: struct { path: [] const u8, dir: std.fs.Dir, } = undefined;
-  vk.path = try std.fs.path.join (builder.allocator, &.{ "src", "binding", "vk", });
-
-  vk.dir = try builder.build_root.handle.openDir (vk.path, .{ .iterate = true, });
-  defer vk.dir.close ();
-
-  var walker = try vk.dir.walk (builder.allocator);
-  defer walker.deinit ();
-
-  var prototypes: struct { buffer: std.ArrayList (u8), source: [:0] const u8,
-    path: [] const u8, structless: std.ArrayList ([] const u8),
-    instance: std.ArrayList ([] const u8), device: std.ArrayList ([] const u8), } = undefined;
-  prototypes.structless = std.ArrayList ([] const u8).init (builder.allocator);
-  prototypes.instance = std.ArrayList ([] const u8).init (builder.allocator);
-  prototypes.device = std.ArrayList ([] const u8).init (builder.allocator);
-  prototypes.buffer = std.ArrayList (u8).init (builder.allocator);
-
-  while (try walker.next ()) |*entry|
-  {
-    if (entry.kind != .file) continue;
-
-    binding.path = try std.fs.path.join (builder.allocator, &.{ vk.path, entry.path, });
-    binding.buffer = std.ArrayList (u8).init (builder.allocator);
-    binding.source = try builder.build_root.handle.readFileAlloc (builder.allocator, binding.path, std.math.maxInt (usize));
-
-    try binding.buffer.appendSlice (binding.source);
-    try binding.buffer.append (0);
-
-    var iterator = std.zig.Tokenizer.init (binding.buffer.items [0 .. binding.buffer.items.len - 1 :0]);
-    var token = iterator.next ();
-    const size: usize = 6;
-    var precedent: [size] ?std.zig.Token = .{ null, } ** size;
-
-    while (token.tag != .eof)
-    {
-      if (precedent [precedent.len - 1] != null)
-      {
-        if (std.mem.startsWith (u8, binding.buffer.items [token.loc.start .. token.loc.end], "vk") and
-            precedent [0].?.tag == .period and precedent [2].?.tag == .period and precedent [4].?.tag == .period and
-            std.mem.eql (u8, binding.buffer.items [precedent [3].?.loc.start .. precedent [3].?.loc.end], "prototypes") and
-            std.mem.eql (u8, binding.buffer.items [precedent [5].?.loc.start .. precedent [5].?.loc.end], "raw"))
-        {
-          inline for (@typeInfo (@TypeOf (prototypes)).Struct.fields) |field|
-          {
-            if (field.type == std.ArrayList ([] const u8))
-            {
-              if (std.mem.eql (u8, binding.buffer.items [precedent [1].?.loc.start .. precedent [1].?.loc.end], field.name))
-              {
-                try @field (prototypes, field.name).append (binding.buffer.items [token.loc.start .. token.loc.end]);
-                break;
-              }
-            }
-          }
-        }
-      }
-
-      for (1 .. precedent.len) |i| precedent [precedent.len - i] = precedent [precedent.len - i - 1];
-      precedent [0] = token;
-      token = iterator.next ();
-    }
-  }
-
-  const writer = prototypes.buffer.writer ();
-
-  inline for (@typeInfo (@TypeOf (prototypes)).Struct.fields) |field|
-  {
-    if (field.type == std.ArrayList ([] const u8))
-    {
-      try writer.print ("pub const {s} = enum {c}", .{ field.name, '{', });
-      for (@field (prototypes, field.name).items) |prototype|
-        try writer.print ("  {s},\n", .{ prototype, });
-      try writer.print ("{c};", .{ '}', });
-    }
-  }
-
-  try prototypes.buffer.append (0);
-  prototypes.source = prototypes.buffer.items [0 .. prototypes.buffer.items.len - 1 :0];
-
-  const validated = try std.zig.Ast.parse (builder.allocator, prototypes.source, std.zig.Ast.Mode.zig);
-  const formatted = try validated.render (builder.allocator);
-
-  const hash = &digest (null, formatted);
-  prototypes.path = try std.fs.path.join (builder.allocator, &.{
-    try builder.cache_root.join (builder.allocator, &.{ "prototypes", }), hash,
-  });
-
-  std.fs.accessAbsolute (prototypes.path, .{}) catch |err| switch (err)
-  {
-    error.FileNotFound => try builder.cache_root.handle.writeFile (prototypes.path, formatted),
-    else => return err,
-  };
-
-  std.debug.print ("{s}\n", .{ prototypes.path, });
-  return prototypes.path;
-}
-
 fn link (builder: *std.Build, profile: *const Profile) !*std.Build.Module
 {
-  const glfw_dep = builder.dependency ("glfw", .{
-    .target = profile.target,
-    .optimize = profile.optimize,
-  });
-  const glfw = glfw_dep.artifact ("glfw");
+  const glfw_lib = glfw.lib (builder, profile);
 
   const imgui_dep = builder.dependency ("cimgui", .{
     .target = profile.target,
@@ -412,201 +116,11 @@ fn link (builder: *std.Build, profile: *const Profile) !*std.Build.Module
     .target = profile.target,
     .optimize = profile.optimize,
   });
-  binding.linkLibrary (glfw);
+  binding.linkLibrary (glfw_lib);
   binding.linkLibrary (cimgui);
   binding.addIncludePath (imgui_dep.path ("imgui"));
 
   return binding;
-}
-
-fn import_glfw (builder: *std.Build, profile: *const Profile, c: *std.Build.Module) !*std.Build.Module
-{
-  const path = try builder.build_root.join (builder.allocator, &.{ "src", "binding", "glfw", });
-
-  var modules = std.ArrayList (*std.Build.Module).init (builder.allocator);
-
-  var dir = try builder.build_root.handle.openDir (path, .{ .iterate = true, });
-  defer dir.close ();
-
-  var it = dir.iterate ();
-  while (try it.next ()) |entry|
-  {
-    switch (entry.kind)
-    {
-      .file => {
-                 if (!std.mem.eql (u8, entry.name, "glfw.zig"))
-                 {
-                   try modules.append (builder.createModule (.{
-                     .root_source_file = .{ .path = try std.fs.path.join (builder.allocator, &.{ path, entry.name, }), },
-                     .target = profile.target,
-                     .optimize = profile.optimize,
-                   }));
-                   modules.items [modules.items.len - 1].addImport ("c", c);
-                 }
-               },
-      else  => {},
-    }
-  }
-
-  const glfw = builder.createModule (.{
-    .root_source_file = .{ .path = try std.fs.path.join (builder.allocator, &.{ path, "glfw.zig", }), },
-    .target = profile.target,
-    .optimize = profile.optimize,
-  });
-  glfw.addImport ("c", c);
-
-  for (modules.items) |module|
-  {
-    const name = std.fs.path.stem (std.fs.path.basename (module.root_source_file.?.getPath (builder)));
-    glfw.addImport (name, module);
-    module.addImport ("glfw", glfw);
-    for (modules.items) |other|
-    {
-      const other_name = std.fs.path.stem (std.fs.path.basename (other.root_source_file.?.getPath (builder)));
-      if (std.mem.eql (u8, name, other_name)) continue;
-      module.addImport (other_name, other);
-    }
-  }
-
-  return glfw;
-}
-
-fn import_vk (builder: *std.Build, profile: *const Profile, c: *std.Build.Module) !*std.Build.Module
-{
-  const literals = builder.createModule (.{
-    .root_source_file = .{ .path = try generate_literals_prototypes (builder), },
-    .target = profile.target,
-    .optimize = profile.optimize,
-  });
-
-  const path = try builder.build_root.join (builder.allocator, &.{ "src", "binding", "vk", });
-
-  const raw = builder.createModule (.{
-    .root_source_file = .{ .path = try std.fs.path.join (builder.allocator, &.{ path, "raw.zig", }), },
-    .target = profile.target,
-    .optimize = profile.optimize,
-  });
-  raw.addImport ("c", c);
-  raw.addImport ("literals", literals);
-
-  var modules = std.ArrayList (*std.Build.Module).init (builder.allocator);
-
-  var dir = try builder.build_root.handle.openDir (path, .{ .iterate = true, });
-  defer dir.close ();
-
-  var it = dir.iterate ();
-  while (try it.next ()) |entry|
-  {
-    switch (entry.kind)
-    {
-      .file => {
-                 if (!std.mem.eql (u8, entry.name, "vk.zig") and !std.mem.eql (u8, entry.name, "raw.zig") and
-                     !std.mem.eql (u8, entry.name, "ext.zig") and !std.mem.eql (u8, entry.name, "khr.zig"))
-                 {
-                   try modules.append (builder.createModule (.{
-                     .root_source_file = .{ .path = try std.fs.path.join (builder.allocator, &.{ path, entry.name, }), },
-                     .target = profile.target,
-                     .optimize = profile.optimize,
-                   }));
-                   modules.items [modules.items.len - 1].addImport ("c", c);
-                   modules.items [modules.items.len - 1].addImport ("raw", raw);
-                 }
-               },
-      else  => {},
-    }
-  }
-
-  const ext = builder.createModule (.{
-    .root_source_file = .{ .path = try std.fs.path.join (builder.allocator, &.{ path, "ext.zig", }), },
-    .target = profile.target,
-    .optimize = profile.optimize,
-  });
-  ext.addImport ("c", c);
-  ext.addImport ("raw", raw);
-
-  var ext_subs = std.ArrayList (*std.Build.Module).init (builder.allocator);
-
-  const ext_path = try std.fs.path.join (builder.allocator, &.{ path, "ext", });
-  var ext_dir = try builder.build_root.handle.openDir (ext_path, .{ .iterate = true, });
-  defer ext_dir.close ();
-
-  var walker = try ext_dir.walk (builder.allocator);
-  defer walker.deinit();
-
-  while (try walker.next ()) |entry|
-  {
-    switch (entry.kind)
-    {
-      .file => {
-                 try ext_subs.append (builder.createModule (.{
-                   .root_source_file = .{ .path = try std.fs.path.join (builder.allocator, &.{ ext_path, entry.path, }), },
-                   .target = profile.target,
-                   .optimize = profile.optimize,
-                 }));
-                 ext_subs.items [ext_subs.items.len - 1].addImport ("c", c);
-                 ext_subs.items [ext_subs.items.len - 1].addImport ("raw", raw);
-                 ext.addImport (std.fs.path.stem (entry.basename), ext_subs.items [ext_subs.items.len - 1]);
-               },
-      else  => {},
-    }
-  }
-
-  try modules.append (ext);
-
-  const khr = builder.createModule (.{
-    .root_source_file = .{ .path = try std.fs.path.join (builder.allocator, &.{ path, "khr.zig", }), },
-    .target = profile.target,
-    .optimize = profile.optimize,
-  });
-  khr.addImport ("c", c);
-  khr.addImport ("raw", raw);
-
-  var khr_subs = std.ArrayList (*std.Build.Module).init (builder.allocator);
-
-  const khr_path = try std.fs.path.join (builder.allocator, &.{ path, "khr", });
-  var khr_dir = try builder.build_root.handle.openDir (khr_path, .{ .iterate = true, });
-  defer khr_dir.close ();
-
-  walker = try khr_dir.walk (builder.allocator);
-  defer walker.deinit();
-
-  while (try walker.next ()) |entry|
-  {
-    switch (entry.kind)
-    {
-      .file => {
-                 try khr_subs.append (builder.createModule (.{
-                   .root_source_file = .{ .path = try std.fs.path.join (builder.allocator, &.{ khr_path, entry.path, }), },
-                   .target = profile.target,
-                   .optimize = profile.optimize,
-                 }));
-                 khr_subs.items [khr_subs.items.len - 1].addImport ("c", c);
-                 khr_subs.items [khr_subs.items.len - 1].addImport ("raw", raw);
-                 khr.addImport (std.fs.path.stem (entry.basename), khr_subs.items [khr_subs.items.len - 1]);
-               },
-      else  => {},
-    }
-  }
-
-  try modules.append (khr);
-
-  const vk = builder.createModule (.{
-    .root_source_file = .{ .path = try std.fs.path.join (builder.allocator, &.{ path, "vk.zig", }), },
-    .target = profile.target,
-    .optimize = profile.optimize,
-  });
-  vk.addImport ("c", c);
-  vk.addImport ("raw", raw);
-  raw.addImport ("vk", vk);
-  for (modules.items) |module|
-  {
-    vk.addImport (std.fs.path.stem (std.fs.path.basename (module.root_source_file.?.getPath (builder))), module);
-    module.addImport ("vk", vk);
-  }
-  for (khr_subs.items) |khr_sub| khr_sub.addImport ("vk", vk);
-  for (ext_subs.items) |ext_sub| ext_sub.addImport ("vk", vk);
-
-  return vk;
 }
 
 fn import (builder: *std.Build, exe: *std.Build.Step.Compile, profile: *const Profile) !void
@@ -617,16 +131,10 @@ fn import (builder: *std.Build, exe: *std.Build.Step.Compile, profile: *const Pr
   });
   const datetime = datetime_dep.module ("zig-datetime");
 
-  const shader = builder.createModule (.{
-    .root_source_file = .{ .path = try compile_shaders (builder, exe, profile), },
-    .target = profile.target,
-    .optimize = profile.optimize,
-  });
-
+  const shaders_module = try shaders.import (builder, exe, profile);
   const c = try link (builder, profile);
-
-  const glfw = try import_glfw (builder, profile, c);
-  const vk = try import_vk (builder, profile, c);
+  const glfw_module = try glfw.import (builder, profile, c);
+  const vk_module = try vk.import (builder, profile, c);
 
   const imgui = builder.createModule (.{
     .root_source_file = .{ .path = try builder.build_root.join (builder.allocator, &.{ "src", "binding", "imgui.zig", }), },
@@ -634,7 +142,7 @@ fn import (builder: *std.Build, exe: *std.Build.Step.Compile, profile: *const Pr
     .optimize = profile.optimize,
   });
   imgui.addImport ("c", c);
-  imgui.addImport ("glfw", glfw);
+  imgui.addImport ("glfw", glfw_module);
 
   const build_options = profile.variables.createModule ();
   const logger = builder.createModule (.{
@@ -652,11 +160,11 @@ fn import (builder: *std.Build, exe: *std.Build.Step.Compile, profile: *const Pr
     .optimize = profile.optimize,
   });
   instance.addImport ("logger", logger);
-  instance.addImport ("vk", vk);
+  instance.addImport ("vk", vk_module);
 
   for ([_] struct { name: [] const u8, ptr: *std.Build.Module, } {
-    .{ .name = "datetime", .ptr = datetime, }, .{ .name = "shader", .ptr = shader, },
-    .{ .name = "glfw", .ptr = glfw, }, .{ .name = "vk", .ptr = vk, },
+    .{ .name = "datetime", .ptr = datetime, }, .{ .name = "shader", .ptr = shaders_module, },
+    .{ .name = "glfw", .ptr = glfw_module, }, .{ .name = "vk", .ptr = vk_module, },
     .{ .name = "imgui", .ptr = imgui, }, .{ .name = "logger", .ptr = logger, },
     .{ .name = "instance", .ptr = instance, },
   }) |module| exe.root_module.addImport (module.name, module.ptr);

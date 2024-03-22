@@ -681,29 +681,26 @@ pub const Context = struct
 
   fn init_render_pass (self: *@This ()) !void
   {
-    const attachment_desc = [_] vk.AttachmentDescription
+    const attachment_desc = [_] vk.Attachment.Description
                             {
-                              vk.AttachmentDescription
-                              {
-                                .flags            = vk.AttachmentDescriptionFlags {},
-                                .format           = self.surface_format.format,
-                                .samples          = vk.SampleCountFlags { .@"1_bit" = true },
-                                .load_op          = vk.AttachmentLoadOp.clear,
-                                .store_op         = vk.AttachmentStoreOp.store,
-                                .stencil_load_op  = vk.AttachmentLoadOp.dont_care,
-                                .stencil_store_op = vk.AttachmentStoreOp.dont_care,
-                                .initial_layout   = vk.ImageLayout.undefined,
-                                .final_layout     = vk.ImageLayout.present_src_khr,
-                              },
+                              .{
+                                 .format           = self.surface_format.format,
+                                 .samples          = vk.SampleCountFlags { .@"1_bit" = true },
+                                 .load_op          = vk.Attachment.LoadOp.clear,
+                                 .store_op         = vk.Attachment.StoreOp.store,
+                                 .stencil_load_op  = vk.Attachment.LoadOp.dont_care,
+                                 .stencil_store_op = vk.Attachment.StoreOp.dont_care,
+                                 .initial_layout   = vk.Image.Layout.UNDEFINED,
+                                 .final_layout     = vk.Image.Layout.PRESENT_SRC_khr,
+                               },
                             };
 
-    const attachment_ref = [_] vk.AttachmentReference
+    const attachment_ref = [_] vk.Attachment.Reference
                            {
-                             vk.AttachmentReference
-                             {
-                               .attachment = 0,
-                               .layout     = vk.ImageLayout.color_attachment_optimal,
-                             },
+                             .{
+                                .attachment = 0,
+                                .layout     = vk.Image.Layout.COLOR_ATTACHMENT_OPTIMAL,
+                              },
                            };
 
     const subpass = [_] vk.SubpassDescription

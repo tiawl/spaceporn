@@ -1,7 +1,7 @@
 const c = @import ("c");
 const std = @import ("std");
 
-const glfw = @import ("glfw.zig");
+const glfw = @import ("glfw");
 
 pub const Window = struct
 {

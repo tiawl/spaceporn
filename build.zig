@@ -288,7 +288,7 @@ fn compile_shaders (builder: *std.Build, exe: *std.Build.Step.Compile, profile: 
   return try write_index (builder, &tree);
 }
 
-fn generate_prototypes (builder: *std.Build) ![] const u8
+fn generate_literals_prototypes (builder: *std.Build) ![] const u8
 {
   builder.cache_root.handle.makeDir ("prototypes") catch |err|
   {
@@ -419,6 +419,196 @@ fn link (builder: *std.Build, profile: *const Profile) !*std.Build.Module
   return binding;
 }
 
+fn import_glfw (builder: *std.Build, profile: *const Profile, c: *std.Build.Module) !*std.Build.Module
+{
+  const path = try builder.build_root.join (builder.allocator, &.{ "src", "binding", "glfw", });
+
+  var modules = std.ArrayList (*std.Build.Module).init (builder.allocator);
+
+  var dir = try builder.build_root.handle.openDir (path, .{ .iterate = true, });
+  defer dir.close ();
+
+  var it = dir.iterate ();
+  while (try it.next ()) |entry|
+  {
+    switch (entry.kind)
+    {
+      .file => {
+                 if (!std.mem.eql (u8, entry.name, "glfw.zig"))
+                 {
+                   try modules.append (builder.createModule (.{
+                     .root_source_file = .{ .path = try std.fs.path.join (builder.allocator, &.{ path, entry.name, }), },
+                     .target = profile.target,
+                     .optimize = profile.optimize,
+                   }));
+                   modules.items [modules.items.len - 1].addImport ("c", c);
+                 }
+               },
+      else  => {},
+    }
+  }
+
+  const glfw = builder.createModule (.{
+    .root_source_file = .{ .path = try std.fs.path.join (builder.allocator, &.{ path, "glfw.zig", }), },
+    .target = profile.target,
+    .optimize = profile.optimize,
+  });
+  glfw.addImport ("c", c);
+
+  for (modules.items) |module|
+  {
+    const name = std.fs.path.stem (std.fs.path.basename (module.root_source_file.?.getPath (builder)));
+    glfw.addImport (name, module);
+    module.addImport ("glfw", glfw);
+    for (modules.items) |other|
+    {
+      const other_name = std.fs.path.stem (std.fs.path.basename (other.root_source_file.?.getPath (builder)));
+      if (std.mem.eql (u8, name, other_name)) continue;
+      module.addImport (other_name, other);
+    }
+  }
+
+  return glfw;
+}
+
+fn import_vk (builder: *std.Build, profile: *const Profile, c: *std.Build.Module) !*std.Build.Module
+{
+  const literals = builder.createModule (.{
+    .root_source_file = .{ .path = try generate_literals_prototypes (builder), },
+    .target = profile.target,
+    .optimize = profile.optimize,
+  });
+
+  const path = try builder.build_root.join (builder.allocator, &.{ "src", "binding", "vk", });
+
+  const raw = builder.createModule (.{
+    .root_source_file = .{ .path = try std.fs.path.join (builder.allocator, &.{ path, "raw.zig", }), },
+    .target = profile.target,
+    .optimize = profile.optimize,
+  });
+  raw.addImport ("c", c);
+  raw.addImport ("literals", literals);
+
+  var modules = std.ArrayList (*std.Build.Module).init (builder.allocator);
+
+  var dir = try builder.build_root.handle.openDir (path, .{ .iterate = true, });
+  defer dir.close ();
+
+  var it = dir.iterate ();
+  while (try it.next ()) |entry|
+  {
+    switch (entry.kind)
+    {
+      .file => {
+                 if (!std.mem.eql (u8, entry.name, "vk.zig") and !std.mem.eql (u8, entry.name, "raw.zig") and
+                     !std.mem.eql (u8, entry.name, "ext.zig") and !std.mem.eql (u8, entry.name, "khr.zig"))
+                 {
+                   try modules.append (builder.createModule (.{
+                     .root_source_file = .{ .path = try std.fs.path.join (builder.allocator, &.{ path, entry.name, }), },
+                     .target = profile.target,
+                     .optimize = profile.optimize,
+                   }));
+                   modules.items [modules.items.len - 1].addImport ("c", c);
+                   modules.items [modules.items.len - 1].addImport ("raw", raw);
+                 }
+               },
+      else  => {},
+    }
+  }
+
+  const ext = builder.createModule (.{
+    .root_source_file = .{ .path = try std.fs.path.join (builder.allocator, &.{ path, "ext.zig", }), },
+    .target = profile.target,
+    .optimize = profile.optimize,
+  });
+  ext.addImport ("c", c);
+  ext.addImport ("raw", raw);
+
+  var ext_subs = std.ArrayList (*std.Build.Module).init (builder.allocator);
+
+  const ext_path = try std.fs.path.join (builder.allocator, &.{ path, "ext", });
+  var ext_dir = try builder.build_root.handle.openDir (ext_path, .{ .iterate = true, });
+  defer ext_dir.close ();
+
+  var walker = try ext_dir.walk (builder.allocator);
+  defer walker.deinit();
+
+  while (try walker.next ()) |entry|
+  {
+    switch (entry.kind)
+    {
+      .file => {
+                 try ext_subs.append (builder.createModule (.{
+                   .root_source_file = .{ .path = try std.fs.path.join (builder.allocator, &.{ ext_path, entry.path, }), },
+                   .target = profile.target,
+                   .optimize = profile.optimize,
+                 }));
+                 ext_subs.items [ext_subs.items.len - 1].addImport ("c", c);
+                 ext_subs.items [ext_subs.items.len - 1].addImport ("raw", raw);
+                 ext.addImport (std.fs.path.stem (entry.basename), ext_subs.items [ext_subs.items.len - 1]);
+               },
+      else  => {},
+    }
+  }
+
+  try modules.append (ext);
+
+  const khr = builder.createModule (.{
+    .root_source_file = .{ .path = try std.fs.path.join (builder.allocator, &.{ path, "khr.zig", }), },
+    .target = profile.target,
+    .optimize = profile.optimize,
+  });
+  khr.addImport ("c", c);
+  khr.addImport ("raw", raw);
+
+  var khr_subs = std.ArrayList (*std.Build.Module).init (builder.allocator);
+
+  const khr_path = try std.fs.path.join (builder.allocator, &.{ path, "khr", });
+  var khr_dir = try builder.build_root.handle.openDir (khr_path, .{ .iterate = true, });
+  defer khr_dir.close ();
+
+  walker = try khr_dir.walk (builder.allocator);
+  defer walker.deinit();
+
+  while (try walker.next ()) |entry|
+  {
+    switch (entry.kind)
+    {
+      .file => {
+                 try khr_subs.append (builder.createModule (.{
+                   .root_source_file = .{ .path = try std.fs.path.join (builder.allocator, &.{ khr_path, entry.path, }), },
+                   .target = profile.target,
+                   .optimize = profile.optimize,
+                 }));
+                 khr_subs.items [khr_subs.items.len - 1].addImport ("c", c);
+                 khr_subs.items [khr_subs.items.len - 1].addImport ("raw", raw);
+                 khr.addImport (std.fs.path.stem (entry.basename), khr_subs.items [khr_subs.items.len - 1]);
+               },
+      else  => {},
+    }
+  }
+
+  try modules.append (khr);
+
+  const vk = builder.createModule (.{
+    .root_source_file = .{ .path = try std.fs.path.join (builder.allocator, &.{ path, "vk.zig", }), },
+    .target = profile.target,
+    .optimize = profile.optimize,
+  });
+  vk.addImport ("c", c);
+  vk.addImport ("raw", raw);
+  raw.addImport ("vk", vk);
+  for (modules.items) |module|
+  {
+    vk.addImport (std.fs.path.stem (std.fs.path.basename (module.root_source_file.?.getPath (builder))), module);
+    module.addImport ("vk", vk);
+  }
+  for (khr_subs.items) |khr_sub| khr_sub.addImport ("vk", vk);
+  for (ext_subs.items) |ext_sub| ext_sub.addImport ("vk", vk);
+
+  return vk;
+}
+
 fn import (builder: *std.Build, exe: *std.Build.Step.Compile, profile: *const Profile) !void
 {
   const datetime_dep = builder.dependency ("zig-datetime", .{
@@ -435,26 +625,8 @@ fn import (builder: *std.Build, exe: *std.Build.Step.Compile, profile: *const Pr
 
   const c = try link (builder, profile);
 
-  const glfw = builder.createModule (.{
-    .root_source_file = .{ .path = try builder.build_root.join (builder.allocator, &.{ "src", "binding", "glfw", "glfw.zig", }), },
-    .target = profile.target,
-    .optimize = profile.optimize,
-  });
-  glfw.addImport ("c", c);
-
-  const prototypes = builder.createModule (.{
-    .root_source_file = .{ .path = try generate_prototypes (builder), },
-    .target = profile.target,
-    .optimize = profile.optimize,
-  });
-
-  const vk = builder.createModule (.{
-    .root_source_file = .{ .path = try builder.build_root.join (builder.allocator, &.{ "src", "binding", "vk", "vk.zig", }), },
-    .target = profile.target,
-    .optimize = profile.optimize,
-  });
-  vk.addImport ("c", c);
-  vk.addImport ("prototypes", prototypes);
+  const glfw = try import_glfw (builder, profile, c);
+  const vk = try import_vk (builder, profile, c);
 
   const imgui = builder.createModule (.{
     .root_source_file = .{ .path = try builder.build_root.join (builder.allocator, &.{ "src", "binding", "imgui.zig", }), },

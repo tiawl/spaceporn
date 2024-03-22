@@ -1,8 +1,8 @@
 const std      = @import ("std");
 const c        = @import ("c");
-const literals = @import ("prototypes");
+const literals = @import ("literals");
 
-const vk = @import ("vk.zig");
+const vk = @import ("vk");
 
 const Prototypes = struct
 {

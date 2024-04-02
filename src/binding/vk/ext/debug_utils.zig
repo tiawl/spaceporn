@@ -27,7 +27,7 @@ pub const DebugUtils = extern struct
         WARNING = c.VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT,
         ERROR = c.VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT,
 
-        pub fn in (self: @This (), flags: vk.EXT.DebugUtils.Message.Severity.Flags) bool
+        pub fn contains (self: @This (), flags: vk.EXT.DebugUtils.Message.Severity.Flags) bool
         {
           return (flags & @intFromEnum (self)) == @intFromEnum (self);
         }
@@ -45,7 +45,7 @@ pub const DebugUtils = extern struct
         PERFORMANCE = c.VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT,
         DEVICE_ADDRESS_BINDING = c.VK_DEBUG_UTILS_MESSAGE_TYPE_DEVICE_ADDRESS_BINDING_BIT_EXT,
 
-        pub fn in (self: @This (), flags: vk.EXT.DebugUtils.Message.Type.Flags) bool
+        pub fn contains (self: @This (), flags: vk.EXT.DebugUtils.Message.Type.Flags) bool
         {
           return (flags & @intFromEnum (self)) == @intFromEnum (self);
         }
@@ -55,7 +55,7 @@ pub const DebugUtils = extern struct
 
   pub const Messenger = enum (u64)
   {
-    NULL_HANDLE = 0, _,
+    NULL_HANDLE = vk.NULL_HANDLE, _,
 
     pub fn create (instance: vk.Instance, p_create_info: *const vk.EXT.DebugUtils.Messenger.Create.Info, p_allocator: ?*const vk.AllocationCallbacks) !@This ()
     {

@@ -6,7 +6,7 @@ const raw = @import ("raw");
 
 pub const Swapchain = enum (u64)
 {
-  NULL_HANDLE = 0, _,
+  NULL_HANDLE = vk.NULL_HANDLE, _,
 
   pub fn create (device: vk.Device, p_create_info: *const vk.KHR.Swapchain.Create.Info, p_allocator: ?*const vk.AllocationCallbacks) !vk.KHR.Swapchain
   {

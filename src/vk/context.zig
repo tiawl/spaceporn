@@ -133,18 +133,18 @@ pub const Context = struct
     var present_family: ?u32 = null;
     var graphics_family: ?u32 = null;
 
-    for (queue_families, 0..) |properties, index|
+    for (queue_families, 0 ..) |properties, index|
     {
       const family: u32 = @intCast(index);
 
-      if (vk.Queue.Bit.GRAPHICS.in (properties.queue_flags) and try vk.KHR.PhysicalDevice.Surface.Support.get (device, family, self.surface) == vk.TRUE)
+      if (vk.Queue.Bit.GRAPHICS.contains (properties.queue_flags) and try vk.KHR.PhysicalDevice.Surface.Support.get (device, family, self.surface) == vk.TRUE)
       {
         graphics_family = family;
         present_family = family;
         break;
       }
 
-      if (graphics_family == null and vk.Queue.Bit.GRAPHICS.in (properties.queue_flags)) graphics_family = family;
+      if (graphics_family == null and vk.Queue.Bit.GRAPHICS.contains (properties.queue_flags)) graphics_family = family;
 
       if (present_family == null and try vk.KHR.PhysicalDevice.Surface.Support.get (device, family, self.surface) == vk.TRUE)
         present_family = family;
@@ -174,7 +174,7 @@ pub const Context = struct
     {
       for (supported_device_extensions) |supported_ext|
       {
-        if (std.mem.eql (u8, std.mem.span (required_ext), supported_ext.extension_name [0..std.mem.indexOfScalar (u8, &(supported_ext.extension_name), 0).?]))
+        if (std.mem.eql (u8, std.mem.span (required_ext), supported_ext.extension_name [0 .. std.mem.indexOfScalar (u8, &(supported_ext.extension_name), 0).?]))
         {
           try self.logger.app (.DEBUG, "Vulkan device {s} supports the {s} required device extension", .{ name, required_ext });
           break;
@@ -187,7 +187,7 @@ pub const Context = struct
 
     self.candidate.extensions = try std.ArrayList ([*:0] const u8).initCapacity (self.logger.allocator.*, required_device_extensions.len);
 
-    try self.candidate.extensions.appendSlice (required_device_extensions [0..]);
+    try self.candidate.extensions.appendSlice (required_device_extensions [0 ..]);
 
     try self.logger.app (.DEBUG, "Vulkan device {s} supports all required device extension", .{ name });
     return true;
@@ -441,8 +441,8 @@ pub const Context = struct
       }
     }
 
-    const blitting_supported = vk.Format.Feature.Bit.BLIT_SRC.in (vk.PhysicalDevice.Format.Properties.get (device, selected_format).optimal_tiling_features)
-      and vk.Format.Feature.Bit.BLIT_DST.in (vk.PhysicalDevice.Format.Properties.get (device, vk.Format.R8G8B8A8_UNORM).linear_tiling_features);
+    const blitting_supported = vk.Format.Feature.Bit.BLIT_SRC.contains (vk.PhysicalDevice.Format.Properties.get (device, selected_format).optimal_tiling_features)
+      and vk.Format.Feature.Bit.BLIT_DST.contains (vk.PhysicalDevice.Format.Properties.get (device, vk.Format.R8G8B8A8_UNORM).linear_tiling_features);
 
     if (!try self.check_device_features_properties (features, properties))
     {
@@ -539,7 +539,7 @@ pub const Context = struct
                                  .p_queue_create_infos       = &queue_create_info,
                                  .queue_create_info_count    = queue_count,
                                  .enabled_layer_count        = required_layers.len,
-                                 .pp_enabled_layer_names     = if (required_layers.len > 0) @ptrCast (required_layers [0..]) else undefined,
+                                 .pp_enabled_layer_names     = if (required_layers.len > 0) @ptrCast (required_layers [0 ..]) else undefined,
                                  .enabled_extension_count    = @intCast (self.candidate.extensions.items.len),
                                  .pp_enabled_extension_names = @ptrCast (self.candidate.extensions.items),
                                  .p_enabled_features         = &device_features,
@@ -655,22 +655,21 @@ pub const Context = struct
   {
     var create_info: vk.Image.View.Create.Info = undefined;
 
-    for (self.images, 0..) |image, index|
+    for (self.images, 0 ..) |image, index|
     {
-      create_info = vk.Image.View.Create.Info
-                    {
-                      .image             = image,
-                      .view_type         = .@"2D",
-                      .format            = self.surface_format.format,
-                      .components        = .{ .r = .IDENTITY, .g = .IDENTITY, .b = .IDENTITY, .a = .IDENTITY, },
-                      .subresource_range = .{
-                                              .aspect_mask      = @intFromEnum (vk.Image.Aspect.Bit.COLOR),
-                                              .base_mip_level   = 0,
-                                              .level_count      = 1,
-                                              .base_array_layer = 0,
-                                              .layer_count      = 1,
-                                            },
-                    };
+      create_info = .{
+                       .image             = image,
+                       .view_type         = .@"2D",
+                       .format            = self.surface_format.format,
+                       .components        = .{ .r = .IDENTITY, .g = .IDENTITY, .b = .IDENTITY, .a = .IDENTITY, },
+                       .subresource_range = .{
+                                               .aspect_mask      = @intFromEnum (vk.Image.Aspect.Bit.COLOR),
+                                               .base_mip_level   = 0,
+                                               .level_count      = 1,
+                                               .base_array_layer = 0,
+                                               .layer_count      = 1,
+                                             },
+                     };
 
       self.views [index] = try vk.Image.View.create (self.logical_device, &create_info, null);
       errdefer vk.Image.View.destroy (self.logical_device, self.views [index], null);
@@ -685,13 +684,13 @@ pub const Context = struct
                             {
                               .{
                                  .format           = self.surface_format.format,
-                                 .samples          = vk.SampleCountFlags { .@"1_bit" = true },
-                                 .load_op          = vk.Attachment.LoadOp.clear,
-                                 .store_op         = vk.Attachment.StoreOp.store,
-                                 .stencil_load_op  = vk.Attachment.LoadOp.dont_care,
-                                 .stencil_store_op = vk.Attachment.StoreOp.dont_care,
-                                 .initial_layout   = vk.Image.Layout.UNDEFINED,
-                                 .final_layout     = vk.Image.Layout.PRESENT_SRC_khr,
+                                 .samples          = @intFromEnum (vk.SampleCount.Bit.@"1"),
+                                 .load_op          = .CLEAR,
+                                 .store_op         = .STORE,
+                                 .stencil_load_op  = .DONT_CARE,
+                                 .stencil_store_op = .DONT_CARE,
+                                 .initial_layout   = .UNDEFINED,
+                                 .final_layout     = .PRESENT_SRC_KHR,
                                },
                             };
 
@@ -699,37 +698,31 @@ pub const Context = struct
                            {
                              .{
                                 .attachment = 0,
-                                .layout     = vk.Image.Layout.COLOR_ATTACHMENT_OPTIMAL,
+                                .layout     = .COLOR_ATTACHMENT_OPTIMAL,
                               },
                            };
 
-    const subpass = [_] vk.SubpassDescription
+    const subpass = [_] vk.Subpass.Description
                     {
-                      vk.SubpassDescription
-                      {
-                        .flags                  = vk.SubpassDescriptionFlags {},
-                        .pipeline_bind_point    = vk.PipelineBindPoint.graphics,
-                        .color_attachment_count = attachment_ref.len,
-                        .p_color_attachments    = &attachment_ref,
-                      },
+                      .{
+                         .pipeline_bind_point    = .GRAPHICS,
+                         .color_attachment_count = attachment_ref.len,
+                         .p_color_attachments    = &attachment_ref,
+                       },
                     };
 
-    const dependency = [_] vk.SubpassDependency
+    const dependency = [_] vk.Subpass.Dependency
                        {
-                         vk.SubpassDependency
-                         {
-                           .src_subpass     = vk.SUBPASS_EXTERNAL,
-                           .dst_subpass     = 0,
-                           .src_stage_mask  = vk.PipelineStageFlags { .color_attachment_output_bit = true },
-                           .src_access_mask = vk.AccessFlags {},
-                           .dst_stage_mask  = vk.PipelineStageFlags { .color_attachment_output_bit = true },
-                           .dst_access_mask = vk.AccessFlags {},
-                         },
+                         .{
+                            .src_subpass     = vk.SUBPASS_EXTERNAL,
+                            .dst_subpass     = 0,
+                            .src_stage_mask  = @intFromEnum (vk.Pipeline.Stage.Bit.COLOR_ATTACHMENT_OUTPUT),
+                            .dst_stage_mask  = @intFromEnum (vk.Pipeline.Stage.Bit.COLOR_ATTACHMENT_OUTPUT),
+                          },
                        };
 
-    const create_info = vk.RenderPassCreateInfo
+    const create_info = vk.RenderPass.Create.Info
                         {
-                          .flags            = vk.RenderPassCreateFlags {},
                           .attachment_count = attachment_desc.len,
                           .p_attachments    = &attachment_desc,
                           .subpass_count    = subpass.len,
@@ -738,19 +731,19 @@ pub const Context = struct
                           .p_dependencies   = &dependency,
                         };
 
-    self.render_pass = try self.device_dispatch.createRenderPass (self.logical_device, &create_info, null);
-    errdefer self.device_dispatch.destroyRenderPass (self.logical_device, self.render_pass, null);
+    self.render_pass = try vk.RenderPass.create (self.logical_device, &create_info, null);
+    errdefer vk.RenderPass.destroy (self.logical_device, self.render_pass, null);
 
     try self.logger.app (.DEBUG, "init Vulkan render pass OK", .{});
   }
 
-  fn find_memory_type (self: @This (), type_filter: u32, properties: vk.MemoryPropertyFlags) !u32
+  fn find_memory_type (self: @This (), type_filter: u32, properties: vk.Memory.Property.Flags) !u32
   {
-    const memory_properties = self.instance.dispatch.getPhysicalDeviceMemoryProperties (self.physical_device.?);
+    const memory_properties = vk.PhysicalDevice.Memory.Properties.get (self.physical_device.?);
 
-    for (memory_properties.memory_types [0..memory_properties.memory_type_count], 0..) |memory_type, index|
+    for (memory_properties.memory_types [0 .. memory_properties.memory_type_count], 0 ..) |memory_type, index|
     {
-      if (type_filter & (@as (u32, 1) << @truncate (index)) != 0 and memory_type.property_flags.contains (properties))
+      if (type_filter & (@as (u32, 1) << @truncate (index)) != 0 and memory_type.property_flags & properties == properties)
       {
         return @truncate (index);
       }
@@ -761,157 +754,137 @@ pub const Context = struct
 
   fn init_offscreen (self: *@This ()) !void
   {
-    const image_create_info = vk.ImageCreateInfo
+    const image_create_info = vk.Image.Create.Info
                               {
-                                .image_type     = vk.ImageType.@"2d",
-                                .format         = vk.Format.R8G8B8A8_UNORM,
-                                .extent         = vk.Extent3D
-                                                  {
-                                                    .width  = self.offscreen_width,
-                                                    .height = self.offscreen_height,
-                                                    .depth  = 1,
-                                                  },
+                                .image_type     = .@"2D",
+                                .format         = .R8G8B8A8_UNORM,
+                                .extent         = .{
+                                                     .width  = self.offscreen_width,
+                                                     .height = self.offscreen_height,
+                                                     .depth  = 1,
+                                                   },
                                 .mip_levels     = 1,
                                 .array_layers   = 1,
-                                .samples        = vk.SampleCountFlags { .@"1_bit" = true, },
-                                .tiling         = vk.ImageTiling.optimal,
-                                .usage          = vk.ImageUsageFlags
-                                                  {
-                                                    .color_attachment_bit = true,
-                                                    .sampled_bit          = true,
-                                                  },
-                                .sharing_mode   = vk.SharingMode.exclusive,
-                                .initial_layout = vk.ImageLayout.undefined,
+                                .samples        = @intFromEnum (vk.SampleCount.Bit.@"1"),
+                                .tiling         = .OPTIMAL,
+                                .usage          = @intFromEnum (vk.Image.Usage.Bit.COLOR_ATTACHMENT) |
+                                                  @intFromEnum (vk.Image.Usage.Bit.SAMPLED),
+                                .sharing_mode   = .EXCLUSIVE,
+                                .initial_layout = .UNDEFINED,
                               };
 
-    self.offscreen_image = try self.device_dispatch.createImage (self.logical_device, &image_create_info, null);
-    errdefer self.device_dispatch.destroyImage (self.logical_device, self.offscreen_image, null);
+    self.offscreen_image = try vk.Image.create (self.logical_device, &image_create_info, null);
+    errdefer vk.Image.destroy (self.logical_device, self.offscreen_image, null);
 
-    const memory_requirements = self.device_dispatch.getImageMemoryRequirements (self.logical_device, self.offscreen_image);
+    const memory_requirements = vk.Image.Memory.Requirements.get (self.logical_device, self.offscreen_image);
 
-    const alloc_info = vk.MemoryAllocateInfo
+    const alloc_info = vk.Memory.Allocate.Info
                        {
                          .allocation_size   = memory_requirements.size,
-                         .memory_type_index = try self.find_memory_type (memory_requirements.memory_type_bits, vk.MemoryPropertyFlags { .device_local_bit = true, }),
+                         .memory_type_index = try self.find_memory_type (memory_requirements.memory_type_bits, @intFromEnum (vk.Memory.Property.Bit.DEVICE_LOCAL)),
                        };
 
-    self.offscreen_image_memory = try self.device_dispatch.allocateMemory (self.logical_device, &alloc_info, null);
-    errdefer self.device_dispatch.freeMemory (self.logical_device, self.offscreen_image_memory, null);
+    self.offscreen_image_memory = try vk.Memory.allocate (self.logical_device, &alloc_info, null);
+    errdefer vk.Memory.free (self.logical_device, self.offscreen_image_memory, null);
 
-    try self.device_dispatch.bindImageMemory (self.logical_device, self.offscreen_image, self.offscreen_image_memory, 0);
+    try vk.Image.Memory.bind (self.logical_device, self.offscreen_image, self.offscreen_image_memory, 0);
 
-    const view_create_info = vk.ImageViewCreateInfo
+    const view_create_info = vk.Image.View.Create.Info
                              {
-                               .view_type         = vk.ImageViewType.@"2d",
-                               .format            = vk.Format.R8G8B8A8_UNORM,
-                               .subresource_range = vk.ImageSubresourceRange
-                                                    {
-                                                      .aspect_mask      = vk.ImageAspectFlags { .color_bit = true },
-                                                      .base_mip_level   = 0,
-                                                      .level_count      = 1,
-                                                      .base_array_layer = 0,
-                                                      .layer_count      = 1,
-                                                    },
+                               .view_type         = .@"2D",
+                               .format            = .R8G8B8A8_UNORM,
+                               .subresource_range = .{
+                                                       .aspect_mask      = @intFromEnum (vk.Image.Aspect.Bit.COLOR),
+                                                       .base_mip_level   = 0,
+                                                       .level_count      = 1,
+                                                       .base_array_layer = 0,
+                                                       .layer_count      = 1,
+                                                     },
                                .image             = self.offscreen_image,
-                               .components        = vk.ComponentMapping
-                                                    {
-                                                      .r = vk.ComponentSwizzle.identity,
-                                                      .g = vk.ComponentSwizzle.identity,
-                                                      .b = vk.ComponentSwizzle.identity,
-                                                      .a = vk.ComponentSwizzle.identity,
-                                                    },
+                               .components        = .{ .r = .IDENTITY, .g = .IDENTITY, .b = .IDENTITY, .a = .IDENTITY, },
                              };
 
-    self.offscreen_views = try self.logger.allocator.alloc (vk.ImageView, 1);
+    self.offscreen_views = try self.logger.allocator.alloc (vk.Image.View, 1);
 
-    self.offscreen_views [0] = try self.device_dispatch.createImageView (self.logical_device, &view_create_info, null);
-    errdefer self.device_dispatch.destroyImageView (self.logical_device, self.offscreen_views [0], null);
+    self.offscreen_views [0] = try vk.Image.View.create (self.logical_device, &view_create_info, null);
+    errdefer vk.Image.View.destroy (self.logical_device, self.offscreen_views [0], null);
 
-    const sampler_create_info = vk.SamplerCreateInfo
+    const sampler_create_info = vk.Sampler.Create.Info
                                 {
-                                  .mag_filter               = vk.Filter.linear,
-                                  .min_filter               = vk.Filter.linear,
-                                  .mipmap_mode              = vk.SamplerMipmapMode.linear,
-                                  .address_mode_u           = vk.SamplerAddressMode.clamp_to_border,
-                                  .address_mode_v           = vk.SamplerAddressMode.clamp_to_border,
-                                  .address_mode_w           = vk.SamplerAddressMode.clamp_to_border,
+                                  .mag_filter               = .LINEAR,
+                                  .min_filter               = .LINEAR,
+                                  .mipmap_mode              = .LINEAR,
+                                  .address_mode_u           = .CLAMP_TO_BORDER,
+                                  .address_mode_v           = .CLAMP_TO_BORDER,
+                                  .address_mode_w           = .CLAMP_TO_BORDER,
                                   .mip_lod_bias             = 0,
                                   .anisotropy_enable        = vk.TRUE,
                                   .max_anisotropy           = 1,
                                   .min_lod                  = 0,
                                   .max_lod                  = 1,
-                                  .border_color             = vk.BorderColor.float_opaque_black ,
+                                  .border_color             = .FLOAT_OPAQUE_BLACK ,
                                   .compare_enable           = vk.FALSE,
-                                  .compare_op               = vk.CompareOp.always,
+                                  .compare_op               = .ALWAYS,
                                   .unnormalized_coordinates = vk.FALSE,
                                 };
 
-    self.offscreen_sampler = try self.device_dispatch.createSampler (self.logical_device, &sampler_create_info, null);
-    errdefer self.device_dispatch.destroySampler (self.logical_device, self.offscreen_sampler, null);
+    self.offscreen_sampler = try vk.Sampler.create (self.logical_device, &sampler_create_info, null);
+    errdefer vk.Sampler.destroy (self.logical_device, self.offscreen_sampler, null);
 
-    const attachment_desc = [_] vk.AttachmentDescription
+    const attachment_desc = [_] vk.Attachment.Description
                             {
-                              vk.AttachmentDescription
-                              {
-                                .flags            = vk.AttachmentDescriptionFlags {},
-                                .format           = vk.Format.R8G8B8A8_UNORM,
-                                .samples          = vk.SampleCountFlags { .@"1_bit" = true },
-                                .load_op          = vk.AttachmentLoadOp.clear,
-                                .store_op         = vk.AttachmentStoreOp.store,
-                                .stencil_load_op  = vk.AttachmentLoadOp.dont_care,
-                                .stencil_store_op = vk.AttachmentStoreOp.dont_care,
-                                .initial_layout   = vk.ImageLayout.undefined,
-                                .final_layout     = vk.ImageLayout.shader_read_only_optimal,
-                              },
+                              .{
+                                 .format           = .R8G8B8A8_UNORM,
+                                 .samples          = @intFromEnum (vk.SampleCount.Bit.@"1"),
+                                 .load_op          = .CLEAR,
+                                 .store_op         = .STORE,
+                                 .stencil_load_op  = .DONT_CARE,
+                                 .stencil_store_op = .DONT_CARE,
+                                 .initial_layout   = .UNDEFINED,
+                                 .final_layout     = .SHADER_READ_ONLY_OPTIMAL,
+                               },
                             };
 
-    const attachment_ref = [_] vk.AttachmentReference
+    const attachment_ref = [_] vk.Attachment.Reference
                            {
-                             vk.AttachmentReference
-                             {
-                               .attachment = 0,
-                               .layout     = vk.ImageLayout.color_attachment_optimal,
-                             },
+                             .{
+                                .attachment = 0,
+                                .layout     = .COLOR_ATTACHMENT_OPTIMAL,
+                              },
                            };
 
-    const subpass = [_] vk.SubpassDescription
+    const subpass = [_] vk.Subpass.Description
                     {
-                      vk.SubpassDescription
-                      {
-                        .flags                  = vk.SubpassDescriptionFlags {},
-                        .pipeline_bind_point    = vk.PipelineBindPoint.graphics,
-                        .color_attachment_count = attachment_ref.len,
-                        .p_color_attachments    = &attachment_ref,
-                      },
+                      .{
+                         .pipeline_bind_point    = .GRAPHICS,
+                         .color_attachment_count = attachment_ref.len,
+                         .p_color_attachments    = &attachment_ref,
+                       },
                     };
 
-    const dependency = [_] vk.SubpassDependency
+    const dependency = [_] vk.Subpass.Dependency
                        {
-                         vk.SubpassDependency
-                         {
-                           .src_subpass      = vk.SUBPASS_EXTERNAL,
-                           .dst_subpass      = 0,
-                           .src_stage_mask   = vk.PipelineStageFlags { .fragment_shader_bit = true },
-                           .dst_stage_mask   = vk.PipelineStageFlags { .color_attachment_output_bit = true },
-                           .src_access_mask  = vk.AccessFlags { .shader_read_bit = true, },
-                           .dst_access_mask  = vk.AccessFlags { .color_attachment_write_bit = true},
-                           .dependency_flags = vk.DependencyFlags { .by_region_bit = true },
-                         },
-                         vk.SubpassDependency
-                         {
-                           .src_subpass      = 0,
-                           .dst_subpass      = vk.SUBPASS_EXTERNAL,
-                           .src_stage_mask   = vk.PipelineStageFlags { .color_attachment_output_bit = true },
-                           .dst_stage_mask   = vk.PipelineStageFlags { .fragment_shader_bit = true },
-                           .src_access_mask  = vk.AccessFlags { .color_attachment_write_bit = true},
-                           .dst_access_mask  = vk.AccessFlags { .shader_read_bit = true, },
-                           .dependency_flags = vk.DependencyFlags { .by_region_bit = true },
-                         },
+                         .{
+                            .src_subpass      = vk.SUBPASS_EXTERNAL,
+                            .dst_subpass      = 0,
+                            .src_stage_mask   = @intFromEnum (vk.Pipeline.Stage.Bit.FRAGMENT_SHADER),
+                            .dst_stage_mask   = @intFromEnum (vk.Pipeline.Stage.Bit.COLOR_ATTACHMENT_OUTPUT),
+                            .src_access_mask  = @intFromEnum (vk.Access.Bit.SHADER_READ),
+                            .dst_access_mask  = @intFromEnum (vk.Access.Bit.COLOR_ATTACHMENT_WRITE),
+                            .dependency_flags = @intFromEnum (vk.Dependency.Bit.BY_REGION),
+                          },.{
+                            .src_subpass      = 0,
+                            .dst_subpass      = vk.SUBPASS_EXTERNAL,
+                            .src_stage_mask   = @intFromEnum (vk.Pipeline.Stage.Bit.COLOR_ATTACHMENT_OUTPUT),
+                            .dst_stage_mask   = @intFromEnum (vk.Pipeline.Stage.Bit.FRAGMENT_SHADER),
+                            .src_access_mask  = @intFromEnum (vk.Access.Bit.COLOR_ATTACHMENT_WRITE),
+                            .dst_access_mask  = @intFromEnum (vk.Access.Bit.SHADER_READ),
+                            .dependency_flags = @intFromEnum (vk.Dependency.Bit.BY_REGION),
+                          },
                        };
 
-    const create_info = vk.RenderPassCreateInfo
+    const create_info = vk.RenderPass.Create.Info
                         {
-                          .flags            = vk.RenderPassCreateFlags {},
                           .attachment_count = attachment_desc.len,
                           .p_attachments    = &attachment_desc,
                           .subpass_count    = subpass.len,
@@ -920,12 +893,11 @@ pub const Context = struct
                           .p_dependencies   = &dependency,
                         };
 
-    self.offscreen_render_pass = try self.device_dispatch.createRenderPass (self.logical_device, &create_info, null);
-    errdefer self.device_dispatch.destroyRenderPass (self.logical_device, self.offscreen_render_pass, null);
+    self.offscreen_render_pass = try vk.RenderPass.create (self.logical_device, &create_info, null);
+    errdefer vk.RenderPass.destroy (self.logical_device, self.offscreen_render_pass, null);
 
-    const framebuffer_create_info = vk.FramebufferCreateInfo
+    const framebuffer_create_info = vk.Framebuffer.Create.Info
                                     {
-                                      .flags            = vk.FramebufferCreateFlags {},
                                       .render_pass      = self.offscreen_render_pass,
                                       .attachment_count = @intCast (self.offscreen_views.len),
                                       .p_attachments    = self.offscreen_views.ptr,
@@ -934,65 +906,60 @@ pub const Context = struct
                                       .layers           = 1,
                                     };
 
-    self.offscreen_framebuffer = try self.device_dispatch.createFramebuffer (self.logical_device, &framebuffer_create_info, null);
-    errdefer self.device_dispatch.destroyFramebuffer (self.logical_device, self.offscreen_framebuffer, null);
+    self.offscreen_framebuffer = try vk.Framebuffer.create (self.logical_device, &framebuffer_create_info, null);
+    errdefer vk.Framebuffer.destroy (self.logical_device, self.offscreen_framebuffer, null);
 
     try self.logger.app (.DEBUG, "init Vulkan offscreen render pass OK", .{});
   }
 
   fn init_descriptor_set_layout (self: *@This ()) !void
   {
-    const ubo_layout_binding = [_] vk.DescriptorSetLayoutBinding
+    const ubo_layout_binding = [_] vk.Descriptor.Set.Layout.Binding
                                {
-                                 vk.DescriptorSetLayoutBinding
-                                 {
-                                   .binding              = 0,
-                                   .descriptor_type      = vk.DescriptorType.uniform_buffer,
-                                   .descriptor_count     = 1,
-                                   .stage_flags          = vk.ShaderStageFlags { .fragment_bit = true, },
-                                   .p_immutable_samplers = null,
-                                 },
-                                 vk.DescriptorSetLayoutBinding
-                                 {
-                                   .binding              = 1,
-                                   .descriptor_type      = vk.DescriptorType.combined_image_sampler,
-                                   .descriptor_count     = 1,
-                                   .stage_flags          = vk.ShaderStageFlags { .fragment_bit = true, },
-                                   .p_immutable_samplers = null,
-                                 },
+                                 .{
+                                    .binding              = 0,
+                                    .descriptor_type      = .UNIFORM_BUFFER,
+                                    .descriptor_count     = 1,
+                                    .stage_flags          = @intFromEnum (vk.ShaderStage.Bit.FRAGMENT),
+                                    .p_immutable_samplers = null,
+                                  }, .{
+                                    .binding              = 1,
+                                    .descriptor_type      = .COMBINED_IMAGE_SAMPLER,
+                                    .descriptor_count     = 1,
+                                    .stage_flags          = @intFromEnum (vk.ShaderStage.Bit.FRAGMENT),
+                                    .p_immutable_samplers = null,
+                                  },
                                };
 
-    const offscreen_ubo_layout_binding = [_] vk.DescriptorSetLayoutBinding
+    const offscreen_ubo_layout_binding = [_] vk.Descriptor.Set.Layout.Binding
                                          {
-                                           vk.DescriptorSetLayoutBinding
-                                           {
-                                             .binding              = 0,
-                                             .descriptor_type      = vk.DescriptorType.uniform_buffer,
-                                             .descriptor_count     = 1,
-                                             .stage_flags          = vk.ShaderStageFlags { .fragment_bit = true, },
-                                             .p_immutable_samplers = null,
-                                           },
+                                           .{
+                                              .binding              = 0,
+                                              .descriptor_type      = .UNIFORM_BUFFER,
+                                              .descriptor_count     = 1,
+                                              .stage_flags          = @intFromEnum (vk.ShaderStage.Bit.FRAGMENT),
+                                              .p_immutable_samplers = null,
+                                            },
                                          };
 
-    var create_info = vk.DescriptorSetLayoutCreateInfo
+    var create_info = vk.Descriptor.Set.Layout.Create.Info
                       {
-                        .flags         = vk.DescriptorSetLayoutCreateFlags {},
                         .binding_count = ubo_layout_binding.len,
                         .p_bindings    = &ubo_layout_binding,
                       };
 
-    self.descriptor_set_layout = try self.logger.allocator.alloc (vk.DescriptorSetLayout, 1);
+    self.descriptor_set_layout = try self.logger.allocator.alloc (vk.Descriptor.Set.Layout, 1);
 
-    self.descriptor_set_layout [0] = try self.device_dispatch.createDescriptorSetLayout (self.logical_device, &create_info, null);
-    errdefer self.device_dispatch.destroyDescriptorSetLayout (self.logical_device, self.descriptor_set_layout [0], null);
+    self.descriptor_set_layout [0] = try vk.Descriptor.Set.Layout.create (self.logical_device, &create_info, null);
+    errdefer vk.Descriptor.Set.Layout.destroy (self.logical_device, self.descriptor_set_layout [0], null);
 
     create_info.binding_count = offscreen_ubo_layout_binding.len;
     create_info.p_bindings = &offscreen_ubo_layout_binding;
 
-    self.offscreen_descriptor_set_layout = try self.logger.allocator.alloc (vk.DescriptorSetLayout, 1);
+    self.offscreen_descriptor_set_layout = try self.logger.allocator.alloc (vk.Descriptor.Set.Layout, 1);
 
-    self.offscreen_descriptor_set_layout [0] = try self.device_dispatch.createDescriptorSetLayout (self.logical_device, &create_info, null);
-    errdefer self.device_dispatch.destroyDescriptorSetLayout (self.logical_device, self.offscreen_descriptor_set_layout [0], null);
+    self.offscreen_descriptor_set_layout [0] = try vk.Descriptor.Set.Layout.create (self.logical_device, &create_info, null);
+    errdefer vk.Descriptor.Set.Layout.destroy (self.logical_device, self.offscreen_descriptor_set_layout [0], null);
 
     try self.logger.app (.DEBUG, "init Vulkan descriptor set layout OK", .{});
   }
@@ -1001,7 +968,6 @@ pub const Context = struct
   {
     const create_info = vk.ShaderModuleCreateInfo
                         {
-                          .flags     = vk.ShaderModuleCreateFlags {},
                           .code_size = resource.len,
                           .p_code    = @ptrCast (@alignCast (resource.ptr)),
                         };
@@ -1012,18 +978,17 @@ pub const Context = struct
 
   fn init_graphics_pipeline (self: *@This ()) !void
   {
-    const vertex = try self.init_shader_module (shader.main.vert [0..]);
+    const vertex = try self.init_shader_module (shader.main.vert [0 ..]);
     defer self.device_dispatch.destroyShaderModule (self.logical_device, vertex, null);
-    const fragment = try self.init_shader_module (shader.main.frag [0..]);
+    const fragment = try self.init_shader_module (shader.main.frag [0 ..]);
     defer self.device_dispatch.destroyShaderModule (self.logical_device, fragment, null);
-    const offscreen_fragment = try self.init_shader_module (shader.offscreen.frag [0..]);
+    const offscreen_fragment = try self.init_shader_module (shader.offscreen.frag [0 ..]);
     defer self.device_dispatch.destroyShaderModule (self.logical_device, offscreen_fragment, null);
 
     var shader_stage = [_] vk.PipelineShaderStageCreateInfo
                        {
                          vk.PipelineShaderStageCreateInfo
                          {
-                            .flags                 = vk.PipelineShaderStageCreateFlags {},
                             .stage                 = vk.ShaderStageFlags { .vertex_bit = true },
                             .module                = vertex,
                             .p_name                = "main",
@@ -1031,7 +996,6 @@ pub const Context = struct
                           },
                          vk.PipelineShaderStageCreateInfo
                          {
-                            .flags                 = vk.PipelineShaderStageCreateFlags {},
                             .stage                 = vk.ShaderStageFlags { .fragment_bit = true },
                             .module                = fragment,
                             .p_name                = "main",
@@ -1043,14 +1007,12 @@ pub const Context = struct
 
     const dynamic_state = vk.PipelineDynamicStateCreateInfo
                           {
-                            .flags               = vk.PipelineDynamicStateCreateFlags {},
                             .dynamic_state_count = dynamic_states.len,
                             .p_dynamic_states    = &dynamic_states,
                           };
 
     const vertex_input_state = vk.PipelineVertexInputStateCreateInfo
                                {
-                                 .flags                              = vk.PipelineVertexInputStateCreateFlags {},
                                  .vertex_binding_description_count   = vertex_vk.binding_description.len,
                                  .p_vertex_binding_descriptions      = &(vertex_vk.binding_description),
                                  .vertex_attribute_description_count = vertex_vk.attribute_description.len,
@@ -1059,7 +1021,6 @@ pub const Context = struct
 
     const input_assembly = vk.PipelineInputAssemblyStateCreateInfo
                            {
-                             .flags                    = vk.PipelineInputAssemblyStateCreateFlags {},
                              .topology                 = vk.PrimitiveTopology.triangle_list,
                              .primitive_restart_enable = vk.FALSE,
                            };
@@ -1088,7 +1049,6 @@ pub const Context = struct
 
     const viewport_state = vk.PipelineViewportStateCreateInfo
                            {
-                             .flags          = vk.PipelineViewportStateCreateFlags {},
                              .viewport_count = self.viewport.len,
                              .p_viewports    = &(self.viewport),
                              .scissor_count  = self.scissor.len,
@@ -1097,7 +1057,6 @@ pub const Context = struct
 
     const rasterizer = vk.PipelineRasterizationStateCreateInfo
                        {
-                         .flags                      = vk.PipelineRasterizationStateCreateFlags {},
                          .depth_clamp_enable         = vk.FALSE,
                          .rasterizer_discard_enable  = vk.FALSE,
                          .polygon_mode               = vk.PolygonMode.fill,
@@ -1112,7 +1071,6 @@ pub const Context = struct
 
     const multisampling = vk.PipelineMultisampleStateCreateInfo
                           {
-                            .flags                    = vk.PipelineMultisampleStateCreateFlags {},
                             .sample_shading_enable    = vk.FALSE,
                             .rasterization_samples    = vk.SampleCountFlags { .@"1_bit" = true },
                             .min_sample_shading       = 1,
@@ -1144,7 +1102,6 @@ pub const Context = struct
 
     const blend_state = vk.PipelineColorBlendStateCreateInfo
                         {
-                          .flags            = vk.PipelineColorBlendStateCreateFlags {},
                           .logic_op_enable  = vk.FALSE,
                           .logic_op         = vk.LogicOp.copy,
                           .attachment_count = blend_attachment.len,
@@ -1154,7 +1111,6 @@ pub const Context = struct
 
     var layout_create_info = vk.PipelineLayoutCreateInfo
                              {
-                               .flags                     = vk.PipelineLayoutCreateFlags {},
                                .set_layout_count          = @intCast(self.descriptor_set_layout.len),
                                .p_set_layouts             = self.descriptor_set_layout.ptr,
                                .push_constant_range_count = 0,
@@ -1174,7 +1130,6 @@ pub const Context = struct
                                {
                                  vk.GraphicsPipelineCreateInfo
                                  {
-                                   .flags                  = vk.PipelineCreateFlags {},
                                    .stage_count            = shader_stage.len,
                                    .p_stages               = &shader_stage,
                                    .p_vertex_input_state   = &vertex_input_state,
@@ -1240,7 +1195,6 @@ pub const Context = struct
     {
       create_info = vk.FramebufferCreateInfo
                     {
-                      .flags            = vk.FramebufferCreateFlags {},
                       .render_pass      = self.render_pass,
                       .attachment_count = 1,
                       .p_attachments    = &[_] vk.ImageView { self.views [index] },
@@ -1281,14 +1235,13 @@ pub const Context = struct
     try self.logger.app (.DEBUG, "init Vulkan command pools OK", .{});
   }
 
-  fn init_buffer (self: @This (), size: vk.DeviceSize, usage: vk.BufferUsageFlags, properties: vk.MemoryPropertyFlags, buffer: *vk.Buffer, buffer_memory: *vk.DeviceMemory) !void
+  fn init_buffer (self: @This (), size: vk.Device.Size, usage: vk.BufferUsageFlags, properties: vk.Memory.Property.Flags, buffer: *vk.Buffer, buffer_memory: *vk.DeviceMemory) !void
   {
     const create_info = vk.BufferCreateInfo
                         {
-                          .flags        = vk.BufferCreateFlags {},
                           .size         = size,
                           .usage        = usage,
-                          .sharing_mode = vk.SharingMode.exclusive,
+                          .sharing_mode = .EXCLUSIVE,
                         };
 
     buffer.* = try self.device_dispatch.createBuffer (self.logical_device, &create_info, null);
@@ -1376,7 +1329,7 @@ pub const Context = struct
     const data = try self.device_dispatch.mapMemory (self.logical_device, staging_buffer_memory, 0, size, vk.MemoryMapFlags {});
     defer self.device_dispatch.unmapMemory (self.logical_device, staging_buffer_memory);
 
-    @memcpy (@as ([*] u8, @ptrCast (data.?)) [0..size], std.mem.sliceAsBytes (&vertices));
+    @memcpy (@as ([*] u8, @ptrCast (data.?)) [0 ..size], std.mem.sliceAsBytes (&vertices));
 
     try self.init_buffer (size, vk.BufferUsageFlags
                                 {
@@ -1408,7 +1361,7 @@ pub const Context = struct
     const data = try self.device_dispatch.mapMemory (self.logical_device, staging_buffer_memory, 0, size, vk.MemoryMapFlags {});
     defer self.device_dispatch.unmapMemory (self.logical_device, staging_buffer_memory);
 
-    @memcpy (@as ([*] u8, @ptrCast (data.?)) [0..size], std.mem.sliceAsBytes (&indices));
+    @memcpy (@as ([*] u8, @ptrCast (data.?)) [0 ..size], std.mem.sliceAsBytes (&indices));
 
     try self.init_buffer (size, vk.BufferUsageFlags
                                 {
@@ -1718,7 +1671,6 @@ pub const Context = struct
 
     const command_buffer_begin_info = vk.CommandBufferBeginInfo
                                       {
-                                        .flags              = vk.CommandBufferUsageFlags {},
                                         .p_inheritance_info = null,
                                       };
 
@@ -1726,10 +1678,9 @@ pub const Context = struct
 
     var clear = [_] vk.ClearValue
                 {
-                  vk.ClearValue
-                  {
-                    .color = vk.ClearColorValue { .float_32 = [4] f32 { 0, 0, 0, 0 } },
-                  }
+                  .{
+                     .color = vk.ClearColorValue { .float_32 = [4] f32 { 0, 0, 0, 0 } },
+                   },
                 };
 
     var render_pass_begin_info = vk.RenderPassBeginInfo
@@ -1806,8 +1757,8 @@ pub const Context = struct
     self.device_dispatch.cmdBeginRenderPass (command_buffer.*, &render_pass_begin_info, vk.SubpassContents.@"inline");
     self.device_dispatch.cmdBindPipeline (command_buffer.*, vk.PipelineBindPoint.graphics, self.pipelines [0]);
 
-    self.device_dispatch.cmdSetViewport (command_buffer.*, 0, 1, self.viewport [0..].ptr);
-    self.device_dispatch.cmdSetScissor (command_buffer.*, 0, 1, self.scissor [0..].ptr);
+    self.device_dispatch.cmdSetViewport (command_buffer.*, 0, 1, self.viewport [0 ..].ptr);
+    self.device_dispatch.cmdSetScissor (command_buffer.*, 0, 1, self.scissor [0 ..].ptr);
 
     self.device_dispatch.cmdBindDescriptorSets (command_buffer.*, vk.PipelineBindPoint.graphics, self.pipeline_layout, 0, 1, &[_] vk.DescriptorSet { self.descriptor_sets [self.current_frame] }, 0, undefined);
 
@@ -1866,7 +1817,7 @@ pub const Context = struct
     var data = try self.device_dispatch.mapMemory (self.logical_device, self.uniform_buffers_memory [self.current_frame], 0, ubo_size, vk.MemoryMapFlags {});
     defer self.device_dispatch.unmapMemory (self.logical_device, self.uniform_buffers_memory [self.current_frame]);
 
-    @memcpy (@as ([*] u8, @ptrCast (data.?)) [0..ubo_size], std.mem.asBytes (&ubo));
+    @memcpy (@as ([*] u8, @ptrCast (data.?)) [0 ..ubo_size], std.mem.asBytes (&ubo));
 
     if (self.render_offscreen)
     {
@@ -1880,7 +1831,7 @@ pub const Context = struct
       data = try self.device_dispatch.mapMemory (self.logical_device, self.offscreen_uniform_buffers_memory, 0, oubo_size, vk.MemoryMapFlags {});
       defer self.device_dispatch.unmapMemory (self.logical_device, self.offscreen_uniform_buffers_memory);
 
-      @memcpy (@as ([*] u8, @ptrCast (data.?)) [0..oubo_size], std.mem.asBytes (&oubo));
+      @memcpy (@as ([*] u8, @ptrCast (data.?)) [0 ..oubo_size], std.mem.asBytes (&oubo));
     }
   }
 
@@ -1975,11 +1926,8 @@ pub const Context = struct
                        {
                          .allocation_size   = memory_requirements.size,
                          .memory_type_index = try self.find_memory_type (memory_requirements.memory_type_bits,
-                                                                         vk.MemoryPropertyFlags
-                                                                         {
-                                                                           .host_visible_bit  = true,
-                                                                           .host_coherent_bit = true,
-                                                                         }),
+                                                                         @intFromEnum (vk.Memory.Property.Bit.HOST_VISIBLE) |
+                                                                         @intFromEnum (vk.Memory.Property.Bit.HOST_COHERENT)),
                        };
 
     const dst_image_memory = try self.device_dispatch.allocateMemory (self.logical_device, &alloc_info, null);

@@ -6,8 +6,8 @@ const raw = @import ("raw");
 
 pub const Device = enum (usize)
 {
-  NULL_HANDLE = 0, _,
-  pub const Memory = enum (u64) { NULL_HANDLE = 0, _, };
+  NULL_HANDLE = vk.NULL_HANDLE, _,
+  pub const Memory = enum (u64) { NULL_HANDLE = vk.NULL_HANDLE, _, };
   pub const Size = u64;
 
   pub fn load (self: @This ()) !void
@@ -23,7 +23,7 @@ pub const Device = enum (usize)
 
   pub fn create (physical_device: vk.PhysicalDevice, p_create_info: *const vk.Device.Create.Info, p_allocator: ?*const vk.AllocationCallbacks) !vk.Device
   {
-    var device: Device = undefined;
+    var device: vk.Device = undefined;
     const result = raw.prototypes.instance.vkCreateDevice (physical_device, p_create_info, p_allocator, &device);
     if (result > 0)
     {

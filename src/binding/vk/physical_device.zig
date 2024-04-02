@@ -6,7 +6,7 @@ const raw = @import ("raw");
 
 pub const PhysicalDevice = enum (usize)
 {
-  NULL_HANDLE = 0, _,
+  NULL_HANDLE = vk.NULL_HANDLE, _,
 
   pub const Features = extern struct
   {
@@ -195,6 +195,24 @@ pub const PhysicalDevice = enum (usize)
     optimal_buffer_copy_offset_alignment: vk.Device.Size,
     optimal_buffer_copy_row_pitch_alignment: vk.Device.Size,
     non_coherent_atom_size: vk.Device.Size,
+  };
+
+  pub const Memory = extern struct
+  {
+    pub const Properties = extern struct
+    {
+      memory_type_count: u32,
+      memory_types: [vk.MAX_MEMORY_TYPES] vk.Memory.Type,
+      memory_heap_count: u32,
+      memory_heaps: [vk.MAX_MEMORY_HEAPS] vk.Memory.Heap,
+
+      pub fn get (physical_device: vk.PhysicalDevice) vk.PhysicalDevice.Memory.Properties
+      {
+        var memory_properties: vk.PhysicalDevice.Memory.Properties = undefined;
+        raw.prototypes.instance.vkGetPhysicalDeviceMemoryProperties (physical_device, &memory_properties);
+        return memory_properties;
+      }
+    };
   };
 
   pub const Properties = extern struct

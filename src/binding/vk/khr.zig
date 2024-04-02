@@ -32,7 +32,7 @@ pub const PresentMode = enum (i32)
 
 pub const Surface = enum (u64)
 {
-  NULL_HANDLE = 0, _,
+  NULL_HANDLE = vk.NULL_HANDLE, _,
   pub const Capabilities = extern struct
   {
     min_image_count: u32,

@@ -43,8 +43,23 @@ pub const API_VERSION = extern struct
 
 pub const MAX_DESCRIPTION_SIZE = c.VK_MAX_DESCRIPTION_SIZE;
 pub const MAX_EXTENSION_NAME_SIZE = c.VK_MAX_EXTENSION_NAME_SIZE;
+pub const MAX_MEMORY_HEAPS = c.VK_MAX_MEMORY_HEAPS;
+pub const MAX_MEMORY_TYPES = c.VK_MAX_MEMORY_TYPES;
 pub const MAX_PHYSICAL_DEVICE_NAME_SIZE = c.VK_MAX_PHYSICAL_DEVICE_NAME_SIZE;
+pub const NULL_HANDLE: u32 = @intCast (@intFromPtr (c.VK_NULL_HANDLE));
+pub const SUBPASS_EXTERNAL = c.VK_SUBPASS_EXTERNAL;
 pub const UUID_SIZE = c.VK_UUID_SIZE;
+
+pub const Access = extern struct
+{
+  pub const Flags = u32;
+
+  pub const Bit = enum (vk.Access.Flags)
+  {
+    COLOR_ATTACHMENT_WRITE = c.VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+    SHADER_READ = c.VK_ACCESS_SHADER_READ_BIT,
+  };
+};
 
 pub const AllocationCallbacks = extern struct
 {
@@ -67,16 +82,28 @@ pub const ApplicationInfo = extern struct
   api_version: u32,
 };
 
+pub const Attachment = @import ("attachment").Attachment;
+
 pub const Bool32 = u32;
 pub const TRUE = c.VK_TRUE;
 pub const FALSE = c.VK_FALSE;
 
-pub const Buffer = enum (u64) { NULL_HANDLE = 0, _, };
+pub const BorderColor = enum (i32)
+{
+  FLOAT_OPAQUE_BLACK = c.VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK,
+};
+
+pub const Buffer = enum (u64) { NULL_HANDLE = vk.NULL_HANDLE, _, };
 
 pub const Command = extern struct
 {
-  pub const Buffer = enum (usize) { NULL_HANDLE = 0, _, };
-  pub const Pool = enum (u64) { NULL_HANDLE = 0, _, };
+  pub const Buffer = enum (usize) { NULL_HANDLE = vk.NULL_HANDLE, _, };
+  pub const Pool = enum (u64) { NULL_HANDLE = vk.NULL_HANDLE, _, };
+};
+
+pub const CompareOp = enum (i32)
+{
+  ALWAYS = c.VK_COMPARE_OP_ALWAYS,
 };
 
 pub const Component = extern struct
@@ -95,17 +122,19 @@ pub const Component = extern struct
   };
 };
 
-pub const Descriptor = extern struct
+pub const Dependency = extern struct
 {
-  pub const Pool = enum (u64) { NULL_HANDLE = 0, _, };
-  pub const Set = enum (u64)
+  pub const Flags = u32;
+
+  pub const Bit = enum (vk.Dependency.Flags)
   {
-    NULL_HANDLE = 0, _,
-    pub const Layout = enum (u64) { NULL_HANDLE = 0, _, };
+    BY_REGION = c.VK_DEPENDENCY_BY_REGION_BIT,
   };
 };
 
+pub const Descriptor = @import ("descriptor").Descriptor;
 pub const Device = @import ("device").Device;
+
 pub const ExtensionProperties = extern struct
 {
   extension_name: [vk.MAX_EXTENSION_NAME_SIZE] u8,
@@ -125,43 +154,15 @@ pub const Extent3D = extern struct
   depth: u32,
 };
 
-pub const Fence = enum (u64) { NULL_HANDLE = 0, _, };
+pub const Fence = enum (u64) { NULL_HANDLE = vk.NULL_HANDLE, _, };
 
-pub const Format = enum (u32)
+pub const Filter = enum (i32)
 {
-  A8B8G8R8_UNORM_PACK32 = c.VK_FORMAT_A8B8G8R8_UNORM_PACK32,
-  B8G8R8A8_SRGB = c.VK_FORMAT_B8G8R8A8_SRGB,
-  B8G8R8A8_UNORM = c.VK_FORMAT_B8G8R8A8_UNORM,
-  R8G8B8_UNORM = c.VK_FORMAT_R8G8B8_UNORM,
-  R8G8B8A8_UNORM = c.VK_FORMAT_R8G8B8A8_UNORM,
-  _,
-
-  pub const Feature = extern struct
-  {
-    pub const Flags = u32;
-
-    pub const Bit = enum (vk.Format.Feature.Flags)
-    {
-      BLIT_SRC = c.VK_FORMAT_FEATURE_BLIT_SRC_BIT,
-      BLIT_DST = c.VK_FORMAT_FEATURE_BLIT_DST_BIT,
-
-      pub fn in (self: @This (), flags: vk.Format.Feature.Flags) bool
-      {
-        return (flags & @intFromEnum (self)) == @intFromEnum (self);
-      }
-    };
-  };
-
-  pub const Properties = extern struct
-  {
-    linear_tiling_features: vk.Format.Feature.Flags = 0,
-    optimal_tiling_features: vk.Format.Feature.Flags = 0,
-    buffer_features: vk.Format.Feature.Flags = 0,
-  };
+  LINEAR = c.VK_FILTER_LINEAR,
 };
 
-pub const Framebuffer = enum (u64) { NULL_HANDLE = 0, _, };
-
+pub const Format = @import ("format").Format;
+pub const Framebuffer = @import ("framebuffer").Framebuffer;
 pub const Image = @import ("image").Image;
 pub const Instance = @import ("instance").Instance;
 
@@ -174,6 +175,8 @@ pub const LayerProperties = extern struct
   implementation_version: u32,
   description: [vk.MAX_DESCRIPTION_SIZE] u8,
 };
+
+pub const Memory = @import ("memory").Memory;
 
 pub const ObjectType = enum (i32)
 {
@@ -203,13 +206,30 @@ pub const PhysicalDevices = extern struct
 
 pub const Pipeline = enum (u64)
 {
-  NULL_HANDLE = 0, _,
-  pub const Layout = enum (u64) { NULL_HANDLE = 0, _, };
+  NULL_HANDLE = vk.NULL_HANDLE, _,
+
+  pub const BindPoint = enum (i32)
+  {
+    GRAPHICS = c.VK_PIPELINE_BIND_POINT_GRAPHICS,
+  };
+
+  pub const Layout = enum (u64) { NULL_HANDLE = vk.NULL_HANDLE, _, };
+
+  pub const Stage = extern struct
+  {
+    pub const Flags = u32;
+
+    pub const Bit = enum (vk.Pipeline.Stage.Flags)
+    {
+      COLOR_ATTACHMENT_OUTPUT = c.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+      FRAGMENT_SHADER = c.VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+    };
+  };
 };
 
 pub const Queue = enum (usize)
 {
-  NULL_HANDLE = 0, _,
+  NULL_HANDLE = vk.NULL_HANDLE, _,
 
   pub const Flags = u32;
 
@@ -217,7 +237,7 @@ pub const Queue = enum (usize)
   {
     GRAPHICS = c.VK_QUEUE_GRAPHICS_BIT,
 
-    pub fn in (self: @This (), flags: vk.Queue.Flags) bool
+    pub fn contains (self: @This (), flags: vk.Queue.Flags) bool
     {
       return (flags & @intFromEnum (self)) == @intFromEnum (self);
     }
@@ -238,15 +258,32 @@ pub const Rect2D = extern struct
   extent: vk.Extent2D,
 };
 
-pub const RenderPass = enum (u64) { NULL_HANDLE = 0, _, };
-pub const Sampler = enum (u64) { NULL_HANDLE = 0, _, };
+pub const RenderPass = @import ("render_pass").RenderPass;
+
+pub const Sampler = @import ("sampler").Sampler;
 
 pub const SampleCount = extern struct
 {
   pub const Flags = u32;
+
+  pub const Bit = enum (vk.SampleCount.Flags)
+  {
+    @"1" = c.VK_SAMPLE_COUNT_1_BIT,
+  };
 };
 
-pub const Semaphore = enum (u64) { NULL_HANDLE = 0, _, };
+pub const Semaphore = enum (u64) { NULL_HANDLE = vk.NULL_HANDLE, _, };
+
+pub const ShaderStage = extern struct
+{
+  pub const Flags = u32;
+
+  pub const Bit = enum (vk.ShaderStage.Flags)
+  {
+    FRAGMENT = c.VK_SHADER_STAGE_FRAGMENT_BIT,
+  };
+};
+
 pub const SharingMode = enum (i32)
 {
   EXCLUSIVE = c.VK_SHARING_MODE_EXCLUSIVE,
@@ -260,12 +297,48 @@ pub const StructureType = enum (i32)
   DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT = c.VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT,
   DEBUG_UTILS_MESSENGER_CALLBACK_DATA_EXT = c.VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CALLBACK_DATA_EXT,
   DEBUG_UTILS_OBJECT_NAME_INFO_EXT = c.VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT,
+  DESCRIPTOR_SET_LAYOUT_CREATE_INFO = c.VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
   DEVICE_CREATE_INFO = c.VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
   DEVICE_QUEUE_CREATE_INFO = c.VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+  FRAMEBUFFER_CREATE_INFO = c.VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
+  IMAGE_CREATE_INFO = c.VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
   IMAGE_VIEW_CREATE_INFO = c.VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
   INSTANCE_CREATE_INFO = c.VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
+  MEMORY_ALLOCATE_INFO = c.VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+  RENDER_PASS_CREATE_INFO = c.VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
+  SAMPLER_CREATE_INFO = c.VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
   SWAPCHAIN_CREATE_INFO_KHR = c.VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
   VALIDATION_FEATURES_EXT = c.VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT,
+};
+
+pub const Subpass = extern struct
+{
+  pub const Dependency = extern struct
+  {
+    src_subpass: u32,
+    dst_subpass: u32,
+    src_stage_mask: vk.Pipeline.Stage.Flags = 0,
+    dst_stage_mask: vk.Pipeline.Stage.Flags = 0,
+    src_access_mask: vk.Access.Flags = 0,
+    dst_access_mask: vk.Access.Flags = 0,
+    dependency_flags: vk.Dependency.Flags = 0,
+  };
+
+  pub const Description = extern struct
+  {
+    flags: vk.Subpass.Description.Flags = 0,
+    pipeline_bind_point: vk.Pipeline.BindPoint,
+    input_attachment_count: u32 = 0,
+    p_input_attachments: ?[*] const vk.Attachment.Reference = null,
+    color_attachment_count: u32 = 0,
+    p_color_attachments: ?[*] const vk.Attachment.Reference = null,
+    p_resolve_attachments: ?[*] const vk.Attachment.Reference = null,
+    p_depth_stencil_attachment: ?*const vk.Attachment.Reference = null,
+    preserve_attachment_count: u32 = 0,
+    p_preserve_attachments: ?[*] const u32 = null,
+
+    pub const Flags = u32;
+  };
 };
 
 pub const SystemAllocationScope = enum (i32) {};

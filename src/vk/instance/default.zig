@@ -56,13 +56,13 @@ pub const instance_vk = struct
     const self = @as (?*instance_vk, @ptrCast (@alignCast (p_user_data)));
 
     self.?.logger.vk (
-      if (vk.EXT.DebugUtils.Message.Severity.Bit.VERBOSE.in (message_severity)) .DEBUG
-      else if (vk.EXT.DebugUtils.Message.Severity.Bit.INFO.in (message_severity)) .INFO
-      else if (vk.EXT.DebugUtils.Message.Severity.Bit.WARNING.in (message_severity)) .WARNING
+      if (vk.EXT.DebugUtils.Message.Severity.Bit.VERBOSE.contains (message_severity)) .DEBUG
+      else if (vk.EXT.DebugUtils.Message.Severity.Bit.INFO.contains (message_severity)) .INFO
+      else if (vk.EXT.DebugUtils.Message.Severity.Bit.WARNING.contains (message_severity)) .WARNING
       else .ERROR,
-      if (vk.EXT.DebugUtils.Message.Type.Bit.GENERAL.in (message_type)) .GENERAL
-      else if (vk.EXT.DebugUtils.Message.Type.Bit.VALIDATION.in (message_type)) .VALIDATION
-      else if (vk.EXT.DebugUtils.Message.Type.Bit.PERFORMANCE.in (message_type)) .PERFORMANCE
+      if (vk.EXT.DebugUtils.Message.Type.Bit.GENERAL.contains (message_type)) .GENERAL
+      else if (vk.EXT.DebugUtils.Message.Type.Bit.VALIDATION.contains (message_type)) .VALIDATION
+      else if (vk.EXT.DebugUtils.Message.Type.Bit.PERFORMANCE.contains (message_type)) .PERFORMANCE
       else .@"DEVICE ADDR BINDING",
       "{s}", .{ p_callback_data.?.p_message }) catch return false;
 

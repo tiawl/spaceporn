@@ -6,7 +6,7 @@ const raw = @import ("raw");
 
 pub const Instance = enum (usize)
 {
-  NULL_HANDLE = 0, _,
+  NULL_HANDLE = vk.NULL_HANDLE, _,
 
   pub fn create (p_create_info: *const vk.Instance.Create.Info, p_allocator: ?*const vk.AllocationCallbacks) !@This ()
   {

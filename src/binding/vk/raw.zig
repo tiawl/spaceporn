@@ -72,7 +72,7 @@ const Prototypes = struct
 
   fn Dispatch (comptime T: std.meta.DeclEnum (literals)) type
   {
-    @setEvalBranchQuota (10_000);
+    @setEvalBranchQuota (100_000);
     const size = @typeInfo (@field (literals, @tagName (T))).Enum.fields.len;
     var fields: [size] std.builtin.Type.StructField = undefined;
     for (@typeInfo (@field (literals, @tagName (T))).Enum.fields, 0 ..) |*field, i|

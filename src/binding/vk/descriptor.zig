@@ -21,7 +21,7 @@ pub const Descriptor = extern struct
         binding: u32,
         descriptor_type: vk.Descriptor.Type,
         descriptor_count: u32 = 0,
-        stage_flags: vk.ShaderStage.Flags,
+        stage_flags: vk.Shader.Stage.Flags,
         p_immutable_samplers: ?[*] const vk.Sampler = null,
       };
 

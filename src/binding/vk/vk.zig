@@ -88,6 +88,20 @@ pub const Bool32 = u32;
 pub const TRUE = c.VK_TRUE;
 pub const FALSE = c.VK_FALSE;
 
+pub const Blend = extern struct
+{
+  pub const Factor = enum (i32)
+  {
+    ONE = c.VK_BLEND_FACTOR_ONE,
+    ZERO = c.VK_BLEND_FACTOR_ZERO,
+  };
+
+  pub const Op = enum (i32)
+  {
+    ADD = c.VK_BLEND_OP_ADD,
+  };
+};
+
 pub const BorderColor = enum (i32)
 {
   FLOAT_OPAQUE_BLACK = c.VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK,
@@ -95,11 +109,20 @@ pub const BorderColor = enum (i32)
 
 pub const Buffer = enum (u64) { NULL_HANDLE = vk.NULL_HANDLE, _, };
 
-pub const Command = extern struct
+pub const ColorComponent = extern struct
 {
-  pub const Buffer = enum (usize) { NULL_HANDLE = vk.NULL_HANDLE, _, };
-  pub const Pool = enum (u64) { NULL_HANDLE = vk.NULL_HANDLE, _, };
+  pub const Flags = u32;
+
+  pub const Bit = enum (vk.ColorComponent.Flags)
+  {
+    A = c.VK_COLOR_COMPONENT_A_BIT,
+    B = c.VK_COLOR_COMPONENT_B_BIT,
+    G = c.VK_COLOR_COMPONENT_G_BIT,
+    R = c.VK_COLOR_COMPONENT_R_BIT,
+  };
 };
+
+pub const Command = @import ("command").Command;
 
 pub const CompareOp = enum (i32)
 {
@@ -122,6 +145,16 @@ pub const Component = extern struct
   };
 };
 
+pub const CullMode = extern struct
+{
+  pub const Flags = u32;
+
+  pub const Bit = enum (vk.CullMode.Flags)
+  {
+    BACK = c.VK_CULL_MODE_BACK_BIT,
+  };
+};
+
 pub const Dependency = extern struct
 {
   pub const Flags = u32;
@@ -134,6 +167,12 @@ pub const Dependency = extern struct
 
 pub const Descriptor = @import ("descriptor").Descriptor;
 pub const Device = @import ("device").Device;
+
+pub const DynamicState = enum (i32)
+{
+  SCISSOR = c.VK_DYNAMIC_STATE_SCISSOR,
+  VIEWPORT = c.VK_DYNAMIC_STATE_VIEWPORT,
+};
 
 pub const ExtensionProperties = extern struct
 {
@@ -163,6 +202,14 @@ pub const Filter = enum (i32)
 
 pub const Format = @import ("format").Format;
 pub const Framebuffer = @import ("framebuffer").Framebuffer;
+
+pub const FrontFace = enum (i32)
+{
+  CLOCKWISE = c.VK_FRONT_FACE_CLOCKWISE,
+};
+
+pub const Graphics = @import ("pipeline").Graphics;
+
 pub const Image = @import ("image").Image;
 pub const Instance = @import ("instance").Instance;
 
@@ -176,11 +223,16 @@ pub const LayerProperties = extern struct
   description: [vk.MAX_DESCRIPTION_SIZE] u8,
 };
 
+pub const LogicOp = enum (i32)
+{
+  COPY = c.VK_LOGIC_OP_COPY,
+};
+
 pub const Memory = @import ("memory").Memory;
 
 pub const ObjectType = enum (i32)
 {
-  unknown = 0,
+  UNKNOWN = c.VK_OBJECT_TYPE_UNKNOWN,
 };
 
 pub const Offset2D = extern struct
@@ -204,27 +256,23 @@ pub const PhysicalDevices = extern struct
   }
 };
 
-pub const Pipeline = enum (u64)
+pub const Pipeline = @import ("pipeline").Pipeline;
+
+pub const PolygonMode = enum (i32)
 {
-  NULL_HANDLE = vk.NULL_HANDLE, _,
+  FILL = c.VK_POLYGON_MODE_FILL,
+};
 
-  pub const BindPoint = enum (i32)
-  {
-    GRAPHICS = c.VK_PIPELINE_BIND_POINT_GRAPHICS,
-  };
+pub const PrimitiveTopology = enum (i32)
+{
+  TRIANGLE_LIST = c.VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+};
 
-  pub const Layout = enum (u64) { NULL_HANDLE = vk.NULL_HANDLE, _, };
-
-  pub const Stage = extern struct
-  {
-    pub const Flags = u32;
-
-    pub const Bit = enum (vk.Pipeline.Stage.Flags)
-    {
-      COLOR_ATTACHMENT_OUTPUT = c.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-      FRAGMENT_SHADER = c.VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-    };
-  };
+pub const PushConstantRange = extern struct
+{
+  stage_flags: vk.Shader.Stage.Flags,
+  offset: u32,
+  size: u32,
 };
 
 pub const Queue = enum (usize)
@@ -262,27 +310,24 @@ pub const RenderPass = @import ("render_pass").RenderPass;
 
 pub const Sampler = @import ("sampler").Sampler;
 
-pub const SampleCount = extern struct
+pub const Sample = extern struct
 {
-  pub const Flags = u32;
-
-  pub const Bit = enum (vk.SampleCount.Flags)
+  pub const Count = extern struct
   {
-    @"1" = c.VK_SAMPLE_COUNT_1_BIT,
+    pub const Flags = u32;
+
+    pub const Bit = enum (vk.Sample.Count.Flags)
+    {
+      @"1" = c.VK_SAMPLE_COUNT_1_BIT,
+    };
   };
+
+  pub const Mask = u32;
 };
 
 pub const Semaphore = enum (u64) { NULL_HANDLE = vk.NULL_HANDLE, _, };
 
-pub const ShaderStage = extern struct
-{
-  pub const Flags = u32;
-
-  pub const Bit = enum (vk.ShaderStage.Flags)
-  {
-    FRAGMENT = c.VK_SHADER_STAGE_FRAGMENT_BIT,
-  };
-};
+pub const Shader = @import ("shader").Shader;
 
 pub const SharingMode = enum (i32)
 {
@@ -290,9 +335,42 @@ pub const SharingMode = enum (i32)
   CONCURRENT = c.VK_SHARING_MODE_CONCURRENT,
 };
 
+pub const Specialization = extern struct
+{
+  pub const Info = extern struct
+  {
+    map_entry_count: u32 = 0,
+    p_map_entries: ?[*] const vk.Specialization.MapEntry = null,
+    data_size: usize = 0,
+    p_data: ?*const anyopaque = null,
+  };
+
+  pub const MapEntry = extern struct
+  {
+    constant_id: u32,
+    offset: u32,
+    size: usize,
+  };
+};
+
+pub const StencilOp = enum (i32)
+{
+  pub const State = extern struct
+  {
+    fail_op: vk.StencilOp,
+    pass_op: vk.StencilOp,
+    depth_fail_op: vk.StencilOp,
+    compare_op: vk.CompareOp,
+    compare_mask: u32,
+    write_mask: u32,
+    reference: u32,
+  };
+};
+
 pub const StructureType = enum (i32)
 {
   APPLICATION_INFO = c.VK_STRUCTURE_TYPE_APPLICATION_INFO,
+  COMMAND_POOL_CREATE_INFO = c.VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
   DEBUG_UTILS_LABEL_EXT = c.VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT,
   DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT = c.VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT,
   DEBUG_UTILS_MESSENGER_CALLBACK_DATA_EXT = c.VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CALLBACK_DATA_EXT,
@@ -301,12 +379,25 @@ pub const StructureType = enum (i32)
   DEVICE_CREATE_INFO = c.VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
   DEVICE_QUEUE_CREATE_INFO = c.VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
   FRAMEBUFFER_CREATE_INFO = c.VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
+  GRAPHICS_PIPELINE_CREATE_INFO = c.VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
   IMAGE_CREATE_INFO = c.VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
   IMAGE_VIEW_CREATE_INFO = c.VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
   INSTANCE_CREATE_INFO = c.VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
   MEMORY_ALLOCATE_INFO = c.VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+  PIPELINE_COLOR_BLEND_STATE_CREATE_INFO = c.VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
+  PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO = c.VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
+  PIPELINE_DYNAMIC_STATE_CREATE_INFO = c.VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO,
+  PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO = c.VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
+  PIPELINE_LAYOUT_CREATE_INFO = c.VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+  PIPELINE_MULTISAMPLE_STATE_CREATE_INFO = c.VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
+  PIPELINE_RASTERIZATION_STATE_CREATE_INFO = c.VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
+  PIPELINE_SHADER_STAGE_CREATE_INFO = c.VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+  PIPELINE_TESSELLATION_STATE_CREATE_INFO = c.VK_STRUCTURE_TYPE_PIPELINE_TESSELLATION_STATE_CREATE_INFO,
+  PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO = c.VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
+  PIPELINE_VIEWPORT_STATE_CREATE_INFO = c.VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
   RENDER_PASS_CREATE_INFO = c.VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
   SAMPLER_CREATE_INFO = c.VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
+  SHADER_MODULE_CREATE_INFO = c.VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
   SWAPCHAIN_CREATE_INFO_KHR = c.VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
   VALIDATION_FEATURES_EXT = c.VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT,
 };
@@ -342,6 +433,29 @@ pub const Subpass = extern struct
 };
 
 pub const SystemAllocationScope = enum (i32) {};
+
+pub const VertexInput = extern struct
+{
+  pub const AttributeDescription = extern struct
+  {
+    location: u32,
+    binding: u32,
+    format: vk.Format,
+    offset: u32,
+  };
+
+  pub const BindingDescription = extern struct
+  {
+    binding: u32,
+    stride: u32,
+    input_rate: vk.VertexInput.Rate,
+  };
+
+  pub const Rate = enum (i32)
+  {
+    VERTEX = c.VK_VERTEX_INPUT_RATE_VERTEX,
+  };
+};
 
 pub const Viewport = extern struct
 {

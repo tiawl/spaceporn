@@ -4,24 +4,22 @@ pub const vertex_vk = struct
 {
   pos: [2] f32,
 
-  pub const binding_description = [_] vk.VertexInputBindingDescription
+  pub const binding_description = [_] vk.VertexInput.BindingDescription
                                   {
-                                    vk.VertexInputBindingDescription
-                                    {
-                                      .binding    = 0,
-                                      .stride     = @sizeOf (@This ()),
-                                      .input_rate = vk.VertexInputRate.vertex,
-                                    },
+                                    .{
+                                       .binding    = 0,
+                                       .stride     = @sizeOf (@This ()),
+                                       .input_rate = .VERTEX,
+                                     },
                                   };
 
-  pub const attribute_description = [_] vk.VertexInputAttributeDescription
+  pub const attribute_description = [_] vk.VertexInput.AttributeDescription
                                     {
-                                      vk.VertexInputAttributeDescription
-                                      {
-                                        .binding  = 0,
-                                        .location = 0,
-                                        .format   = vk.Format.r32g32_sfloat,
-                                        .offset   = @offsetOf (@This (), "pos"),
-                                      },
+                                      .{
+                                         .binding  = 0,
+                                         .location = 0,
+                                         .format   = .R32G32_SFLOAT,
+                                         .offset   = @offsetOf (@This (), "pos"),
+                                       },
                                     };
 };

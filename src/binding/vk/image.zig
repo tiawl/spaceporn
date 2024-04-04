@@ -32,7 +32,7 @@ pub const Image = enum (u64)
       extent: vk.Extent3D,
       mip_levels: u32,
       array_layers: u32,
-      samples: vk.SampleCount.Flags,
+      samples: vk.Sample.Count.Flags,
       tiling: vk.Image.Tiling,
       usage: vk.Image.Usage.Flags,
       sharing_mode: vk.SharingMode,

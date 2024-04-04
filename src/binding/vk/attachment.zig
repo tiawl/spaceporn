@@ -10,7 +10,7 @@ pub const Attachment = extern struct
   {
     flags: vk.Attachment.Description.Flags = 0,
     format: vk.Format,
-    samples: vk.SampleCount.Flags,
+    samples: vk.Sample.Count.Flags,
     load_op: vk.Attachment.LoadOp,
     store_op: vk.Attachment.StoreOp,
     stencil_load_op: vk.Attachment.LoadOp,

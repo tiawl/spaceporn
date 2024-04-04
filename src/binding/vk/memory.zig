@@ -25,6 +25,11 @@ pub const Memory = extern struct
     flags: vk.Memory.Heap.Flags = 0,
   };
 
+  pub const Map = extern struct
+  {
+    pub const Flags = u32;
+  };
+
   pub const Property = extern struct
   {
     pub const Flags = u32;
@@ -60,10 +65,5 @@ pub const Memory = extern struct
       return error.UnexpectedResult;
     }
     return memory;
-  }
-
-  pub fn free (device: vk.Device, memory: vk.Device.Memory, p_allocator: ?*const vk.AllocationCallbacks) void
-  {
-    raw.prototypes.device.vkFreeMemory (device, memory, p_allocator);
   }
 };

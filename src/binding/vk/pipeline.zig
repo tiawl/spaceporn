@@ -134,7 +134,7 @@ pub const Pipeline = enum (u64)
       };
     };
 
-    pub fn create (device: vk.Device, p_create_info: *const vk.Pipeline.Layout.Create.Info, p_allocator: ?*const vk.AllocationCallbacks) !vk.Pipeline.Layout
+    pub fn create (device: vk.Device, p_create_info: *const vk.Pipeline.Layout.Create.Info, p_allocator: ?*const vk.AllocationCallbacks) !@This ()
     {
       var pipeline_layout: vk.Pipeline.Layout = undefined;
       const result = raw.prototypes.device.vkCreatePipelineLayout (device, p_create_info, p_allocator, &pipeline_layout);
@@ -146,7 +146,7 @@ pub const Pipeline = enum (u64)
       return pipeline_layout;
     }
 
-    pub fn destroy (device: vk.Device, pipeline_layout: vk.Pipeline.Layout, p_allocator: ?*const vk.AllocationCallbacks) void
+    pub fn destroy (pipeline_layout: @This (), device: vk.Device, p_allocator: ?*const vk.AllocationCallbacks) void
     {
       raw.prototypes.device.vkDestroyPipelineLayout (device, pipeline_layout, p_allocator);
     }
@@ -282,7 +282,7 @@ pub const Pipeline = enum (u64)
     };
   };
 
-  pub fn destroy (device: vk.Device, pipeline: vk.Pipeline, p_allocator: ?*const vk.AllocationCallbacks) void
+  pub fn destroy (pipeline: @This (), device: vk.Device, p_allocator: ?*const vk.AllocationCallbacks) void
   {
     raw.prototypes.device.vkDestroyPipeline (device, pipeline, p_allocator);
   }

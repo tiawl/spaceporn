@@ -26,7 +26,7 @@ pub const Framebuffer = enum (u64)
     };
   };
 
-  pub fn create (device: vk.Device, p_create_info: *const vk.Framebuffer.Create.Info, p_allocator: ?*const vk.AllocationCallbacks) !vk.Framebuffer
+  pub fn create (device: vk.Device, p_create_info: *const vk.Framebuffer.Create.Info, p_allocator: ?*const vk.AllocationCallbacks) !@This ()
   {
     var framebuffer: vk.Framebuffer = undefined;
     const result = raw.prototypes.device.vkCreateFramebuffer (device, p_create_info, p_allocator, &framebuffer);
@@ -38,7 +38,7 @@ pub const Framebuffer = enum (u64)
     return framebuffer;
   }
 
-  pub fn destroy (device: vk.Device, framebuffer: vk.Framebuffer, p_allocator: ?*const vk.AllocationCallbacks) void
+  pub fn destroy (framebuffer: @This (), device: vk.Device, p_allocator: ?*const vk.AllocationCallbacks) void
   {
     raw.prototypes.device.vkDestroyFramebuffer (device, framebuffer, p_allocator);
   }

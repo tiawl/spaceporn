@@ -24,7 +24,7 @@ pub const Shader = extern struct
       };
     };
 
-    pub fn create (device: vk.Device, p_create_info: *const vk.Shader.Module.Create.Info, p_allocator: ?*const vk.AllocationCallbacks) !vk.Shader.Module
+    pub fn create (device: vk.Device, p_create_info: *const vk.Shader.Module.Create.Info, p_allocator: ?*const vk.AllocationCallbacks) !@This ()
     {
       var shader_module: vk.Shader.Module = undefined;
       const result = raw.prototypes.device.vkCreateShaderModule (device, p_create_info, p_allocator, &shader_module);
@@ -36,7 +36,7 @@ pub const Shader = extern struct
       return shader_module;
     }
 
-    pub fn destroy (device: vk.Device, shader_module: vk.Shader.Module, p_allocator: ?*const vk.AllocationCallbacks) void
+    pub fn destroy (shader_module: @This (), device: vk.Device, p_allocator: ?*const vk.AllocationCallbacks) void
     {
       raw.prototypes.device.vkDestroyShaderModule (device, shader_module, p_allocator);
     }

@@ -8,7 +8,7 @@ pub const Swapchain = enum (u64)
 {
   NULL_HANDLE = vk.NULL_HANDLE, _,
 
-  pub fn create (device: vk.Device, p_create_info: *const vk.KHR.Swapchain.Create.Info, p_allocator: ?*const vk.AllocationCallbacks) !vk.KHR.Swapchain
+  pub fn create (device: vk.Device, p_create_info: *const vk.KHR.Swapchain.Create.Info, p_allocator: ?*const vk.AllocationCallbacks) !@This ()
   {
     var swapchain: vk.KHR.Swapchain = undefined;
     const result = raw.prototypes.device.vkCreateSwapchainKHR (device, p_create_info, p_allocator, &swapchain);
@@ -20,7 +20,7 @@ pub const Swapchain = enum (u64)
     return swapchain;
   }
 
-  pub fn destroy (device: vk.Device, swapchain: vk.KHR.Swapchain, p_allocator: ?*const vk. AllocationCallbacks) void
+  pub fn destroy (swapchain: @This (), device: vk.Device, p_allocator: ?*const vk. AllocationCallbacks) void
   {
     raw.prototypes.device.vkDestroySwapchainKHR (device, swapchain, p_allocator);
   }

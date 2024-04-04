@@ -109,7 +109,7 @@ pub const Image = enum (u64)
   {
     NULL_HANDLE = vk.NULL_HANDLE, _,
 
-    pub fn create (device: vk.Device, p_create_info: *const vk.Image.View.Create.Info, p_allocator: ?*const vk.AllocationCallbacks) !vk.Image.View
+    pub fn create (device: vk.Device, p_create_info: *const vk.Image.View.Create.Info, p_allocator: ?*const vk.AllocationCallbacks) !@This ()
     {
       var view: vk.Image.View = undefined;
       const result = raw.prototypes.device.vkCreateImageView (device, p_create_info, p_allocator, &view);
@@ -121,7 +121,7 @@ pub const Image = enum (u64)
       return view;
     }
 
-    pub fn destroy (device: vk.Device, image_view: vk.Image.View, p_allocator: ?*const vk.AllocationCallbacks) void
+    pub fn destroy (image_view: @This (),device: vk.Device, p_allocator: ?*const vk.AllocationCallbacks) void
     {
       raw.prototypes.device.vkDestroyImageView (device, image_view, p_allocator);
     }
@@ -151,7 +151,7 @@ pub const Image = enum (u64)
     };
   };
 
-  pub fn create (device: vk.Device, p_create_info: *const vk.Image.Create.Info, p_allocator: ?*const vk.AllocationCallbacks) !vk.Image
+  pub fn create (device: vk.Device, p_create_info: *const vk.Image.Create.Info, p_allocator: ?*const vk.AllocationCallbacks) !@This ()
   {
     var image: vk.Image = undefined;
     const result = raw.prototypes.device.vkCreateImage (device, p_create_info, p_allocator, &image);
@@ -163,7 +163,7 @@ pub const Image = enum (u64)
     return image;
   }
 
-  pub fn destroy (device: vk.Device, image: vk.Image, p_allocator: ?*const vk.AllocationCallbacks) void
+  pub fn destroy (image: @This (), device: vk.Device, p_allocator: ?*const vk.AllocationCallbacks) void
   {
     raw.prototypes.device.vkDestroyImage (device, image, p_allocator);
   }

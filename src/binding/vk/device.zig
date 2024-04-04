@@ -7,7 +7,34 @@ const raw = @import ("raw");
 pub const Device = enum (usize)
 {
   NULL_HANDLE = vk.NULL_HANDLE, _,
-  pub const Memory = enum (u64) { NULL_HANDLE = vk.NULL_HANDLE, _, };
+
+  pub const Memory = enum (u64)
+  {
+    NULL_HANDLE = vk.NULL_HANDLE, _,
+
+    pub fn free (memory: @This (), device: vk.Device, p_allocator: ?*const vk.AllocationCallbacks) void
+    {
+      raw.prototypes.device.vkFreeMemory (device, memory, p_allocator);
+    }
+
+    pub fn map (memory: @This (), device: vk.Device, offset: vk.Device.Size, size: vk.Device.Size, flags: vk.Memory.Map.Flags) !?*anyopaque
+    {
+      var pp_data: ?*anyopaque = undefined;
+      const result = raw.prototypes.device.vkMapMemory (device, memory, offset, size, flags, &pp_data);
+      if (result > 0)
+      {
+        std.debug.print ("{s} failed with {} status code\n", .{ @typeName (@This ()) ++ "." ++ @src ().fn_name, result, });
+        return error.UnexpectedResult;
+      }
+      return pp_data;
+    }
+
+    pub fn unmap (memory: @This (), device: vk.Device) void
+    {
+      raw.prototypes.device.vkUnmapMemory (device, memory);
+    }
+  };
+
   pub const Size = u64;
 
   pub fn load (self: @This ()) !void
@@ -21,7 +48,7 @@ pub const Device = enum (usize)
     }
   }
 
-  pub fn create (physical_device: vk.PhysicalDevice, p_create_info: *const vk.Device.Create.Info, p_allocator: ?*const vk.AllocationCallbacks) !vk.Device
+  pub fn create (physical_device: vk.PhysicalDevice, p_create_info: *const vk.Device.Create.Info, p_allocator: ?*const vk.AllocationCallbacks) !@This ()
   {
     var device: vk.Device = undefined;
     const result = raw.prototypes.instance.vkCreateDevice (physical_device, p_create_info, p_allocator, &device);

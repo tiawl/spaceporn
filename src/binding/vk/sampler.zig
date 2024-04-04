@@ -45,7 +45,7 @@ pub const Sampler = enum (u64)
     LINEAR = c.VK_SAMPLER_MIPMAP_MODE_LINEAR,
   };
 
-  pub fn create (device: vk.Device, p_create_info: *const vk.Sampler.Create.Info, p_allocator: ?*const vk.AllocationCallbacks) !vk.Sampler
+  pub fn create (device: vk.Device, p_create_info: *const vk.Sampler.Create.Info, p_allocator: ?*const vk.AllocationCallbacks) !@This ()
   {
     var sampler: vk.Sampler = undefined;
     const result = raw.prototypes.device.vkCreateSampler (device, p_create_info, p_allocator, &sampler);
@@ -57,7 +57,7 @@ pub const Sampler = enum (u64)
     return sampler;
   }
 
-  pub fn destroy (device: vk.Device, sampler: vk.Sampler, p_allocator: ?*const vk.AllocationCallbacks) void
+  pub fn destroy (sampler: @This (), device: vk.Device, p_allocator: ?*const vk.AllocationCallbacks) void
   {
     raw.prototypes.device.vkDestroySampler (device, sampler, p_allocator);
   }

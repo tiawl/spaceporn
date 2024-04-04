@@ -38,7 +38,7 @@ pub const Descriptor = extern struct
           p_bindings: ?[*] const vk.Descriptor.Set.Layout.Binding = null,
         };
       };
-      pub fn create (device: vk.Device, p_create_info: *const vk.Descriptor.Set.Layout.Create.Info, p_allocator: ?*const vk.AllocationCallbacks) !vk.Descriptor.Set.Layout
+      pub fn create (device: vk.Device, p_create_info: *const vk.Descriptor.Set.Layout.Create.Info, p_allocator: ?*const vk.AllocationCallbacks) !@This ()
       {
         var set_layout: vk.Descriptor.Set.Layout = undefined;
         const result = raw.prototypes.device.vkCreateDescriptorSetLayout (device, p_create_info, p_allocator, &set_layout);
@@ -50,7 +50,7 @@ pub const Descriptor = extern struct
         return set_layout;
       }
 
-      pub fn destroy (device: vk.Device, descriptor_set_layout: vk.Descriptor.Set.Layout, p_allocator: ?*const vk.AllocationCallbacks) void
+      pub fn destroy (descriptor_set_layout: @This (), device: vk.Device, p_allocator: ?*const vk.AllocationCallbacks) void
       {
         raw.prototypes.device.vkDestroyDescriptorSetLayout(device, descriptor_set_layout, p_allocator);
       }

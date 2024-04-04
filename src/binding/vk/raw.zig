@@ -6,17 +6,13 @@ const vk = @import ("vk");
 
 const Prototypes = struct
 {
-  fn basename (raw: [] const u8) [] const u8
-  {
-    var res = raw;
-    if (std.mem.indexOf (u8, res, "_Vk")) |index| res = res [index + 3 ..];
-    if (std.mem.lastIndexOfScalar (u8, res, '_')) |index| res = res [0 .. index];
-    return res;
-  }
 
-  fn ziggify (raw: [] const u8) type
+  fn ziggify (comptime T: type) type
   {
-    var name = basename (raw);
+    var name: [] const u8 = @typeName (T);
+    if (std.mem.indexOf (u8, name, "_Vk")) |index| name = name [index + 3 ..];
+    if (std.mem.lastIndexOfScalar (u8, name, '_')) |index| name = name [0 .. index];
+
     var field = vk;
     for ([_][] const u8 { "EXT", "KHR", }) |prefix|
     {
@@ -37,7 +33,7 @@ const Prototypes = struct
         start = end;
         end = name.len;
       } else end = std.mem.lastIndexOfAny (u8, name [0 .. end - 1], "ABCDEFGHIJKLMNOPQRSTUVWXYZ")
-        orelse std.debug.panic ("Undefined \"{s}\" into vk binding from \"{s}\"", .{ name [start .. end], name, });
+        orelse @compileError ("Undefined \"" ++ name [start .. end] ++ "\" into vk binding from \"" ++ name ++ "\"");
     }
 
     return field;
@@ -48,7 +44,7 @@ const Prototypes = struct
     var info = @typeInfo (T);
     return switch (info)
     {
-      .Opaque   => blk: { is_opaque.* = true; break :blk ziggify (@typeName (T)); },
+      .Opaque   => blk: { if (T == anyopaque) break :blk T else { is_opaque.* = true; break :blk ziggify (T); } },
       .Optional => blk: {
                      const child = cast_rec (info.Optional.child, is_opaque);
                      if (is_opaque.*) { is_opaque.* = false; break :blk child; }
@@ -59,7 +55,7 @@ const Prototypes = struct
                      if (is_opaque.*) break :blk child
                      else { info.Pointer.child = child; break :blk @Type (info); }
                    },
-      .Struct   => if (info.Struct.layout == .Auto) T else ziggify (@typeName (T)),
+      .Struct   => if (info.Struct.layout == .Auto) T else ziggify (T),
       else      => T,
     };
   }

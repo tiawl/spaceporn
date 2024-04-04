@@ -66,7 +66,7 @@ pub const PhysicalDevice = enum (usize)
     variable_multisample_rate: vk.Bool32 = vk.FALSE,
     inherited_queries: vk.Bool32 = vk.FALSE,
 
-    pub fn get (physical_device: vk.PhysicalDevice) vk.PhysicalDevice.Features
+    pub fn get (physical_device: vk.PhysicalDevice) @This ()
     {
       var features: vk.PhysicalDevice.Features = undefined;
       raw.prototypes.instance.vkGetPhysicalDeviceFeatures (physical_device, &features);
@@ -206,7 +206,7 @@ pub const PhysicalDevice = enum (usize)
       memory_heap_count: u32,
       memory_heaps: [vk.MAX_MEMORY_HEAPS] vk.Memory.Heap,
 
-      pub fn get (physical_device: vk.PhysicalDevice) vk.PhysicalDevice.Memory.Properties
+      pub fn get (physical_device: vk.PhysicalDevice) @This ()
       {
         var memory_properties: vk.PhysicalDevice.Memory.Properties = undefined;
         raw.prototypes.instance.vkGetPhysicalDeviceMemoryProperties (physical_device, &memory_properties);
@@ -227,7 +227,7 @@ pub const PhysicalDevice = enum (usize)
     limits: vk.PhysicalDevice.Limits,
     sparse_properties: vk.PhysicalDevice.SparseProperties,
 
-    pub fn get (physical_device: vk.PhysicalDevice) vk.PhysicalDevice.Properties
+    pub fn get (physical_device: vk.PhysicalDevice) @This ()
     {
       var properties: vk.PhysicalDevice.Properties = undefined;
       raw.prototypes.instance.vkGetPhysicalDeviceProperties (physical_device, &properties);

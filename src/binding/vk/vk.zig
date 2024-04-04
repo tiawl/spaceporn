@@ -107,7 +107,7 @@ pub const BorderColor = enum (i32)
   FLOAT_OPAQUE_BLACK = c.VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK,
 };
 
-pub const Buffer = enum (u64) { NULL_HANDLE = vk.NULL_HANDLE, _, };
+pub const Buffer = @import ("buffer").Buffer;
 
 pub const ColorComponent = extern struct
 {
@@ -275,6 +275,19 @@ pub const PushConstantRange = extern struct
   size: u32,
 };
 
+pub const Query = extern struct
+{
+  pub const Control = extern struct
+  {
+    pub const Flags = u32;
+  };
+
+  pub const PipelineStatistic = extern struct
+  {
+    pub const Flags = u32;
+  };
+};
+
 pub const Queue = enum (usize)
 {
   NULL_HANDLE = vk.NULL_HANDLE, _,
@@ -298,6 +311,26 @@ pub const Queue = enum (usize)
     timestamp_valid_bits: u32,
     min_image_transfer_granularity: vk.Extent3D,
   };
+
+  pub fn submit (queue: @This (), submit_count: u32, p_submits: ?[*] const vk.Submit.Info, fence: vk.Fence) !void
+  {
+    const result = raw.prototypes.device.vkQueueSubmit (queue, submit_count, p_submits, fence);
+    if (result > 0)
+    {
+      std.debug.print ("{s} failed with {} status code\n", .{ @typeName (@This ()) ++ "." ++ @src ().fn_name, result, });
+      return error.UnexpectedResult;
+    }
+  }
+
+  pub fn waitIdle (queue: @This ()) !void
+  {
+    const result = raw.prototypes.device.vkQueueWaitIdle (queue);
+    if (result > 0)
+    {
+      std.debug.print ("{s} failed with {} status code\n", .{ @typeName (@This ()) ++ "." ++ @src ().fn_name, result, });
+      return error.UnexpectedResult;
+    }
+  }
 };
 
 pub const Rect2D = extern struct
@@ -370,6 +403,10 @@ pub const StencilOp = enum (i32)
 pub const StructureType = enum (i32)
 {
   APPLICATION_INFO = c.VK_STRUCTURE_TYPE_APPLICATION_INFO,
+  BUFFER_CREATE_INFO = c.VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+  COMMAND_BUFFER_ALLOCATE_INFO = c.VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+  COMMAND_BUFFER_BEGIN_INFO = c.VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+  COMMAND_BUFFER_INHERITANCE_INFO = c.VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_INFO,
   COMMAND_POOL_CREATE_INFO = c.VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
   DEBUG_UTILS_LABEL_EXT = c.VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT,
   DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT = c.VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT,
@@ -398,8 +435,25 @@ pub const StructureType = enum (i32)
   RENDER_PASS_CREATE_INFO = c.VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
   SAMPLER_CREATE_INFO = c.VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
   SHADER_MODULE_CREATE_INFO = c.VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
+  SUBMIT_INFO = c.VK_STRUCTURE_TYPE_SUBMIT_INFO,
   SWAPCHAIN_CREATE_INFO_KHR = c.VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
   VALIDATION_FEATURES_EXT = c.VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT,
+};
+
+pub const Submit = extern struct
+{
+  pub const Info = extern struct
+  {
+    s_type: vk.StructureType = .SUBMIT_INFO,
+    p_next: ?*const anyopaque = null,
+    wait_semaphore_count: u32 = 0,
+    p_wait_semaphores: ?[*] const vk.Semaphore = null,
+    p_wait_dst_stage_mask: ?[*] const vk.Pipeline.Stage.Flags = null,
+    command_buffer_count: u32 = 0,
+    p_command_buffers: ?[*] const vk.Command.Buffer = null,
+    signal_semaphore_count: u32 = 0,
+    p_signal_semaphores: ?[*] const vk.Semaphore = null,
+  };
 };
 
 pub const Subpass = extern struct

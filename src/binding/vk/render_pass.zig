@@ -26,7 +26,7 @@ pub const RenderPass = enum (u64)
     };
   };
 
-  pub fn create (device: vk.Device, p_create_info: *const vk.RenderPass.Create.Info, p_allocator: ?*const vk.AllocationCallbacks) !vk.RenderPass
+  pub fn create (device: vk.Device, p_create_info: *const vk.RenderPass.Create.Info, p_allocator: ?*const vk.AllocationCallbacks) !@This ()
   {
     var render_pass: vk.RenderPass = undefined;
     const result = raw.prototypes.device.vkCreateRenderPass (device, p_create_info, p_allocator, &render_pass);
@@ -38,7 +38,7 @@ pub const RenderPass = enum (u64)
     return render_pass;
   }
 
-  pub fn destroy (device: vk.Device, render_pass: vk.RenderPass, p_allocator: ?*const vk.AllocationCallbacks) void
+  pub fn destroy (render_pass: @This (), device: vk.Device, p_allocator: ?*const vk.AllocationCallbacks) void
   {
     raw.prototypes.device.vkDestroyRenderPass (device, render_pass, p_allocator);
   }

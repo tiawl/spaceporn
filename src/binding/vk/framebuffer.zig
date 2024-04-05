@@ -28,7 +28,7 @@ pub const Framebuffer = enum (u64)
 
   pub fn create (device: vk.Device, p_create_info: *const vk.Framebuffer.Create.Info, p_allocator: ?*const vk.AllocationCallbacks) !@This ()
   {
-    var framebuffer: vk.Framebuffer = undefined;
+    var framebuffer: @This () = undefined;
     const result = raw.prototypes.device.vkCreateFramebuffer (device, p_create_info, p_allocator, &framebuffer);
     if (result > 0)
     {

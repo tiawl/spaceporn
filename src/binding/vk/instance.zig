@@ -10,7 +10,7 @@ pub const Instance = enum (usize)
 
   pub fn create (p_create_info: *const vk.Instance.Create.Info, p_allocator: ?*const vk.AllocationCallbacks) !@This ()
   {
-    var instance: vk.Instance = undefined;
+    var instance: @This () = undefined;
     const result = raw.prototypes.structless.vkCreateInstance (p_create_info, p_allocator, &instance);
     if (result > 0)
     {

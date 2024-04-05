@@ -132,7 +132,7 @@ pub const Command = extern struct
 
     pub fn create (device: vk.Device, p_create_info: *const vk.Command.Pool.Create.Info, p_allocator: ?*const vk.AllocationCallbacks) !@This ()
     {
-      var command_pool: vk.Command.Pool = undefined;
+      var command_pool: @This () = undefined;
       const result = raw.prototypes.device.vkCreateCommandPool (device, p_create_info, p_allocator, &command_pool);
       if (result > 0)
       {

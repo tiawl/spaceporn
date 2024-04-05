@@ -6,7 +6,6 @@ const vk = @import ("vk");
 
 const Prototypes = struct
 {
-
   fn ziggify (comptime T: type) type
   {
     var name: [] const u8 = @typeName (T);

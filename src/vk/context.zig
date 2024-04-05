@@ -426,23 +426,23 @@ pub const Context = struct
 
     for (self.formats) |supported_format|
     {
-      if (selected_format == vk.Format.B8G8R8A8_UNORM)
+      if (selected_format == .B8G8R8A8_UNORM)
       {
         break;
       }
 
-      if (supported_format.format == vk.Format.B8G8R8A8_UNORM)
+      if (supported_format.format == .B8G8R8A8_UNORM)
       {
         selected_format = supported_format.format;
-      } else if (supported_format.format == vk.Format.R8G8B8A8_UNORM and selected_format != vk.Format.R8G8B8A8_UNORM) {
+      } else if (supported_format.format == .R8G8B8A8_UNORM and selected_format != .R8G8B8A8_UNORM) {
         selected_format = supported_format.format;
-      } else if (supported_format.format == vk.Format.A8B8G8R8_UNORM_PACK32 and selected_format != vk.Format.R8G8B8A8_UNORM and selected_format != vk.Format.A8B8G8R8_UNORM_PACK32) {
+      } else if (supported_format.format == .A8B8G8R8_UNORM_PACK32 and selected_format != .R8G8B8A8_UNORM and selected_format != .A8B8G8R8_UNORM_PACK32) {
         selected_format = supported_format.format;
       }
     }
 
     const blitting_supported = vk.Format.Feature.Bit.BLIT_SRC.contains (vk.PhysicalDevice.Format.Properties.get (device, selected_format).optimal_tiling_features)
-      and vk.Format.Feature.Bit.BLIT_DST.contains (vk.PhysicalDevice.Format.Properties.get (device, vk.Format.R8G8B8A8_UNORM).linear_tiling_features);
+      and vk.Format.Feature.Bit.BLIT_DST.contains (vk.PhysicalDevice.Format.Properties.get (device, .R8G8B8A8_UNORM).linear_tiling_features);
 
     if (!try self.check_device_features_properties (features, properties))
     {
@@ -461,7 +461,7 @@ pub const Context = struct
                                   {
                                     blitting_supported,
                                     candidate.graphics_family == candidate.present_family,
-                                    properties.device_type == vk.PhysicalDevice.Type.DISCRETE_GPU,
+                                    properties.device_type == .DISCRETE_GPU,
                                   };
 
         return .{
@@ -617,11 +617,7 @@ pub const Context = struct
       image_count = self.capabilities.max_image_count;
     }
 
-    const queue_family_indices = [_] u32
-                                 {
-                                   self.candidate.graphics_family,
-                                   self.candidate.present_family,
-                                 };
+    const queue_family_indices = [_] u32 { self.candidate.graphics_family, self.candidate.present_family, };
 
     const create_info = vk.KHR.Swapchain.Create.Info
                         {
@@ -784,7 +780,7 @@ pub const Context = struct
                          .memory_type_index = try self.find_memory_type (memory_requirements.memory_type_bits, @intFromEnum (vk.Memory.Property.Bit.DEVICE_LOCAL)),
                        };
 
-    self.offscreen_image_memory = try vk.Memory.allocate (self.logical_device, &alloc_info, null);
+    self.offscreen_image_memory = try vk.Device.Memory.allocate (self.logical_device, &alloc_info, null);
     errdefer self.offscreen_image_memory.free (self.logical_device, null);
 
     try vk.Image.Memory.bind (self.logical_device, self.offscreen_image, self.offscreen_image_memory, 0);
@@ -1246,7 +1242,7 @@ pub const Context = struct
                        };
 
     // TODO: issue #68
-    buffer_memory.* = try vk.Memory.allocate (self.logical_device, &alloc_info, null);
+    buffer_memory.* = try vk.Device.Memory.allocate (self.logical_device, &alloc_info, null);
     errdefer buffer_memory.free (self.logical_device, null);
 
     try vk.Buffer.Memory.bind (self.logical_device, buffer.*, buffer_memory.*, 0);
@@ -1371,12 +1367,10 @@ pub const Context = struct
     while (index < MAX_FRAMES_IN_FLIGHT)
     {
       try self.init_buffer (@sizeOf (uniform_buffer_object_vk),
-                            vk.BufferUsageFlags { .uniform_buffer_bit = true, },
-                            vk.MemoryPropertyFlags
-                            {
-                              .host_visible_bit = true,
-                              .host_coherent_bit = true,
-                            }, &(self.uniform_buffers [index]), &(self.uniform_buffers_memory [index]));
+                            @intFromEnum (vk.Buffer.Usage.Bit.UNIFORM_BUFFER),
+                            @intFromEnum (vk.Memory.Property.Bit.HOST_VISIBLE) |
+                            @intFromEnum (vk.Memory.Property.Bit.HOST_COHERENT),
+                            &(self.uniform_buffers [index]), &(self.uniform_buffers_memory [index]));
       index += 1;
     }
 
@@ -1393,12 +1387,10 @@ pub const Context = struct
     }
 
     try self.init_buffer (@sizeOf (offscreen_uniform_buffer_object_vk),
-                          vk.BufferUsageFlags { .uniform_buffer_bit = true, },
-                          vk.MemoryPropertyFlags
-                          {
-                            .host_visible_bit = true,
-                            .host_coherent_bit = true,
-                          }, &(self.offscreen_uniform_buffers), &(self.offscreen_uniform_buffers_memory));
+                          @intFromEnum (vk.Buffer.Usage.Bit.UNIFORM_BUFFER),
+                          @intFromEnum (vk.Memory.Property.Bit.HOST_VISIBLE) |
+                          @intFromEnum (vk.Memory.Property.Bit.HOST_COHERENT),
+                          &(self.offscreen_uniform_buffers), &(self.offscreen_uniform_buffers_memory));
 
     errdefer
     {
@@ -1411,105 +1403,97 @@ pub const Context = struct
 
   fn init_descriptor_pool (self: *@This ()) !void
   {
-    const pool_size = [_] vk.DescriptorPoolSize
+    const pool_size = [_] vk.Descriptor.Pool.Size
                       {
-                        vk.DescriptorPoolSize
-                        {
-                          .type             = vk.DescriptorType.uniform_buffer,
-                          .descriptor_count = MAX_FRAMES_IN_FLIGHT * 2,
-                        },
-                        vk.DescriptorPoolSize
-                        {
-                          .type             = vk.DescriptorType.combined_image_sampler,
-                          .descriptor_count = MAX_FRAMES_IN_FLIGHT + 1,
-                        },
+                        .{
+                           .type             = .UNIFORM_BUFFER,
+                           .descriptor_count = MAX_FRAMES_IN_FLIGHT * 2,
+                         }, .{
+                           .type             = .COMBINED_IMAGE_SAMPLER,
+                           .descriptor_count = MAX_FRAMES_IN_FLIGHT + 1,
+                         },
                       };
 
-    const create_info = vk.DescriptorPoolCreateInfo
+    const create_info = vk.Descriptor.Pool.Create.Info
                         {
-                          .flags           = vk.DescriptorPoolCreateFlags { .free_descriptor_set_bit = true, },
+                          .flags           = @intFromEnum (vk.Descriptor.Pool.Create.Bit.FREE_DESCRIPTOR_SET),
                           .pool_size_count = pool_size.len,
                           .p_pool_sizes    = &pool_size,
                           .max_sets        = @min (pool_size [0].descriptor_count, pool_size [1].descriptor_count),
                         };
 
-    self.descriptor_pool = try self.device_dispatch.createDescriptorPool (self.logical_device, &create_info, null);
-    errdefer self.device_dispatch.destroyDescriptorPool (self.logical_device, self.descriptor_pool, null);
+    self.descriptor_pool = try vk.Descriptor.Pool.create (self.logical_device, &create_info, null);
+    errdefer self.descriptor_pool.destroy (self.logical_device, null);
 
     try self.logger.app (.DEBUG, "init Vulkan descriptor pool OK", .{});
   }
 
   fn init_descriptor_sets (self: *@This ()) !void
   {
-    var alloc_info = vk.DescriptorSetAllocateInfo
+    var alloc_info = vk.Descriptor.Set.Allocate.Info
                      {
                        .descriptor_pool      = self.descriptor_pool,
                        .descriptor_set_count = MAX_FRAMES_IN_FLIGHT,
-                       .p_set_layouts        = &[_] vk.DescriptorSetLayout
+                       .p_set_layouts        = &[_] vk.Descriptor.Set.Layout
                                                 {
                                                   self.descriptor_set_layout [0],
                                                   self.descriptor_set_layout [0],
                                                 },
                      };
 
-    self.descriptor_sets = try self.logger.allocator.alloc (vk.DescriptorSet, MAX_FRAMES_IN_FLIGHT);
+    self.descriptor_sets = try self.logger.allocator.alloc (vk.Descriptor.Set, MAX_FRAMES_IN_FLIGHT);
 
-    try self.device_dispatch.allocateDescriptorSets (self.logical_device, &alloc_info, self.descriptor_sets.ptr);
+    try vk.Descriptor.Sets.allocate (self.logical_device, &alloc_info, self.descriptor_sets.ptr);
 
     var index: u32 = 0;
-    var buffer_info: [1] vk.DescriptorBufferInfo = undefined;
-    var image_info: [1] vk.DescriptorImageInfo = undefined;
-    var descriptor_write: [2] vk.WriteDescriptorSet = undefined;
+    var buffer_info: [1] vk.Descriptor.Buffer.Info = undefined;
+    var image_info: [1] vk.Descriptor.Image.Info = undefined;
+    var descriptor_write: [2] vk.Write.Descriptor.Set = undefined;
 
     while (index < MAX_FRAMES_IN_FLIGHT)
     {
-      buffer_info = [_] vk.DescriptorBufferInfo
+      buffer_info = [_] vk.Descriptor.Buffer.Info
                     {
-                      vk.DescriptorBufferInfo
-                      {
-                        .buffer = self.uniform_buffers [index],
-                        .offset = 0,
-                        .range  = @sizeOf (uniform_buffer_object_vk),
-                      },
+                      .{
+                         .buffer = self.uniform_buffers [index],
+                         .offset = 0,
+                         .range  = @sizeOf (uniform_buffer_object_vk),
+                       },
                     };
 
-      image_info = [_] vk.DescriptorImageInfo
+      image_info = [_] vk.Descriptor.Image.Info
                    {
-                     vk.DescriptorImageInfo
-                     {
-                       .sampler      = self.offscreen_sampler,
-                       .image_view   = self.offscreen_views [0],
-                       .image_layout = vk.ImageLayout.shader_read_only_optimal,
-                     },
-                 };
+                     .{
+                        .sampler      = self.offscreen_sampler,
+                        .image_view   = self.offscreen_views [0],
+                        .image_layout = .SHADER_READ_ONLY_OPTIMAL,
+                      },
+                   };
 
-      descriptor_write = [_] vk.WriteDescriptorSet
+      descriptor_write = [_] vk.Write.Descriptor.Set
                          {
-                           vk.WriteDescriptorSet
-                           {
-                             .dst_set             = self.descriptor_sets [index],
-                             .dst_binding         = 0,
-                             .dst_array_element   = 0,
-                             .descriptor_type     = vk.DescriptorType.uniform_buffer,
-                             .descriptor_count    = 1,
-                             .p_buffer_info       = &buffer_info,
-                             .p_image_info        = undefined,
-                             .p_texel_buffer_view = undefined,
-                           },
-                           vk.WriteDescriptorSet
-                           {
-                             .dst_set             = self.descriptor_sets [index],
-                             .dst_binding         = 1,
-                             .dst_array_element   = 0,
-                             .descriptor_type     = vk.DescriptorType.combined_image_sampler,
-                             .descriptor_count    = 1,
-                             .p_buffer_info       = undefined,
-                             .p_image_info        = &image_info,
-                             .p_texel_buffer_view = undefined,
-                           },
+                           .{
+                              .dst_set             = self.descriptor_sets [index],
+                              .dst_binding         = 0,
+                              .dst_array_element   = 0,
+                              .descriptor_type     = .UNIFORM_BUFFER,
+                              .descriptor_count    = 1,
+                              .p_buffer_info       = &buffer_info,
+                              .p_image_info        = undefined,
+                              .p_texel_buffer_view = undefined,
+                            }, .{
+                              .dst_set             = self.descriptor_sets [index],
+                              .dst_binding         = 1,
+                              .dst_array_element   = 0,
+                              .descriptor_type     = .COMBINED_IMAGE_SAMPLER,
+                              .descriptor_count    = 1,
+                              .p_buffer_info       = undefined,
+                              .p_image_info        = &image_info,
+                              .p_texel_buffer_view = undefined,
+                            },
                          };
 
-      self.device_dispatch.updateDescriptorSets (self.logical_device, descriptor_write.len, &descriptor_write, 0, undefined);
+      vk.Descriptor.Sets.update (self.logical_device, descriptor_write.len, &descriptor_write, 0, undefined);
 
       index += 1;
     }
@@ -1517,43 +1501,41 @@ pub const Context = struct
     alloc_info.descriptor_set_count = @intCast (self.offscreen_descriptor_set_layout.len);
     alloc_info.p_set_layouts = self.offscreen_descriptor_set_layout.ptr;
 
-    self.offscreen_descriptor_sets = try self.logger.allocator.alloc (vk.DescriptorSet, 1);
+    self.offscreen_descriptor_sets = try self.logger.allocator.alloc (vk.Descriptor.Set, 1);
 
-    try self.device_dispatch.allocateDescriptorSets (self.logical_device, &alloc_info, self.offscreen_descriptor_sets.ptr);
+    try vk.Descriptor.Sets.allocate (self.logical_device, &alloc_info, self.offscreen_descriptor_sets.ptr);
 
-    buffer_info = [_] vk.DescriptorBufferInfo
+    buffer_info = [_] vk.Descriptor.Buffer.Info
                   {
-                    vk.DescriptorBufferInfo
-                    {
-                      .buffer = self.offscreen_uniform_buffers,
-                      .offset = 0,
-                      .range  = @sizeOf (offscreen_uniform_buffer_object_vk),
-                    },
+                    .{
+                       .buffer = self.offscreen_uniform_buffers,
+                       .offset = 0,
+                       .range  = @sizeOf (offscreen_uniform_buffer_object_vk),
+                     },
                   };
 
-    const offscreen_descriptor_write = [_] vk.WriteDescriptorSet
+    const offscreen_descriptor_write = [_] vk.Write.Descriptor.Set
                                        {
-                                         vk.WriteDescriptorSet
-                                         {
-                                           .dst_set             = self.offscreen_descriptor_sets [0],
-                                           .dst_binding         = 0,
-                                           .dst_array_element   = 0,
-                                           .descriptor_type     = vk.DescriptorType.uniform_buffer,
-                                           .descriptor_count    = 1,
-                                           .p_buffer_info       = &buffer_info,
-                                           .p_image_info        = undefined,
-                                           .p_texel_buffer_view = undefined,
-                                         },
+                                         .{
+                                            .dst_set             = self.offscreen_descriptor_sets [0],
+                                            .dst_binding         = 0,
+                                            .dst_array_element   = 0,
+                                            .descriptor_type     = .UNIFORM_BUFFER,
+                                            .descriptor_count    = 1,
+                                            .p_buffer_info       = &buffer_info,
+                                            .p_image_info        = undefined,
+                                            .p_texel_buffer_view = undefined,
+                                          },
                                        };
 
-    self.device_dispatch.updateDescriptorSets (self.logical_device, offscreen_descriptor_write.len, &offscreen_descriptor_write, 0, undefined);
+    vk.Descriptor.Sets.update (self.logical_device, offscreen_descriptor_write.len, &offscreen_descriptor_write, 0, undefined);
 
     try self.logger.app (.DEBUG, "init Vulkan descriptor sets OK", .{});
   }
 
   fn init_command_buffers (self: *@This ()) !void
   {
-    self.command_buffers = try self.logger.allocator.alloc (vk.CommandBuffer, MAX_FRAMES_IN_FLIGHT);
+    self.command_buffers = try self.logger.allocator.alloc (vk.Command.Buffer, MAX_FRAMES_IN_FLIGHT);
 
     const alloc_info = vk.Command.Buffer.Allocate.Info
                        {
@@ -1578,12 +1560,12 @@ pub const Context = struct
 
     while (index < MAX_FRAMES_IN_FLIGHT)
     {
-      self.image_available_semaphores [index] = try self.device_dispatch.createSemaphore (self.logical_device, &vk.SemaphoreCreateInfo { .flags = vk.SemaphoreCreateFlags {} }, null);
-      errdefer self.device_dispatch.destroySemaphore (self.logical_device, self.image_available_semaphores [index], null);
-      self.render_finished_semaphores [index] = try self.device_dispatch.createSemaphore (self.logical_device, &vk.SemaphoreCreateInfo { .flags = vk.SemaphoreCreateFlags {} }, null);
-      errdefer self.device_dispatch.destroySemaphore (self.logical_device, self.render_finished_semaphores [index], null);
-      self.in_flight_fences [index] = try self.device_dispatch.createFence(self.logical_device, &vk.FenceCreateInfo { .flags = vk.FenceCreateFlags { .signaled_bit = true } }, null);
-      errdefer self.device_dispatch.destroyFence (self.logical_device, self.in_flight_fences [index], null);
+      self.image_available_semaphores [index] = try vk.Semaphore.create (self.logical_device, &vk.Semaphore.Create.Info {}, null);
+      errdefer self.image_available_semaphores [index].destroy (self.logical_device, null);
+      self.render_finished_semaphores [index] = try vk.Semaphore.create (self.logical_device, &vk.Semaphore.Create.Info {}, null);
+      errdefer self.render_finished_semaphores [index].destroy (self.logical_device, null);
+      self.in_flight_fences [index] = try vk.Fence.create (self.logical_device, &vk.Fence.Create.Info { .flags = @intFromEnum (vk.Fence.Create.Bit.SIGNALED), }, null);
+      errdefer self.in_flight_fences [index].destroy (self.logical_device, null);
       index += 1;
     }
 
@@ -1917,8 +1899,8 @@ pub const Context = struct
                                                                          @intFromEnum (vk.Memory.Property.Bit.HOST_COHERENT)),
                        };
 
-    const dst_image_memory = try vk.Memory.allocate (self.logical_device, &alloc_info, null);
-    errdefer vk.Memory.free (self.logical_device, dst_image_memory, null);
+    const dst_image_memory = try vk.Device.Memory.allocate (self.logical_device, &alloc_info, null);
+    errdefer dst_image_memory.free (self.logical_device, null);
 
     try self.device_dispatch.bindImageMemory (self.logical_device, dst_image, dst_image_memory, 0);
 
@@ -2156,8 +2138,8 @@ pub const Context = struct
                           },
                         };
 
-    const fence = try self.device_dispatch.createFence (self.logical_device, &vk.FenceCreateInfo {}, null);
-    defer self.device_dispatch.destroyFence (self.logical_device, fence, null);
+    const fence = try vk.Fence.create (self.logical_device, &vk.Fence.Create.Info {}, null);
+    defer fence.destroy (self.logical_device, null);
 
     try self.device_dispatch.queueSubmit (self.graphics_queue, 1, &submit_info, fence);
 
@@ -2241,7 +2223,7 @@ pub const Context = struct
       if (prepare == ImguiPrepare.Screenshot) self.screenshot_frame = self.current_frame;
     }
 
-    const acquire_result = self.device_dispatch.acquireNextImageKHR (self.logical_device, self.swapchain, std.math.maxInt(u64), self.image_available_semaphores [self.current_frame], vk.Fence.null_handle) catch |err| switch (err)
+    const acquire_result = self.device_dispatch.acquireNextImageKHR (self.logical_device, self.swapchain, std.math.maxInt(u64), self.image_available_semaphores [self.current_frame], .NULL_HANDLE) catch |err| switch (err)
                            {
                              error.OutOfDateKHR => {
                                                      try self.rebuild_swapchain (.{ .width = framebuffer.width, .height = framebuffer.height, }, arena, allocator);
@@ -2321,12 +2303,12 @@ pub const Context = struct
 
     self.cleanup_swapchain ();
 
-    self.device_dispatch.destroyFramebuffer (self.logical_device, self.offscreen_framebuffer, null);
+    self.offscreen_framebuffer.destroy (self.logical_device, null);
 
-    self.device_dispatch.destroySampler (self.logical_device, self.offscreen_sampler, null);
-    self.device_dispatch.destroyImageView (self.logical_device, self.offscreen_views [0], null);
-    self.device_dispatch.destroyImage (self.logical_device, self.offscreen_image, null);
-    vk.Memory.free (self.logical_device, self.offscreen_image_memory, null);
+    self.offscreen_sampler.destroy (self.logical_device, null);
+    self.offscreen_views [0].destroy (self.logical_device, null);
+    self.offscreen_image.destroy (self.logical_device, null);
+    self.offscreen_image_memory.free (self.logical_device, null);
 
     var index: u32 = 0;
 
@@ -2340,16 +2322,16 @@ pub const Context = struct
     self.offscreen_uniform_buffers.destroy (self.logical_device, null);
     self.offscreen_uniform_buffers_memory.free (self.logical_device, null);
 
-    self.device_dispatch.destroyDescriptorPool (self.logical_device, self.descriptor_pool, null);
+    self.descriptor_pool.destroy (self.logical_device, null);
 
     index = 0;
 
     while (index < self.descriptor_set_layout.len)
     {
-      self.device_dispatch.destroyDescriptorSetLayout (self.logical_device, self.descriptor_set_layout [index], null);
+      self.descriptor_set_layout [index].destroy (self.logical_device, null);
       index += 1;
     }
-    self.device_dispatch.destroyDescriptorSetLayout (self.logical_device, self.offscreen_descriptor_set_layout [0], null);
+    self.offscreen_descriptor_set_layout [0].destroy (self.logical_device, null);
 
     self.index_buffer.destroy (self.logical_device, null);
     self.index_buffer_memory.free (self.logical_device, null);
@@ -2361,31 +2343,31 @@ pub const Context = struct
 
     while (index < self.pipelines.len)
     {
-      self.device_dispatch.destroyPipeline (self.logical_device, self.pipelines [index], null);
+      self.pipelines [index].destroy (self.logical_device, null);
       index += 1;
     }
-    self.device_dispatch.destroyPipeline (self.logical_device, self.offscreen_pipelines [0], null);
+    self.offscreen_pipelines [0].destroy (self.logical_device, null);
 
-    self.device_dispatch.destroyPipelineLayout (self.logical_device, self.pipeline_layout, null);
-    self.device_dispatch.destroyPipelineLayout (self.logical_device, self.offscreen_pipeline_layout, null);
-    self.device_dispatch.destroyRenderPass (self.logical_device, self.render_pass, null);
-    self.device_dispatch.destroyRenderPass (self.logical_device, self.offscreen_render_pass, null);
+    self.pipeline_layout.destroy (self.logical_device, null);
+    self.offscreen_pipeline_layout.destroy (self.logical_device, null);
+    self.render_pass.destroy (self.logical_device, null);
+    self.offscreen_render_pass.destroy (self.logical_device, null);
 
     index = 0;
 
     while (index < MAX_FRAMES_IN_FLIGHT)
     {
-      self.device_dispatch.destroyFence (self.logical_device, self.in_flight_fences [index], null);
-      self.device_dispatch.destroySemaphore (self.logical_device, self.image_available_semaphores [index], null);
-      self.device_dispatch.destroySemaphore (self.logical_device, self.render_finished_semaphores [index], null);
+      self.in_flight_fences [index].destroy (self.logical_device, null);
+      self.image_available_semaphores [index].destroy (self.logical_device, null);
+      self.render_finished_semaphores [index].destroy (self.logical_device, null);
       index += 1;
     }
 
-    self.device_dispatch.destroyCommandPool (self.logical_device, self.command_pool, null);
-    self.device_dispatch.destroyCommandPool (self.logical_device, self.buffers_command_pool, null);
+    self.command_pool.destroy (self.logical_device, null);
+    self.buffers_command_pool.destroy (self.logical_device, null);
 
-    self.device_dispatch.destroyDevice (self.logical_device, null);
-    self.instance.dispatch.destroySurfaceKHR (self.instance.instance, self.surface, null);
+    self.logical_device.destroy (null);
+    self.surface.destroy (self.instance.instance, null);
     try self.instance.cleanup ();
 
     try self.logger.app (.DEBUG, "cleanup Vulkan OK", .{});

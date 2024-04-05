@@ -136,7 +136,7 @@ pub const Pipeline = enum (u64)
 
     pub fn create (device: vk.Device, p_create_info: *const vk.Pipeline.Layout.Create.Info, p_allocator: ?*const vk.AllocationCallbacks) !@This ()
     {
-      var pipeline_layout: vk.Pipeline.Layout = undefined;
+      var pipeline_layout: @This () = undefined;
       const result = raw.prototypes.device.vkCreatePipelineLayout (device, p_create_info, p_allocator, &pipeline_layout);
       if (result > 0)
       {

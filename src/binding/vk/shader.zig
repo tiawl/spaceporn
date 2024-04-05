@@ -26,7 +26,7 @@ pub const Shader = extern struct
 
     pub fn create (device: vk.Device, p_create_info: *const vk.Shader.Module.Create.Info, p_allocator: ?*const vk.AllocationCallbacks) !@This ()
     {
-      var shader_module: vk.Shader.Module = undefined;
+      var shader_module: @This () = undefined;
       const result = raw.prototypes.device.vkCreateShaderModule (device, p_create_info, p_allocator, &shader_module);
       if (result > 0)
       {

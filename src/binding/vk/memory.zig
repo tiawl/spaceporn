@@ -54,16 +54,4 @@ pub const Memory = extern struct
     property_flags: vk.Memory.Property.Flags = 0,
     heap_index: u32,
   };
-
-  pub fn allocate (device: vk.Device, p_allocate_info: *const vk.Memory.Allocate.Info, p_allocator: ?*const vk.AllocationCallbacks) !vk.Device.Memory
-  {
-    var memory: vk.Device.Memory = undefined;
-    const result = raw.prototypes.device.vkAllocateMemory (device, p_allocate_info, p_allocator, &memory);
-    if (result > 0)
-    {
-      std.debug.print ("{s} failed with {} status code\n", .{ @typeName (@This ()) ++ "." ++ @src ().fn_name, result, });
-      return error.UnexpectedResult;
-    }
-    return memory;
-  }
 };

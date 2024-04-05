@@ -64,13 +64,16 @@ pub const Buffer = enum (u64)
       INDEX_BUFFER = c.VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
       TRANSFER_DST = c.VK_BUFFER_USAGE_TRANSFER_DST_BIT,
       TRANSFER_SRC = c.VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+      UNIFORM_BUFFER = c.VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
       VERTEX_BUFFER = c.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
     };
   };
 
+  pub const View = enum (u64) { NULL_HANDLE = vk.NULL_HANDLE, _, };
+
   pub fn create (device: vk.Device, p_create_info: *const vk.Buffer.Create.Info, p_allocator: ?*const vk.AllocationCallbacks) !@This ()
   {
-    var buffer: vk.Buffer = undefined;
+    var buffer: @This () = undefined;
     const result = raw.prototypes.device.vkCreateBuffer (device, p_create_info, p_allocator, &buffer);
     if (result > 0)
     {

@@ -28,7 +28,7 @@ pub const RenderPass = enum (u64)
 
   pub fn create (device: vk.Device, p_create_info: *const vk.RenderPass.Create.Info, p_allocator: ?*const vk.AllocationCallbacks) !@This ()
   {
-    var render_pass: vk.RenderPass = undefined;
+    var render_pass: @This () = undefined;
     const result = raw.prototypes.device.vkCreateRenderPass (device, p_create_info, p_allocator, &render_pass);
     if (result > 0)
     {

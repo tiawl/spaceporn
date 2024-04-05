@@ -10,7 +10,7 @@ pub const Swapchain = enum (u64)
 
   pub fn create (device: vk.Device, p_create_info: *const vk.KHR.Swapchain.Create.Info, p_allocator: ?*const vk.AllocationCallbacks) !@This ()
   {
-    var swapchain: vk.KHR.Swapchain = undefined;
+    var swapchain: @This () = undefined;
     const result = raw.prototypes.device.vkCreateSwapchainKHR (device, p_create_info, p_allocator, &swapchain);
     if (result > 0)
     {

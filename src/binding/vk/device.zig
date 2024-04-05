@@ -12,6 +12,18 @@ pub const Device = enum (usize)
   {
     NULL_HANDLE = vk.NULL_HANDLE, _,
 
+    pub fn allocate (device: vk.Device, p_allocate_info: *const vk.Memory.Allocate.Info, p_allocator: ?*const vk.AllocationCallbacks) !@This ()
+    {
+      var memory: @This () = undefined;
+      const result = raw.prototypes.device.vkAllocateMemory (device, p_allocate_info, p_allocator, &memory);
+      if (result > 0)
+      {
+        std.debug.print ("{s} failed with {} status code\n", .{ @typeName (@This ()) ++ "." ++ @src ().fn_name, result, });
+        return error.UnexpectedResult;
+      }
+      return memory;
+    }
+
     pub fn free (memory: @This (), device: vk.Device, p_allocator: ?*const vk.AllocationCallbacks) void
     {
       raw.prototypes.device.vkFreeMemory (device, memory, p_allocator);
@@ -50,7 +62,7 @@ pub const Device = enum (usize)
 
   pub fn create (physical_device: vk.PhysicalDevice, p_create_info: *const vk.Device.Create.Info, p_allocator: ?*const vk.AllocationCallbacks) !@This ()
   {
-    var device: vk.Device = undefined;
+    var device: @This () = undefined;
     const result = raw.prototypes.instance.vkCreateDevice (physical_device, p_create_info, p_allocator, &device);
     if (result > 0)
     {

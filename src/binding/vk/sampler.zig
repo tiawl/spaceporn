@@ -47,7 +47,7 @@ pub const Sampler = enum (u64)
 
   pub fn create (device: vk.Device, p_create_info: *const vk.Sampler.Create.Info, p_allocator: ?*const vk.AllocationCallbacks) !@This ()
   {
-    var sampler: vk.Sampler = undefined;
+    var sampler: @This () = undefined;
     const result = raw.prototypes.device.vkCreateSampler (device, p_create_info, p_allocator, &sampler);
     if (result > 0)
     {

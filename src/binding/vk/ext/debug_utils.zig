@@ -59,7 +59,7 @@ pub const DebugUtils = extern struct
 
     pub fn create (instance: vk.Instance, p_create_info: *const vk.EXT.DebugUtils.Messenger.Create.Info, p_allocator: ?*const vk.AllocationCallbacks) !@This ()
     {
-      var messenger: vk.EXT.DebugUtils.Messenger = undefined;
+      var messenger: @This () = undefined;
       const result = raw.prototypes.instance.vkCreateDebugUtilsMessengerEXT (instance, p_create_info, p_allocator, &messenger);
       if (result > 0)
       {

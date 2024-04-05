@@ -105,7 +105,7 @@ fn generate_literals (builder: *std.Build) ![] const u8
     else => return err,
   };
 
-  std.debug.print ("{s}\n", .{ prototypes.path, });
+  std.debug.print ("[vulkan prototypes] {s}\n", .{ prototypes.path, });
   return prototypes.path;
 }
 

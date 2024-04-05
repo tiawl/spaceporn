@@ -111,7 +111,7 @@ pub const Image = enum (u64)
 
     pub fn create (device: vk.Device, p_create_info: *const vk.Image.View.Create.Info, p_allocator: ?*const vk.AllocationCallbacks) !@This ()
     {
-      var view: vk.Image.View = undefined;
+      var view: @This () = undefined;
       const result = raw.prototypes.device.vkCreateImageView (device, p_create_info, p_allocator, &view);
       if (result > 0)
       {
@@ -153,7 +153,7 @@ pub const Image = enum (u64)
 
   pub fn create (device: vk.Device, p_create_info: *const vk.Image.Create.Info, p_allocator: ?*const vk.AllocationCallbacks) !@This ()
   {
-    var image: vk.Image = undefined;
+    var image: @This () = undefined;
     const result = raw.prototypes.device.vkCreateImage (device, p_create_info, p_allocator, &image);
     if (result > 0)
     {

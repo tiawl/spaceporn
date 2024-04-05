@@ -141,7 +141,7 @@ fn write_index (builder: *std.Build, tree: *Node) ![] const u8
     else => return err,
   };
 
-  std.debug.print ("{s}\n", .{ path, });
+  std.debug.print ("[shader module] {s}\n", .{ path, });
   return path;
 }
 

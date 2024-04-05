@@ -111,16 +111,16 @@ fn link (builder: *std.Build, profile: *const Profile) !*std.Build.Module
   });
   const cimgui = imgui_dep.artifact ("cimgui");
 
-  const binding = builder.createModule (.{
+  const c = builder.createModule (.{
     .root_source_file = .{ .path = try builder.build_root.join (builder.allocator, &.{ "src", "binding", "raw.zig", }), },
     .target = profile.target,
     .optimize = profile.optimize,
   });
-  binding.linkLibrary (glfw_lib);
-  binding.linkLibrary (cimgui);
-  binding.addIncludePath (imgui_dep.path ("imgui"));
+  c.linkLibrary (glfw_lib);
+  c.linkLibrary (cimgui);
+  c.addIncludePath (imgui_dep.path ("imgui"));
 
-  return binding;
+  return c;
 }
 
 fn import (builder: *std.Build, exe: *std.Build.Step.Compile, profile: *const Profile) !void

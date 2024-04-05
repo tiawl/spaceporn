@@ -17,6 +17,11 @@ pub const Events = struct
   {
     c.glfwWaitEvents ();
   }
+
+  pub fn poll () void
+  {
+    c.glfwPollEvents ();
+  }
 };
 
 pub const Monitor = struct

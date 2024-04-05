@@ -130,6 +130,11 @@ pub const Command = extern struct
       };
     };
 
+    pub const Reset = extern struct
+    {
+      pub const Flags = u32;
+    };
+
     pub fn create (device: vk.Device, p_create_info: *const vk.Command.Pool.Create.Info, p_allocator: ?*const vk.AllocationCallbacks) !@This ()
     {
       var command_pool: @This () = undefined;
@@ -145,6 +150,16 @@ pub const Command = extern struct
     pub fn destroy (command_pool: @This (), device: vk.Device, p_allocator: ?*const vk.AllocationCallbacks) void
     {
       raw.prototypes.device.vkDestroyCommandPool (device, command_pool, p_allocator);
+    }
+
+    pub fn reset (command_pool: @This (), device: vk.Device, flags: vk.Command.Pool.Reset.Flags) !void
+    {
+      const result = raw.prototypes.device.vkResetCommandPool (device, command_pool, flags);
+      if (result > 0)
+      {
+        std.debug.print ("{s} failed with {} status code\n", .{ @typeName (@This ()) ++ "." ++ @src ().fn_name, result, });
+        return error.UnexpectedResult;
+      }
     }
   };
 };

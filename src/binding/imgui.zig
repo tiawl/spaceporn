@@ -11,6 +11,33 @@ const imgui = @This ();
 
 pub const vk = struct
 {
+  pub const DrawData = struct
+  {
+    pub const Ex = struct
+    {
+      pub fn render (draw_data: *const c.ImGui_DrawData, command_buffer: binding.vk.Command.Buffer, pipeline: binding.vk.Pipeline) void
+      {
+        c.cImGui_ImplVulkan_RenderDrawDataEx (draw_data, @ptrFromInt (@intFromEnum (command_buffer)), @ptrFromInt (@intFromEnum (pipeline)));
+      }
+    };
+  };
+
+  pub const FontsTexture = struct
+  {
+    pub fn create () !void
+    {
+      if (!c.cImGui_ImplVulkan_CreateFontsTexture ()) return error.ImGuiVulkanCreateFontsTexture;
+    }
+  };
+
+  pub const Frame = struct
+  {
+    pub fn new () void
+    {
+      c.cImGui_ImplVulkan_NewFrame ();
+    }
+  };
+
   pub const InitInfo = struct
   {
     Instance:              binding.vk.Instance,
@@ -18,8 +45,8 @@ pub const vk = struct
     Device:                binding.vk.Device,
     QueueFamily:           u32,
     Queue:                 binding.vk.Queue,
-    PipelineCache:         binding.vk.PipelineCache,
-    DescriptorPool:        binding.vk.DescriptorPool,
+    PipelineCache:         binding.vk.Pipeline.Cache,
+    DescriptorPool:        binding.vk.Descriptor.Pool,
     Subpass:               u32,
     MinImageCount:         u32,
     ImageCount:            u32,
@@ -29,16 +56,51 @@ pub const vk = struct
     Allocator:             [*c] const binding.vk.AllocationCallbacks,
     CheckVkResultFn:       ?*const fn (c_int) callconv (binding.vk.call_conv) void,
   };
+
+  fn loader (function_name: [*c] const u8, instance: ?*anyopaque) callconv (binding.vk.call_conv) ?*const fn () callconv (binding.vk.call_conv) void
+  {
+    return c.vkGetInstanceProcAddr (if (instance) |v| @as (c.VkInstance, @ptrCast (v)) else null, function_name);
+  }
+
+  pub fn load () !void
+  {
+    if (!c.cImGui_ImplVulkan_LoadFunctions (loader)) return error.ImGuiVulkanLoadFunctionsFailure;
+  }
+
+  pub fn init (init_info: *imgui.vk.InitInfo) !void
+  {
+    if (!c.cImGui_ImplVulkan_Init (@ptrCast (init_info))) return error.ImGuiVulkanInitFailure;
+  }
+
+  pub fn shutdown () void
+  {
+    imgui.cImGui_ImplVulkan_Shutdown ();
+  }
 };
 
 pub const glfw = struct
 {
+  pub const Frame = struct
+  {
+    pub fn new () void
+    {
+      c.cImGui_ImplGlfw_NewFrame ();
+    }
+  };
+
   pub fn init () !void
   {
     const window = try binding.glfw.Context.get ();
     if (!c.cImGui_ImplGlfw_InitForVulkan (@ptrCast (window), true)) return error.ImGuiGlfwInitForVulkanFailure;
   }
+
+  pub fn shutdown () void
+  {
+    imgui.cImGui_ImplGlfw_Shutdown ();
+  }
 };
+
+pub const Cond = c.ImGuiCond;
 
 pub const Context = struct
 {
@@ -46,11 +108,75 @@ pub const Context = struct
   {
     if (c.ImGui_CreateContext (null) == null) return error.ImGuiCreateContextFailure;
   }
+
+  pub fn destroy () void
+  {
+    c.ImGui_DestroyContext (null);
+  }
 };
 
 pub const Col = struct
 {
   pub const WindowBg = c.ImGuiCol_WindowBg;
+};
+
+pub const DrawData = struct
+{
+  pub fn get () *const c.ImDrawData
+  {
+    return &(c.ImGui_GetDrawData ().*);
+  }
+};
+
+pub const Ex = struct
+{
+  pub fn button (label: [] const u8, size: imgui.Vec2) bool
+  {
+    return c.ImGui_ButtonEx (label, size);
+  }
+
+  pub fn sameline (offset_from_start_x: f32, spacing: f32) void
+  {
+    c.ImGui_SameLineEx (offset_from_start_x, spacing);
+  }
+};
+
+pub const Frame = struct
+{
+  pub fn new () void
+  {
+    c.ImGui_NewFrame ();
+  }
+};
+
+pub const IO = struct
+{
+  pub fn get () *const c.ImGuiIO
+  {
+    return &(c.ImGui_GetIO ().*);
+  }
+};
+
+pub const NextWindow = struct
+{
+  pub const Pos = struct
+  {
+    pub const Ex = struct
+    {
+      pub fn set (pos: imgui.Vec2, cond: imgui.Cond, pivot: imgui.Vec2) void
+      {
+        c.ImGui_SetNextWindowPosEx (pos, cond, pivot);
+      }
+    };
+  };
+
+  pub const Size = struct
+  {
+    pub fn set (size: imgui.Vec2, cond: imgui.Cond) void
+    {
+      c.ImGui_SetNextWindowSize (size, cond);
+    }
+  };
 };
 
 pub const Style = struct
@@ -95,3 +221,38 @@ pub const Style = struct
     }
   }
 };
+
+pub const Vec2 = c.ImVec2;
+
+pub const Window = struct
+{
+  pub const Flags = c.ImGuiWindowFlags_;
+
+  pub const Bit = enum (imgui.Window.Flags)
+  {
+    NO_COLLAPSE = c.ImGuiWindowFlags_NoCollapse,
+    NO_MOVE = c.ImGuiWindowFlags_NoMove,
+    NO_RESIZE = c.ImGuiWindowFlags_NoResize,
+    NO_TITLE_BAR = c.ImGuiWindowFlags_NoTitleBar,
+  };
+};
+
+pub fn begin (name: [] const u8, p_open: ?*bool, flags: imgui.Window.Flags) !void
+{
+  if (!imgui.ImGui_Begin (name, p_open, flags)) return error.ImGuiBeginFailure;
+}
+
+pub fn end () void
+{
+  imgui.ImGui_End ();
+}
+
+pub fn render () void
+{
+  imgui.ImGui_Render ();
+}
+
+pub fn text (comptime fmt: [] const u8, args: anytype) void
+{
+  c.ImGui_Text (std.debug.comptimePrint (fmt, args));
+}

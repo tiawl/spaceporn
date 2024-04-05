@@ -7,11 +7,6 @@ pub const Window = struct
 {
   handle: *c.GLFWwindow,
 
-  pub fn from (handle: *anyopaque) @This ()
-  {
-    return .{ .handle = @as (*c.GLFWwindow, @ptrCast (@alignCast (handle))), };
-  }
-
   const Tag = enum
   {
     resizable,
@@ -86,22 +81,6 @@ pub const Window = struct
     }
   };
 
-  pub fn create (width: u32, height: u32, title: [*:0] const u8,
-    monitor: ?glfw.Monitor, share: ?@This (), hints: [] const glfw.Window.Hint) !@This ()
-  {
-    for (hints) |hint| c.glfwWindowHint (hint.tag (), @intFromEnum (std.meta.activeTag (hint)));
-    if (c.glfwCreateWindow (@as (c_int, @intCast (width)), @as (c_int, @intCast (height)),
-      &title [0], if (monitor) |m| m.handle else null, if (share) |w| w.handle else null)) |handle|
-        return from (handle);
-
-    return error.WindowInitFailed;
-  }
-
-  pub fn destroy (self: @This ()) void
-  {
-    c.glfwDestroyWindow (self.handle);
-  }
-
   pub const UserPointer = struct
   {
     pub fn get (comptime T: type) !?*T
@@ -156,4 +135,30 @@ pub const Window = struct
       };
     };
   };
+
+  pub fn create (width: u32, height: u32, title: [*:0] const u8,
+    monitor: ?glfw.Monitor, share: ?@This (), hints: [] const glfw.Window.Hint) !@This ()
+  {
+    for (hints) |hint| c.glfwWindowHint (hint.tag (), @intFromEnum (std.meta.activeTag (hint)));
+    if (c.glfwCreateWindow (@as (c_int, @intCast (width)), @as (c_int, @intCast (height)),
+      &title [0], if (monitor) |m| m.handle else null, if (share) |w| w.handle else null)) |handle|
+        return from (handle);
+
+    return error.WindowInitFailed;
+  }
+
+  pub fn destroy (self: @This ()) void
+  {
+    c.glfwDestroyWindow (self.handle);
+  }
+
+  pub fn from (handle: *anyopaque) @This ()
+  {
+    return .{ .handle = @as (*c.GLFWwindow, @ptrCast (@alignCast (handle))), };
+  }
+
+  pub fn shouldClose (self: @This ()) bool
+  {
+    return c.glfwWindowShouldClose (self.handle) == c.GLFW_TRUE;
+  }
 };

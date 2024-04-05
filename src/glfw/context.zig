@@ -123,8 +123,7 @@ pub const Context = struct
 
   pub fn looping (self: @This ()) bool
   {
-    const close_window = self.window.shouldClose ();
-    return !close_window;
+    return !self.window.shouldClose ();
   }
 
   pub fn loop (self: @This ()) !void

@@ -1619,7 +1619,6 @@ pub const Context = struct
     try self.init_sync_objects ();
 
     try imgui.init_vk (.{
-                          .device_dispatch = self.device_dispatch,
                           .instance        = self.instance.instance,
                           .physical_device = self.physical_device.?,
                           .logical_device  = self.logical_device,

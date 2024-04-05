@@ -12,6 +12,7 @@ pub const Format = enum (u32)
   R8G8B8_UNORM = c.VK_FORMAT_R8G8B8_UNORM,
   R8G8B8A8_UNORM = c.VK_FORMAT_R8G8B8A8_UNORM,
   R32G32_SFLOAT = c.VK_FORMAT_R32G32_SFLOAT,
+  UNDEFINED = c.VK_FORMAT_UNDEFINED,
   _,
 
   pub const Feature = extern struct

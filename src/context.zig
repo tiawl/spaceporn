@@ -30,7 +30,7 @@ pub const Context = struct
     const framebuffer = try self.glfw.get_framebuffer_size ();
     try self.vk.init (self.imgui, .{ .width = framebuffer.width, .height = framebuffer.height, });
 
-    try self.logger.app ("init OK", .DEBUG, .{});
+    try self.logger.app (.DEBUG, "init OK", .{});
     return self;
   }
 
@@ -45,7 +45,7 @@ pub const Context = struct
       const framebuffer = self.glfw.get_framebuffer_size ();
       try self.vk.loop (&(self.imgui), .{ .resized = framebuffer.resized, .width = framebuffer.width, .height = framebuffer.height, }, &arena, &allocator, options);
     }
-    try self.logger.app ("loop OK", .DEBUG, .{});
+    try self.logger.app (.DEBUG, "loop OK", .{});
   }
 
   pub fn cleanup (self: @This ()) !void
@@ -53,6 +53,6 @@ pub const Context = struct
     self.imgui.cleanup ();
     try self.vk.cleanup ();
     try self.glfw.cleanup ();
-    try self.logger.app ("cleanup OK", .DEBUG, .{});
+    try self.logger.app (.DEBUG, "cleanup OK", .{});
   }
 };

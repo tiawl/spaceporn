@@ -143,6 +143,7 @@ fn import (builder: *std.Build, exe: *std.Build.Step.Compile, profile: *const Pr
   });
   imgui.addImport ("c", c);
   imgui.addImport ("glfw", glfw_module);
+  imgui.addImport ("vk", vk_module);
 
   const build_options = profile.variables.createModule ();
   const logger = builder.createModule (.{

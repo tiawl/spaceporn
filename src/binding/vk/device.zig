@@ -72,6 +72,16 @@ pub const Device = enum (usize)
     return device;
   }
 
+  pub fn waitIdle (device: @This ()) !void
+  {
+    const result = raw.prototypes.device.vkDeviceWaitIdle (device);
+    if (result > 0)
+    {
+      std.debug.print ("{s} failed with {} status code\n", .{ @typeName (@This ()) ++ "." ++ @src ().fn_name, result, });
+      return error.UnexpectedResult;
+    }
+  }
+
   pub fn destroy (self: @This (), p_allocator: ?*const vk.AllocationCallbacks) void
   {
     raw.prototypes.device.vkDestroyDevice (self, p_allocator);

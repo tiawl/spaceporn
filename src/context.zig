@@ -42,7 +42,7 @@ pub const Context = struct
     while (self.glfw.looping ())
     {
       try self.glfw.loop ();
-      const framebuffer = self.glfw.get_framebuffer_size ();
+      const framebuffer = try self.glfw.get_framebuffer_size ();
       try self.vk.loop (&(self.imgui), .{ .resized = framebuffer.resized, .width = framebuffer.width, .height = framebuffer.height, }, &arena, &allocator, options);
     }
     try self.logger.app (.DEBUG, "loop OK", .{});

@@ -236,12 +236,12 @@ pub const Context = struct
     try self.logger.app (.DEBUG, "end render Imgui OK", .{});
   }
 
-  pub fn cleanup (self: @This ()) void
+  pub fn deinit (self: @This ()) !void
   {
     imgui.vk.shutdown ();
     imgui.glfw.shutdown ();
     imgui.Context.destroy ();
 
-    try self.logger.app (.DEBUG, "cleanup Imgui OK", .{});
+    try self.logger.app (.DEBUG, "deinit Imgui OK", .{});
   }
 };

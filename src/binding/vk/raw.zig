@@ -110,7 +110,7 @@ const Prototypes = struct
         });
       };
 
-      @compileLog (field.name ++ ": " ++ @typeName (pfn));
+      // @compileLog (field.name ++ ": " ++ @typeName (pfn));
       fields [i] = .{
         .name = field.name,
         .type = pfn,

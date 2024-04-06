@@ -15,7 +15,7 @@ pub const vk = struct
   {
     pub const Ex = struct
     {
-      pub fn render (draw_data: *const c.ImGui_DrawData, command_buffer: binding.vk.Command.Buffer, pipeline: binding.vk.Pipeline) void
+      pub fn render (draw_data: *c.ImDrawData, command_buffer: binding.vk.Command.Buffer, pipeline: binding.vk.Pipeline) void
       {
         c.cImGui_ImplVulkan_RenderDrawDataEx (draw_data, @ptrFromInt (@intFromEnum (command_buffer)), @ptrFromInt (@intFromEnum (pipeline)));
       }
@@ -59,7 +59,7 @@ pub const vk = struct
 
   fn loader (function_name: [*c] const u8, instance: ?*anyopaque) callconv (binding.vk.call_conv) ?*const fn () callconv (binding.vk.call_conv) void
   {
-    return c.vkGetInstanceProcAddr (if (instance) |v| @as (c.VkInstance, @ptrCast (v)) else null, function_name);
+    return c.glfwGetInstanceProcAddress (if (instance) |v| @as (c.VkInstance, @ptrCast (v)) else null, function_name);
   }
 
   pub fn load () !void
@@ -122,7 +122,7 @@ pub const Col = struct
 
 pub const DrawData = struct
 {
-  pub fn get () *const c.ImDrawData
+  pub fn get () *c.ImDrawData
   {
     return &(c.ImGui_GetDrawData ().*);
   }

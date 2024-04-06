@@ -48,9 +48,9 @@ pub const Context = struct
     try self.logger.app (.DEBUG, "loop OK", .{});
   }
 
-  pub fn cleanup (self: @This ()) !void
+  pub fn deinit (self: @This ()) !void
   {
-    self.imgui.cleanup ();
+    try self.imgui.deinit ();
     try self.vk.cleanup ();
     try self.glfw.cleanup ();
     try self.logger.app (.DEBUG, "cleanup OK", .{});

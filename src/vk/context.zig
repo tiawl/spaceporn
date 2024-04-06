@@ -1923,24 +1923,23 @@ pub const Context = struct
   }
 
   fn record_command_buffer (self: *@This (), imgui: *ImguiContext,
-    command_buffer: *vk.CommandBuffer, image_index: u32) !void
+    command_buffer: *vk.Command.Buffer, image_index: u32) !void
   {
-    try self.device_dispatch.resetCommandBuffer (command_buffer.*,
-      vk.CommandBufferResetFlags {});
+    try command_buffer.reset (0);
 
     const command_buffer_begin_info =
-      vk.CommandBufferBeginInfo { .p_inheritance_info = null, };
+      vk.Command.Buffer.Begin.Info { .p_inheritance_info = null, };
 
     try command_buffer.begin (&command_buffer_begin_info);
 
-    var clear = [_] vk.ClearValue
+    var clear = [_] vk.Clear.Value
     {
       .{
          .color = .{ .float_32 = [4] f32 { 0, 0, 0, 0, }, },
        },
     };
 
-    var render_pass_begin_info = vk.RenderPassBeginInfo
+    var render_pass_begin_info = vk.RenderPass.Begin.Info
     {
       .render_pass       = self.offscreen_render_pass,
       .framebuffer       = self.offscreen_framebuffer,
@@ -1957,16 +1956,15 @@ pub const Context = struct
 
     if (self.render_offscreen)
     {
-      self.device_dispatch.cmdBeginRenderPass (command_buffer.*,
-        &render_pass_begin_info, vk.SubpassContents.@"inline");
+      command_buffer.begin_render_pass (&render_pass_begin_info, .INLINE);
 
       const offscreen_viewport = [_] vk.Viewport
       {
         .{
            .x         = 0,
            .y         = 0,
-           .width     = @floatFromInt(self.offscreen_width),
-           .height    = @floatFromInt(self.offscreen_height),
+           .width     = @floatFromInt (self.offscreen_width),
+           .height    = @floatFromInt (self.offscreen_height),
            .min_depth = 0,
            .max_depth = 1,
          },
@@ -1983,31 +1981,26 @@ pub const Context = struct
          },
       };
 
-      self.device_dispatch.cmdSetViewport (command_buffer.*, 0, 1,
-        &offscreen_viewport);
-      self.device_dispatch.cmdSetScissor (command_buffer.*, 0, 1,
-        &offscreen_scissor);
+      command_buffer.set_viewport (0, 1, &offscreen_viewport);
+      command_buffer.set_scissor (0, 1, &offscreen_scissor);
     }
 
-    const offset = [_] vk.DeviceSize {0};
-    self.device_dispatch.cmdBindVertexBuffers (command_buffer.*, 0, 1,
+    const offset = [_] vk.Device.Size { 0, };
+    command_buffer.bind_vertex_buffers (0, 1,
       &[_] vk.Buffer { self.vertex_buffer, }, &offset);
 
-    self.device_dispatch.cmdBindIndexBuffer (command_buffer.*,
-      self.index_buffer, 0, vk.IndexType.uint32);
+    command_buffer.bind_index_buffer (self.index_buffer, 0, .UINT32);
 
     if (self.render_offscreen)
     {
-      self.device_dispatch.cmdBindDescriptorSets (command_buffer.*,
-        vk.PipelineBindPoint.graphics, self.offscreen_pipeline_layout, 0, 1,
+      command_buffer.bind_descriptor_sets (.GRAPHICS,
+        self.offscreen_pipeline_layout, 0, 1,
         self.offscreen_descriptor_sets.ptr, 0, undefined);
-      self.device_dispatch.cmdBindPipeline (command_buffer.*,
-        vk.PipelineBindPoint.graphics, self.offscreen_pipelines [0]);
+      command_buffer.bind_pipeline (.GRAPHICS, self.offscreen_pipelines [0]);
 
-      self.device_dispatch.cmdDrawIndexed (command_buffer.*,
-        indices.len, 1, 0, 0, 0);
+      command_buffer.draw_indexed (indices.len, 1, 0, 0, 0);
 
-      self.device_dispatch.cmdEndRenderPass (command_buffer.*);
+      command_buffer.end_render_pass ();
     }
 
     clear [0].color.float_32 [3] = 1;
@@ -2015,28 +2008,22 @@ pub const Context = struct
     render_pass_begin_info.framebuffer = self.framebuffers [image_index];
     render_pass_begin_info.render_area.extent = self.extent;
 
-    self.device_dispatch.cmdBeginRenderPass (command_buffer.*,
-      &render_pass_begin_info, vk.SubpassContents.@"inline");
-    self.device_dispatch.cmdBindPipeline (command_buffer.*,
-      vk.PipelineBindPoint.graphics, self.pipelines [0]);
+    command_buffer.begin_render_pass (&render_pass_begin_info, .INLINE);
+    command_buffer.bind_pipeline (.GRAPHICS, self.pipelines [0]);
 
-    self.device_dispatch.cmdSetViewport (command_buffer.*, 0, 1,
-      self.viewport [0 ..].ptr);
-    self.device_dispatch.cmdSetScissor (command_buffer.*, 0, 1,
-      self.scissor [0 ..].ptr);
+    command_buffer.set_viewport (0, 1, self.viewport [0 ..].ptr);
+    command_buffer.set_scissor (0, 1, self.scissor [0 ..].ptr);
 
-    self.device_dispatch.cmdBindDescriptorSets (command_buffer.*,
-      vk.PipelineBindPoint.graphics, self.pipeline_layout, 0, 1,
-      &[_] vk.DescriptorSet { self.descriptor_sets [self.current_frame], },
+    command_buffer.bind_descriptor_sets (.GRAPHICS, self.pipeline_layout, 0,
+      1, &[_] vk.Descriptor.Set { self.descriptor_sets [self.current_frame], },
       0, undefined);
 
-    self.device_dispatch.cmdDrawIndexed (
-      command_buffer.*, indices.len, 1, 0, 0, 0);
+    command_buffer.draw_indexed (indices.len, 1, 0, 0, 0);
 
     if (self.screenshot_frame == std.math.maxInt (u32))
       try imgui.render (command_buffer.*);
 
-    self.device_dispatch.cmdEndRenderPass (command_buffer.*);
+    command_buffer.end_render_pass ();
 
     try command_buffer.end ();
 
@@ -2046,26 +2033,17 @@ pub const Context = struct
   fn cleanup_swapchain (self: @This ()) void
   {
     for (self.framebuffers) |framebuffer|
-    {
-      self.device_dispatch.destroyFramebuffer (
-        self.logical_device, framebuffer, null);
-    }
+      framebuffer.destroy (self.logical_device);
 
-    for (self.views) |image_view|
-    {
-      self.device_dispatch.destroyImageView (
-        self.logical_device, image_view, null);
-    }
-
-    self.device_dispatch.destroySwapchainKHR (
-      self.logical_device, self.swapchain, null);
+    for (self.views) |image_view| image_view.destroy (self.logical_device);
+    self.swapchain.destroy (self.logical_device);
   }
 
   fn rebuild_swapchain (self: *@This (),
     framebuffer: struct { width: u32, height: u32, },
     arena: *std.heap.ArenaAllocator, allocator: *std.mem.Allocator) !void
   {
-    try self.device_dispatch.deviceWaitIdle (self.logical_device);
+    try self.logical_device.waitIdle ();
 
     self.cleanup_swapchain ();
 
@@ -2074,12 +2052,12 @@ pub const Context = struct
     arena.* = std.heap.ArenaAllocator.init (std.heap.page_allocator);
     allocator.* = arena.allocator ();
 
-    try self.query_swapchain_support (self.physical_device.?, allocator.*);
+    try self.query_swapchain_support (self.physical_device.?);
     try self.init_swapchain (.{ .width = framebuffer.width,
-      .height = framebuffer.height, }, allocator.*);
+      .height = framebuffer.height, });
 
     try self.init_image_views ();
-    try self.init_framebuffers (allocator.*);
+    try self.init_framebuffers ();
   }
 
   fn update_uniform_buffer (self: *@This (), options: *Options) !void
@@ -2565,10 +2543,9 @@ pub const Context = struct
     };
 
     var present_result_suboptimal_khr = false;
-    present_result_suboptimal_khr =
-      self.present_queue.presentKHR (&present_info) catch |err| switch (err)
+    self.present_queue.presentKHR (&present_info) catch |err| switch (err)
     {
-      error.OutOfDateKHR => true,
+      error.OutOfDateKHR => present_result_suboptimal_khr = true,
       else               => return err,
     };
 
@@ -2595,9 +2572,7 @@ pub const Context = struct
 
   pub fn cleanup (self: @This ()) !void
   {
-    try self.device_dispatch.deviceWaitIdle (self.logical_device);
-
-    self.instance.cleanup_imgui ();
+    try self.logical_device.waitIdle ();
 
     self.cleanup_swapchain ();
 

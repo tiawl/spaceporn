@@ -133,6 +133,28 @@ pub const ColorComponent = extern struct
   };
 };
 
+pub const Clear = extern struct
+{
+  pub const ColorValue = extern union
+  {
+    float_32: [4] f32,
+    int_32: [4] i32,
+    uint_32: [4] u32,
+  };
+
+  pub const DepthStencilValue = extern struct
+  {
+    depth: f32,
+    stencil: u32,
+  };
+
+  pub const Value = extern union
+  {
+    color: vk.Clear.ColorValue,
+    depth_stencil: vk.Clear.DepthStencilValue,
+  };
+};
+
 pub const Command = @import ("command").Command;
 
 pub const CompareOp = enum (i32)
@@ -226,6 +248,12 @@ pub const FrontFace = enum (i32)
 pub const Graphics = @import ("pipeline").Graphics;
 
 pub const Image = @import ("image").Image;
+
+pub const IndexType = enum (u32)
+{
+  UINT32 = c.VK_INDEX_TYPE_UINT32,
+};
+
 pub const Instance = @import ("instance").Instance;
 
 pub const InternalAllocationType = enum (i32) {};
@@ -421,6 +449,7 @@ pub const StructureType = enum (i32)
   PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO = c.VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
   PIPELINE_VIEWPORT_STATE_CREATE_INFO = c.VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
   PRESENT_INFO_KHR = c.VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
+  RENDER_PASS_BEGIN_INFO = c.VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
   RENDER_PASS_CREATE_INFO = c.VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
   SAMPLER_CREATE_INFO = c.VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
   SEMAPHORE_CREATE_INFO = c.VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
@@ -449,6 +478,11 @@ pub const Submit = extern struct
 
 pub const Subpass = extern struct
 {
+  pub const Contents = enum (u32)
+  {
+    INLINE = c.VK_SUBPASS_CONTENTS_INLINE,
+  };
+
   pub const Dependency = extern struct
   {
     src_subpass: u32,

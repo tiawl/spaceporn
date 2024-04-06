@@ -53,6 +53,11 @@ pub const Command = extern struct
       PRIMARY = c.VK_COMMAND_BUFFER_LEVEL_PRIMARY,
     };
 
+    pub const Reset = extern struct
+    {
+      pub const Flags = u32;
+    };
+
     pub const Usage = extern struct
     {
       pub const Flags = u32;
@@ -87,6 +92,19 @@ pub const Command = extern struct
       }
     }
 
+    pub fn begin_render_pass (command_buffer: @This (),
+      p_render_pass_begin: *const vk.RenderPass.Begin.Info,
+      contents: vk.Subpass.Contents) void
+    {
+      raw.prototypes.device.vkCmdBeginRenderPass (command_buffer,
+        p_render_pass_begin, @intFromEnum (contents));
+    }
+
+    pub fn end_render_pass (command_buffer: @This ()) void
+    {
+      raw.prototypes.device.vkCmdEndRenderPass (command_buffer);
+    }
+
     pub fn blit_image (command_buffer: @This (), src_image: vk.Image,
       src_image_layout: vk.Image.Layout, dst_image: vk.Image,
       dst_image_layout: vk.Image.Layout, region_count: u32,
@@ -96,6 +114,40 @@ pub const Command = extern struct
         @intFromEnum (src_image_layout), dst_image,
         @intFromEnum (dst_image_layout), region_count, p_regions,
         @intFromEnum (filter));
+    }
+
+    pub fn bind_descriptor_sets (command_buffer: @This (),
+      pipeline_bind_point: vk.Pipeline.BindPoint, layout: vk.Pipeline.Layout,
+      first_set: u32, descriptor_set_count: u32,
+      p_descriptor_sets: [*] const vk.Descriptor.Set,
+      dynamic_offset_count: u32, p_dynamic_offsets: ?[*]const u32) void
+    {
+      raw.prototypes.device.vkCmdBindDescriptorSets (command_buffer,
+        @intFromEnum (pipeline_bind_point), layout, first_set,
+        descriptor_set_count, p_descriptor_sets, dynamic_offset_count,
+        p_dynamic_offsets);
+    }
+
+    pub fn bind_index_buffer (command_buffer: @This (), buffer: vk.Buffer,
+      offset: vk.Device.Size, index_type: vk.IndexType) void
+    {
+      raw.prototypes.device.vkCmdBindIndexBuffer (command_buffer, buffer,
+        offset, @intFromEnum (index_type));
+    }
+
+    pub fn bind_pipeline (command_buffer: @This (),
+      pipeline_bind_point: vk.Pipeline.BindPoint, pipeline: vk.Pipeline) void
+    {
+      raw.prototypes.device.vkCmdBindPipeline (command_buffer,
+        @intFromEnum (pipeline_bind_point), pipeline);
+    }
+
+    pub fn bind_vertex_buffers (command_buffer: @This (), first_binding: u32,
+      binding_count: u32, p_buffers: [*] const vk.Buffer,
+      p_offsets: [*] const vk.Device.Size) void
+    {
+      raw.prototypes.device.vkCmdBindVertexBuffers (command_buffer,
+        first_binding, binding_count, p_buffers, p_offsets);
     }
 
     pub fn copy_buffer (command_buffer: @This (), src_buffer: vk.Buffer,
@@ -116,6 +168,14 @@ pub const Command = extern struct
         @intFromEnum (dst_image_layout), region_count, p_regions);
     }
 
+    pub fn draw_indexed (command_buffer: @This (), index_count: u32,
+      instance_count: u32, first_index: u32, vertex_offset: i32,
+      first_instance: u32) void
+    {
+      raw.prototypes.device.vkCmdDrawIndexed (command_buffer, index_count,
+        instance_count, first_index, vertex_offset, first_instance);
+    }
+
     pub fn pipeline_barrier (command_buffer: @This (),
       src_stage_mask: vk.Pipeline.Stage.Flags,
       dst_stage_mask: vk.Pipeline.Stage.Flags,
@@ -131,6 +191,33 @@ pub const Command = extern struct
         p_memory_barriers, buffer_memory_barrier_count,
         p_buffer_memory_barriers, image_memory_barrier_count,
         p_image_memory_barriers);
+    }
+
+    pub fn reset (command_buffer: @This (),
+      flags: vk.Command.Buffer.Reset.Flags) !void
+    {
+      const result = raw.prototypes.device.vkResetCommandBuffer (
+        command_buffer, flags);
+      if (result > 0)
+      {
+        std.debug.print ("{s} failed with {} status code\n",
+          .{ @typeName (@This ()) ++ "." ++ @src ().fn_name, result, });
+        return error.UnexpectedResult;
+      }
+    }
+
+    pub fn set_scissor (command_buffer: @This (), first_scissor: u32,
+      scissor_count: u32, p_scissors: [*] const vk.Rect2D) void
+    {
+      raw.prototypes.device.vkCmdSetScissor (command_buffer, first_scissor,
+        scissor_count, p_scissors);
+    }
+
+    pub fn set_viewport (command_buffer: @This (), first_viewport: u32,
+      viewport_count: u32, p_viewports: [*] const vk.Viewport) void
+    {
+      raw.prototypes.device.vkCmdSetViewport (command_buffer, first_viewport,
+        viewport_count, p_viewports);
     }
   };
 

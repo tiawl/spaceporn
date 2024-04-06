@@ -8,6 +8,20 @@ pub const RenderPass = enum (u64)
 {
   NULL_HANDLE = vk.NULL_HANDLE, _,
 
+  pub const Begin = extern struct
+  {
+    pub const Info = extern struct
+    {
+      s_type: vk.StructureType = .RENDER_PASS_BEGIN_INFO,
+      p_next: ?*const anyopaque = null,
+      render_pass: vk.RenderPass,
+      framebuffer: vk.Framebuffer,
+      render_area: vk.Rect2D,
+      clear_value_count: u32 = 0,
+      p_clear_values: ?[*] const vk.Clear.Value = null,
+    };
+  };
+
   pub const Create = extern struct
   {
     pub const Flags = u32;

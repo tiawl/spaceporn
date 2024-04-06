@@ -8,6 +8,11 @@ pub const Pipeline = enum (u64)
 {
   NULL_HANDLE = vk.NULL_HANDLE, _,
 
+  pub const BindPoint = enum (u32)
+  {
+    GRAPHICS = c.VK_PIPELINE_BIND_POINT_GRAPHICS,
+  };
+
   pub const Cache = enum (u64) { NULL_HANDLE = vk.NULL_HANDLE, _, };
 
   pub const ColorBlend = extern struct
@@ -43,11 +48,6 @@ pub const Pipeline = enum (u64)
         };
       };
     };
-  };
-
-  pub const BindPoint = enum (i32)
-  {
-    GRAPHICS = c.VK_PIPELINE_BIND_POINT_GRAPHICS,
   };
 
   pub const Create = extern struct

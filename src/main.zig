@@ -15,7 +15,7 @@ pub fn main () !void
   var options = try Options.init (&logger);
 
   var context = try Context.init (&logger, &options);
-  defer context.cleanup ();
+  defer context.deinit () catch {};
 
   try context.loop (&options);
 }

@@ -12,7 +12,7 @@ pub fn main () !void
 
   const logger = try Logger.init (&allocator);
   defer logger.deinit ();
-  const options = try Options.init (&logger);
+  var options = try Options.init (&logger);
 
   var context = try Context.init (&logger, &options);
   defer context.cleanup ();

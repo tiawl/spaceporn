@@ -63,12 +63,15 @@ pub const Command = extern struct
       };
     };
 
-    pub fn begin (command_buffer: @This (), p_begin_info: *const vk.Command.Buffer.Begin.Info) !void
+    pub fn begin (command_buffer: @This (),
+      p_begin_info: *const vk.Command.Buffer.Begin.Info) !void
     {
-      const result = raw.prototypes.device.vkBeginCommandBuffer (command_buffer, p_begin_info);
+      const result = raw.prototypes.device.vkBeginCommandBuffer (
+        command_buffer, p_begin_info);
       if (result > 0)
       {
-        std.debug.print ("{s} failed with {} status code\n", .{ @typeName (@This ()) ++ "." ++ @src ().fn_name, result, });
+        std.debug.print ("{s} failed with {} status code\n",
+          .{ @typeName (@This ()) ++ "." ++ @src ().fn_name, result, });
         return error.UnexpectedResult;
       }
     }
@@ -78,32 +81,81 @@ pub const Command = extern struct
       const result = raw.prototypes.device.vkEndCommandBuffer (command_buffer);
       if (result > 0)
       {
-        std.debug.print ("{s} failed with {} status code\n", .{ @typeName (@This ()) ++ "." ++ @src ().fn_name, result, });
+        std.debug.print ("{s} failed with {} status code\n",
+          .{ @typeName (@This ()) ++ "." ++ @src ().fn_name, result, });
         return error.UnexpectedResult;
       }
     }
 
-    pub fn copy_buffer (command_buffer: @This (), src_buffer: vk.Buffer, dst_buffer: vk.Buffer, region_count: u32, p_regions: [*] const vk.Buffer.Copy) void
+    pub fn blit_image (command_buffer: @This (), src_image: vk.Image,
+      src_image_layout: vk.Image.Layout, dst_image: vk.Image,
+      dst_image_layout: vk.Image.Layout, region_count: u32,
+      p_regions: [*] const vk.Image.Blit, filter: vk.Filter) void
     {
-      raw.prototypes.device.vkCmdCopyBuffer (command_buffer, src_buffer, dst_buffer, region_count, p_regions);
+      raw.prototypes.device.vkCmdBlitImage (command_buffer, src_image,
+        @intFromEnum (src_image_layout), dst_image,
+        @intFromEnum (dst_image_layout), region_count, p_regions,
+        @intFromEnum (filter));
+    }
+
+    pub fn copy_buffer (command_buffer: @This (), src_buffer: vk.Buffer,
+      dst_buffer: vk.Buffer, region_count: u32,
+      p_regions: [*] const vk.Buffer.Copy) void
+    {
+      raw.prototypes.device.vkCmdCopyBuffer (command_buffer, src_buffer,
+        dst_buffer, region_count, p_regions);
+    }
+
+    pub fn copy_image (command_buffer: vk.Command.Buffer, src_image: vk.Image,
+      src_image_layout: vk.Image.Layout, dst_image: vk.Image,
+      dst_image_layout: vk.Image.Layout, region_count: u32,
+      p_regions: [*] const vk.Image.Copy) void
+    {
+      raw.prototypes.device.vkCmdCopyImage (command_buffer, src_image,
+        @intFromEnum (src_image_layout), dst_image,
+        @intFromEnum (dst_image_layout), region_count, p_regions);
+    }
+
+    pub fn pipeline_barrier (command_buffer: @This (),
+      src_stage_mask: vk.Pipeline.Stage.Flags,
+      dst_stage_mask: vk.Pipeline.Stage.Flags,
+      dependency_flags: vk.Dependency.Flags, memory_barrier_count: u32,
+      p_memory_barriers: ?[*] const vk.Memory.Barrier,
+      buffer_memory_barrier_count: u32,
+      p_buffer_memory_barriers: ?[*] const vk.Buffer.Memory.Barrier,
+      image_memory_barrier_count: u32,
+      p_image_memory_barriers: ?[*] const vk.Image.Memory.Barrier) void
+    {
+      raw.prototypes.device.vkCmdPipelineBarrier (command_buffer,
+        src_stage_mask, dst_stage_mask, dependency_flags, memory_barrier_count,
+        p_memory_barriers, buffer_memory_barrier_count,
+        p_buffer_memory_barriers, image_memory_barrier_count,
+        p_image_memory_barriers);
     }
   };
 
   pub const Buffers = extern struct
   {
-    pub fn allocate (device: vk.Device, p_allocate_info: *const vk.Command.Buffer.Allocate.Info, p_command_buffers: [*] vk.Command.Buffer) !void
+    pub fn allocate (device: vk.Device,
+      p_allocate_info: *const vk.Command.Buffer.Allocate.Info,
+      p_command_buffers: [*] vk.Command.Buffer) !void
     {
-      const result = raw.prototypes.device.vkAllocateCommandBuffers (device, p_allocate_info, p_command_buffers);
+      const result = raw.prototypes.device.vkAllocateCommandBuffers (device,
+        p_allocate_info, p_command_buffers);
       if (result > 0)
       {
-        std.debug.print ("{s} failed with {} status code\n", .{ @typeName (@This ()) ++ "." ++ @src ().fn_name, result, });
+        std.debug.print ("{s} failed with {} status code\n",
+          .{ @typeName (@This ()) ++ "." ++ @src ().fn_name, result, });
         return error.UnexpectedResult;
       }
     }
 
-    pub fn free (device: vk.Device, command_pool: vk.Command.Pool, command_buffer_count: u32, p_command_buffers: [*] const vk.Command.Buffer) void
+    pub fn free (device: vk.Device, command_pool: vk.Command.Pool,
+      command_buffer_count: u32,
+      p_command_buffers: [*] const vk.Command.Buffer) void
     {
-      raw.prototypes.device.vkFreeCommandBuffers (device, command_pool, command_buffer_count, p_command_buffers);
+      raw.prototypes.device.vkFreeCommandBuffers (device, command_pool,
+        command_buffer_count, p_command_buffers);
     }
   };
 
@@ -135,29 +187,38 @@ pub const Command = extern struct
       pub const Flags = u32;
     };
 
-    pub fn create (device: vk.Device, p_create_info: *const vk.Command.Pool.Create.Info, p_allocator: ?*const vk.AllocationCallbacks) !@This ()
+    pub fn create (device: vk.Device,
+      p_create_info: *const vk.Command.Pool.Create.Info) !@This ()
     {
       var command_pool: @This () = undefined;
-      const result = raw.prototypes.device.vkCreateCommandPool (device, p_create_info, p_allocator, &command_pool);
+      const p_allocator: ?*const vk.AllocationCallbacks = null;
+      const result = raw.prototypes.device.vkCreateCommandPool (device,
+        p_create_info, p_allocator, &command_pool);
       if (result > 0)
       {
-        std.debug.print ("{s} failed with {} status code\n", .{ @typeName (@This ()) ++ "." ++ @src ().fn_name, result, });
+        std.debug.print ("{s} failed with {} status code\n",
+          .{ @typeName (@This ()) ++ "." ++ @src ().fn_name, result, });
         return error.UnexpectedResult;
       }
       return command_pool;
     }
 
-    pub fn destroy (command_pool: @This (), device: vk.Device, p_allocator: ?*const vk.AllocationCallbacks) void
+    pub fn destroy (command_pool: @This (), device: vk.Device) void
     {
-      raw.prototypes.device.vkDestroyCommandPool (device, command_pool, p_allocator);
+      const p_allocator: ?*const vk.AllocationCallbacks = null;
+      raw.prototypes.device.vkDestroyCommandPool (device, command_pool,
+        p_allocator);
     }
 
-    pub fn reset (command_pool: @This (), device: vk.Device, flags: vk.Command.Pool.Reset.Flags) !void
+    pub fn reset (command_pool: @This (), device: vk.Device,
+      flags: vk.Command.Pool.Reset.Flags) !void
     {
-      const result = raw.prototypes.device.vkResetCommandPool (device, command_pool, flags);
+      const result = raw.prototypes.device.vkResetCommandPool (device,
+        command_pool, flags);
       if (result > 0)
       {
-        std.debug.print ("{s} failed with {} status code\n", .{ @typeName (@This ()) ++ "." ++ @src ().fn_name, result, });
+        std.debug.print ("{s} failed with {} status code\n",
+          .{ @typeName (@This ()) ++ "." ++ @src ().fn_name, result, });
         return error.UnexpectedResult;
       }
     }

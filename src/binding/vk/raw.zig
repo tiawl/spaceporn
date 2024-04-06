@@ -31,8 +31,9 @@ const Prototypes = struct
         field = @field (field, name [start .. end]);
         start = end;
         end = name.len;
-      } else end = std.mem.lastIndexOfAny (u8, name [0 .. end - 1], "ABCDEFGHIJKLMNOPQRSTUVWXYZ")
-        orelse @compileError ("Undefined \"" ++ name [start .. end] ++ "\" into vk binding from \"" ++ name ++ "\"");
+      } else end = std.mem.lastIndexOfAny (u8, name [0 .. end - 1],
+          "ABCDEFGHIJKLMNOPQRSTUVWXYZ") orelse
+          @compileError ("Undefined \"" ++ name [start .. end] ++ "\" into vk binding from \"" ++ name ++ "\"");
     }
 
     return field;
@@ -43,7 +44,8 @@ const Prototypes = struct
     var info = @typeInfo (T);
     return switch (info)
     {
-      .Opaque   => blk: { if (T == anyopaque) break :blk T else { is_opaque.* = true; break :blk ziggify (T); } },
+      .Opaque   => blk: { if (T == anyopaque) break :blk T
+                     else { is_opaque.* = true; break :blk ziggify (T); } },
       .Optional => blk: {
                      const child = cast_rec (info.Optional.child, is_opaque);
                      if (is_opaque.*) { is_opaque.* = false; break :blk child; }
@@ -80,7 +82,8 @@ const Prototypes = struct
           params [j] = .{
             .is_generic = param.is_generic,
             .is_noalias = param.is_noalias,
-            .type = cast (param.type orelse @compileError ("Param type is null for " ++ field.name)),
+            .type = cast (param.type orelse
+              @compileError ("Param type is null for " ++ field.name)),
           };
         }
         break :pfn @Type (.{
@@ -96,7 +99,8 @@ const Prototypes = struct
                 .alignment = pointer.Fn.alignment,
                 .is_generic = pointer.Fn.is_generic,
                 .is_var_args = pointer.Fn.is_var_args,
-                .return_type = cast (pointer.Fn.return_type orelse @compileError ("Return type is null for " ++ field.name)),
+                .return_type = cast (pointer.Fn.return_type orelse
+                  @compileError ("Return type is null for " ++ field.name)),
                 .params = &params,
               },
             }),

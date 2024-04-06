@@ -8,26 +8,31 @@ pub const Instance = enum (usize)
 {
   NULL_HANDLE = vk.NULL_HANDLE, _,
 
-  pub fn create (p_create_info: *const vk.Instance.Create.Info, p_allocator: ?*const vk.AllocationCallbacks) !@This ()
+  pub fn create (p_create_info: *const vk.Instance.Create.Info) !@This ()
   {
     var instance: @This () = undefined;
-    const result = raw.prototypes.structless.vkCreateInstance (p_create_info, p_allocator, &instance);
+    const p_allocator: ?*const vk.AllocationCallbacks = null;
+    const result = raw.prototypes.structless.vkCreateInstance (p_create_info,
+      p_allocator, &instance);
     if (result > 0)
     {
-      std.debug.print ("{s} failed with {} status code\n", .{ @typeName (@This ()) ++ "." ++ @src ().fn_name, result, });
+      std.debug.print ("{s} failed with {} status code\n",
+        .{ @typeName (@This ()) ++ "." ++ @src ().fn_name, result, });
       return error.UnexpectedResult;
     }
     return instance;
   }
 
-  pub fn destroy (self: @This (), p_allocator: ?*const vk.AllocationCallbacks) void
+  pub fn destroy (self: @This ()) void
   {
+    const p_allocator: ?*const vk.AllocationCallbacks = null;
     raw.prototypes.instance.vkDestroyInstance (self, p_allocator);
   }
 
   pub fn load (self: @This ()) !void
   {
-    const loader: *const fn (vk.Instance, [*:0] const u8) callconv (vk.call_conv) ?*const fn () callconv (vk.call_conv) void = @ptrCast (&raw.prototypes.structless.vkGetInstanceProcAddr);
+    const loader: *const fn (vk.Instance, [*:0] const u8) callconv (vk.call_conv) ?*const fn () callconv (vk.call_conv) void =
+      @ptrCast (&raw.prototypes.structless.vkGetInstanceProcAddr);
     inline for (std.meta.fields (@TypeOf (raw.prototypes.instance))) |field|
     {
       const name: [*:0] const u8 = @ptrCast (field.name ++ "\x00");
@@ -54,12 +59,16 @@ pub const Instance = enum (usize)
 
   pub const ExtensionProperties = extern struct
   {
-    pub fn enumerate (p_layer_name: ?[*:0] const u8, p_property_count: *u32, p_properties: ?[*] vk.ExtensionProperties) !void
+    pub fn enumerate (p_layer_name: ?[*:0] const u8, p_property_count: *u32,
+      p_properties: ?[*] vk.ExtensionProperties) !void
     {
-      const result = raw.prototypes.structless.vkEnumerateInstanceExtensionProperties (p_layer_name, p_property_count, p_properties);
+      const result =
+        raw.prototypes.structless.vkEnumerateInstanceExtensionProperties (
+          p_layer_name, p_property_count, p_properties);
       if (result > 0)
       {
-        std.debug.print ("{s} failed with {} status code\n", .{ @typeName (@This ()) ++ "." ++ @src ().fn_name, result, });
+        std.debug.print ("{s} failed with {} status code\n",
+          .{ @typeName (@This ()) ++ "." ++ @src ().fn_name, result, });
         return error.UnexpectedResult;
       }
     }
@@ -67,12 +76,16 @@ pub const Instance = enum (usize)
 
   pub const LayerProperties = extern struct
   {
-    pub fn enumerate (p_property_count: *u32, p_properties: ?[*] vk.LayerProperties) !void
+    pub fn enumerate (p_property_count: *u32,
+      p_properties: ?[*] vk.LayerProperties) !void
     {
-      const result = raw.prototypes.structless.vkEnumerateInstanceLayerProperties (p_property_count, p_properties);
+      const result =
+        raw.prototypes.structless.vkEnumerateInstanceLayerProperties (
+          p_property_count, p_properties);
       if (result > 0)
       {
-        std.debug.print ("{s} failed with {} status code\n", .{ @typeName (@This ()) ++ "." ++ @src ().fn_name, result, });
+        std.debug.print ("{s} failed with {} status code\n",
+          .{ @typeName (@This ()) ++ "." ++ @src ().fn_name, result, });
         return error.UnexpectedResult;
       }
     }

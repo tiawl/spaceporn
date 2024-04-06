@@ -69,7 +69,8 @@ pub const PhysicalDevice = enum (usize)
     pub fn get (physical_device: vk.PhysicalDevice) @This ()
     {
       var features: vk.PhysicalDevice.Features = undefined;
-      raw.prototypes.instance.vkGetPhysicalDeviceFeatures (physical_device, &features);
+      raw.prototypes.instance.vkGetPhysicalDeviceFeatures (physical_device,
+        &features);
       return features;
     }
   };
@@ -78,10 +79,12 @@ pub const PhysicalDevice = enum (usize)
   {
     pub const Properties = extern struct
     {
-      pub fn get (physical_device: vk.PhysicalDevice, format: vk.Format) vk.Format.Properties
+      pub fn get (physical_device: vk.PhysicalDevice,
+        format: vk.Format) vk.Format.Properties
       {
         var format_properties: vk.Format.Properties = undefined;
-        raw.prototypes.instance.vkGetPhysicalDeviceFormatProperties (physical_device, @intFromEnum (format), &format_properties);
+        raw.prototypes.instance.vkGetPhysicalDeviceFormatProperties (
+          physical_device, @intFromEnum (format), &format_properties);
         return format_properties;
       }
     };
@@ -209,7 +212,8 @@ pub const PhysicalDevice = enum (usize)
       pub fn get (physical_device: vk.PhysicalDevice) @This ()
       {
         var memory_properties: vk.PhysicalDevice.Memory.Properties = undefined;
-        raw.prototypes.instance.vkGetPhysicalDeviceMemoryProperties (physical_device, &memory_properties);
+        raw.prototypes.instance.vkGetPhysicalDeviceMemoryProperties (
+          physical_device, &memory_properties);
         return memory_properties;
       }
     };
@@ -230,7 +234,8 @@ pub const PhysicalDevice = enum (usize)
     pub fn get (physical_device: vk.PhysicalDevice) @This ()
     {
       var properties: vk.PhysicalDevice.Properties = undefined;
-      raw.prototypes.instance.vkGetPhysicalDeviceProperties (physical_device, &properties);
+      raw.prototypes.instance.vkGetPhysicalDeviceProperties (physical_device,
+        &properties);
       return properties;
     }
   };
@@ -239,9 +244,13 @@ pub const PhysicalDevice = enum (usize)
   {
     pub const FamilyProperties = extern struct
     {
-      pub fn get (physical_device: vk.PhysicalDevice, p_queue_family_property_count: *u32, p_queue_family_properties: ?[*] vk.Queue.FamilyProperties) void
+      pub fn get (physical_device: vk.PhysicalDevice,
+        p_queue_family_property_count: *u32,
+        p_queue_family_properties: ?[*] vk.Queue.FamilyProperties) void
       {
-        raw.prototypes.instance.vkGetPhysicalDeviceQueueFamilyProperties (physical_device, p_queue_family_property_count, p_queue_family_properties);
+        raw.prototypes.instance.vkGetPhysicalDeviceQueueFamilyProperties (
+          physical_device, p_queue_family_property_count,
+          p_queue_family_properties);
       }
     };
   };

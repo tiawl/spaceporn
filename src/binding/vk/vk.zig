@@ -8,24 +8,30 @@ const raw = @import ("raw");
 pub const EXT = @import ("ext");
 pub const KHR = @import ("khr");
 
-pub const call_conv: std.builtin.CallingConvention = if (builtin.os.tag == .windows and builtin.cpu.arch == .x86)
-  .Stdcall
-else if (builtin.abi == .android and (builtin.cpu.arch.isARM () or builtin.cpu.arch.isThumb ()) and std.Target.arm.featureSetHas (builtin.cpu.features, .has_v7) and builtin.cpu.arch.ptrBitWidth () == 32)
-  // On Android 32-bit ARM targets, Vulkan functions use the "hardfloat"
-  // calling convention, i.e. float parameters are passed in registers. This
-  // is true even if the rest of the application passes floats on the stack,
-  // as it does by default when compiling for the armeabi-v7a NDK ABI.
-  .AAPCSVFP
-else
-  .C;
+pub const call_conv: std.builtin.CallingConvention =
+  if (builtin.os.tag == .windows and builtin.cpu.arch == .x86)
+    .Stdcall
+  else if (builtin.abi == .android and
+    (builtin.cpu.arch.isARM () or builtin.cpu.arch.isThumb ()) and
+    std.Target.arm.featureSetHas (builtin.cpu.features, .has_v7) and
+    builtin.cpu.arch.ptrBitWidth () == 32)
+      // On Android 32-bit ARM targets, Vulkan functions use the "hardfloat"
+      // calling convention, i.e. float parameters are passed in registers. This
+      // is true even if the rest of the application passes floats on the stack,
+      // as it does by default when compiling for the armeabi-v7a NDK ABI.
+      .AAPCSVFP
+  else
+    .C;
 
 pub fn load () !void
 {
-  const loader: *const fn (vk.Instance, [*:0] const u8) callconv (vk.call_conv) ?*const fn () callconv (vk.call_conv) void = @ptrCast (&c.glfwGetInstanceProcAddress);
+  const loader: *const fn (vk.Instance, [*:0] const u8) callconv (vk.call_conv) ?*const fn () callconv (vk.call_conv) void =
+    @ptrCast (&c.glfwGetInstanceProcAddress);
   inline for (std.meta.fields (@TypeOf (raw.prototypes.structless))) |field|
   {
     const name: [*:0] const u8 = @ptrCast (field.name ++ "\x00");
-    const pointer = loader (vk.Instance.NULL_HANDLE, name) orelse return error.CommandLoadFailure;
+    const pointer = loader (vk.Instance.NULL_HANDLE, name) orelse
+      return error.CommandLoadFailure;
     @field (raw.prototypes.structless, field.name) = @ptrCast (pointer);
   }
 }
@@ -47,8 +53,10 @@ pub const MAX_MEMORY_HEAPS = c.VK_MAX_MEMORY_HEAPS;
 pub const MAX_MEMORY_TYPES = c.VK_MAX_MEMORY_TYPES;
 pub const MAX_PHYSICAL_DEVICE_NAME_SIZE = c.VK_MAX_PHYSICAL_DEVICE_NAME_SIZE;
 pub const NULL_HANDLE: u32 = @intCast (@intFromPtr (c.VK_NULL_HANDLE));
+pub const QUEUE_FAMILY_IGNORED = c.VK_QUEUE_FAMILY_IGNORED;
 pub const SUBPASS_EXTERNAL = c.VK_SUBPASS_EXTERNAL;
 pub const UUID_SIZE = c.VK_UUID_SIZE;
+pub const WHOLE_SIZE = c.VK_WHOLE_SIZE;
 
 pub const Access = extern struct
 {
@@ -57,7 +65,10 @@ pub const Access = extern struct
   pub const Bit = enum (vk.Access.Flags)
   {
     COLOR_ATTACHMENT_WRITE = c.VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+    MEMORY_READ = c.VK_ACCESS_MEMORY_READ_BIT,
     SHADER_READ = c.VK_ACCESS_SHADER_READ_BIT,
+    TRANSFER_READ = c.VK_ACCESS_TRANSFER_READ_BIT,
+    TRANSFER_WRITE = c.VK_ACCESS_TRANSFER_WRITE_BIT,
   };
 };
 
@@ -196,10 +207,12 @@ pub const Extent3D = extern struct
 };
 
 pub const Fence = @import ("sync").Fence;
+pub const Fences = @import ("sync").Fences;
 
-pub const Filter = enum (i32)
+pub const Filter = enum (u32)
 {
   LINEAR = c.VK_FILTER_LINEAR,
+  NEAREST = c.VK_FILTER_NEAREST,
 };
 
 pub const Format = @import ("format").Format;
@@ -243,16 +256,26 @@ pub const Offset2D = extern struct
   y: i32,
 };
 
+pub const Offset3D = extern struct
+{
+  x: i32,
+  y: i32,
+  z: i32,
+};
+
 pub const PhysicalDevice = @import ("physical_device").PhysicalDevice;
 
 pub const PhysicalDevices = extern struct
 {
-  pub fn enumerate (instance: vk.Instance, p_physical_device_count: *u32, p_physical_devices: ?[*] vk.PhysicalDevice) !void
+  pub fn enumerate (instance: vk.Instance, p_physical_device_count: *u32,
+    p_physical_devices: ?[*] vk.PhysicalDevice) !void
   {
-    const result = raw.prototypes.instance.vkEnumeratePhysicalDevices (instance, p_physical_device_count, p_physical_devices);
+    const result = raw.prototypes.instance.vkEnumeratePhysicalDevices (
+      instance, p_physical_device_count, p_physical_devices);
     if (result > 0)
     {
-      std.debug.print ("{s} failed with {} status code\n", .{ @typeName (@This ()) ++ "." ++ @src ().fn_name, result, });
+      std.debug.print ("{s} failed with {} status code\n",
+        .{ @typeName (@This ()) ++ "." ++ @src ().fn_name, result, });
       return error.UnexpectedResult;
     }
   }
@@ -290,50 +313,7 @@ pub const Query = extern struct
   };
 };
 
-pub const Queue = enum (usize)
-{
-  NULL_HANDLE = vk.NULL_HANDLE, _,
-
-  pub const Flags = u32;
-
-  pub const Bit = enum (vk.Queue.Flags)
-  {
-    GRAPHICS = c.VK_QUEUE_GRAPHICS_BIT,
-
-    pub fn contains (self: @This (), flags: vk.Queue.Flags) bool
-    {
-      return (flags & @intFromEnum (self)) == @intFromEnum (self);
-    }
-  };
-
-  pub const FamilyProperties = extern struct
-  {
-    queue_flags: vk.Queue.Flags = 0,
-    queue_count: u32,
-    timestamp_valid_bits: u32,
-    min_image_transfer_granularity: vk.Extent3D,
-  };
-
-  pub fn submit (queue: @This (), submit_count: u32, p_submits: ?[*] const vk.Submit.Info, fence: vk.Fence) !void
-  {
-    const result = raw.prototypes.device.vkQueueSubmit (queue, submit_count, p_submits, fence);
-    if (result > 0)
-    {
-      std.debug.print ("{s} failed with {} status code\n", .{ @typeName (@This ()) ++ "." ++ @src ().fn_name, result, });
-      return error.UnexpectedResult;
-    }
-  }
-
-  pub fn waitIdle (queue: @This ()) !void
-  {
-    const result = raw.prototypes.device.vkQueueWaitIdle (queue);
-    if (result > 0)
-    {
-      std.debug.print ("{s} failed with {} status code\n", .{ @typeName (@This ()) ++ "." ++ @src ().fn_name, result, });
-      return error.UnexpectedResult;
-    }
-  }
-};
+pub const Queue = @import ("queue").Queue;
 
 pub const Rect2D = extern struct
 {
@@ -405,6 +385,7 @@ pub const StructureType = enum (i32)
 {
   APPLICATION_INFO = c.VK_STRUCTURE_TYPE_APPLICATION_INFO,
   BUFFER_CREATE_INFO = c.VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+  BUFFER_MEMORY_BARRIER = c.VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
   COMMAND_BUFFER_ALLOCATE_INFO = c.VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
   COMMAND_BUFFER_BEGIN_INFO = c.VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
   COMMAND_BUFFER_INHERITANCE_INFO = c.VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_INFO,
@@ -423,9 +404,11 @@ pub const StructureType = enum (i32)
   FRAMEBUFFER_CREATE_INFO = c.VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
   GRAPHICS_PIPELINE_CREATE_INFO = c.VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
   IMAGE_CREATE_INFO = c.VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
+  IMAGE_MEMORY_BARRIER = c.VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
   IMAGE_VIEW_CREATE_INFO = c.VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
   INSTANCE_CREATE_INFO = c.VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
   MEMORY_ALLOCATE_INFO = c.VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+  MEMORY_BARRIER = c.VK_STRUCTURE_TYPE_MEMORY_BARRIER,
   PIPELINE_COLOR_BLEND_STATE_CREATE_INFO = c.VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
   PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO = c.VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
   PIPELINE_DYNAMIC_STATE_CREATE_INFO = c.VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO,
@@ -437,6 +420,7 @@ pub const StructureType = enum (i32)
   PIPELINE_TESSELLATION_STATE_CREATE_INFO = c.VK_STRUCTURE_TYPE_PIPELINE_TESSELLATION_STATE_CREATE_INFO,
   PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO = c.VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
   PIPELINE_VIEWPORT_STATE_CREATE_INFO = c.VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
+  PRESENT_INFO_KHR = c.VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
   RENDER_PASS_CREATE_INFO = c.VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
   SAMPLER_CREATE_INFO = c.VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
   SEMAPHORE_CREATE_INFO = c.VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
@@ -490,6 +474,18 @@ pub const Subpass = extern struct
     p_preserve_attachments: ?[*] const u32 = null,
 
     pub const Flags = u32;
+  };
+};
+
+pub const Subresource = extern struct
+{
+  pub const Layout = extern struct
+  {
+    offset: vk.Device.Size,
+    size: vk.Device.Size,
+    row_pitch: vk.Device.Size,
+    array_pitch: vk.Device.Size,
+    depth_pitch: vk.Device.Size,
   };
 };
 

@@ -10,7 +10,6 @@ pub const Pipeline = enum (u64)
 
   pub const Cache = enum (u64) { NULL_HANDLE = vk.NULL_HANDLE, _, };
 
-
   pub const ColorBlend = extern struct
   {
     pub const AttachmentState = extern struct
@@ -134,21 +133,27 @@ pub const Pipeline = enum (u64)
       };
     };
 
-    pub fn create (device: vk.Device, p_create_info: *const vk.Pipeline.Layout.Create.Info, p_allocator: ?*const vk.AllocationCallbacks) !@This ()
+    pub fn create (device: vk.Device,
+      p_create_info: *const vk.Pipeline.Layout.Create.Info) !@This ()
     {
       var pipeline_layout: @This () = undefined;
-      const result = raw.prototypes.device.vkCreatePipelineLayout (device, p_create_info, p_allocator, &pipeline_layout);
+      const p_allocator: ?*const vk.AllocationCallbacks = null;
+      const result = raw.prototypes.device.vkCreatePipelineLayout (device,
+        p_create_info, p_allocator, &pipeline_layout);
       if (result > 0)
       {
-        std.debug.print ("{s} failed with {} status code\n", .{ @typeName (@This ()) ++ "." ++ @src ().fn_name, result, });
+        std.debug.print ("{s} failed with {} status code\n",
+          .{ @typeName (@This ()) ++ "." ++ @src ().fn_name, result, });
         return error.UnexpectedResult;
       }
       return pipeline_layout;
     }
 
-    pub fn destroy (pipeline_layout: @This (), device: vk.Device, p_allocator: ?*const vk.AllocationCallbacks) void
+    pub fn destroy (pipeline_layout: @This (), device: vk.Device) void
     {
-      raw.prototypes.device.vkDestroyPipelineLayout (device, pipeline_layout, p_allocator);
+      const p_allocator: ?*const vk.AllocationCallbacks = null;
+      raw.prototypes.device.vkDestroyPipelineLayout (device, pipeline_layout,
+        p_allocator);
     }
   };
 
@@ -225,6 +230,7 @@ pub const Pipeline = enum (u64)
     {
       COLOR_ATTACHMENT_OUTPUT = c.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
       FRAGMENT_SHADER = c.VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+      TRANSFER = c.VK_PIPELINE_STAGE_TRANSFER_BIT,
     };
   };
 
@@ -282,8 +288,9 @@ pub const Pipeline = enum (u64)
     };
   };
 
-  pub fn destroy (pipeline: @This (), device: vk.Device, p_allocator: ?*const vk.AllocationCallbacks) void
+  pub fn destroy (pipeline: @This (), device: vk.Device) void
   {
+    const p_allocator: ?*const vk.AllocationCallbacks = null;
     raw.prototypes.device.vkDestroyPipeline (device, pipeline, p_allocator);
   }
 };
@@ -321,12 +328,19 @@ pub const Graphics = extern struct
 
   pub const Pipelines = extern struct
   {
-    pub fn create (device: vk.Device, pipeline_cache: vk.Pipeline.Cache, create_info_count: u32, p_create_infos: [*] const vk.Graphics.Pipeline.Create.Info, p_allocator: ?*const vk.AllocationCallbacks, p_pipelines: [*] vk.Pipeline) !void
+    pub fn create (device: vk.Device, pipeline_cache: vk.Pipeline.Cache,
+      create_info_count: u32,
+      p_create_infos: [*] const vk.Graphics.Pipeline.Create.Info,
+      p_pipelines: [*] vk.Pipeline) !void
     {
-      const result = raw.prototypes.device.vkCreateGraphicsPipelines (device, pipeline_cache, create_info_count, p_create_infos, p_allocator, p_pipelines);
+      const p_allocator: ?*const vk.AllocationCallbacks = null;
+      const result = raw.prototypes.device.vkCreateGraphicsPipelines (device,
+        pipeline_cache, create_info_count, p_create_infos, p_allocator,
+        p_pipelines);
       if (result > 0)
       {
-        std.debug.print ("{s} failed with {} status code\n", .{ @typeName (@This ()) ++ "." ++ @src ().fn_name, result, });
+        std.debug.print ("{s} failed with {} status code\n",
+          .{ @typeName (@This ()) ++ "." ++ @src ().fn_name, result, });
         return error.UnexpectedResult;
       }
     }

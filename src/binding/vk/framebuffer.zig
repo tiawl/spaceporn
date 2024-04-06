@@ -26,20 +26,25 @@ pub const Framebuffer = enum (u64)
     };
   };
 
-  pub fn create (device: vk.Device, p_create_info: *const vk.Framebuffer.Create.Info, p_allocator: ?*const vk.AllocationCallbacks) !@This ()
+  pub fn create (device: vk.Device,
+    p_create_info: *const vk.Framebuffer.Create.Info) !@This ()
   {
     var framebuffer: @This () = undefined;
-    const result = raw.prototypes.device.vkCreateFramebuffer (device, p_create_info, p_allocator, &framebuffer);
+    const p_allocator: ?*const vk.AllocationCallbacks = null;
+    const result = raw.prototypes.device.vkCreateFramebuffer (device,
+      p_create_info, p_allocator, &framebuffer);
     if (result > 0)
     {
-      std.debug.print ("{s} failed with {} status code\n", .{ @typeName (@This ()) ++ "." ++ @src ().fn_name, result, });
+      std.debug.print ("{s} failed with {} status code\n",
+        .{ @typeName (@This ()) ++ "." ++ @src ().fn_name, result, });
       return error.UnexpectedResult;
     }
     return framebuffer;
   }
 
-  pub fn destroy (framebuffer: @This (), device: vk.Device, p_allocator: ?*const vk.AllocationCallbacks) void
+  pub fn destroy (framebuffer: @This (), device: vk.Device) void
   {
+    const p_allocator: ?*const vk.AllocationCallbacks = null;
     raw.prototypes.device.vkDestroyFramebuffer (device, framebuffer, p_allocator);
   }
 };

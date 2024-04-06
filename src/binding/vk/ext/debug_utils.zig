@@ -27,7 +27,8 @@ pub const DebugUtils = extern struct
         WARNING = c.VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT,
         ERROR = c.VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT,
 
-        pub fn contains (self: @This (), flags: vk.EXT.DebugUtils.Message.Severity.Flags) bool
+        pub fn contains (self: @This (),
+          flags: vk.EXT.DebugUtils.Message.Severity.Flags) bool
         {
           return (flags & @intFromEnum (self)) == @intFromEnum (self);
         }
@@ -45,7 +46,8 @@ pub const DebugUtils = extern struct
         PERFORMANCE = c.VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT,
         DEVICE_ADDRESS_BINDING = c.VK_DEBUG_UTILS_MESSAGE_TYPE_DEVICE_ADDRESS_BINDING_BIT_EXT,
 
-        pub fn contains (self: @This (), flags: vk.EXT.DebugUtils.Message.Type.Flags) bool
+        pub fn contains (self: @This (),
+          flags: vk.EXT.DebugUtils.Message.Type.Flags) bool
         {
           return (flags & @intFromEnum (self)) == @intFromEnum (self);
         }
@@ -57,21 +59,27 @@ pub const DebugUtils = extern struct
   {
     NULL_HANDLE = vk.NULL_HANDLE, _,
 
-    pub fn create (instance: vk.Instance, p_create_info: *const vk.EXT.DebugUtils.Messenger.Create.Info, p_allocator: ?*const vk.AllocationCallbacks) !@This ()
+    pub fn create (instance: vk.Instance,
+      p_create_info: *const vk.EXT.DebugUtils.Messenger.Create.Info) !@This ()
     {
       var messenger: @This () = undefined;
-      const result = raw.prototypes.instance.vkCreateDebugUtilsMessengerEXT (instance, p_create_info, p_allocator, &messenger);
+      const p_allocator: ?*const vk.AllocationCallbacks = null;
+      const result = raw.prototypes.instance.vkCreateDebugUtilsMessengerEXT (
+        instance, p_create_info, p_allocator, &messenger);
       if (result > 0)
       {
-        std.debug.print ("{s} failed with {} status code\n", .{ @typeName (@This ()) ++ "." ++ @src ().fn_name, result, });
+        std.debug.print ("{s} failed with {} status code\n",
+          .{ @typeName (@This ()) ++ "." ++ @src ().fn_name, result, });
         return error.UnexpectedResult;
       }
       return messenger;
     }
 
-    pub fn destroy (self: @This (), instance: vk.Instance, p_allocator: ?*const vk.AllocationCallbacks) void
+    pub fn destroy (self: @This (), instance: vk.Instance) void
     {
-      raw.prototypes.instance.vkDestroyDebugUtilsMessengerEXT (instance, self, p_allocator);
+      const p_allocator: ?*const vk.AllocationCallbacks = null;
+      raw.prototypes.instance.vkDestroyDebugUtilsMessengerEXT (instance, self,
+        p_allocator);
     }
 
     pub const Callback = extern struct

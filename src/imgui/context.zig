@@ -6,6 +6,11 @@ const Logger = @import ("logger").Logger;
 
 const imgui = @import ("imgui");
 
+pub const Tweaker = struct
+{
+  seed: *u32,
+};
+
 pub const Context = struct
 {
   const Renderer = struct
@@ -48,12 +53,13 @@ pub const Context = struct
     imgui.Style.colorsDark ();
 
     imgui.Style.set (&.{
-                        .{ .window_rounding = 0, },
-                        .{ .colors = .{
-                                        .index = imgui.Col.WindowBg,
-                                        .channel = "w",
-                                        .value = 1,
-                                      }, },
+      .{ .window_rounding = 0, },
+      .{ .colors = .{
+           .index = imgui.Col.WindowBg,
+           .channel = "w",
+           .value = 1,
+         },
+       },
     });
 
     try imgui.glfw.init ();
@@ -72,26 +78,26 @@ pub const Context = struct
   {
     try renderer.command_pool.reset (renderer.logical_device, 0);
     const begin_info = vk.Command.Buffer.Begin.Info
-                       {
-                         .flags = @intFromEnum (vk.Command.Buffer.Usage.Bit.ONE_TIME_SUBMIT),
-                       };
+    {
+      .flags = @intFromEnum (vk.Command.Buffer.Usage.Bit.ONE_TIME_SUBMIT),
+    };
 
     const command_buffers = [_] vk.Command.Buffer
-                            {
-                              renderer.command_buffer,
-                            };
+    {
+      renderer.command_buffer,
+    };
 
     try command_buffers [0].begin (&begin_info);
 
     try imgui.vk.FontsTexture.create ();
 
     const submit_info = [_] vk.Submit.Info
-                        {
-                          .{
-                             .command_buffer_count = command_buffers.len,
-                             .p_command_buffers    = &command_buffers,
-                           },
-                        };
+    {
+      .{
+         .command_buffer_count = command_buffers.len,
+         .p_command_buffers    = &command_buffers,
+       },
+    };
 
     try command_buffers [0].end ();
     try renderer.graphics_queue.submit (1, &submit_info, .NULL_HANDLE);
@@ -104,23 +110,23 @@ pub const Context = struct
   pub fn init_vk (self: @This (), renderer: Renderer) !void
   {
     var init_info = imgui.vk.InitInfo
-                    {
-                      .Instance              = renderer.instance,
-                      .PhysicalDevice        = renderer.physical_device,
-                      .Device                = renderer.logical_device,
-                      .QueueFamily           = renderer.graphics_family,
-                      .Queue                 = renderer.graphics_queue,
-                      .PipelineCache         = .NULL_HANDLE,
-                      .DescriptorPool        = renderer.descriptor_pool,
-                      .Subpass               = 0,
-                      .MinImageCount         = 2,
-                      .ImageCount            = 2,
-                      .MSAASamples           = @intFromEnum (vk.Sample.Count.Bit.@"1"),
-                      .UseDynamicRendering   = false,
-                      .ColorAttachmentFormat = @intFromEnum (vk.Format.UNDEFINED),
-                      .Allocator             = null,
-                      .CheckVkResultFn       = check_vk_result,
-                    };
+    {
+      .Instance              = renderer.instance,
+      .PhysicalDevice        = renderer.physical_device,
+      .Device                = renderer.logical_device,
+      .QueueFamily           = renderer.graphics_family,
+      .Queue                 = renderer.graphics_queue,
+      .PipelineCache         = .NULL_HANDLE,
+      .DescriptorPool        = renderer.descriptor_pool,
+      .Subpass               = 0,
+      .MinImageCount         = 2,
+      .ImageCount            = 2,
+      .MSAASamples           = @intFromEnum (vk.Sample.Count.Bit.@"1"),
+      .UseDynamicRendering   = false,
+      .ColorAttachmentFormat = @intFromEnum (vk.Format.UNDEFINED),
+      .Allocator             = null,
+      .CheckVkResultFn       = check_vk_result,
+    };
 
     try imgui.vk.load ();
     try imgui.vk.init (&init_info);
@@ -130,12 +136,14 @@ pub const Context = struct
     try self.logger.app (.DEBUG, "init Imgui Vulkan OK", .{});
   }
 
-  fn prepare_pane (self: *@This (), framebuffer: struct { width: u32, height: u32, }) !void
+  fn prepare_pane (self: *@This (),
+    framebuffer: struct { width: u32, height: u32, }) !void
   {
     if (framebuffer.height != self.glfw_win_size.height)
     {
       self.glfw_win_size.height = framebuffer.height;
-      const window_size = imgui.Vec2 { .x = 0.0, .y = @floatFromInt (self.glfw_win_size.height), };
+      const window_size = imgui.Vec2 { .x = 0.0,
+        .y = @floatFromInt (self.glfw_win_size.height), };
       imgui.NextWindow.Size.set (window_size, 0);
     }
 
@@ -145,33 +153,38 @@ pub const Context = struct
       const window_pivot = imgui.Vec2 { .x = 0.0, .y = 0.0, };
       imgui.NextWindow.Pos.Ex.set (window_pos, 0, window_pivot);
 
-      const window_size = imgui.Vec2 { .x = 0.0, .y = @floatFromInt (self.glfw_win_size.height), };
+      const window_size = imgui.Vec2 { .x = 0.0,
+        .y = @floatFromInt (self.glfw_win_size.height), };
       imgui.NextWindow.Size.set (window_size, 0);
 
       self.init_window = true;
     }
   }
 
-  fn prepare_fps (_: @This (), last_displayed_fps: *?std.time.Instant, fps: *f32) !void
+  fn prepare_fps (_: @This (), allocator: *std.mem.Allocator,
+    last_displayed_fps: *?std.time.Instant, fps: *f32) !void
   {
-    if (last_displayed_fps.* == null or (try std.time.Instant.now ()).since (last_displayed_fps.*.?) > std.time.ns_per_s)
+    if (last_displayed_fps.* == null or
+      (try std.time.Instant.now ()).since (last_displayed_fps.*.?) > std.time.ns_per_s)
     {
       fps.* = imgui.IO.get ().Framerate;
       last_displayed_fps.* = try std.time.Instant.now ();
     }
 
-    imgui.text ("Average {d:.3} ms/frame ({d:.1} FPS)", .{ 1000.0 / fps.*, fps.*, });
+    try imgui.text (allocator.*, "Average {d:.3} ms/frame ({d:.1} FPS)",
+      .{ 1000.0 / fps.*, fps.*, });
   }
 
-  fn prepare_seed (tweak_me: anytype) void
+  fn prepare_seed (_: *@This (), allocator: *std.mem.Allocator, tweak_me: *Tweaker) !void
   {
     const button_size = imgui.Vec2 { .x = 0, .y = 0, };
 
-    if (imgui.Ex.button ("New seed", button_size)) tweak_me.seed.* = @intCast (@mod (std.time.milliTimestamp (), @as (i64, @intCast (std.math.maxInt (u32)))));
+    if (imgui.Ex.button ("New seed", button_size)) tweak_me.seed.* =
+      @intCast (@mod (std.time.milliTimestamp (), @as (i64, @intCast (std.math.maxInt (u32)))));
     if (Logger.build.profile.eql (.DEFAULT))
     {
       imgui.Ex.sameline (0.0, -1.0);
-      imgui.text ("{}", .{ tweak_me.seed.*, });
+      try imgui.text (allocator.*, "{}", .{ tweak_me.seed.*, });
     }
   }
 
@@ -183,24 +196,26 @@ pub const Context = struct
     self.screenshot = imgui.Ex.button ("Take a screenshot", button_size);
   }
 
-  pub fn prepare (self: *@This (), last_displayed_fps: *?std.time.Instant, fps: *f32,
-                  framebuffer: struct { width: u32, height: u32, }, tweak_me: anytype) !ImguiPrepare
+  pub fn prepare (self: *@This (), allocator: *std.mem.Allocator,
+    last_displayed_fps: *?std.time.Instant, fps: *f32,
+    framebuffer: struct { width: u32, height: u32, }, tweak_me: *Tweaker) !ImguiPrepare
   {
     imgui.vk.Frame.new ();
     imgui.glfw.Frame.new ();
     imgui.Frame.new ();
 
-    try self.prepare_pane (.{ .width = framebuffer.width, .height = framebuffer.height, });
+    try self.prepare_pane (
+      .{ .width = framebuffer.width, .height = framebuffer.height, });
 
     const window_flags = @intFromEnum (imgui.Window.Bit.NO_TITLE_BAR) |
-                         @intFromEnum (imgui.Window.Bit.NO_COLLAPSE) |
-                         @intFromEnum (imgui.Window.Bit.NO_RESIZE) |
-                         @intFromEnum (imgui.Window.Bit.NO_MOVE);
+      @intFromEnum (imgui.Window.Bit.NO_COLLAPSE) |
+      @intFromEnum (imgui.Window.Bit.NO_RESIZE) |
+      @intFromEnum (imgui.Window.Bit.NO_MOVE);
 
     try imgui.begin ("Tweaker", null, window_flags);
 
-    try self.prepare_fps (last_displayed_fps, fps);
-    self.prepare_seed (tweak_me);
+    try self.prepare_fps (allocator, last_displayed_fps, fps);
+    try self.prepare_seed (allocator, tweak_me);
     self.prepare_screenshot ();
 
     // Return a boolean depending on the fact that the value of the variable changed or not
@@ -210,7 +225,7 @@ pub const Context = struct
     imgui.render ();
 
     try self.logger.app (.DEBUG, "start render Imgui OK", .{});
-    return if (self.screenshot) ImguiPrepare.Screenshot else ImguiPrepare.Nothing;
+    return if (self.screenshot) .Screenshot else .Nothing;
   }
 
   pub fn render (self: @This (), command_buffer: vk.Command.Buffer) !void

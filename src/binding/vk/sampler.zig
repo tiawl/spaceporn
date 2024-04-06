@@ -45,20 +45,25 @@ pub const Sampler = enum (u64)
     LINEAR = c.VK_SAMPLER_MIPMAP_MODE_LINEAR,
   };
 
-  pub fn create (device: vk.Device, p_create_info: *const vk.Sampler.Create.Info, p_allocator: ?*const vk.AllocationCallbacks) !@This ()
+  pub fn create (device: vk.Device,
+    p_create_info: *const vk.Sampler.Create.Info) !@This ()
   {
     var sampler: @This () = undefined;
-    const result = raw.prototypes.device.vkCreateSampler (device, p_create_info, p_allocator, &sampler);
+    const p_allocator: ?*const vk.AllocationCallbacks = null;
+    const result = raw.prototypes.device.vkCreateSampler (device,
+      p_create_info, p_allocator, &sampler);
     if (result > 0)
     {
-      std.debug.print ("{s} failed with {} status code\n", .{ @typeName (@This ()) ++ "." ++ @src ().fn_name, result, });
+      std.debug.print ("{s} failed with {} status code\n",
+        .{ @typeName (@This ()) ++ "." ++ @src ().fn_name, result, });
       return error.UnexpectedResult;
     }
     return sampler;
   }
 
-  pub fn destroy (sampler: @This (), device: vk.Device, p_allocator: ?*const vk.AllocationCallbacks) void
+  pub fn destroy (sampler: @This (), device: vk.Device) void
   {
+    const p_allocator: ?*const vk.AllocationCallbacks = null;
     raw.prototypes.device.vkDestroySampler (device, sampler, p_allocator);
   }
 };

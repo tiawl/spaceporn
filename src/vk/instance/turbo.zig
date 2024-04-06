@@ -34,8 +34,8 @@ pub const instance_vk = struct
                           .pp_enabled_extension_names = @ptrCast (self.extensions),
                         };
 
-    self.instance = try vk.Instance.create (&create_info, null);
-    errdefer self.instance.destroy (null);
+    self.instance = try vk.Instance.create (&create_info);
+    errdefer self.instance.destroy ();
 
     try self.instance.load ();
 
@@ -44,6 +44,6 @@ pub const instance_vk = struct
 
   pub fn cleanup (self: @This ()) !void
   {
-    self.instance.destroy (null);
+    self.instance.destroy ();
   }
 };

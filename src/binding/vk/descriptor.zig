@@ -75,21 +75,27 @@ pub const Descriptor = extern struct
       descriptor_count: u32,
     };
 
-    pub fn create (device: vk.Device, p_create_info: *const vk.Descriptor.Pool.Create.Info, p_allocator: ?*const vk.AllocationCallbacks) !@This ()
+    pub fn create (device: vk.Device,
+      p_create_info: *const vk.Descriptor.Pool.Create.Info) !@This ()
     {
       var descriptor_pool: @This () = undefined;
-      const result = raw.prototypes.device.vkCreateDescriptorPool (device, p_create_info, p_allocator, &descriptor_pool);
+      const p_allocator: ?*const vk.AllocationCallbacks = null;
+      const result = raw.prototypes.device.vkCreateDescriptorPool (device,
+        p_create_info, p_allocator, &descriptor_pool);
       if (result > 0)
       {
-        std.debug.print ("{s} failed with {} status code\n", .{ @typeName (@This ()) ++ "." ++ @src ().fn_name, result, });
+        std.debug.print ("{s} failed with {} status code\n",
+          .{ @typeName (@This ()) ++ "." ++ @src ().fn_name, result, });
         return error.UnexpectedResult;
       }
       return descriptor_pool;
     }
 
-    pub fn destroy (descriptor_pool: @This (), device: vk.Device, p_allocator: ?*const vk.AllocationCallbacks) void
+    pub fn destroy (descriptor_pool: @This (), device: vk.Device) void
     {
-      raw.prototypes.device.vkDestroyDescriptorPool (device, descriptor_pool, p_allocator);
+      const p_allocator: ?*const vk.AllocationCallbacks = null;
+      raw.prototypes.device.vkDestroyDescriptorPool (device, descriptor_pool,
+        p_allocator);
     }
   };
 
@@ -136,40 +142,55 @@ pub const Descriptor = extern struct
         };
       };
 
-      pub fn create (device: vk.Device, p_create_info: *const vk.Descriptor.Set.Layout.Create.Info, p_allocator: ?*const vk.AllocationCallbacks) !@This ()
+      pub fn create (device: vk.Device,
+        p_create_info: *const vk.Descriptor.Set.Layout.Create.Info) !@This ()
       {
         var set_layout: @This () = undefined;
-        const result = raw.prototypes.device.vkCreateDescriptorSetLayout (device, p_create_info, p_allocator, &set_layout);
+        const p_allocator: ?*const vk.AllocationCallbacks = null;
+        const result = raw.prototypes.device.vkCreateDescriptorSetLayout (
+          device, p_create_info, p_allocator, &set_layout);
         if (result > 0)
         {
-          std.debug.print ("{s} failed with {} status code\n", .{ @typeName (@This ()) ++ "." ++ @src ().fn_name, result, });
+          std.debug.print ("{s} failed with {} status code\n",
+            .{ @typeName (@This ()) ++ "." ++ @src ().fn_name, result, });
           return error.UnexpectedResult;
         }
         return set_layout;
       }
 
-      pub fn destroy (descriptor_set_layout: @This (), device: vk.Device, p_allocator: ?*const vk.AllocationCallbacks) void
+      pub fn destroy (descriptor_set_layout: @This (), device: vk.Device) void
       {
-        raw.prototypes.device.vkDestroyDescriptorSetLayout(device, descriptor_set_layout, p_allocator);
+        const p_allocator: ?*const vk.AllocationCallbacks = null;
+        raw.prototypes.device.vkDestroyDescriptorSetLayout(device,
+          descriptor_set_layout, p_allocator);
       }
     };
   };
 
   pub const Sets = extern struct
   {
-    pub fn allocate (device: vk.Device, p_allocate_info: *const vk.Descriptor.Set.Allocate.Info, p_descriptor_sets: [*] vk.Descriptor.Set) !void
+    pub fn allocate (device: vk.Device,
+      p_allocate_info: *const vk.Descriptor.Set.Allocate.Info,
+      p_descriptor_sets: [*] vk.Descriptor.Set) !void
     {
-      const result = raw.prototypes.device.vkAllocateDescriptorSets (device, p_allocate_info, p_descriptor_sets);
+      const result = raw.prototypes.device.vkAllocateDescriptorSets (device,
+        p_allocate_info, p_descriptor_sets);
       if (result > 0)
       {
-        std.debug.print ("{s} failed with {} status code\n", .{ @typeName (@This ()) ++ "." ++ @src ().fn_name, result, });
+        std.debug.print ("{s} failed with {} status code\n",
+          .{ @typeName (@This ()) ++ "." ++ @src ().fn_name, result, });
         return error.UnexpectedResult;
       }
     }
 
-    pub fn update (device: vk.Device, descriptor_write_count: u32, p_descriptor_writes: ?[*] const vk.Write.Descriptor.Set, descriptor_copy_count: u32, p_descriptor_copies: ?[*] const vk.Copy.Descriptor.Set) void
+    pub fn update (device: vk.Device, descriptor_write_count: u32,
+      p_descriptor_writes: ?[*] const vk.Write.Descriptor.Set,
+      descriptor_copy_count: u32,
+      p_descriptor_copies: ?[*] const vk.Copy.Descriptor.Set) void
     {
-      raw.prototypes.device.vkUpdateDescriptorSets (device, descriptor_write_count, p_descriptor_writes, descriptor_copy_count, p_descriptor_copies);
+      raw.prototypes.device.vkUpdateDescriptorSets (device,
+        descriptor_write_count, p_descriptor_writes, descriptor_copy_count,
+        p_descriptor_copies);
     }
   };
 

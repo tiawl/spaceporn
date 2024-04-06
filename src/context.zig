@@ -34,7 +34,7 @@ pub const Context = struct
     return self;
   }
 
-  pub fn loop (self: *@This (), options: *const Options) !void
+  pub fn loop (self: *@This (), options: *Options) !void
   {
     var arena = std.heap.ArenaAllocator.init (std.heap.page_allocator);
     var allocator = arena.allocator ();

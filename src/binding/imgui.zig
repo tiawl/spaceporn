@@ -74,7 +74,7 @@ pub const vk = struct
 
   pub fn shutdown () void
   {
-    imgui.cImGui_ImplVulkan_Shutdown ();
+    c.cImGui_ImplVulkan_Shutdown ();
   }
 };
 
@@ -96,7 +96,7 @@ pub const glfw = struct
 
   pub fn shutdown () void
   {
-    imgui.cImGui_ImplGlfw_Shutdown ();
+    c.cImGui_ImplGlfw_Shutdown ();
   }
 };
 
@@ -132,7 +132,7 @@ pub const Ex = struct
 {
   pub fn button (label: [] const u8, size: imgui.Vec2) bool
   {
-    return c.ImGui_ButtonEx (label, size);
+    return c.ImGui_ButtonEx (label.ptr, size);
   }
 
   pub fn sameline (offset_from_start_x: f32, spacing: f32) void
@@ -226,7 +226,8 @@ pub const Vec2 = c.ImVec2;
 
 pub const Window = struct
 {
-  pub const Flags = c.ImGuiWindowFlags_;
+  //pub const Flags = c.ImGuiWindowFlags_;
+  pub const Flags = i32;
 
   pub const Bit = enum (imgui.Window.Flags)
   {
@@ -239,20 +240,21 @@ pub const Window = struct
 
 pub fn begin (name: [] const u8, p_open: ?*bool, flags: imgui.Window.Flags) !void
 {
-  if (!imgui.ImGui_Begin (name, p_open, flags)) return error.ImGuiBeginFailure;
+  if (!c.ImGui_Begin (name.ptr, p_open, flags)) return error.ImGuiBeginFailure;
 }
 
 pub fn end () void
 {
-  imgui.ImGui_End ();
+  c.ImGui_End ();
 }
 
 pub fn render () void
 {
-  imgui.ImGui_Render ();
+  c.ImGui_Render ();
 }
 
-pub fn text (comptime fmt: [] const u8, args: anytype) void
+pub fn text (allocator: std.mem.Allocator, comptime fmt: [] const u8, args: anytype) !void
 {
-  c.ImGui_Text (std.debug.comptimePrint (fmt, args));
+  const str = try std.fmt.allocPrint (allocator, fmt, args);
+  c.ImGui_Text (str.ptr);
 }

@@ -26,20 +26,26 @@ pub const RenderPass = enum (u64)
     };
   };
 
-  pub fn create (device: vk.Device, p_create_info: *const vk.RenderPass.Create.Info, p_allocator: ?*const vk.AllocationCallbacks) !@This ()
+  pub fn create (device: vk.Device,
+    p_create_info: *const vk.RenderPass.Create.Info) !@This ()
   {
     var render_pass: @This () = undefined;
-    const result = raw.prototypes.device.vkCreateRenderPass (device, p_create_info, p_allocator, &render_pass);
+    const p_allocator: ?*const vk.AllocationCallbacks = null;
+    const result = raw.prototypes.device.vkCreateRenderPass (device,
+      p_create_info, p_allocator, &render_pass);
     if (result > 0)
     {
-      std.debug.print ("{s} failed with {} status code\n", .{ @typeName (@This ()) ++ "." ++ @src ().fn_name, result, });
+      std.debug.print ("{s} failed with {} status code\n",
+        .{ @typeName (@This ()) ++ "." ++ @src ().fn_name, result, });
       return error.UnexpectedResult;
     }
     return render_pass;
   }
 
-  pub fn destroy (render_pass: @This (), device: vk.Device, p_allocator: ?*const vk.AllocationCallbacks) void
+  pub fn destroy (render_pass: @This (), device: vk.Device) void
   {
-    raw.prototypes.device.vkDestroyRenderPass (device, render_pass, p_allocator);
+    const p_allocator: ?*const vk.AllocationCallbacks = null;
+    raw.prototypes.device.vkDestroyRenderPass (device, render_pass,
+      p_allocator);
   }
 };

@@ -17,6 +17,14 @@ pub const Memory = extern struct
     };
   };
 
+  pub const Barrier = extern struct
+  {
+    s_type: vk.StructureType = .MEMORY_BARRIER,
+    p_next: ?*const anyopaque = null,
+    src_access_mask: vk.Access.Flags = 0,
+    dst_access_mask: vk.Access.Flags = 0,
+  };
+
   pub const Heap = extern struct
   {
     pub const Flags = u32;

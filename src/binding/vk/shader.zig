@@ -24,21 +24,27 @@ pub const Shader = extern struct
       };
     };
 
-    pub fn create (device: vk.Device, p_create_info: *const vk.Shader.Module.Create.Info, p_allocator: ?*const vk.AllocationCallbacks) !@This ()
+    pub fn create (device: vk.Device,
+      p_create_info: *const vk.Shader.Module.Create.Info) !@This ()
     {
       var shader_module: @This () = undefined;
-      const result = raw.prototypes.device.vkCreateShaderModule (device, p_create_info, p_allocator, &shader_module);
+      const p_allocator: ?*const vk.AllocationCallbacks = null;
+      const result = raw.prototypes.device.vkCreateShaderModule (device,
+        p_create_info, p_allocator, &shader_module);
       if (result > 0)
       {
-        std.debug.print ("{s} failed with {} status code\n", .{ @typeName (@This ()) ++ "." ++ @src ().fn_name, result, });
+        std.debug.print ("{s} failed with {} status code\n",
+          .{ @typeName (@This ()) ++ "." ++ @src ().fn_name, result, });
         return error.UnexpectedResult;
       }
       return shader_module;
     }
 
-    pub fn destroy (shader_module: @This (), device: vk.Device, p_allocator: ?*const vk.AllocationCallbacks) void
+    pub fn destroy (shader_module: @This (), device: vk.Device) void
     {
-      raw.prototypes.device.vkDestroyShaderModule (device, shader_module, p_allocator);
+      const p_allocator: ?*const vk.AllocationCallbacks = null;
+      raw.prototypes.device.vkDestroyShaderModule (device, shader_module,
+        p_allocator);
     }
   };
 

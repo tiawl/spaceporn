@@ -8,21 +8,27 @@ pub const Swapchain = enum (u64)
 {
   NULL_HANDLE = vk.NULL_HANDLE, _,
 
-  pub fn create (device: vk.Device, p_create_info: *const vk.KHR.Swapchain.Create.Info, p_allocator: ?*const vk.AllocationCallbacks) !@This ()
+  pub fn create (device: vk.Device,
+    p_create_info: *const vk.KHR.Swapchain.Create.Info) !@This ()
   {
     var swapchain: @This () = undefined;
-    const result = raw.prototypes.device.vkCreateSwapchainKHR (device, p_create_info, p_allocator, &swapchain);
+    const p_allocator: ?*const vk.AllocationCallbacks = null;
+    const result = raw.prototypes.device.vkCreateSwapchainKHR (device,
+      p_create_info, p_allocator, &swapchain);
     if (result > 0)
     {
-      std.debug.print ("{s} failed with {} status code\n", .{ @typeName (@This ()) ++ "." ++ @src ().fn_name, result, });
+      std.debug.print ("{s} failed with {} status code\n",
+        .{ @typeName (@This ()) ++ "." ++ @src ().fn_name, result, });
       return error.UnexpectedResult;
     }
     return swapchain;
   }
 
-  pub fn destroy (swapchain: @This (), device: vk.Device, p_allocator: ?*const vk. AllocationCallbacks) void
+  pub fn destroy (swapchain: @This (), device: vk.Device) void
   {
-    raw.prototypes.device.vkDestroySwapchainKHR (device, swapchain, p_allocator);
+    const p_allocator: ?*const vk.AllocationCallbacks = null;
+    raw.prototypes.device.vkDestroySwapchainKHR (device, swapchain,
+      p_allocator);
   }
 
   pub const Create = extern struct
@@ -45,7 +51,7 @@ pub const Swapchain = enum (u64)
       p_queue_family_indices: ?[*] const u32 = null,
       pre_transform: vk.KHR.Surface.Transform.Flags,
       composite_alpha: vk.KHR.CompositeAlpha.Flags,
-      present_mode: vk.KHR.PresentMode,
+      present_mode: vk.KHR.Present.Mode,
       clipped: vk.Bool32,
       old_swapchain: vk.KHR.Swapchain = .NULL_HANDLE,
     };
@@ -53,12 +59,15 @@ pub const Swapchain = enum (u64)
 
   pub const Images = extern struct
   {
-    pub fn get (device: vk.Device, swapchain: vk.KHR.Swapchain, p_swapchain_image_count: *u32, p_swapchain_images: ?[*] vk.Image) !void
+    pub fn get (device: vk.Device, swapchain: vk.KHR.Swapchain,
+      p_swapchain_image_count: *u32, p_swapchain_images: ?[*] vk.Image) !void
     {
-      const result = raw.prototypes.device.vkGetSwapchainImagesKHR (device, swapchain, p_swapchain_image_count, p_swapchain_images);
+      const result = raw.prototypes.device.vkGetSwapchainImagesKHR (device,
+        swapchain, p_swapchain_image_count, p_swapchain_images);
       if (result > 0)
       {
-        std.debug.print ("{s} failed with {} status code\n", .{ @typeName (@This ()) ++ "." ++ @src ().fn_name, result, });
+        std.debug.print ("{s} failed with {} status code\n",
+          .{ @typeName (@This ()) ++ "." ++ @src ().fn_name, result, });
         return error.UnexpectedResult;
       }
     }

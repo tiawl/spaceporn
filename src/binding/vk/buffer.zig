@@ -34,22 +34,39 @@ pub const Buffer = enum (u64)
 
   pub const Memory = extern struct
   {
+    pub const Barrier = extern struct
+    {
+      s_type: vk.StructureType = .BUFFER_MEMORY_BARRIER,
+      p_next: ?*const anyopaque = null,
+      src_access_mask: vk.Access.Flags,
+      dst_access_mask: vk.Access.Flags,
+      src_queue_family_index: u32,
+      dst_queue_family_index: u32,
+      buffer: vk.Buffer,
+      offset: vk.Device.Size,
+      size: vk.Device.Size,
+    };
+
     pub const Requirements = extern struct
     {
       pub fn get (device: vk.Device, buffer: vk.Buffer) vk.Memory.Requirements
       {
         var memory_requirements: vk.Memory.Requirements = undefined;
-        raw.prototypes.device.vkGetBufferMemoryRequirements (device, buffer, &memory_requirements);
+        raw.prototypes.device.vkGetBufferMemoryRequirements (device, buffer,
+          &memory_requirements);
         return memory_requirements;
       }
     };
 
-    pub fn bind (device: vk.Device, buffer: vk.Buffer, memory: vk.Device.Memory, memory_offset: vk.Device.Size) !void
+    pub fn bind (device: vk.Device, buffer: vk.Buffer, memory: vk.Device.Memory,
+      memory_offset: vk.Device.Size) !void
     {
-      const result = raw.prototypes.device.vkBindBufferMemory (device, buffer, memory, memory_offset);
+      const result = raw.prototypes.device.vkBindBufferMemory (device, buffer,
+        memory, memory_offset);
       if (result > 0)
       {
-        std.debug.print ("{s} failed with {} status code\n", .{ @typeName (@This ()) ++ "." ++ @src ().fn_name, result, });
+        std.debug.print ("{s} failed with {} status code\n",
+          .{ @typeName (@This ()) ++ "." ++ @src ().fn_name, result, });
         return error.UnexpectedResult;
       }
     }
@@ -71,20 +88,25 @@ pub const Buffer = enum (u64)
 
   pub const View = enum (u64) { NULL_HANDLE = vk.NULL_HANDLE, _, };
 
-  pub fn create (device: vk.Device, p_create_info: *const vk.Buffer.Create.Info, p_allocator: ?*const vk.AllocationCallbacks) !@This ()
+  pub fn create (device: vk.Device,
+    p_create_info: *const vk.Buffer.Create.Info) !@This ()
   {
     var buffer: @This () = undefined;
-    const result = raw.prototypes.device.vkCreateBuffer (device, p_create_info, p_allocator, &buffer);
+    const p_allocator: ?*const vk.AllocationCallbacks = null;
+    const result = raw.prototypes.device.vkCreateBuffer (device, p_create_info,
+      p_allocator, &buffer);
     if (result > 0)
     {
-      std.debug.print ("{s} failed with {} status code\n", .{ @typeName (@This ()) ++ "." ++ @src ().fn_name, result, });
+      std.debug.print ("{s} failed with {} status code\n",
+        .{ @typeName (@This ()) ++ "." ++ @src ().fn_name, result, });
       return error.UnexpectedResult;
     }
     return buffer;
   }
 
-  pub fn destroy (buffer: @This (), device: vk.Device, p_allocator: ?*const vk.AllocationCallbacks) void
+  pub fn destroy (buffer: @This (), device: vk.Device) void
   {
+    const p_allocator: ?*const vk.AllocationCallbacks = null;
     raw.prototypes.device.vkDestroyBuffer (device, buffer, p_allocator);
   }
 };

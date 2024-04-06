@@ -12,30 +12,38 @@ pub const Device = enum (usize)
   {
     NULL_HANDLE = vk.NULL_HANDLE, _,
 
-    pub fn allocate (device: vk.Device, p_allocate_info: *const vk.Memory.Allocate.Info, p_allocator: ?*const vk.AllocationCallbacks) !@This ()
+    pub fn allocate (device: vk.Device,
+      p_allocate_info: *const vk.Memory.Allocate.Info) !@This ()
     {
       var memory: @This () = undefined;
-      const result = raw.prototypes.device.vkAllocateMemory (device, p_allocate_info, p_allocator, &memory);
+      const p_allocator: ?*const vk.AllocationCallbacks = null;
+      const result = raw.prototypes.device.vkAllocateMemory (device,
+        p_allocate_info, p_allocator, &memory);
       if (result > 0)
       {
-        std.debug.print ("{s} failed with {} status code\n", .{ @typeName (@This ()) ++ "." ++ @src ().fn_name, result, });
+        std.debug.print ("{s} failed with {} status code\n",
+          .{ @typeName (@This ()) ++ "." ++ @src ().fn_name, result, });
         return error.UnexpectedResult;
       }
       return memory;
     }
 
-    pub fn free (memory: @This (), device: vk.Device, p_allocator: ?*const vk.AllocationCallbacks) void
+    pub fn free (memory: @This (), device: vk.Device) void
     {
+      const p_allocator: ?*const vk.AllocationCallbacks = null;
       raw.prototypes.device.vkFreeMemory (device, memory, p_allocator);
     }
 
-    pub fn map (memory: @This (), device: vk.Device, offset: vk.Device.Size, size: vk.Device.Size, flags: vk.Memory.Map.Flags) !?*anyopaque
+    pub fn map (memory: @This (), device: vk.Device, offset: vk.Device.Size,
+      size: vk.Device.Size, flags: vk.Memory.Map.Flags) !?*anyopaque
     {
       var pp_data: ?*anyopaque = undefined;
-      const result = raw.prototypes.device.vkMapMemory (device, memory, offset, size, flags, &pp_data);
+      const result = raw.prototypes.device.vkMapMemory (device, memory, offset,
+        size, flags, &pp_data);
       if (result > 0)
       {
-        std.debug.print ("{s} failed with {} status code\n", .{ @typeName (@This ()) ++ "." ++ @src ().fn_name, result, });
+        std.debug.print ("{s} failed with {} status code\n",
+          .{ @typeName (@This ()) ++ "." ++ @src ().fn_name, result, });
         return error.UnexpectedResult;
       }
       return pp_data;
@@ -51,7 +59,8 @@ pub const Device = enum (usize)
 
   pub fn load (self: @This ()) !void
   {
-    const loader: *const fn (vk.Device, [*:0] const u8) callconv (vk.call_conv) ?*const fn () callconv (vk.call_conv) void = @ptrCast (&raw.prototypes.instance.vkGetDeviceProcAddr);
+    const loader: *const fn (vk.Device, [*:0] const u8) callconv (vk.call_conv) ?*const fn () callconv (vk.call_conv) void =
+      @ptrCast (&raw.prototypes.instance.vkGetDeviceProcAddr);
     inline for (std.meta.fields (@TypeOf (raw.prototypes.device))) |field|
     {
       const name: [*:0] const u8 = @ptrCast (field.name ++ "\x00");
@@ -60,13 +69,17 @@ pub const Device = enum (usize)
     }
   }
 
-  pub fn create (physical_device: vk.PhysicalDevice, p_create_info: *const vk.Device.Create.Info, p_allocator: ?*const vk.AllocationCallbacks) !@This ()
+  pub fn create (physical_device: vk.PhysicalDevice,
+    p_create_info: *const vk.Device.Create.Info) !@This ()
   {
     var device: @This () = undefined;
-    const result = raw.prototypes.instance.vkCreateDevice (physical_device, p_create_info, p_allocator, &device);
+    const p_allocator: ?*const vk.AllocationCallbacks = null;
+    const result = raw.prototypes.instance.vkCreateDevice (physical_device,
+      p_create_info, p_allocator, &device);
     if (result > 0)
     {
-      std.debug.print ("{s} failed with {} status code\n", .{ @typeName (@This ()) ++ "." ++ @src ().fn_name, result, });
+      std.debug.print ("{s} failed with {} status code\n",
+        .{ @typeName (@This ()) ++ "." ++ @src ().fn_name, result, });
       return error.UnexpectedResult;
     }
     return device;
@@ -77,13 +90,15 @@ pub const Device = enum (usize)
     const result = raw.prototypes.device.vkDeviceWaitIdle (device);
     if (result > 0)
     {
-      std.debug.print ("{s} failed with {} status code\n", .{ @typeName (@This ()) ++ "." ++ @src ().fn_name, result, });
+      std.debug.print ("{s} failed with {} status code\n",
+        .{ @typeName (@This ()) ++ "." ++ @src ().fn_name, result, });
       return error.UnexpectedResult;
     }
   }
 
-  pub fn destroy (self: @This (), p_allocator: ?*const vk.AllocationCallbacks) void
+  pub fn destroy (self: @This ()) void
   {
+    const p_allocator: ?*const vk.AllocationCallbacks = null;
     raw.prototypes.device.vkDestroyDevice (self, p_allocator);
   }
 
@@ -107,12 +122,17 @@ pub const Device = enum (usize)
 
   pub const ExtensionProperties = extern struct
   {
-    pub fn enumerate (physical_device: vk.PhysicalDevice, p_layer_name: ?[*:0] const u8, p_property_count: *u32, p_properties: ?[*] vk.ExtensionProperties) !void
+    pub fn enumerate (physical_device: vk.PhysicalDevice,
+      p_layer_name: ?[*:0] const u8, p_property_count: *u32,
+      p_properties: ?[*] vk.ExtensionProperties) !void
     {
-      const result = raw.prototypes.structless.vkEnumerateDeviceExtensionProperties (physical_device, p_layer_name, p_property_count, p_properties);
+      const result =
+        raw.prototypes.structless.vkEnumerateDeviceExtensionProperties (
+          physical_device, p_layer_name, p_property_count, p_properties);
       if (result > 0)
       {
-        std.debug.print ("{s} failed with {} status code\n", .{ @typeName (@This ()) ++ "." ++ @src ().fn_name, result, });
+        std.debug.print ("{s} failed with {} status code\n",
+          .{ @typeName (@This ()) ++ "." ++ @src ().fn_name, result, });
         return error.UnexpectedResult;
       }
     }
@@ -120,10 +140,12 @@ pub const Device = enum (usize)
 
   pub const Queue = extern struct
   {
-    pub fn get (device: vk.Device, queue_family_index: u32, queue_index: u32) vk.Queue
+    pub fn get (device: vk.Device, queue_family_index: u32,
+      queue_index: u32) vk.Queue
     {
       var queue: vk.Queue = undefined;
-      raw.prototypes.device.vkGetDeviceQueue (device, queue_family_index, queue_index, &queue);
+      raw.prototypes.device.vkGetDeviceQueue (device, queue_family_index,
+        queue_index, &queue);
       return queue;
     }
 

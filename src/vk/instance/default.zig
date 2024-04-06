@@ -234,7 +234,7 @@ pub const instance_vk = struct
                           .pp_enabled_extension_names = self.extensions [0..].ptr,
                         };
 
-    self.instance = try vk.Instance.create (&create_info, null);
+    self.instance = try vk.Instance.create (&create_info);
 
     try self.logger.app (.DEBUG, "check Vulkan extension properties initializer OK", .{});
   }
@@ -251,11 +251,11 @@ pub const instance_vk = struct
     try check_extension_properties (&self, &debug_info);
 
     try self.instance.load ();
-    errdefer self.instance.destroy (null);
+    errdefer self.instance.destroy ();
 
     self.init_debug_info (&debug_info);
-    self.debug_messenger = try vk.EXT.DebugUtils.Messenger.create (self.instance, &debug_info, null);
-    errdefer self.debug_messenger.destroy (self.instance, null);
+    self.debug_messenger = try vk.EXT.DebugUtils.Messenger.create (self.instance, &debug_info);
+    errdefer self.debug_messenger.destroy (self.instance);
 
     try self.logger.app (.DEBUG, "init Vulkan initializer instance OK", .{});
     return self;
@@ -263,8 +263,8 @@ pub const instance_vk = struct
 
   pub fn cleanup (self: @This ()) !void
   {
-    self.debug_messenger.destroy (self.instance, null);
-    self.instance.destroy (null);
+    self.debug_messenger.destroy (self.instance);
+    self.instance.destroy ();
 
     try self.logger.app (.DEBUG, "cleanup Vulkan initializer OK", .{});
   }

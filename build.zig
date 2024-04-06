@@ -3,6 +3,7 @@ const zig_version = @import ("builtin").zig_version;
 
 const glfw = @import ("build/glfw.zig");
 const vk = @import ("build/vk.zig");
+const imgui = @import ("build/imgui.zig");
 const shaders = @import ("build/shaders.zig");
 
 const utils = @import ("build/utils.zig");
@@ -20,8 +21,10 @@ pub fn build (builder: *std.Build) !void
 
 fn requirements () !void
 {
-  if (zig_version.order (try std.SemanticVersion.parse (zon.min_zig_version)) == .lt)
-    std.debug.panic ("{s} needs at least Zig {s} to be build", .{ zon.name, zon.min_zig_version, });
+  if (zig_version.order (
+    try std.SemanticVersion.parse (zon.min_zig_version)) == .lt)
+      std.debug.panic ("{s} needs at least Zig {s} to be build",
+        .{ zon.name, zon.min_zig_version, });
 }
 
 fn turbo (builder: *std.Build, profile: *Profile) !void
@@ -29,15 +32,18 @@ fn turbo (builder: *std.Build, profile: *Profile) !void
   profile.optimize = .ReleaseFast;
   profile.variables.addOption ([] const u8, "log_dir", "");
   profile.variables.addOption (u8, "log_level", 0);
-  profile.variables.addOption ([] const [] const [] const u8, "vk_optional_extensions", &.{});
-  profile.command = &.{ "glslc", "-O", try std.fmt.allocPrint (builder.allocator, "--target-env=vulkan1.{s}", .{ profile.options.vkminor, }), };
+  profile.variables.addOption ([] const [] const [] const u8,
+    "vk_optional_extensions", &.{});
+  profile.command = &.{ "glslc", "-O", try std.fmt.allocPrint (
+    builder.allocator, "--target-env=vulkan1.{s}",
+      .{ profile.options.vkminor, }), };
 }
 
-fn verbose (builder: *std.Build, profile: *Profile) !void
+fn dev (builder: *std.Build, profile: *Profile) !void
 {
   const log_dir = "log";
 
-  // Make log directory if not present only in verbose mode
+  // Make log directory if not present only in dev mode
   builder.build_root.handle.makeDir (log_dir) catch |err|
   {
     // Do not return error if log directory already exists
@@ -45,14 +51,17 @@ fn verbose (builder: *std.Build, profile: *Profile) !void
   };
 
   profile.optimize = .Debug;
-  profile.variables.addOption ([] const u8, "log_dir", try builder.build_root.join (builder.allocator, &.{ log_dir, }));
+  profile.variables.addOption ([] const u8, "log_dir",
+    try builder.build_root.join (builder.allocator, &.{ log_dir, }));
   profile.variables.addOption (u8, "log_level", 2);
-  profile.variables.addOption ([] const [] const [] const u8, "vk_optional_extensions", &.{
-    &.{ "EXT", "DEVICE_ADDRESS_BINDING_REPORT", },
-    &.{ "EXT", "VALIDATION_FEATURES", },
-    &.{ "KHR", "SHADER_NON_SEMANTIC_INFO", },
-  });
-  profile.command = &.{ "glslc", try std.fmt.allocPrint (builder.allocator, "--target-env=vulkan1.{s}", .{ profile.options.vkminor, }), };
+  profile.variables.addOption ([] const [] const [] const u8,
+    "vk_optional_extensions", &.{
+      &.{ "EXT", "DEVICE_ADDRESS_BINDING_REPORT", },
+      &.{ "EXT", "VALIDATION_FEATURES", },
+      &.{ "KHR", "SHADER_NON_SEMANTIC_INFO", },
+    });
+  profile.command = &.{ "glslc", try std.fmt.allocPrint (builder.allocator,
+    "--target-env=vulkan1.{s}", .{ profile.options.vkminor, }), };
 }
 
 fn default (builder: *std.Build, profile: *Profile) !void
@@ -60,42 +69,64 @@ fn default (builder: *std.Build, profile: *Profile) !void
   profile.optimize = builder.standardOptimizeOption (.{});
   profile.variables.addOption ([] const u8, "log_dir", profile.options.logdir);
   profile.variables.addOption (u8, "log_level", 1);
-  profile.variables.addOption ([] const [] const [] const u8, "vk_optional_extensions", &.{
-    &.{ "EXT", "DEVICE_ADDRESS_BINDING_REPORT", },
-  });
-  profile.command = &.{ "glslc", try std.fmt.allocPrint (builder.allocator, "--target-env=vulkan1.{s}", .{ profile.options.vkminor, }), };
+  profile.variables.addOption ([] const [] const [] const u8,
+    "vk_optional_extensions", &.{
+      &.{ "EXT", "DEVICE_ADDRESS_BINDING_REPORT", },
+    });
+  profile.command = &.{ "glslc", try std.fmt.allocPrint (builder.allocator,
+    "--target-env=vulkan1.{s}", .{ profile.options.vkminor, }), };
 }
 
 fn parse_options (builder: *std.Build) !Profile
 {
   const options = Options {
-    .verbose = builder.option (bool, std.meta.fieldInfo (Options, .verbose).name, "Build " ++ zon.name ++ " with full logging features. Default: " ++ (if (@field (Options.default, std.meta.fieldInfo (Options, .verbose).name)) "enabled" else "disabled") ++ ".")
-      orelse @field (Options.default, std.meta.fieldInfo (Options, .verbose).name),
-    .turbo = builder.option (bool, std.meta.fieldInfo (Options, .turbo).name, "Build " ++ zon.name ++ " with optimized features. Default: " ++ (if (@field (Options.default, std.meta.fieldInfo (Options, .turbo).name)) "enabled" else "disabled") ++ ".")
+    .dev = builder.option (bool, std.meta.fieldInfo (Options, .dev).name,
+        "Build " ++ zon.name ++ " with full logging features. Default: " ++
+        (if (@field (Options.default, std.meta.fieldInfo (Options, .dev).name))
+          "enabled" else "disabled") ++ ".")
+      orelse @field (Options.default, std.meta.fieldInfo (Options, .dev).name),
+    .turbo = builder.option (bool, std.meta.fieldInfo (Options, .turbo).name,
+        "Build " ++ zon.name ++ " with optimized features. Default: " ++
+        (if (@field (Options.default, std.meta.fieldInfo (Options, .turbo).name))
+          "enabled" else "disabled") ++ ".")
       orelse @field (Options.default, std.meta.fieldInfo (Options, .turbo).name),
-    .logdir = builder.option ([] const u8, std.meta.fieldInfo (Options, .logdir).name, "Absolute path to log directory. If not specified, logs are not registered in a file.")
+    .logdir = builder.option ([] const u8,
+        std.meta.fieldInfo (Options, .logdir).name,
+        "Absolute path to log directory. If not specified, logs are not registered in a file.")
       orelse @field (Options.default, std.meta.fieldInfo (Options, .logdir).name),
-    .vkminor = builder.option ([] const u8, std.meta.fieldInfo (Options, .vkminor).name, "Vulkan minor version to use: Possible values: 0, 1, 2 or 3. Default value: " ++ @field (Options.default, std.meta.fieldInfo (Options, .vkminor).name) ++ ".")
+    .vkminor = builder.option ([] const u8,
+        std.meta.fieldInfo (Options, .vkminor).name,
+        "Vulkan minor version to use: Possible values: 0, 1, 2 or 3. Default value: " ++
+        @field (Options.default, std.meta.fieldInfo (Options, .vkminor).name) ++ ".")
       orelse @field (Options.default, std.meta.fieldInfo (Options, .vkminor).name),
   };
 
-  _ = std.fmt.parseInt (u2, options.vkminor, 10) catch std.debug.panic ("-D{s} value should be 0, 1, 2 or 3", .{ std.meta.fieldInfo (Options, .vkminor).name, });
+  _ = std.fmt.parseInt (u2, options.vkminor, 10) catch
+    std.debug.panic ("-D{s} value should be 0, 1, 2 or 3",
+      .{ std.meta.fieldInfo (Options, .vkminor).name, });
 
-  if (options.turbo and options.verbose)
-    std.debug.panic ("-D{s} and -D{s} can not be used together", .{ std.meta.fieldInfo (Options, .turbo).name, std.meta.fieldInfo (Options, .verbose).name, })
+  if (options.turbo and options.dev)
+    std.debug.panic ("-D{s} and -D{s} can not be used together",
+      .{ std.meta.fieldInfo (Options, .turbo).name,
+         std.meta.fieldInfo (Options, .dev).name, })
   else if (options.turbo and options.logdir.len > 0)
-    std.debug.panic ("-D{s} and -D{s} can not be used together", .{ std.meta.fieldInfo (Options, .turbo).name, std.meta.fieldInfo (Options, .logdir).name, });
+    std.debug.panic ("-D{s} and -D{s} can not be used together",
+      .{ std.meta.fieldInfo (Options, .turbo).name,
+         std.meta.fieldInfo (Options, .logdir).name, });
 
   var profile: Profile = undefined;
   profile.target = builder.standardTargetOptions (.{});
   profile.options = options;
   profile.variables = builder.addOptions ();
-  profile.variables.addOption ([] const u8, std.meta.fieldInfo (@TypeOf (zon), .name).name, zon.name);
-  profile.variables.addOption ([] const u8, std.meta.fieldInfo (@TypeOf (zon), .version).name, zon.version);
-  profile.variables.addOption ([] const u8, "vk_minor", profile.options.vkminor);
+  profile.variables.addOption ([] const u8,
+    std.meta.fieldInfo (@TypeOf (zon), .name).name, zon.name);
+  profile.variables.addOption ([] const u8,
+    std.meta.fieldInfo (@TypeOf (zon), .version).name, zon.version);
+  profile.variables.addOption ([] const u8, "vk_minor",
+    profile.options.vkminor);
 
   if (profile.options.turbo) try turbo (builder, &profile)
-  else if (profile.options.verbose) try verbose (builder, &profile)
+  else if (profile.options.dev) try dev (builder, &profile)
   else try default (builder, &profile);
 
   return profile;
@@ -112,7 +143,8 @@ fn link (builder: *std.Build, profile: *const Profile) !*std.Build.Module
   const cimgui = imgui_dep.artifact ("cimgui");
 
   const c = builder.createModule (.{
-    .root_source_file = .{ .path = try builder.build_root.join (builder.allocator, &.{ "src", "binding", "raw.zig", }), },
+    .root_source_file = .{ .path = try builder.build_root.join (
+      builder.allocator, &.{ "src", "binding", "raw.zig", }), },
     .target = profile.target,
     .optimize = profile.optimize,
   });
@@ -123,7 +155,8 @@ fn link (builder: *std.Build, profile: *const Profile) !*std.Build.Module
   return c;
 }
 
-fn import (builder: *std.Build, exe: *std.Build.Step.Compile, profile: *const Profile) !void
+fn import (builder: *std.Build, exe: *std.Build.Step.Compile,
+  profile: *const Profile) !void
 {
   const datetime_dep = builder.dependency ("zig-datetime", .{
     .target = profile.target,
@@ -135,19 +168,13 @@ fn import (builder: *std.Build, exe: *std.Build.Step.Compile, profile: *const Pr
   const c = try link (builder, profile);
   const glfw_module = try glfw.import (builder, profile, c);
   const vk_module = try vk.import (builder, profile, c);
-
-  const imgui = builder.createModule (.{
-    .root_source_file = .{ .path = try builder.build_root.join (builder.allocator, &.{ "src", "binding", "imgui.zig", }), },
-    .target = profile.target,
-    .optimize = profile.optimize,
-  });
-  imgui.addImport ("c", c);
-  imgui.addImport ("glfw", glfw_module);
-  imgui.addImport ("vk", vk_module);
+  const imgui_module =
+    try imgui.import (builder, profile, c, glfw_module, vk_module);
 
   const build_options = profile.variables.createModule ();
   const logger = builder.createModule (.{
-    .root_source_file = .{ .path = try builder.build_root.join (builder.allocator, &.{ "src", "logger.zig", }), },
+    .root_source_file = .{ .path = try builder.build_root.join (
+      builder.allocator, &.{ "src", "logger.zig", }), },
     .target = profile.target,
     .optimize = profile.optimize,
   });
@@ -155,8 +182,9 @@ fn import (builder: *std.Build, exe: *std.Build.Step.Compile, profile: *const Pr
   logger.addImport ("datetime", datetime);
 
   const instance = builder.createModule (.{
-    .root_source_file = .{ .path = try builder.build_root.join (builder.allocator,
-      &.{ "src", "vk", "instance", if (profile.options.turbo) "turbo.zig" else "default.zig", }), },
+    .root_source_file = .{ .path = try builder.build_root.join (
+      builder.allocator, &.{ "src", "vk", "instance",
+        if (profile.options.turbo) "turbo.zig" else "default.zig", }), },
     .target = profile.target,
     .optimize = profile.optimize,
   });
@@ -164,9 +192,12 @@ fn import (builder: *std.Build, exe: *std.Build.Step.Compile, profile: *const Pr
   instance.addImport ("vk", vk_module);
 
   for ([_] struct { name: [] const u8, ptr: *std.Build.Module, } {
-    .{ .name = "datetime", .ptr = datetime, }, .{ .name = "shader", .ptr = shaders_module, },
-    .{ .name = "glfw", .ptr = glfw_module, }, .{ .name = "vk", .ptr = vk_module, },
-    .{ .name = "imgui", .ptr = imgui, }, .{ .name = "logger", .ptr = logger, },
+    .{ .name = "datetime", .ptr = datetime, },
+    .{ .name = "shader", .ptr = shaders_module, },
+    .{ .name = "glfw", .ptr = glfw_module, },
+    .{ .name = "vk", .ptr = vk_module, },
+    .{ .name = "imgui", .ptr = imgui_module, },
+    .{ .name = "logger", .ptr = logger, },
     .{ .name = "instance", .ptr = instance, },
   }) |module| exe.root_module.addImport (module.name, module.ptr);
 }
@@ -175,7 +206,8 @@ fn run_exe (builder: *std.Build, profile: *const Profile) !void
 {
   const exe = builder.addExecutable (.{
     .name = zon.name,
-    .root_source_file = .{ .path = try builder.build_root.join (builder.allocator, &.{ "src", "main.zig", }), },
+    .root_source_file = .{ .path = try builder.build_root.join (
+      builder.allocator, &.{ "src", "main.zig", }), },
     .target = profile.target,
     .optimize = profile.optimize,
   });
@@ -196,8 +228,10 @@ fn run_test (builder: *std.Build, profile: *const Profile) !void
   const unit_tests = builder.addTest (.{
     .target = profile.target,
     .optimize = profile.optimize,
-    .test_runner = try builder.build_root.join (builder.allocator, &.{ "test", "runner.zig", }),
-    .root_source_file = .{ .path = try builder.build_root.join (builder.allocator, &.{ "test", "main.zig", }), },
+    .test_runner = try builder.build_root.join (builder.allocator,
+      &.{ "test", "runner.zig", }),
+    .root_source_file = .{ .path = try builder.build_root.join (
+      builder.allocator, &.{ "test", "main.zig", }), },
   });
   unit_tests.step.dependOn (builder.getInstallStep ());
 

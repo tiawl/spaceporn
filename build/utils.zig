@@ -4,7 +4,7 @@ pub const zon = .{ .name = "spaceporn", .version = "0.1.0", .min_zig_version = "
 
 pub const Options = struct
 {
-  verbose: bool = false,
+  dev:     bool = false,
   turbo:   bool = false,
   logdir:  [] const u8 = "",
   vkminor: [] const u8 = "2",

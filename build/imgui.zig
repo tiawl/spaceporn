@@ -3,10 +3,11 @@ const std = @import ("std");
 const Profile = @import ("utils.zig").Profile;
 
 pub fn import (builder: *std.Build, profile: *const Profile,
-  c: *std.Build.Module) !*std.Build.Module
+  c: *std.Build.Module, glfw: *std.Build.Module,
+  vk: *std.Build.Module) !*std.Build.Module
 {
   const path = try builder.build_root.join (builder.allocator,
-    &.{ "src", "binding", "glfw", });
+    &.{ "src", "binding", "imgui", });
 
   var modules = std.ArrayList (*std.Build.Module).init (builder.allocator);
 
@@ -19,7 +20,7 @@ pub fn import (builder: *std.Build, profile: *const Profile,
     switch (entry.kind)
     {
       .file => {
-        if (!std.mem.eql (u8, entry.name, "glfw.zig"))
+        if (!std.mem.eql (u8, entry.name, "imgui.zig"))
         {
           try modules.append (builder.createModule (.{
             .root_source_file = .{ .path = try std.fs.path.join (
@@ -28,26 +29,28 @@ pub fn import (builder: *std.Build, profile: *const Profile,
             .optimize = profile.optimize,
           }));
           modules.items [modules.items.len - 1].addImport ("c", c);
+          modules.items [modules.items.len - 1].addImport ("glfw", glfw);
+          modules.items [modules.items.len - 1].addImport ("vk", vk);
         }
       },
       else  => {},
     }
   }
 
-  const glfw = builder.createModule (.{
+  const imgui = builder.createModule (.{
     .root_source_file = .{ .path = try std.fs.path.join (builder.allocator,
-      &.{ path, "glfw.zig", }), },
+      &.{ path, "imgui.zig", }), },
     .target = profile.target,
     .optimize = profile.optimize,
   });
-  glfw.addImport ("c", c);
+  imgui.addImport ("c", c);
 
   for (modules.items) |module|
   {
     const name = std.fs.path.stem (
       std.fs.path.basename (module.root_source_file.?.getPath (builder)));
-    glfw.addImport (name, module);
-    module.addImport ("glfw", glfw);
+    imgui.addImport (name, module);
+    module.addImport ("imgui", imgui);
     for (modules.items) |other|
     {
       const other_name = std.fs.path.stem (
@@ -57,15 +60,5 @@ pub fn import (builder: *std.Build, profile: *const Profile,
     }
   }
 
-  return glfw;
-}
-
-pub fn lib (builder: *std.Build,
-  profile: *const Profile) *std.Build.Step.Compile
-{
-  const dep = builder.dependency ("glfw", .{
-    .target = profile.target,
-    .optimize = profile.optimize,
-  });
-  return dep.artifact ("glfw");
+  return imgui;
 }

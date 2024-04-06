@@ -79,6 +79,7 @@ pub const Logger = struct
 
     if (Logger.build.profile.gt (.TURBO))
     {
+      std.debug.print ("{s}\n", .{Logger.build.path});
       try create_file (Logger.build.path);
 
       self.file = try std.fs.openFileAbsolute (Logger.build.path, .{ .mode = .write_only, });

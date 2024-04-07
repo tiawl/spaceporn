@@ -52,7 +52,7 @@ pub const Context = struct
   {
     try self.imgui.deinit ();
     try self.vk.cleanup ();
-    try self.glfw.cleanup ();
+    try self.glfw.deinit ();
     try self.logger.app (.DEBUG, "cleanup OK", .{});
   }
 };

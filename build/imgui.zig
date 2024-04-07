@@ -1,15 +1,22 @@
 const std = @import ("std");
 
-const Profile = @import ("utils.zig").Profile;
+const utils = @import ("utils.zig");
+const Package = utils.Package;
+const Profile = utils.Profile;
 
 pub fn import (builder: *std.Build, profile: *const Profile,
-  c: *std.Build.Module, glfw: *std.Build.Module,
-  vk: *std.Build.Module) !*std.Build.Module
+  c: *Package, glfw: *Package, vk: *Package) !*Package
 {
   const path = try builder.build_root.join (builder.allocator,
     &.{ "src", "binding", "imgui", });
 
-  var modules = std.ArrayList (*std.Build.Module).init (builder.allocator);
+  var imgui = try Package.init (builder, profile, "imgui",
+    try std.fs.path.join (builder.allocator, &.{ path, "imgui.zig", }));
+  try imgui.put (c, .{});
+  try imgui.put (vk, .{});
+  try imgui.put (glfw, .{});
+
+  var sub: *Package = undefined;
 
   var dir = try builder.build_root.handle.openDir (path, .{ .iterate = true, });
   defer dir.close ();
@@ -22,41 +29,18 @@ pub fn import (builder: *std.Build, profile: *const Profile,
       .file => {
         if (!std.mem.eql (u8, entry.name, "imgui.zig"))
         {
-          try modules.append (builder.createModule (.{
-            .root_source_file = .{ .path = try std.fs.path.join (
-              builder.allocator, &.{ path, entry.name, }), },
-            .target = profile.target,
-            .optimize = profile.optimize,
-          }));
-          modules.items [modules.items.len - 1].addImport ("c", c);
-          modules.items [modules.items.len - 1].addImport ("glfw", glfw);
-          modules.items [modules.items.len - 1].addImport ("vk", vk);
+          sub = try Package.init (builder, profile,
+            builder.dupe (std.fs.path.stem (entry.name)),
+              try std.fs.path.join (builder.allocator,
+                &.{ path, entry.name, }));
+          try sub.put (c, .{});
+          try sub.put (vk, .{});
+          try sub.put (glfw, .{});
+          try imgui.put (sub, .{});
+          try sub.put (imgui, .{});
         }
       },
       else  => {},
-    }
-  }
-
-  const imgui = builder.createModule (.{
-    .root_source_file = .{ .path = try std.fs.path.join (builder.allocator,
-      &.{ path, "imgui.zig", }), },
-    .target = profile.target,
-    .optimize = profile.optimize,
-  });
-  imgui.addImport ("c", c);
-
-  for (modules.items) |module|
-  {
-    const name = std.fs.path.stem (
-      std.fs.path.basename (module.root_source_file.?.getPath (builder)));
-    imgui.addImport (name, module);
-    module.addImport ("imgui", imgui);
-    for (modules.items) |other|
-    {
-      const other_name = std.fs.path.stem (
-        std.fs.path.basename (other.root_source_file.?.getPath (builder)));
-      if (std.mem.eql (u8, name, other_name)) continue;
-      module.addImport (other_name, other);
     }
   }
 

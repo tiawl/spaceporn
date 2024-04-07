@@ -5,13 +5,15 @@ const glfw = @import ("glfw");
 
 pub const Context = struct
 {
+  var handle: ?*c.GLFWwindow = null;
+
   pub fn make (window: *glfw.Window) void
   {
-    c.glfwMakeContextCurrent (window.handle);
+    handle = window.handle;
   }
 
   pub fn get () !*c.GLFWwindow
   {
-    return c.glfwGetCurrentContext () orelse error.NoCurrentContext;
+    return handle orelse error.GlfwNoCurrentContext;
   }
 };

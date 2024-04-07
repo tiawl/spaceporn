@@ -107,7 +107,7 @@ pub const DebugUtils = extern struct
         message_types: vk.EXT.DebugUtils.Message.Type.Flags,
         p_callback_data: ?*const vk.EXT.DebugUtils.Messenger.Callback.Data,
         p_user_data: ?*anyopaque,
-      ) callconv (vk.call_conv) vk.Bool32;
+      ) callconv (c.call_conv) vk.Bool32;
     };
 
     pub const Create = extern struct

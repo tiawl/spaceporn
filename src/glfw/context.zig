@@ -16,70 +16,74 @@ pub const Context = struct
 
   fn error_callback (code: glfw.Error.Code, description: [:0] const u8) void
   {
-    var self = glfw.Window.UserPointer.get (Context) catch std.debug.panic ("glfw.Window.UserPointer failed", .{});
-    self.?.logger.app (.ERROR, "GLFW: {}: {s}", .{ code, description, }) catch std.process.exit (1);
+    var self = glfw.Window.UserPointer.get (Context) catch
+      std.debug.panic ("glfw.Window.UserPointer.get () failed", .{});
+    self.?.logger.app (.ERROR, "GLFW: {}: {s}", .{ code, description, })
+      catch std.process.exit (1);
   }
 
   fn framebuffer_resize_callback (_: glfw.Window, _: u32, _: u32) void
   {
-    var self = glfw.Window.UserPointer.get (Context) catch std.debug.panic ("glfw.Window.UserPointer failed", .{});
+    var self = glfw.Window.UserPointer.get (Context) catch
+      std.debug.panic ("glfw.Window.UserPointer.get () failed", .{});
     self.?.framebuffer_resized = true;
   }
 
   const MIN_WINDOW_WIDTH  = 800;
   const MIN_WINDOW_HEIGHT = 600;
 
-  pub fn init (imgui: *ImguiContext, logger: *const Logger, options: *const Options) !@This ()
+  pub fn init (imgui: *ImguiContext, logger: *const Logger,
+    options: *const Options) !@This ()
   {
     var self: @This () = .{ .logger = logger, };
 
-    glfw.Error.Callback.set (error_callback);
-    if (!glfw.init ())
+    glfw.init () catch |err|
     {
-      try self.logger.app (.ERROR, "failed to initialize GLFW: {?s}", .{ glfw.Error.String.get (), });
-      return error.ContextInitFailed;
-    }
+      try self.logger.app (.ERROR, "failed to initialize GLFW: {?s}",
+        .{ glfw.Error.String.get (), });
+      return err;
+    };
     errdefer glfw.terminate ();
 
-    if (!glfw.vk.supported ()) std.debug.panic ("Vulkan not supported", .{});
+    if (!glfw.vk.supported ()) return error.VulkanNotSupported;
 
     const hints = [_] glfw.Window.Hint
-                  {
-                    .{ .client_api = .no_api, },
-                    .{ .resizable = .@"false", },
-                  };
-
-    self.window = glfw.Window.create (options.window.width.?, options.window.height.?, Logger.build.binary.name, null, null, &hints) catch |err|
     {
-      try self.logger.app (.ERROR, "failed to initialize GLFW window: {?s}", .{ glfw.Error.String.get () });
+      .{ .client_api = .no_api, },
+      .{ .resizable = .@"false", },
+    };
+
+    self.window = glfw.Window.create (options.window.width.?,
+      options.window.height.?, Logger.build.binary.name, null, null, &hints)
+    catch |err|
+    {
+      try self.logger.app (.ERROR, "failed to initialize GLFW window: {?s}",
+        .{ glfw.Error.String.get () });
       return err;
     };
     errdefer self.window.destroy ();
     glfw.Context.make (&self.window);
+    try glfw.Window.UserPointer.set (&self);
+    glfw.Error.Callback.set (error_callback);
 
     const min = glfw.Window.Size.Optional
-                {
-                  .width  = MIN_WINDOW_WIDTH,
-                  .height = MIN_WINDOW_HEIGHT,
-                };
+    {
+      .width  = MIN_WINDOW_WIDTH,
+      .height = MIN_WINDOW_HEIGHT,
+    };
 
     const max = glfw.Window.Size.Optional
-                {
-                  .width  = null,
-                  .height = null,
-                };
+    {
+      .width  = null,
+      .height = null,
+    };
 
     try glfw.Window.Size.Limits.set (min, max);
 
     self.framebuffer_resized = true;
-    try glfw.Window.UserPointer.set (&self);
     try glfw.Window.Framebuffer.Size.Callback.set (framebuffer_resize_callback);
 
-    self.extensions = glfw.vk.Instance.RequiredExtensions.get () orelse
-    {
-      try self.logger.app (.ERROR, "failed to get required vulkan instance extensions: error={s}", .{ glfw.Error.String.get () orelse std.debug.panic ("no Glfw error", .{}), });
-      return error.RequiredInstanceExtensionsFailed;
-    };
+    self.extensions = try glfw.vk.Instance.RequiredExtensions.get ();
 
     // TODO: remove this:
     try imgui.init_glfw ();
@@ -89,13 +93,15 @@ pub const Context = struct
     return self;
   }
 
-  pub fn init_surface (self: @This (), instance: anytype, surface: anytype) !void
+  pub fn init_surface (self: @This (), instance: anytype,
+    surface: anytype) !void
   {
-    try glfw.Window.Surface.create (instance, self.window, null, surface);
+    try glfw.Window.Surface.create (instance, self.window, surface);
     try self.logger.app (.DEBUG, "init GLFW surface OK", .{});
   }
 
-  pub fn get_framebuffer_size (self: *@This ()) !struct { resized: bool, width: u32, height: u32, }
+  pub fn get_framebuffer_size (self: *@This ()) !struct { resized: bool,
+    width: u32, height: u32, }
   {
     const resized = self.framebuffer_resized;
 
@@ -110,10 +116,10 @@ pub const Context = struct
     }
 
     return .{
-              .resized = resized,
-              .width   = size.width,
-              .height  = size.height,
-            };
+      .resized = resized,
+      .width   = size.width,
+      .height  = size.height,
+    };
   }
 
   pub fn get_window (self: @This ()) glfw.Window
@@ -132,7 +138,7 @@ pub const Context = struct
     try self.logger.app (.DEBUG, "loop GLFW OK", .{});
   }
 
-  pub fn cleanup (self: @This ()) !void
+  pub fn deinit (self: @This ()) !void
   {
     self.window.destroy ();
     glfw.terminate ();

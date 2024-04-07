@@ -1,14 +1,20 @@
 const std = @import ("std");
 
-const Profile = @import ("utils.zig").Profile;
+const utils = @import ("utils.zig");
+const Package = utils.Package;
+const Profile = utils.Profile;
 
 pub fn import (builder: *std.Build, profile: *const Profile,
-  c: *std.Build.Module) !*std.Build.Module
+  c: *Package) !*Package
 {
   const path = try builder.build_root.join (builder.allocator,
     &.{ "src", "binding", "glfw", });
 
-  var modules = std.ArrayList (*std.Build.Module).init (builder.allocator);
+  var glfw = try Package.init (builder, profile, "glfw",
+    try std.fs.path.join (builder.allocator, &.{ path, "glfw.zig", }));
+  try glfw.put (c, .{});
+
+  var sub: *Package = undefined;
 
   var dir = try builder.build_root.handle.openDir (path, .{ .iterate = true, });
   defer dir.close ();
@@ -21,39 +27,15 @@ pub fn import (builder: *std.Build, profile: *const Profile,
       .file => {
         if (!std.mem.eql (u8, entry.name, "glfw.zig"))
         {
-          try modules.append (builder.createModule (.{
-            .root_source_file = .{ .path = try std.fs.path.join (
-              builder.allocator, &.{ path, entry.name, }), },
-            .target = profile.target,
-            .optimize = profile.optimize,
-          }));
-          modules.items [modules.items.len - 1].addImport ("c", c);
+          sub = try Package.init (builder, profile,
+            builder.dupe (std.fs.path.stem (entry.name)),
+            try std.fs.path.join (builder.allocator, &.{ path, entry.name, }));
+          try sub.put (c, .{});
+          try glfw.put (sub, .{});
+          try sub.put (glfw, .{});
         }
       },
       else  => {},
-    }
-  }
-
-  const glfw = builder.createModule (.{
-    .root_source_file = .{ .path = try std.fs.path.join (builder.allocator,
-      &.{ path, "glfw.zig", }), },
-    .target = profile.target,
-    .optimize = profile.optimize,
-  });
-  glfw.addImport ("c", c);
-
-  for (modules.items) |module|
-  {
-    const name = std.fs.path.stem (
-      std.fs.path.basename (module.root_source_file.?.getPath (builder)));
-    glfw.addImport (name, module);
-    module.addImport ("glfw", glfw);
-    for (modules.items) |other|
-    {
-      const other_name = std.fs.path.stem (
-        std.fs.path.basename (other.root_source_file.?.getPath (builder)));
-      if (std.mem.eql (u8, name, other_name)) continue;
-      module.addImport (other_name, other);
     }
   }
 

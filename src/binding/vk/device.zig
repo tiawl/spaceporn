@@ -59,12 +59,11 @@ pub const Device = enum (usize)
 
   pub fn load (self: @This ()) !void
   {
-    const loader: *const fn (vk.Device, [*:0] const u8) callconv (vk.call_conv) ?*const fn () callconv (vk.call_conv) void =
-      @ptrCast (&raw.prototypes.instance.vkGetDeviceProcAddr);
     inline for (std.meta.fields (@TypeOf (raw.prototypes.device))) |field|
     {
       const name: [*:0] const u8 = @ptrCast (field.name ++ "\x00");
-      const pointer = loader (self, name) orelse return error.CommandLoadFailure;
+      const pointer = raw.prototypes.instance.vkGetDeviceProcAddr (self, name)
+        orelse return error.CommandLoadFailure;
       @field (raw.prototypes.device, field.name) = @ptrCast (pointer);
     }
   }

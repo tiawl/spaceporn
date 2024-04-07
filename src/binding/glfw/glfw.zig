@@ -1,8 +1,10 @@
 const c = @import ("c");
 
+const glfw = @This ();
+
 pub const Context = @import ("context").Context;
 pub const Error = @import ("error").Error;
-pub const vk = @import ("vk").vk;
+pub const vk = @import ("vk");
 pub const Window = @import ("window").Window;
 
 pub const Bool = enum (c_int)
@@ -29,9 +31,9 @@ pub const Monitor = struct
   handle: *c.GLFWmonitor,
 };
 
-pub fn init () bool
+pub fn init () !void
 {
-  return c.glfwInit () == c.GLFW_TRUE;
+  if (c.glfwInit () != c.GLFW_TRUE) return error.GlfwInitFailed;
 }
 
 pub fn terminate () void

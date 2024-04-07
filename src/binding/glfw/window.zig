@@ -3,6 +3,15 @@ const std = @import ("std");
 
 const glfw = @import ("glfw");
 
+const vk = struct
+{
+  pub const Instance = @import ("instance").Instance;
+  pub const KHR = struct
+  {
+    pub const Surface = @import ("surface").Surface;
+  };
+};
+
 pub const Window = struct
 {
   handle: *c.GLFWwindow,
@@ -31,6 +40,14 @@ pub const Window = struct
         .client_api => c.GLFW_CLIENT_API,
       };
     }
+
+    fn get (self: @This ()) c_int
+    {
+      return switch (self)
+      {
+        inline else => |value| @intFromEnum (value),
+      };
+    }
   };
 
   pub const Size = struct
@@ -46,7 +63,8 @@ pub const Window = struct
 
     pub const Limits = struct
     {
-      pub fn set (min: glfw.Window.Size.Optional, max: glfw.Window.Size.Optional) !void
+      pub fn set (min: glfw.Window.Size.Optional,
+        max: glfw.Window.Size.Optional) !void
       {
         if (min.width != null and max.width != null)
           std.debug.assert (min.width.? <= max.width.?);
@@ -55,27 +73,31 @@ pub const Window = struct
 
         const window = try glfw.Context.get ();
         c.glfwSetWindowSizeLimits (window,
-          if (min.width) |min_width| @as (c_int, @intCast (min_width)) else c.GLFW_DONT_CARE,
-          if (min.height) |min_height| @as (c_int, @intCast (min_height)) else c.GLFW_DONT_CARE,
-          if (max.width) |max_width| @as (c_int, @intCast (max_width)) else c.GLFW_DONT_CARE,
-          if (max.height) |max_height| @as (c_int, @intCast (max_height)) else c.GLFW_DONT_CARE);
+          if (min.width) |min_width| @as (c_int, @intCast (min_width))
+          else c.GLFW_DONT_CARE,
+          if (min.height) |min_height| @as (c_int, @intCast (min_height))
+          else c.GLFW_DONT_CARE,
+          if (max.width) |max_width| @as (c_int, @intCast (max_width))
+          else c.GLFW_DONT_CARE,
+          if (max.height) |max_height| @as (c_int, @intCast (max_height))
+          else c.GLFW_DONT_CARE);
       }
     };
   };
 
   pub const Surface = struct
   {
-    pub fn create (vk_instance: anytype, window: Window, vk_allocation_callbacks: anytype, vk_surface_khr: anytype) !void
+    pub fn create (vk_instance: vk.Instance, window: Window,
+      vk_surface_khr: *vk.KHR.Surface) !void
     {
-      const instance: c.VkInstance = @as (c.VkInstance, @ptrFromInt (@intFromEnum (vk_instance)));
-
-      const result = c.glfwCreateWindowSurface (instance, window.handle,
-        if (vk_allocation_callbacks == null) null else @as (*const c.VkAllocationCallbacks, @ptrCast (@alignCast (vk_allocation_callbacks))),
-        @as (*c.VkSurfaceKHR, @ptrCast (@alignCast (vk_surface_khr))));
+      const result = c.glfwCreateWindowSurface (
+        @ptrFromInt (@intFromEnum (vk_instance)), window.handle, null,
+        @ptrCast (@alignCast (vk_surface_khr)));
 
       if (result > 0)
       {
-        std.debug.print ("{s} failed with {} status code\n", .{ @typeName (@This ()) ++ "." ++ @src ().fn_name, result, });
+        std.debug.print ("{s} failed with {} status code\n",
+          .{ @typeName (@This ()) ++ "." ++ @src ().fn_name, result, });
         return error.UnexpectedResult;
       }
     }
@@ -109,9 +131,9 @@ pub const Window = struct
         var height: c_int = 0;
         c.glfwGetFramebufferSize (window, &width, &height);
         return .{
-                  .width = @as (u32, @intCast (width)),
-                  .height = @as (u32, @intCast (height)),
-                };
+          .width = @as (u32, @intCast (width)),
+          .height = @as (u32, @intCast (height)),
+        };
       }
 
       pub const Callback = struct
@@ -123,13 +145,16 @@ pub const Window = struct
           {
             const Wrapper = struct
             {
-              pub fn framebufferSizeCallbackWrapper (handle: ?*c.GLFWwindow, width: c_int, height: c_int) callconv(.C) void
+              pub fn framebufferSizeCallbackWrapper (handle: ?*c.GLFWwindow,
+                width: c_int, height: c_int) callconv(.C) void
               {
-                @call (.always_inline, user_callback, .{ from (handle.?), @as (u32, @intCast (width)), @as (u32, @intCast (height)), });
+                @call (.always_inline, user_callback, .{ from (handle.?),
+                  @as (u32, @intCast (width)), @as (u32, @intCast (height)), });
               }
             };
 
-            _ = c.glfwSetFramebufferSizeCallback (window, Wrapper.framebufferSizeCallbackWrapper);
+            _ = c.glfwSetFramebufferSizeCallback (window,
+              Wrapper.framebufferSizeCallbackWrapper);
           } else _ = c.glfwSetFramebufferSizeCallback (window, null);
         }
       };
@@ -137,12 +162,14 @@ pub const Window = struct
   };
 
   pub fn create (width: u32, height: u32, title: [*:0] const u8,
-    monitor: ?glfw.Monitor, share: ?@This (), hints: [] const glfw.Window.Hint) !@This ()
+    monitor: ?glfw.Monitor, share: ?@This (),
+    hints: [] const glfw.Window.Hint) !@This ()
   {
-    for (hints) |hint| c.glfwWindowHint (hint.tag (), @intFromEnum (std.meta.activeTag (hint)));
-    if (c.glfwCreateWindow (@as (c_int, @intCast (width)), @as (c_int, @intCast (height)),
-      &title [0], if (monitor) |m| m.handle else null, if (share) |w| w.handle else null)) |handle|
-        return from (handle);
+    for (hints) |hint| c.glfwWindowHint (hint.tag (), hint.get ());
+    if (c.glfwCreateWindow (@as (c_int, @intCast (width)),
+      @as (c_int, @intCast (height)), &title [0],
+      if (monitor) |m| m.handle else null,
+      if (share) |w| w.handle else null)) |handle| return from (handle);
 
     return error.WindowInitFailed;
   }

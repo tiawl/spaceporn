@@ -20,7 +20,10 @@ const Build = struct
 
   profile: Profile = @enumFromInt (options.log_level),
   binary: Binary = .{},
-  path: [:0] const u8 = options.log_dir ++ "/" ++ options.name [0 .. :0] ++ ".log",
+  log: struct {
+    path: [:0] const u8 = options.log_dir ++ "/" ++ options.name [0 .. :0] ++ ".log",
+    dir: [] const u8 = options.log_dir,
+  } = .{},
   vk: Vk = .{},
 };
 
@@ -34,9 +37,16 @@ const Level = enum (LevelInt)
   pub fn ge (self: @This (), other: @This ()) bool { return !self.lt (other); }
 };
 
-fn print (lvl: Level, entry: [] const u8) !void
+fn access (path: [] const u8) bool
 {
-  const writer = switch (lvl)
+  if (path.len == 0) return false;
+  std.fs.accessAbsolute (path, .{}) catch return false;
+  return true;
+}
+
+fn print (level: Level, entry: [] const u8) !void
+{
+  const writer = switch (level)
   {
     .DEBUG,.INFO    => stdout,
     .WARNING,.ERROR => stderr,
@@ -77,12 +87,11 @@ pub const Logger = struct
   {
     var self: @This () = .{ .allocator = allocator, };
 
-    if (Logger.build.profile.gt (.TURBO))
+    if (Logger.build.profile.gt (.TURBO) and access (Logger.build.log.dir))
     {
-      std.debug.print ("{s}\n", .{Logger.build.path});
-      try create_file (Logger.build.path);
+      try create_file (Logger.build.log.path);
 
-      self.file = try std.fs.openFileAbsolute (Logger.build.path, .{ .mode = .write_only, });
+      self.file = try std.fs.openFileAbsolute (Logger.build.log.path, .{ .mode = .write_only, });
       try self.app (.DEBUG, "log file init OK", .{});
     }
 
@@ -101,7 +110,8 @@ pub const Logger = struct
 
   fn now (self: @This ()) ![] const u8
   {
-    if (Logger.build.profile.gt (.TURBO)) return "X" ** 29;
+    if (Logger.build.profile.eql (.TURBO) or !access (Logger.build.log.dir))
+      return "X" ** 29;
 
     const ns_ts = std.time.nanoTimestamp ();
     const instant = @import ("datetime").datetime.Datetime.fromTimestamp (@intCast (@divFloor (ns_ts, std.time.ns_per_ms)));
@@ -116,39 +126,41 @@ pub const Logger = struct
     );
   }
 
-  fn header (self: @This (), lvl: Level, caller: [*:0] const u8, event: ?Event) ![] const u8
+  fn header (self: @This (), level: Level, caller: [*:0] const u8, event: ?Event) ![] const u8
   {
     return try std.fmt.allocPrint (self.allocator.*, "[{s}: {s} {s}{s}{s}]",
-      .{ try self.now (), caller, @tagName (lvl), if (event) |_| " " else "",
+      .{ try self.now (), caller, @tagName (level), if (event) |_| " " else "",
          if (event) |e| @tagName (e) else "", });
   }
 
-  fn write (self: @This (), caller: [*:0] const u8, lvl: Level,
+  fn write (self: @This (), caller: [*:0] const u8, level: Level,
     event: ?Event, comptime format: [] const u8, args: anytype) !void
   {
     const message = try std.fmt.allocPrint (self.allocator.*, format, args);
-    const head = try self.header (lvl, caller, event);
+    const head = try self.header (level, caller, event);
     var entry = try std.fmt.allocPrint (self.allocator.*, "{s} {s}\n", .{ head, message, });
 
-    try print (lvl, entry);
+    try print (level, try std.fmt.allocPrint (self.allocator.*, "{s}{s}", .{ entry [0 .. 1], entry [32 ..], }));
 
-    try self.file.?.seekFromEnd (0);
-    entry = try std.fmt.allocPrint (self.allocator.*, "{s}{s}\n", .{ entry [0 .. 1], entry [32 ..], });
-    _ = try self.file.?.writeAll (entry);
+    if (access (Logger.build.log.path))
+    {
+      try self.file.?.seekFromEnd (0);
+      _ = try self.file.?.writeAll (entry);
+    }
   }
 
-  fn allows (lvl: Level, min: Level) bool
+  fn allows (level: Level, min: Level) bool
   {
-    return (Logger.build.profile.eql (.DEV) or (Logger.build.profile.eql (.DEFAULT) and lvl.ge (min)));
+    return (Logger.build.profile.eql (.DEV) or (Logger.build.profile.eql (.DEFAULT) and level.ge (min)));
   }
 
-  pub fn vk (self: @This (), lvl: Level, event: Event, comptime format: [] const u8, args: anytype) !void
+  pub fn vk (self: @This (), level: Level, event: Event, comptime format: [] const u8, args: anytype) !void
   {
-    if (allows (lvl, .WARNING)) try self.write ("vulkan", lvl, event, format, args);
+    if (allows (level, .WARNING)) try self.write ("vulkan", level, event, format, args);
   }
 
-  pub fn app (self: @This (), lvl: Level, comptime format: [] const u8, args: anytype) !void
+  pub fn app (self: @This (), level: Level, comptime format: [] const u8, args: anytype) !void
   {
-    if (allows (lvl, .INFO)) try self.write (Logger.build.binary.name, lvl, null, format, args);
+    if (allows (level, .INFO)) try self.write (Logger.build.binary.name, level, null, format, args);
   }
 };

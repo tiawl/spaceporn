@@ -8,6 +8,7 @@ const shaders = @import ("build/shaders.zig");
 
 const utils = @import ("build/utils.zig");
 const Options = utils.Options;
+const Package = utils.Package;
 const Profile = utils.Profile;
 const zon = utils.zon;
 
@@ -132,7 +133,7 @@ fn parse_options (builder: *std.Build) !Profile
   return profile;
 }
 
-fn link (builder: *std.Build, profile: *const Profile) !*std.Build.Module
+fn link (builder: *std.Build, profile: *const Profile) !*Package
 {
   const glfw_lib = glfw.lib (builder, profile);
 
@@ -142,17 +143,20 @@ fn link (builder: *std.Build, profile: *const Profile) !*std.Build.Module
   });
   const cimgui = imgui_dep.artifact ("cimgui");
 
-  const c = builder.createModule (.{
-    .root_source_file = .{ .path = try builder.build_root.join (
-      builder.allocator, &.{ "src", "binding", "raw.zig", }), },
-    .target = profile.target,
-    .optimize = profile.optimize,
-  });
-  c.linkLibrary (glfw_lib);
-  c.linkLibrary (cimgui);
-  c.addIncludePath (imgui_dep.path ("imgui"));
+  const c = try Package.init (builder, profile, "c", try builder.build_root.join (
+    builder.allocator, &.{ "src", "binding", "raw.zig", }));
+  c.link (glfw_lib);
+  c.link (cimgui);
+  c.include (imgui_dep.path ("imgui"));
 
   return c;
+}
+
+fn manage_deps (glfw_pkg: *Package, vk_pkg: *Package) !void
+{
+  try glfw_pkg.get ("window").put (vk_pkg.get ("instance"), .{});
+  try glfw_pkg.get ("window").put (vk_pkg.get ("khr").get ("surface"), .{});
+  try vk_pkg.put (glfw_pkg.get ("vk"), .{ .pkg_name = "glfw", });
 }
 
 fn import (builder: *std.Build, exe: *std.Build.Step.Compile,
@@ -166,10 +170,11 @@ fn import (builder: *std.Build, exe: *std.Build.Step.Compile,
 
   const shaders_module = try shaders.import (builder, exe, profile);
   const c = try link (builder, profile);
-  const glfw_module = try glfw.import (builder, profile, c);
-  const vk_module = try vk.import (builder, profile, c);
-  const imgui_module =
-    try imgui.import (builder, profile, c, glfw_module, vk_module);
+  const glfw_pkg = try glfw.import (builder, profile, c);
+  const vk_pkg = try vk.import (builder, profile, c);
+  const imgui_pkg = try imgui.import (builder, profile, c, glfw_pkg, vk_pkg);
+
+  try manage_deps (glfw_pkg, vk_pkg);
 
   const build_options = profile.variables.createModule ();
   const logger = builder.createModule (.{
@@ -189,14 +194,14 @@ fn import (builder: *std.Build, exe: *std.Build.Step.Compile,
     .optimize = profile.optimize,
   });
   instance.addImport ("logger", logger);
-  instance.addImport ("vk", vk_module);
+  instance.addImport ("vk", vk_pkg.module);
 
   for ([_] struct { name: [] const u8, ptr: *std.Build.Module, } {
     .{ .name = "datetime", .ptr = datetime, },
     .{ .name = "shader", .ptr = shaders_module, },
-    .{ .name = "glfw", .ptr = glfw_module, },
-    .{ .name = "vk", .ptr = vk_module, },
-    .{ .name = "imgui", .ptr = imgui_module, },
+    .{ .name = "glfw", .ptr = glfw_pkg.module, },
+    .{ .name = "vk", .ptr = vk_pkg.module, },
+    .{ .name = "imgui", .ptr = imgui_pkg.module, },
     .{ .name = "logger", .ptr = logger, },
     .{ .name = "instance", .ptr = instance, },
   }) |module| exe.root_module.addImport (module.name, module.ptr);

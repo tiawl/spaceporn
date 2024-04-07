@@ -13,7 +13,8 @@ pub const Frame = struct
 pub fn init () !void
 {
   const window = try glfw.Context.get ();
-  if (!c.cImGui_ImplGlfw_InitForVulkan (@ptrCast (window), true)) return error.ImGuiGlfwInitForVulkanFailure;
+  if (!c.cImGui_ImplGlfw_InitForVulkan (@ptrCast (window), true))
+    return error.ImGuiGlfwInitForVulkanFailure;
 }
 
 pub fn shutdown () void

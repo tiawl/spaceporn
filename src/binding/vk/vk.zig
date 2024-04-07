@@ -1,6 +1,8 @@
-const std     = @import ("std");
-const builtin = @import ("builtin");
-const c       = @import ("c");
+const std  = @import ("std");
+const c    = @import ("c");
+const glfw = .{
+  .vk = @import ("glfw"),
+};
 
 const vk = @This ();
 
@@ -8,29 +10,12 @@ const raw = @import ("raw");
 pub const EXT = @import ("ext");
 pub const KHR = @import ("khr");
 
-pub const call_conv: std.builtin.CallingConvention =
-  if (builtin.os.tag == .windows and builtin.cpu.arch == .x86)
-    .Stdcall
-  else if (builtin.abi == .android and
-    (builtin.cpu.arch.isARM () or builtin.cpu.arch.isThumb ()) and
-    std.Target.arm.featureSetHas (builtin.cpu.features, .has_v7) and
-    builtin.cpu.arch.ptrBitWidth () == 32)
-      // On Android 32-bit ARM targets, Vulkan functions use the "hardfloat"
-      // calling convention, i.e. float parameters are passed in registers. This
-      // is true even if the rest of the application passes floats on the stack,
-      // as it does by default when compiling for the armeabi-v7a NDK ABI.
-      .AAPCSVFP
-  else
-    .C;
-
 pub fn load () !void
 {
-  const loader: *const fn (vk.Instance, [*:0] const u8) callconv (vk.call_conv) ?*const fn () callconv (vk.call_conv) void =
-    @ptrCast (&c.glfwGetInstanceProcAddress);
   inline for (std.meta.fields (@TypeOf (raw.prototypes.structless))) |field|
   {
     const name: [*:0] const u8 = @ptrCast (field.name ++ "\x00");
-    const pointer = loader (vk.Instance.NULL_HANDLE, name) orelse
+    const pointer = glfw.vk.Instance.ProcAddress.get (null, name) orelse
       return error.CommandLoadFailure;
     @field (raw.prototypes.structless, field.name) = @ptrCast (pointer);
   }
@@ -75,11 +60,11 @@ pub const Access = extern struct
 pub const AllocationCallbacks = extern struct
 {
   p_user_data: ?*anyopaque = null,
-  pfn_allocation: ?*const fn (?*anyopaque, usize, usize, vk.SystemAllocationScope) callconv (vk.call_conv) ?*anyopaque,
-  pfn_reallocation: ?*const fn (?*anyopaque, ?*anyopaque, usize, usize, vk.SystemAllocationScope) callconv (vk.call_conv) ?*anyopaque,
-  pfn_free: ?*const fn (?*anyopaque, ?*anyopaque) callconv (vk.call_conv) void,
-  pfn_internal_allocation: ?*const fn (?*anyopaque, usize, vk.InternalAllocationType, vk.SystemAllocationScope) callconv (vk.call_conv) void = null,
-  pfn_internal_free: ?*const fn (?*anyopaque, usize, vk.InternalAllocationType, vk.SystemAllocationScope) callconv (vk.call_conv) void = null,
+  pfn_allocation: ?*const fn (?*anyopaque, usize, usize, vk.SystemAllocationScope) callconv (c.call_conv) ?*anyopaque,
+  pfn_reallocation: ?*const fn (?*anyopaque, ?*anyopaque, usize, usize, vk.SystemAllocationScope) callconv (c.call_conv) ?*anyopaque,
+  pfn_free: ?*const fn (?*anyopaque, ?*anyopaque) callconv (c.call_conv) void,
+  pfn_internal_allocation: ?*const fn (?*anyopaque, usize, vk.InternalAllocationType, vk.SystemAllocationScope) callconv (c.call_conv) void = null,
+  pfn_internal_free: ?*const fn (?*anyopaque, usize, vk.InternalAllocationType, vk.SystemAllocationScope) callconv (c.call_conv) void = null,
 };
 
 pub const ApplicationInfo = extern struct

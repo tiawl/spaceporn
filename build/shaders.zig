@@ -19,7 +19,7 @@ fn add (builder: *std.Build, exe: *std.Build.Step.Compile, profile: *const Profi
   depth.* += 1;
   if (std.mem.eql (u8, entry.basename, dupe))
   {
-    const path = try builder.allocator.dupe (u8, entry.path);
+    const path = builder.dupe (entry.path);
     const source = try glsl.readFileAlloc (builder.allocator, path, std.math.maxInt (usize));
     try ptr.nodes.append (.{
       .name = std.fs.path.extension (dupe) [1 ..],

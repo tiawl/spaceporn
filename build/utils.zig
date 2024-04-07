@@ -21,6 +21,52 @@ pub const Profile = struct
   command:   [] const [] const u8,
 };
 
+pub const Package = struct
+{
+  name: [] const u8,
+  module: *std.Build.Module,
+  subs: std.StringHashMap (*@This ()),
+
+  pub fn init (builder: *std.Build, profile: *const Profile,
+    name: [] const u8, path: [] const u8) !*@This ()
+  {
+    const self = try builder.allocator.create (@This ());
+    self.name = name;
+    self.module = builder.createModule (.{
+      .root_source_file = .{ .path = path, },
+      .target = profile.target,
+      .optimize = profile.optimize,
+    });
+    self.subs = std.StringHashMap (*@This ()).init (builder.allocator);
+    return self;
+  }
+
+  pub fn get (self: @This (), key: [] const u8) *@This ()
+  {
+    return self.subs.get (key) orelse
+      std.debug.panic ("\"{s}\" module does not exist into \"{s}\" package",
+        .{ key, self.name, });
+  }
+
+  pub fn put (self: *@This (), pkg: *@This (),
+    optional: struct { pkg_name: ?[] const u8 = null, }) !void
+  {
+    const name = if (optional.pkg_name) |n| n else pkg.name;
+    self.module.addImport (name, pkg.module);
+    try self.subs.put (name, pkg);
+  }
+
+  pub fn link (self: @This (), lib: *std.Build.Step.Compile) void
+  {
+    self.module.linkLibrary (lib);
+  }
+
+  pub fn include (self: @This (), path: std.Build.LazyPath) void
+  {
+    self.module.addIncludePath (path);
+  }
+};
+
 // Create a hash from a shader's source contents.
 pub fn digest (profile: ?*const Profile, source: [] u8) [64] u8
 {

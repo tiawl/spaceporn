@@ -5,7 +5,8 @@ const digest = utils.digest;
 const Package = utils.Package;
 const Profile = utils.Profile;
 
-fn generate_literals (builder: *std.Build) ![] const u8
+fn generate_literals (builder: *std.Build,
+  profile: *const Profile) ![] const u8
 {
   builder.cache_root.handle.makeDir ("prototypes") catch |err|
   {
@@ -60,6 +61,10 @@ fn generate_literals (builder: *std.Build) ![] const u8
       {
         if (std.mem.startsWith (u8,
             binding.buffer.items [token.loc.start .. token.loc.end], "vk") and
+          (!profile.options.turbo or (profile.options.turbo and
+            std.mem.indexOf (u8,
+              binding.buffer.items [token.loc.start .. token.loc.end],
+              "Debug") == null)) and
           precedent [0].?.tag == .period and precedent [2].?.tag == .period and
           precedent [4].?.tag == .period and
           std.mem.eql (u8, binding.buffer.items [precedent [3].?.loc.start ..
@@ -139,7 +144,7 @@ pub fn import (builder: *std.Build, profile: *const Profile,
   try vk.put (c, .{});
 
   const literals = try Package.init (builder, profile, "literals",
-    try generate_literals (builder));
+    try generate_literals (builder, profile));
 
   var raw = try Package.init (builder, profile, "raw",
     try std.fs.path.join (builder.allocator, &.{ path, "raw.zig", }));

@@ -69,11 +69,9 @@ pub const instance_vk = struct
     return true;
   }
 
-  fn check_layer_properties (self: *@This ()) !void
+  fn check_layer_properties (self: @This ()) !void
   {
     var available_layers_count: u32 = undefined;
-
-    try vk.load ();
 
     try vk.Instance.LayerProperties.enumerate (&available_layers_count, null);
 
@@ -118,7 +116,7 @@ pub const instance_vk = struct
       "check Vulkan layer properties initializer OK", .{});
   }
 
-  fn init_debug_info (self: *@This (),
+  fn init_debug_info (self: @This (),
     debug_info: *vk.EXT.DebugUtils.Messenger.Create.Info) void
   {
     const use_features = blk:
@@ -168,20 +166,20 @@ pub const instance_vk = struct
           break :blk 0;
         },
       .pfn_user_callback = @ptrCast (&debug_callback),
-      // TODO
+      // TODO: remove @constCast
       .p_user_data       = @constCast (self.logger),
       .p_next            = if (use_features) @ptrCast (&features) else null,
     };
   }
 
   fn check_extension_properties (self: *@This (),
-    debug_info: *vk.EXT.DebugUtils.Messenger.Create.Info) !void
+    init_extensions: *[][*:0] const u8) ![][*:0] const u8
   {
     var extensions = try std.ArrayList ([*:0] const u8).initCapacity (
       self.logger.allocator.*,
-      self.extensions.len + required_extensions.len + optional_extensions.len);
+      init_extensions.len + required_extensions.len + optional_extensions.len);
 
-    try extensions.appendSlice(self.extensions);
+    try extensions.appendSlice (init_extensions.*);
 
     var supported_extensions_count: u32 = undefined;
 
@@ -246,9 +244,23 @@ pub const instance_vk = struct
       }
     }
 
-    self.extensions = extensions.items;
+    try self.logger.app (.DEBUG,
+      "check Vulkan extension properties initializer OK", .{});
 
-    self.init_debug_info (debug_info);
+    return extensions.items;
+  }
+
+  pub fn init (extensions: *[][*:0] const u8, logger: *const Logger) !@This ()
+  {
+    var self: @This () = .{ .logger = logger, };
+
+    try vk.load ();
+
+    try self.check_layer_properties ();
+    self.extensions = try self.check_extension_properties (extensions);
+
+    var debug_info: vk.EXT.DebugUtils.Messenger.Create.Info = undefined;
+    self.init_debug_info (&debug_info);
 
     const app_info = vk.ApplicationInfo
     {
@@ -266,33 +278,17 @@ pub const instance_vk = struct
     {
       .enabled_layer_count        = required_layers.len,
       .pp_enabled_layer_names     = required_layers [0 ..].ptr,
-      .p_next                     = debug_info,
+      .p_next                     = &debug_info,
       .p_application_info         = &app_info,
       .enabled_extension_count    = @intCast (self.extensions.len),
       .pp_enabled_extension_names = self.extensions [0 ..].ptr,
     };
 
     self.instance = try vk.Instance.create (&create_info);
-
-    try self.logger.app (.DEBUG,
-      "check Vulkan extension properties initializer OK", .{});
-  }
-
-  pub fn init (extensions: *[][*:0] const u8, logger: *const Logger) !@This ()
-  {
-    var self: @This () = .{ .logger = logger, };
-
-    var debug_info: vk.EXT.DebugUtils.Messenger.Create.Info = undefined;
-
-    self.extensions = extensions.*;
-
-    try check_layer_properties (&self);
-    try check_extension_properties (&self, &debug_info);
-
-    try self.instance.load ();
     errdefer self.instance.destroy ();
 
-    self.init_debug_info (&debug_info);
+    try self.instance.load ();
+
     self.debug_messenger =
       try vk.EXT.DebugUtils.Messenger.create (self.instance, &debug_info);
     errdefer self.debug_messenger.destroy (self.instance);

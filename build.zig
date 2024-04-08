@@ -30,6 +30,9 @@ fn requirements () !void
 
 fn turbo (builder: *std.Build, profile: *Profile) !void
 {
+  // Keep this for debug purpose
+  // profile.optimize = .Debug;
+  // profile.variables.addOption (u8, "log_level", 2);
   profile.optimize = .ReleaseFast;
   profile.variables.addOption ([] const u8, "log_dir", "");
   profile.variables.addOption (u8, "log_level", 0);

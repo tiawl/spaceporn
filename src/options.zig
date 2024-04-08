@@ -71,18 +71,6 @@ pub const Options = struct
   colors:  colors_options                        = colors_options {},
   stars:   stars_options                         = stars_options {},
 
-  const OptionsError = error
-  {
-    NoExecutableName,
-    MissingArgument,
-    UnknownOption,
-    UnknownArgument,
-    ZeroIntegerArgument,
-    OverflowArgument,
-    Help,
-    Version,
-  };
-
   fn usage_help (self: *@This ()) void
   {
     _ = self;
@@ -229,7 +217,7 @@ pub const Options = struct
       } else {
         try logger.app (.ERROR, "unknown option: '{s}'", .{ options.items [index] });
         self.usage ();
-        return OptionsError.UnknownOption;
+        return error.UnknownOption;
       }
 
       index += 1;
@@ -258,7 +246,7 @@ pub const Options = struct
 
     _ = options_iterator.next () orelse
         {
-          return OptionsError.NoExecutableName;
+          return error.NoExecutableName;
         };
 
     var options = std.ArrayList ([] const u8).init (logger.allocator.*);
@@ -274,10 +262,10 @@ pub const Options = struct
     if (self.help)
     {
       self.usage ();
-      return OptionsError.Help;
+      return error.Help;
     } else if (self.version) {
       Logger.version ();
-      return OptionsError.Version;
+      return error.Version;
     }
 
     self.fix_random ();

@@ -51,15 +51,6 @@ pub const Context = struct
     vk.KHR.SWAPCHAIN,
   };
 
-  const ContextError = error
-  {
-    NoDevice,
-    NoSuitableDevice,
-    NoSuitableMemoryType,
-    ImageAcquireFailed,
-    NoAvailableFilename,
-  };
-
   logger:                           *const Logger = undefined,
   instance:                         instance_vk = undefined,
   surface:                          vk.KHR.Surface = undefined,
@@ -665,7 +656,7 @@ pub const Context = struct
     try vk.PhysicalDevices.enumerate (self.instance.instance, &device_count,
       null);
 
-    if (device_count == 0) return ContextError.NoDevice;
+    if (device_count == 0) return error.NoDevice;
 
     const devices = try self.logger.allocator.alloc (vk.PhysicalDevice,
       device_count);
@@ -689,7 +680,7 @@ pub const Context = struct
     }
 
     if (max_score == 0 or self.physical_device == null)
-      return ContextError.NoSuitableDevice;
+      return error.NoSuitableDevice;
 
     try self.logger.app (.DEBUG, "pick a {d}/{d} Vulkan physical device OK",
       .{ max_score, MAX_DEVICE_SCORE, });
@@ -956,7 +947,7 @@ pub const Context = struct
       }
     }
 
-    return ContextError.NoSuitableMemoryType;
+    return error.NoSuitableMemoryType;
   }
 
   fn init_offscreen (self: *@This ()) !void
@@ -2128,7 +2119,7 @@ pub const Context = struct
       id += 1;
     }
 
-    if (!available) return ContextError.NoAvailableFilename;
+    if (!available) return error.NoAvailableFilename;
 
     filename = try std.fmt.allocPrint (allocator, "{s}.ppm", .{ filename, });
     return filename;

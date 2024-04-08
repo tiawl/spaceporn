@@ -41,12 +41,6 @@ pub const instance_vk = struct
     break :blk &optionals;
   };
 
-  const InitVkError = error
-  {
-    ExtensionNotSupported,
-    LayerNotAvailable,
-  };
-
   fn debug_callback (
     message_severity: vk.EXT.DebugUtils.Message.Severity.Flags,
     message_type:     vk.EXT.DebugUtils.Message.Type.Flags,
@@ -114,7 +108,7 @@ pub const instance_vk = struct
       } else {
         try self.logger.app (.ERROR, "{s} required layer is not available",
           .{ layer });
-        return InitVkError.LayerNotAvailable;
+        return error.LayerNotAvailable;
       }
 
       flag = false;
@@ -224,7 +218,7 @@ pub const instance_vk = struct
       {
         try self.logger.app (.ERROR,
           "{s} required extension is not supported", .{ required_ext });
-        return InitVkError.ExtensionNotSupported;
+        return error.ExtensionNotSupported;
       }
     }
 

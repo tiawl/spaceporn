@@ -36,21 +36,20 @@ pub const Frame = struct
 
 pub const InitInfo = struct
 {
-  Instance:              vk.Instance,
-  PhysicalDevice:        vk.PhysicalDevice,
-  Device:                vk.Device,
-  QueueFamily:           u32,
-  Queue:                 vk.Queue,
-  PipelineCache:         vk.Pipeline.Cache,
-  DescriptorPool:        vk.Descriptor.Pool,
-  Subpass:               u32,
-  MinImageCount:         u32,
-  ImageCount:            u32,
-  MSAASamples:           c_uint,
-  UseDynamicRendering:   bool,
-  ColorAttachmentFormat: i32,
-  Allocator:             [*c] const vk.AllocationCallbacks,
-  CheckVkResultFn:       ?*const fn (c_int) callconv (c.call_conv) void,
+  instance:              vk.Instance,
+  physical_device:       vk.PhysicalDevice,
+  device:                vk.Device,
+  queue_family:          u32,
+  queue:                 vk.Queue,
+  pipeline_cache:        vk.Pipeline.Cache,
+  descriptor_pool:       vk.Descriptor.Pool,
+  render_pass:           vk.RenderPass,
+  subpass:               u32,
+  min_image_count:       u32,
+  image_count:           u32,
+  msaa_samples:          c_uint,
+  use_dynamic_rendering: bool,
+  check_vk_result_fn:    ?*const fn (c_int) callconv (c.call_conv) void,
 };
 
 fn loader (function_name: [*c] const u8, instance: ?*anyopaque)
@@ -67,7 +66,26 @@ pub fn load () !void
 
 pub fn init (init_info: *imgui.vk.InitInfo) !void
 {
-  if (!c.cImGui_ImplVulkan_Init (@ptrCast (init_info)))
+  var c_init_info = c.ImGui_ImplVulkan_InitInfo
+  {
+    .Instance = @ptrFromInt (@intFromEnum (init_info.instance)),
+    .PhysicalDevice = @ptrFromInt (@intFromEnum (init_info.physical_device)),
+    .Device = @ptrFromInt (@intFromEnum (init_info.device)),
+    .QueueFamily = init_info.queue_family,
+    .Queue = @ptrFromInt (@intFromEnum (init_info.queue)),
+    .DescriptorPool = @ptrFromInt (@intFromEnum (init_info.descriptor_pool)),
+    .RenderPass = @ptrFromInt (@intFromEnum (init_info.render_pass)),
+    .MinImageCount = init_info.min_image_count,
+    .ImageCount = init_info.image_count,
+    .MSAASamples = init_info.msaa_samples,
+    .PipelineCache = @ptrFromInt (@intFromEnum (init_info.pipeline_cache)),
+    .Subpass = init_info.subpass,
+    .UseDynamicRendering = init_info.use_dynamic_rendering,
+    .Allocator = null,
+    .CheckVkResultFn = init_info.check_vk_result_fn,
+  };
+
+  if (!c.cImGui_ImplVulkan_Init (&c_init_info))
     return error.ImGuiVulkanInitFailure;
 }
 

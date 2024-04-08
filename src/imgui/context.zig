@@ -111,21 +111,20 @@ pub const Context = struct
   {
     var init_info = imgui.vk.InitInfo
     {
-      .Instance              = renderer.instance,
-      .PhysicalDevice        = renderer.physical_device,
-      .Device                = renderer.logical_device,
-      .QueueFamily           = renderer.graphics_family,
-      .Queue                 = renderer.graphics_queue,
-      .PipelineCache         = .NULL_HANDLE,
-      .DescriptorPool        = renderer.descriptor_pool,
-      .Subpass               = 0,
-      .MinImageCount         = 2,
-      .ImageCount            = 2,
-      .MSAASamples           = @intFromEnum (vk.Sample.Count.Bit.@"1"),
-      .UseDynamicRendering   = false,
-      .ColorAttachmentFormat = @intFromEnum (vk.Format.UNDEFINED),
-      .Allocator             = null,
-      .CheckVkResultFn       = check_vk_result,
+      .instance              = renderer.instance,
+      .physical_device       = renderer.physical_device,
+      .device                = renderer.logical_device,
+      .queue_family          = renderer.graphics_family,
+      .queue                 = renderer.graphics_queue,
+      .pipeline_cache        = .NULL_HANDLE,
+      .descriptor_pool       = renderer.descriptor_pool,
+      .render_pass           = renderer.render_pass,
+      .subpass               = 0,
+      .min_image_count       = 2,
+      .image_count           = 2,
+      .msaa_samples          = @intFromEnum (vk.Sample.Count.Bit.@"1"),
+      .use_dynamic_rendering = false,
+      .check_vk_result_fn    = check_vk_result,
     };
 
     try imgui.vk.load ();

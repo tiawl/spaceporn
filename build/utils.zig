@@ -1,6 +1,6 @@
 const std = @import ("std");
 
-const ShaderCompileOptions = @import ("shaders/options.zig").Options;
+const shaders_compile = @import ("shaders/step.zig");
 
 pub const zon = .{ .name = "spaceporn", .version = "0.1.0", .min_zig_version = "0.11.0", };
 
@@ -20,7 +20,7 @@ pub const Profile = struct
   optimize:        std.builtin.OptimizeMode,
   variables:       *std.Build.Step.Options,
   options:         Options,
-  compile_options: ShaderCompileOptions,
+  compile_options: shaders_compile.Options,
 };
 
 pub const Package = struct
@@ -70,7 +70,7 @@ pub const Package = struct
 };
 
 // Create a hash from a shader's source contents.
-pub fn digest (options: ?*const ShaderCompileOptions, source: [] u8) [64] u8
+pub fn digest (options: ?shaders_compile.Options, source: [] u8) [64] u8
 {
   var hasher = std.crypto.hash.blake2.Blake2b384.init (.{});
 
@@ -81,10 +81,10 @@ pub fn digest (options: ?*const ShaderCompileOptions, source: [] u8) [64] u8
   // Not only the shader source must be the same to ensure uniqueness the compile command, too.
   if (options) |o|
   {
-    inline for (std.meta.fields (@TypeOf (o.*))) |field|
+    inline for (std.meta.fields (@TypeOf (o))) |field|
     {
       hasher.update (field.name);
-      hasher.update (@tagName (@field (o.*, field.name)));
+      hasher.update (@tagName (@field (o, field.name)));
     }
   }
 

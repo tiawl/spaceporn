@@ -14,9 +14,9 @@
       .url = "https://github.com/tiawl/glfw.zig/archive/refs/tags/3.4.tar.gz",
       .hash = "1220cae93f3e4476db397a438fbfb3aadce9da67feb6bb0e6dd87c75d861fea9257d",
     },
-    .shaderc = .{
-      .url = "git+https://github.com/tiawl/shaderc.zig#43be56d5c2f7958f2790ddad74b32c7de25f615c",
-      .hash = "1220b01d6cb3db77ada6029d92b49cc47111cde29c8109545f31adcd978f7ef2eee3",
+    .glslang = .{
+      .url = "https://github.com/tiawl/glslang.zig/archive/refs/tags/1.3.280.tar.gz",
+      .hash = "1220e85fbf78e71b8005076c5da4d13eddade60450f13c9c01468948db8dbe6be00f",
     },
     .@"zig-datetime" = .{
       .url = "https://github.com/frmdstryr/zig-datetime/archive/a9c75242dfc119a305c1381c2352d2fc16b2e0aa.tar.gz",

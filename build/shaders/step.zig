@@ -3,8 +3,6 @@ const std = @import ("std");
 const utils = @import ("../utils.zig");
 const digest = utils.digest;
 
-const Options = @import ("options.zig").Options;
-
 const Node = struct
 {
   name: [] const u8,
@@ -13,16 +11,33 @@ const Node = struct
   depth: usize = 0,
 };
 
+pub const Options = struct
+{
+  pub const Optimization = enum
+  {
+    Zero,
+    Performance,
+  };
+
+  pub const VulkanEnvVersion = enum
+  {
+    @"0", @"1", @"2", @"3",
+  };
+
+  optimization: Optimization,
+  vulkan_env_version: VulkanEnvVersion,
+};
+
 pub const Step = struct
 {
   step: std.Build.Step,
   shader_compiler: *std.Build.Step.Run,
   generated_file: std.Build.GeneratedFile,
-  options: *const Options,
+  options: Options,
   tree: Node,
 
   pub fn create (dependency: *std.Build.Dependency,
-    options: *const Options) *@This ()
+    options: Options) *@This ()
   {
     const builder = dependency.builder;
     const self = builder.allocator.create (@This ()) catch unreachable;
@@ -83,8 +98,13 @@ pub const Step = struct
         return;
       }
 
-      self.shader_compiler.addArgs (&.{ in, out, });
-      for (self.options.to_args ()) |arg| self.shader_compiler.addArg (arg);
+      for ([_][] const u8 {
+        in, out,
+        @tagName (self.options.optimization),
+        @tagName (self.options.vulkan_env_version),
+      }) |arg| self.shader_compiler.addArg (arg);
+
+      self.shader_compiler.addCheck (.{ .expect_stderr_exact = "", });
 
       try self.shader_compiler.step.makeFn (&self.shader_compiler.step,
         progress_node);
@@ -209,7 +229,7 @@ pub const Step = struct
   }
 
   pub fn compileModule (dependency: *std.Build.Dependency,
-    options: *const Options) *std.Build.Module
+    options: Options) *std.Build.Module
   {
     const step = create (dependency, options);
     const builder = dependency.builder;

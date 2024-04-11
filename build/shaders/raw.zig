@@ -1,3 +1,3 @@
 pub usingnamespace @cImport ({
-  @cInclude ("shaderc/shaderc.h");
+  @cInclude ("glslang/Include/glslang_c_interface.h");
 });

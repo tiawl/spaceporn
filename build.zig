@@ -4,8 +4,7 @@ const zig_version = @import ("builtin").zig_version;
 const glfw = @import ("build/glfw.zig");
 const vk = @import ("build/vk.zig");
 const imgui = @import ("build/imgui.zig");
-const ShaderCompileStep = @import ("build/shaders/step.zig").Step;
-const ShaderCompileOptions = @import ("build/shaders/options.zig").Options;
+const shaders_compile = @import ("build/shaders/step.zig");
 
 const utils = @import ("build/utils.zig");
 const Options = utils.Options;
@@ -43,7 +42,7 @@ fn turbo (profile: *Profile) !void
   profile.compile_options = .{
     .optimization = .Performance,
     .vulkan_env_version = std.meta.stringToEnum (
-      ShaderCompileOptions.VulkanEnvVersion, profile.options.vkminor).?,
+      shaders_compile.Options.VulkanEnvVersion, profile.options.vkminor).?,
   };
 }
 
@@ -71,7 +70,7 @@ fn dev (builder: *std.Build, profile: *Profile) !void
   profile.compile_options = .{
     .optimization = .Zero,
     .vulkan_env_version = std.meta.stringToEnum (
-      ShaderCompileOptions.VulkanEnvVersion, profile.options.vkminor).?,
+      shaders_compile.Options.VulkanEnvVersion, profile.options.vkminor).?,
   };
 }
 
@@ -87,7 +86,7 @@ fn default (builder: *std.Build, profile: *Profile) !void
   profile.compile_options = .{
     .optimization = .Zero,
     .vulkan_env_version = std.meta.stringToEnum (
-      ShaderCompileOptions.VulkanEnvVersion,
+      shaders_compile.Options.VulkanEnvVersion,
       profile.options.vkminor).?,
   };
 }
@@ -232,11 +231,11 @@ fn run_shader_compiler (builder: *std.Build,
     .optimize = .Debug,
   });
 
-  const shaderc_dep = builder.dependency ("shaderc", .{
+  const glslang_dep = builder.dependency ("glslang", .{
     .target = profile.target,
     .optimize = profile.optimize,
   });
-  const shaderc = shaderc_dep.artifact ("shaderc");
+  const glslang = glslang_dep.artifact ("glslang");
 
   const c = builder.createModule (.{
     .root_source_file = .{ .path = try builder.build_root.join (
@@ -244,7 +243,7 @@ fn run_shader_compiler (builder: *std.Build,
     .target = builder.host,
     .optimize = .Debug,
   });
-  c.linkLibrary (shaderc);
+  c.linkLibrary (glslang);
   shader_compiler.root_module.addImport ("c", c);
 
   const install_shader_compiler =
@@ -254,8 +253,8 @@ fn run_shader_compiler (builder: *std.Build,
 
   var self_dependency = std.Build.Dependency { .builder = builder, };
 
-  const shaders_module = ShaderCompileStep.compileModule (
-    &self_dependency, &profile.compile_options);
+  const shaders_module = shaders_compile.Step.compileModule (
+    &self_dependency, profile.compile_options);
 
   const shader_compile_step = builder.addRunArtifact (shader_compiler);
 

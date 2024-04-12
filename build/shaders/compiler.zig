@@ -1,8 +1,6 @@
 const std = @import ("std");
 const c = @import ("c");
 
-extern fn glslang_default_resource () callconv (.C) *const c.glslang_resource_t;
-
 const Stage = enum (c.glslang_stage_t)
 {
   vert = c.GLSLANG_STAGE_VERTEX,
@@ -30,7 +28,7 @@ fn include_local (context: ?*anyopaque, header_name: [*c] const u8,
 
   const result = std.heap.c_allocator.create (c.glsl_include_result_t) catch @panic ("oom");
 
-  const includer_name_span = std.mem.span (@as([*:0]const u8, @ptrCast (includer_name)));
+  const includer_name_span = std.mem.span (@as ([*:0]const u8, @ptrCast (includer_name)));
   const header_name_span = std.mem.span (@as ([*:0]const u8, @ptrCast (header_name)));
 
   const includer_dir_relative = std.fs.path.dirname (includer_name_span) orelse "";
@@ -75,22 +73,27 @@ pub fn main () !void
   const in = it.next ().?;
   const out = it.next ().?;
   const optimization = std.meta.stringToEnum (Optimization, it.next ().?).?;
-  const env_version = std.meta.stringToEnum (VulkanEnvVersion, it.next ().?).?;
-  const stage = @intFromEnum (std.meta.stringToEnum (Stage, in [in.len - 4 ..]).?);
+  const env_version =
+    @intFromEnum (std.meta.stringToEnum (VulkanEnvVersion, it.next ().?).?);
+  const stage =
+    @intFromEnum (std.meta.stringToEnum (Stage, in [in.len - 4 ..]).?);
+
+  std.log.info ("Compiling {s} into {s}", .{ in, out, });
 
   var context = .{ .dir = std.fs.path.dirname (in).?, };
 
   var dir = try std.fs.openDirAbsolute (context.dir, .{});
   defer dir.close ();
 
-  const source =
-    try dir.readFileAlloc (allocator, in, std.math.maxInt (usize));
+  const source = try dir.readFileAllocOptions (
+    allocator, in, std.math.maxInt (usize), null, 1, 0);
 
   if (c.glslang_initialize_process () == 0)
     return error.FailedToInitializeProcess;
-  defer c.glslang_finalize_process();
+  defer c.glslang_finalize_process ();
 
-  var input = .{
+  var input = c.struct_glslang_input_s
+  {
     .language = c.GLSLANG_SOURCE_GLSL,
     .stage = stage,
     .client = c.GLSLANG_CLIENT_VULKAN,
@@ -104,13 +107,13 @@ pub fn main () !void
     .forward_compatible = @intFromBool (false),
     .messages = c.GLSLANG_MSG_DEFAULT_BIT | c.GLSLANG_MSG_DEBUG_INFO_BIT |
       c.GLSLANG_MSG_ENHANCED | c.GLSLANG_MSG_CASCADING_ERRORS_BIT,
-    .resource = glslang_default_resource (),
+    .resource = c.glslang_default_resource (),
     .callbacks = .{
       .include_local = &include_local,
       .include_system = &include_local,
       .free_include_result = &free_include_result,
     },
-    .context = &context,
+    .callbacks_ctx = &context,
   };
 
   const shader = c.glslang_shader_create (@ptrCast (&input)) orelse
@@ -158,10 +161,12 @@ pub fn main () !void
   if (c.glslang_program_link (program, c.GLSLANG_MSG_SPV_RULES_BIT | c.GLSLANG_MSG_VULKAN_RULES_BIT) == 0) return error.LinkFailed;
   if (c.glslang_program_map_io (program) == 0) return error.InputOutputMappingFailed;
 
-  c.glslang_program_add_source_text (program, stage, source.ptr, source.len);
-  c.glslang_program_set_source_file (program, stage, in);
+  //const in_z = try allocator.dupeZ (u8, in);
 
-  var spirv_options: c.glslang_spv_options_t = .{
+  //c.glslang_program_add_source_text (program, stage, source.ptr, source.len);
+  //c.glslang_program_set_source_file (program, stage, in_z);
+
+  var spirv_options = c.glslang_spv_options_t {
     .generate_debug_info = optimization != .Performance,
     .strip_debug_info = optimization == .Performance,
     .disable_optimizer = optimization != .Performance,

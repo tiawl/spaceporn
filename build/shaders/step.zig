@@ -104,8 +104,6 @@ pub const Step = struct
         @tagName (self.options.vulkan_env_version),
       }) |arg| self.shader_compiler.addArg (arg);
 
-      self.shader_compiler.addCheck (.{ .expect_stderr_exact = "", });
-
       try self.shader_compiler.step.makeFn (&self.shader_compiler.step,
         progress_node);
     }

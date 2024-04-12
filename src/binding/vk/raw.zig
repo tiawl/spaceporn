@@ -44,8 +44,10 @@ const Prototypes = struct
     var info = @typeInfo (T);
     return switch (info)
     {
-      .Opaque   => blk: { if (T == anyopaque) break :blk T
-                     else { is_opaque.* = true; break :blk ziggify (T); } },
+      .Opaque   => blk: {
+                     if (T == anyopaque) break :blk T
+                     else { is_opaque.* = true; break :blk ziggify (T); }
+                   },
       .Optional => blk: {
                      const child = cast_rec (info.Optional.child, is_opaque);
                      if (is_opaque.*) { is_opaque.* = false; break :blk child; }
@@ -56,7 +58,7 @@ const Prototypes = struct
                      if (is_opaque.*) break :blk child
                      else { info.Pointer.child = child; break :blk @Type (info); }
                    },
-      .Struct   => if (info.Struct.layout == .Auto) T else ziggify (T),
+      .Struct   => if (info.Struct.layout == .auto) T else ziggify (T),
       else      => T,
     };
   }
@@ -96,7 +98,6 @@ const Prototypes = struct
             .child = @Type (.{
               .Fn = .{
                 .calling_convention = c.call_conv,
-                .alignment = pointer.Fn.alignment,
                 .is_generic = pointer.Fn.is_generic,
                 .is_var_args = pointer.Fn.is_var_args,
                 .return_type = cast (pointer.Fn.return_type orelse
@@ -121,9 +122,9 @@ const Prototypes = struct
     }
     return @Type (.{
       .Struct = .{
-        .layout = .Auto,
+        .layout = .auto,
         .fields = &fields,
-        .decls = &[_] std.builtin.Type.Declaration {},
+        .decls = &.{},
         .is_tuple = false,
       },
     });

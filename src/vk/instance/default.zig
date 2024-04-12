@@ -3,12 +3,32 @@ const vk  = @import ("vk");
 
 const Logger = @import ("logger").Logger;
 
-// TODO: why ?
-const ext_vk = struct
+fn OptionalExtensions () type
 {
-  name: [*:0] const u8,
-  supported: bool = false,
-};
+  const size = Logger.build.vk.optional_extensions.len;
+  var fields: [size] std.builtin.Type.StructField = undefined;
+  for (Logger.build.vk.optional_extensions, 0 ..) |*ext, i|
+  {
+    fields [i].type = vk;
+    for (0 .. ext.len - 1) |j|
+      fields [i].type = @field (fields [i].type, ext.* [j]);
+    fields [i] = .{
+      .name = @field (fields [i].type, ext.* [ext.len - 1]),
+      .type = bool,
+      .default_value = null,
+      .is_comptime = false,
+      .alignment = 0,
+    };
+  }
+  return @Type (.{
+    .Struct = .{
+      .layout = .auto,
+      .fields = &fields,
+      .decls = &.{},
+      .is_tuple = false,
+    },
+  });
+}
 
 pub const instance_vk = struct
 {
@@ -28,18 +48,7 @@ pub const instance_vk = struct
     vk.EXT.DEBUG_UTILS,
   };
 
-  var optional_extensions = blk:
-  {
-    const size = Logger.build.vk.optional_extensions.len;
-    var optionals: [size] ext_vk = undefined;
-    for (Logger.build.vk.optional_extensions, 0 ..) |*ext, i|
-    {
-      var field = vk;
-      for (0 .. ext.len - 1) |j| field = @field (field, ext.* [j]);
-      optionals [i] = .{ .name = @field (field, ext.* [ext.len - 1]), };
-    }
-    break :blk &optionals;
-  };
+  var optional_extensions: OptionalExtensions () = undefined;
 
   fn debug_callback (
     message_severity: vk.EXT.DebugUtils.Message.Severity.Flags,
@@ -119,18 +128,11 @@ pub const instance_vk = struct
   fn init_debug_info (self: @This (),
     debug_info: *vk.EXT.DebugUtils.Messenger.Create.Info) void
   {
-    const use_features = blk:
-    {
-      var i: u8 = 0;
-      for (optional_extensions) |ext|
-      {
-        if (std.mem.eql (u8, std.mem.sliceTo (ext.name, 0),
-          vk.KHR.SHADER_NON_SEMANTIC_INFO) and ext.supported) i += 1
-        else if (std.mem.eql (u8, std.mem.sliceTo (ext.name, 0),
-          vk.EXT.VALIDATION_FEATURES) and ext.supported) i += 1;
-      }
-      break :blk (i == 2);
-    };
+    const use_features =
+      (@hasField (OptionalExtensions (), vk.KHR.SHADER_NON_SEMANTIC_INFO) and
+       @field (optional_extensions, vk.KHR.SHADER_NON_SEMANTIC_INFO)) and
+      (@hasField (OptionalExtensions (), vk.EXT.VALIDATION_FEATURES) and
+       @field (optional_extensions, vk.EXT.VALIDATION_FEATURES));
 
     const enabled_features = [_] vk.EXT.ValidationFeature.Enable {
       .DEBUG_PRINTF, .BEST_PRACTICES, };
@@ -154,17 +156,11 @@ pub const instance_vk = struct
         @intFromEnum (vk.EXT.DebugUtils.Message.Type.Bit.GENERAL) |
         @intFromEnum (vk.EXT.DebugUtils.Message.Type.Bit.VALIDATION) |
         (@intFromEnum (vk.EXT.DebugUtils.Message.Type.Bit.PERFORMANCE) &
-          @intFromBool (Logger.build.profile.eql (.DEV))) | blk:
-        {
-          for (optional_extensions) |ext|
-          {
-            if (std.mem.eql (u8, std.mem.sliceTo (ext.name, 0),
-              vk.EXT.DEVICE_ADDRESS_BINDING_REPORT) and ext.supported)
-                break :blk @intFromEnum (
-                  vk.EXT.DebugUtils.Message.Type.Bit.DEVICE_ADDRESS_BINDING);
-          }
-          break :blk 0;
-        },
+          @intFromBool (Logger.build.profile.eql (.DEV))) |
+        if (@hasField (OptionalExtensions (), vk.EXT.DEVICE_ADDRESS_BINDING_REPORT)
+          and @field (optional_extensions, vk.EXT.DEVICE_ADDRESS_BINDING_REPORT))
+            @intFromEnum (vk.EXT.DebugUtils.Message.Type.Bit.DEVICE_ADDRESS_BINDING)
+        else 0,
       .pfn_user_callback = @ptrCast (&debug_callback),
       // TODO: remove @constCast
       .p_user_data       = @constCast (self.logger),
@@ -175,9 +171,8 @@ pub const instance_vk = struct
   fn check_extension_properties (self: *@This (),
     init_extensions: *[][*:0] const u8) ![][*:0] const u8
   {
-    var extensions = try std.ArrayList ([*:0] const u8).initCapacity (
-      self.logger.allocator.*,
-      init_extensions.len + required_extensions.len + optional_extensions.len);
+    var extensions =
+      std.ArrayList ([*:0] const u8).init (self.logger.allocator.*);
 
     try extensions.appendSlice (init_extensions.*);
 
@@ -220,27 +215,24 @@ pub const instance_vk = struct
       }
     }
 
-    for (optional_extensions) |*optional_ext|
+    inline for (std.meta.fields (OptionalExtensions ())) |*optional_ext|
     {
+      @field (optional_extensions, optional_ext.name) = false;
       for (supported_extensions) |supported_ext|
       {
         if (std.mem.eql (u8,
           supported_ext.extension_name [0 .. std.mem.indexOfScalar (u8,
-            &(supported_ext.extension_name), 0).?],
-              std.mem.span (optional_ext.name)))
+            &(supported_ext.extension_name), 0).?], optional_ext.name))
         {
           try extensions.append (@ptrCast (optional_ext.name));
           try self.logger.app (.DEBUG, "{s} optional extension is supported",
             .{ optional_ext.name });
-          optional_ext.supported = true;
+          @field (optional_extensions, optional_ext.name) = true;
           break;
         }
-      }
-
-      if (!optional_ext.supported)
-      {
+      } else {
         try self.logger.app (.WARNING,
-          "{s} optional extension is not supported", .{ optional_ext.name });
+          "{s} optional extension is not supported", .{ optional_ext.name, });
       }
     }
 

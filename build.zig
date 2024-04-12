@@ -231,11 +231,11 @@ fn run_shader_compiler (builder: *std.Build,
     .optimize = .Debug,
   });
 
-  const glslang_dep = builder.dependency ("glslang", .{
+  const shaderc_dep = builder.dependency ("shaderc", .{
     .target = profile.target,
     .optimize = profile.optimize,
   });
-  const glslang = glslang_dep.artifact ("glslang");
+  const shaderc = shaderc_dep.artifact ("shaderc");
 
   const c = builder.createModule (.{
     .root_source_file = .{ .path = try builder.build_root.join (
@@ -243,7 +243,7 @@ fn run_shader_compiler (builder: *std.Build,
     .target = builder.host,
     .optimize = .Debug,
   });
-  c.linkLibrary (glslang);
+  c.linkLibrary (shaderc);
   shader_compiler.root_module.addImport ("c", c);
 
   const install_shader_compiler =
@@ -253,7 +253,7 @@ fn run_shader_compiler (builder: *std.Build,
 
   var self_dependency = std.Build.Dependency { .builder = builder, };
 
-  const shaders_module = shaders_compile.Step.compileModule (
+  const shaders_module = try shaders_compile.Step.compileModule (
     &self_dependency, profile.compile_options);
 
   const shader_compile_step = builder.addRunArtifact (shader_compiler);

@@ -2,7 +2,6 @@ const std = @import ("std");
 const c   = @import ("c");
 
 const vk  = @import ("vk");
-const raw = @import ("raw");
 
 pub const Memory = extern struct
 {

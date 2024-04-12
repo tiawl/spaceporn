@@ -2,7 +2,6 @@ const std = @import ("std");
 const c   = @import ("c");
 
 const vk  = @import ("vk");
-const raw = @import ("raw");
 
 pub const DEVICE_ADDRESS_BINDING_REPORT = c.VK_EXT_DEVICE_ADDRESS_BINDING_REPORT_EXTENSION_NAME;
 pub const DEBUG_REPORT = c.VK_EXT_DEBUG_REPORT_EXTENSION_NAME;

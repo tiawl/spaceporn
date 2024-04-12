@@ -37,10 +37,10 @@ pub const Step = struct
   tree: Node,
 
   pub fn create (dependency: *std.Build.Dependency,
-    options: Options) *@This ()
+    options: Options) !*@This ()
   {
     const builder = dependency.builder;
-    const self = builder.allocator.create (@This ()) catch unreachable;
+    const self = try builder.allocator.create (@This ());
     const shader_compiler = dependency.artifact ("shader_compiler");
     self.* = .{
       .step = std.Build.Step.init (.{
@@ -59,12 +59,16 @@ pub const Step = struct
     };
     self.generated_file = .{ .step = &self.step, };
     self.step.dependOn (&shader_compiler.step);
+    for ([_][] const u8 {
+      @tagName (self.options.optimization),
+      @tagName (self.options.vulkan_env_version),
+    }) |arg| self.shader_compiler.addArg (arg);
     return self;
   }
 
   fn add (self: @This (), builder: *std.Build, dir: *std.fs.Dir,
     entry: *const std.fs.Dir.Walker.WalkerEntry, dupe: [] const u8,
-    ptr: *Node, depth: *usize, progress_node: *std.Progress.Node) !void
+    ptr: *Node, depth: *usize) !void
   {
     depth.* += 1;
     if (std.mem.eql (u8, entry.basename, dupe))
@@ -98,19 +102,12 @@ pub const Step = struct
         return;
       }
 
-      for ([_][] const u8 {
-        in, out,
-        @tagName (self.options.optimization),
-        @tagName (self.options.vulkan_env_version),
-      }) |arg| self.shader_compiler.addArg (arg);
-
-      try self.shader_compiler.step.makeFn (&self.shader_compiler.step,
-        progress_node);
+      for ([_][] const u8 { in, out, }) |arg|
+        self.shader_compiler.addArg (arg);
     }
   }
 
-  fn walk_through (self: *@This (), builder: *std.Build,
-    progress_node: *std.Progress.Node) !void
+  fn walk_through (self: *@This (), builder: *std.Build) !void
   {
     var dir = try builder.build_root.handle.openDir ("shaders",
       .{ .iterate = true, });
@@ -138,8 +135,7 @@ pub const Step = struct
             if (std.mem.eql (u8, node.name, stem))
             {
               pointer = node;
-              try self.add (builder, &dir, entry, dupe, pointer, &depth,
-                progress_node);
+              try self.add (builder, &dir, entry, dupe, pointer, &depth);
               continue :next;
             }
           }
@@ -149,14 +145,13 @@ pub const Step = struct
             .depth = depth,
           });
           pointer = &pointer.nodes.items [pointer.nodes.items.len - 1];
-          try self.add (builder, &dir, entry, dupe, pointer, &depth,
-            progress_node);
+          try self.add (builder, &dir, entry, dupe, pointer, &depth);
         }
       }
     }
   }
 
-  fn write_index (self: @This (), builder: *std.Build) ![] const u8
+  fn write_index (self: *@This (), builder: *std.Build) !void
   {
     var buffer = std.ArrayList (u8).init (builder.allocator);
     const writer = buffer.writer ();
@@ -206,30 +201,32 @@ pub const Step = struct
       else => return err,
     };
 
+    self.generated_file.path = path;
     std.debug.print ("[shader module] {s}\n", .{ path, });
-    return path;
   }
 
   fn make (step: *std.Build.Step, progress_node: *std.Progress.Node) !void
   {
     const builder = step.owner;
-    const self: *@This () = @fieldParentPtr ("step", step);
-    //const self = step.cast (@This ()).?;
+    var self: *@This () = @fieldParentPtr ("step", step);
 
     builder.cache_root.handle.makeDir ("shaders") catch |err|
     {
       if (err != error.PathAlreadyExists) return err;
     };
 
-    try self.walk_through (builder, progress_node);
+    try self.walk_through (builder);
 
-    self.generated_file.path = try self.write_index (builder);
+    try self.shader_compiler.step.makeFn (&self.shader_compiler.step,
+      progress_node);
+
+    try self.write_index (builder);
   }
 
   pub fn compileModule (dependency: *std.Build.Dependency,
-    options: Options) *std.Build.Module
+    options: Options) !*std.Build.Module
   {
-    const step = create (dependency, options);
+    const step = try create (dependency, options);
     const builder = dependency.builder;
     return builder.createModule (.{
       .root_source_file = .{ .generated = &step.generated_file, },

@@ -37,7 +37,7 @@ pub const Surface = enum (u64)
     };
   };
 
-  pub fn destroy (surface: @This (),instance: vk.Instance) void
+  pub fn destroy (surface: @This (), instance: vk.Instance) void
   {
     const p_allocator: ?*const vk.AllocationCallbacks = null;
     raw.prototypes.instance.vkDestroySurfaceKHR (instance, surface,

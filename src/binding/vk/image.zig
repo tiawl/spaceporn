@@ -191,7 +191,7 @@ pub const Image = enum (u64)
       return view;
     }
 
-    pub fn destroy (image_view: @This (),device: vk.Device) void
+    pub fn destroy (image_view: @This (), device: vk.Device) void
     {
       const p_allocator: ?*const vk.AllocationCallbacks = null;
       raw.prototypes.device.vkDestroyImageView (device, image_view, p_allocator);

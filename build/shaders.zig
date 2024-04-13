@@ -1,6 +1,6 @@
 const std = @import ("std");
 
-const utils = @import ("../utils.zig");
+const utils = @import ("utils.zig");
 const digest = utils.digest;
 
 const Node = struct
@@ -31,7 +31,7 @@ pub const Options = struct
 pub const Step = struct
 {
   step: std.Build.Step,
-  shader_compiler: *std.Build.Step.Run,
+  shaders_compiler: *std.Build.Step.Run,
   generated_file: std.Build.GeneratedFile,
   options: Options,
   tree: Node,
@@ -41,7 +41,7 @@ pub const Step = struct
   {
     const builder = dependency.builder;
     const self = try builder.allocator.create (@This ());
-    const shader_compiler = dependency.artifact ("shader_compiler");
+    const shaders_compiler = dependency.artifact ("shaders_compiler");
     self.* = .{
       .step = std.Build.Step.init (.{
         .id = .custom,
@@ -49,7 +49,7 @@ pub const Step = struct
         .owner = builder,
         .makeFn = make,
       }),
-      .shader_compiler = builder.addRunArtifact (shader_compiler),
+      .shaders_compiler = builder.addRunArtifact (shaders_compiler),
       .generated_file = undefined,
       .options = options,
       .tree = .{
@@ -58,11 +58,7 @@ pub const Step = struct
       },
     };
     self.generated_file = .{ .step = &self.step, };
-    self.step.dependOn (&shader_compiler.step);
-    for ([_][] const u8 {
-      @tagName (self.options.optimization),
-      @tagName (self.options.vulkan_env_version),
-    }) |arg| self.shader_compiler.addArg (arg);
+    self.step.dependOn (&shaders_compiler.step);
     return self;
   }
 
@@ -71,40 +67,43 @@ pub const Step = struct
     ptr: *Node, depth: *usize) !void
   {
     depth.* += 1;
-    if (std.mem.eql (u8, entry.basename, dupe))
-    {
-      const path = builder.dupe (entry.path);
-      const source = try dir.readFileAlloc (builder.allocator, path,
-        std.math.maxInt (usize));
-      try ptr.nodes.append (.{
-        .name = std.fs.path.extension (dupe) [1 ..],
-        .nodes = std.ArrayList (Node).init (builder.allocator),
-        .hash = digest (self.options, source),
-        .depth = depth.*,
-      });
 
-      const out = try std.fs.path.join (builder.allocator, &.{
-        try builder.cache_root.join (builder.allocator, &.{ "shaders", }),
-        &ptr.nodes.items [ptr.nodes.items.len - 1].hash,
-      });
-      const in = try std.fs.path.join (builder.allocator, &.{
-        try builder.build_root.join (builder.allocator, &.{ "shaders", }), path,
-      });
+    if (!std.mem.eql (u8, entry.basename, dupe)) return;
 
-      // If we have a cache hit, we can save some compile time by not
-      // invoking the compiler again
-      shader_not_found: {
-        std.fs.accessAbsolute (out, .{}) catch |err| switch (err)
-        {
-          error.FileNotFound => break :shader_not_found,
-          else => return err,
-        };
-        return;
-      }
+    const path = builder.dupe (entry.path);
+    const source = try dir.readFileAlloc (builder.allocator, path,
+      std.math.maxInt (usize));
 
-      for ([_][] const u8 { in, out, }) |arg|
-        self.shader_compiler.addArg (arg);
+    if (!std.mem.startsWith (u8, source, "#version ")) return;
+
+    try ptr.nodes.append (.{
+      .name = std.fs.path.extension (dupe) [1 ..],
+      .nodes = std.ArrayList (Node).init (builder.allocator),
+      .hash = digest (self.options, source),
+      .depth = depth.*,
+    });
+
+    const in = try std.fs.path.join (builder.allocator, &.{
+      try builder.build_root.join (builder.allocator, &.{ "shaders", }), path,
+    });
+
+    const out = try std.fs.path.join (builder.allocator, &.{
+      try builder.cache_root.join (builder.allocator, &.{ "shaders", }),
+      &ptr.nodes.items [ptr.nodes.items.len - 1].hash,
+    });
+
+    // If we have a cache hit, we can save some compile time by not
+    // invoking the compiler again
+    shader_not_found: {
+      std.fs.accessAbsolute (out, .{}) catch |err| switch (err)
+      {
+        error.FileNotFound => break :shader_not_found,
+        else => return err,
+      };
+      return;
     }
+
+    for ([_][] const u8 { in, out, }) |arg| self.shaders_compiler.addArg (arg);
   }
 
   fn walk_through (self: *@This (), builder: *std.Build) !void
@@ -128,7 +127,7 @@ pub const Step = struct
         depth = 0;
         next: while (iterator.next ()) |*component|
         {
-          const dupe = try builder.allocator.dupe (u8, component.name);
+          const dupe = builder.dupe (component.name);
           const stem = std.fs.path.stem (dupe);
           for (pointer.nodes.items) |*node|
           {
@@ -164,23 +163,23 @@ pub const Step = struct
     {
       node = stack.pop ();
 
-      try writer.print ("pub const @\"{s}\" ", .{ node.name, });
-
-      if (node.nodes.items.len == 0 and (std.mem.eql (u8, node.name, "frag")
-        or std.mem.eql (u8, node.name, "vert")))
+      if (node.name.len == 0)
       {
-        try writer.print ("align(@alignOf(u32)) = @embedFile(\"{s}\").*;\n",
-          .{ node.hash, });
-      } else try writer.print ("= struct {c}\n", .{ '{', });
-
-      for (node.nodes.items) |*child| try stack.append (child.*);
-
-      if (stack.getLastOrNull ()) |last|
-      {
-        if (node.depth > last.depth)
-          for (0 .. node.depth - last.depth) |_|
-            try writer.print ("{c};\n", .{ '}', });
-      } else try writer.print ("{c};\n", .{ '}', });
+        try writer.print ("{c};\n", .{ '}', });
+      } else if (node.nodes.items.len == 0 and
+        (std.mem.eql (u8, node.name, "frag") or
+          std.mem.eql (u8, node.name, "vert"))) {
+            try writer.print ("pub const @\"{s}\" align(@alignOf(u32)) = @embedFile(\"{s}\").*;\n",
+              .{ node.name, node.hash, });
+      } else {
+        try writer.print ("pub const @\"{s}\" = struct {c}\n",
+          .{ node.name, '{', });
+        try stack.append (.{
+          .name = "",
+          .nodes = undefined,
+        });
+        try stack.appendSlice (node.nodes.items);
+      }
     }
 
     try buffer.append (0);
@@ -215,9 +214,14 @@ pub const Step = struct
       if (err != error.PathAlreadyExists) return err;
     };
 
+    for ([_][] const u8 {
+      @tagName (self.options.optimization),
+      @tagName (self.options.vulkan_env_version),
+    }) |arg| self.shaders_compiler.addArg (arg);
+
     try self.walk_through (builder);
 
-    try self.shader_compiler.step.makeFn (&self.shader_compiler.step,
+    try self.shaders_compiler.step.makeFn (&self.shaders_compiler.step,
       progress_node);
 
     try self.write_index (builder);

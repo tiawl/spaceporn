@@ -4,7 +4,7 @@ const zig_version = @import ("builtin").zig_version;
 const glfw = @import ("build/glfw.zig");
 const vk = @import ("build/vk.zig");
 const imgui = @import ("build/imgui.zig");
-const shaders_compile = @import ("build/shaders/step.zig");
+const shaders = @import ("build/shaders.zig");
 
 const utils = @import ("build/utils.zig");
 const Options = utils.Options;
@@ -16,8 +16,8 @@ pub fn build (builder: *std.Build) !void
 {
   try requirements ();
   const profile = try parse_options (builder);
-  const shaders = try run_shader_compiler (builder, &profile);
-  try run_exe (builder, &profile, shaders);
+  const shaders_module = try run_shaders_compiler (builder, &profile);
+  try run_exe (builder, &profile, shaders_module);
   try run_test (builder, &profile);
 }
 
@@ -42,7 +42,7 @@ fn turbo (profile: *Profile) !void
   profile.compile_options = .{
     .optimization = .Performance,
     .vulkan_env_version = std.meta.stringToEnum (
-      shaders_compile.Options.VulkanEnvVersion, profile.options.vkminor).?,
+      shaders.Options.VulkanEnvVersion, profile.options.vkminor).?,
   };
 }
 
@@ -70,7 +70,7 @@ fn dev (builder: *std.Build, profile: *Profile) !void
   profile.compile_options = .{
     .optimization = .Zero,
     .vulkan_env_version = std.meta.stringToEnum (
-      shaders_compile.Options.VulkanEnvVersion, profile.options.vkminor).?,
+      shaders.Options.VulkanEnvVersion, profile.options.vkminor).?,
   };
 }
 
@@ -86,7 +86,7 @@ fn default (builder: *std.Build, profile: *Profile) !void
   profile.compile_options = .{
     .optimization = .Zero,
     .vulkan_env_version = std.meta.stringToEnum (
-      shaders_compile.Options.VulkanEnvVersion,
+      shaders.Options.VulkanEnvVersion,
       profile.options.vkminor).?,
   };
 }
@@ -157,7 +157,7 @@ fn link (builder: *std.Build, profile: *const Profile) !*Package
   const cimgui = imgui_dep.artifact ("cimgui");
 
   const c = try Package.init (builder, profile, "c", try builder.build_root.join (
-    builder.allocator, &.{ "src", "binding", "raw.zig", }));
+    builder.allocator, &.{ "src", zon.name, "bindings", "raw.zig", }));
   c.link (glfw_lib);
   c.link (cimgui);
   c.include (imgui_dep.path ("imgui"));
@@ -181,7 +181,6 @@ fn import (builder: *std.Build, exe: *std.Build.Step.Compile,
   });
   const datetime = datetime_dep.module ("zig-datetime");
 
-  // const shaders_module = try shaders.import (builder, exe, profile);
   const c = try link (builder, profile);
   const glfw_pkg = try glfw.import (builder, profile, c);
   const vk_pkg = try vk.import (builder, profile, c);
@@ -192,7 +191,7 @@ fn import (builder: *std.Build, exe: *std.Build.Step.Compile,
   const build_options = profile.variables.createModule ();
   const logger = builder.createModule (.{
     .root_source_file = .{ .path = try builder.build_root.join (
-      builder.allocator, &.{ "src", "logger.zig", }), },
+      builder.allocator, &.{ "src", zon.name, "logger.zig", }), },
     .target = profile.target,
     .optimize = profile.optimize,
   });
@@ -201,7 +200,7 @@ fn import (builder: *std.Build, exe: *std.Build.Step.Compile,
 
   const instance = builder.createModule (.{
     .root_source_file = .{ .path = try builder.build_root.join (
-      builder.allocator, &.{ "src", "vk", "instance",
+      builder.allocator, &.{ "src", zon.name, "vk", "instance",
         if (profile.options.turbo) "turbo.zig" else "default.zig", }), },
     .target = profile.target,
     .optimize = profile.optimize,
@@ -220,13 +219,13 @@ fn import (builder: *std.Build, exe: *std.Build.Step.Compile,
   }) |module| exe.root_module.addImport (module.name, module.ptr);
 }
 
-fn run_shader_compiler (builder: *std.Build,
+fn run_shaders_compiler (builder: *std.Build,
   profile: *const Profile) !*std.Build.Module
 {
-  const shader_compiler = builder.addExecutable (.{
-    .name = "shader_compiler",
+  const shaders_compiler = builder.addExecutable (.{
+    .name = "shaders_compiler",
     .root_source_file = .{ .path = try builder.build_root.join (
-      builder.allocator, &.{ "build", "shaders", "compiler.zig", }), },
+      builder.allocator, &.{ "src", "compiler", "main.zig", }), },
     .target = builder.host,
     .optimize = .Debug,
   });
@@ -239,42 +238,42 @@ fn run_shader_compiler (builder: *std.Build,
 
   const c = builder.createModule (.{
     .root_source_file = .{ .path = try builder.build_root.join (
-      builder.allocator, &.{ "build", "shaders", "raw.zig", }), },
+      builder.allocator, &.{ "src", "compiler", "bindings", "raw.zig", }), },
     .target = builder.host,
     .optimize = .Debug,
   });
   c.linkLibrary (shaderc);
-  shader_compiler.root_module.addImport ("c", c);
+  shaders_compiler.root_module.addImport ("c", c);
 
-  const install_shader_compiler =
-    builder.addInstallArtifact (shader_compiler, .{});
+  const install_shaders_compiler =
+    builder.addInstallArtifact (shaders_compiler, .{});
 
-  builder.install_tls.step.dependOn (&install_shader_compiler.step);
+  builder.install_tls.step.dependOn (&install_shaders_compiler.step);
 
   var self_dependency = std.Build.Dependency { .builder = builder, };
 
-  const shaders_module = try shaders_compile.Step.compileModule (
+  const shaders_module = try shaders.Step.compileModule (
     &self_dependency, profile.compile_options);
 
-  const shader_compile_step = builder.addRunArtifact (shader_compiler);
+  const shaders_compile_step = builder.addRunArtifact (shaders_compiler);
 
-  shader_compile_step.step.dependOn (&install_shader_compiler.step);
+  shaders_compile_step.step.dependOn (&install_shaders_compiler.step);
 
   return shaders_module;
 }
 
 fn run_exe (builder: *std.Build, profile: *const Profile,
-  shaders: *std.Build.Module) !void
+  shaders_module: *std.Build.Module) !void
 {
   const exe = builder.addExecutable (.{
     .name = zon.name,
     .root_source_file = .{ .path = try builder.build_root.join (
-      builder.allocator, &.{ "src", "main.zig", }), },
+      builder.allocator, &.{ "src", zon.name, "main.zig", }), },
     .target = profile.target,
     .optimize = profile.optimize,
   });
 
-  try import (builder, exe, profile, shaders);
+  try import (builder, exe, profile, shaders_module);
 
   builder.installArtifact (exe);
 

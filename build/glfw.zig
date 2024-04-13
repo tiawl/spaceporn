@@ -3,12 +3,13 @@ const std = @import ("std");
 const utils = @import ("utils.zig");
 const Package = utils.Package;
 const Profile = utils.Profile;
+const zon = utils.zon;
 
 pub fn import (builder: *std.Build, profile: *const Profile,
   c: *Package) !*Package
 {
   const path = try builder.build_root.join (builder.allocator,
-    &.{ "src", "binding", "glfw", });
+    &.{ "src", zon.name, "bindings", "glfw", });
 
   var glfw = try Package.init (builder, profile, "glfw",
     try std.fs.path.join (builder.allocator, &.{ path, "glfw.zig", }));

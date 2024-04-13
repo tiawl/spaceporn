@@ -4,6 +4,7 @@ const utils = @import ("utils.zig");
 const digest = utils.digest;
 const Package = utils.Package;
 const Profile = utils.Profile;
+const zon = utils.zon;
 
 fn generate_literals (builder: *std.Build,
   profile: *const Profile) ![] const u8
@@ -18,7 +19,7 @@ fn generate_literals (builder: *std.Build,
 
   var vk: struct { path: [] const u8, dir: std.fs.Dir, } = undefined;
   vk.path = try std.fs.path.join (builder.allocator,
-    &.{ "src", "binding", "vk", });
+    &.{ "src", zon.name, "bindings", "vk", });
 
   vk.dir = try builder.build_root.handle.openDir (vk.path,
     .{ .iterate = true, });
@@ -137,7 +138,7 @@ pub fn import (builder: *std.Build, profile: *const Profile,
   c: *Package) !*Package
 {
   const path = try builder.build_root.join (builder.allocator,
-    &.{ "src", "binding", "vk", });
+    &.{ "src", zon.name, "bindings", "vk", });
 
   var vk = try Package.init (builder, profile, "vk",
     try std.fs.path.join (builder.allocator, &.{ path, "vk.zig", }));

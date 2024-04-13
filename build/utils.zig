@@ -1,6 +1,6 @@
 const std = @import ("std");
 
-const shaders_compile = @import ("shaders/step.zig");
+const shaders = @import ("shaders.zig");
 
 pub const zon = .{ .name = "spaceporn", .version = "0.1.0", .min_zig_version = "0.11.0", };
 
@@ -20,7 +20,7 @@ pub const Profile = struct
   optimize:        std.builtin.OptimizeMode,
   variables:       *std.Build.Step.Options,
   options:         Options,
-  compile_options: shaders_compile.Options,
+  compile_options: shaders.Options,
 };
 
 pub const Package = struct
@@ -70,7 +70,7 @@ pub const Package = struct
 };
 
 // Create a hash from a shader's source contents.
-pub fn digest (options: ?shaders_compile.Options, source: [] u8) [64] u8
+pub fn digest (options: ?shaders.Options, source: [] u8) [64] u8
 {
   var hasher = std.crypto.hash.blake2.Blake2b384.init (.{});
 

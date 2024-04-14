@@ -84,11 +84,9 @@ fn resolve_include (user_data: ?*anyopaque, requested_source: [*c] const u8,
 }
 
 // An includer callback type for destroying an include result.
-fn release_include (user_data: ?*anyopaque,
+fn release_include (_: ?*anyopaque,
   include_result: [*c] c.shaderc_include_result) callconv (.C) void
 {
-  _ = user_data;
-
   std.heap.c_allocator.destroy (@as (*c.shaderc_include_result,
     @ptrCast (include_result)));
 }
@@ -184,17 +182,11 @@ pub fn main () !void
 
     const relative = try std.fs.path.relative (allocator, shaders_path.?, in);
 
-    // // The "input_file_name" is a null-termintated string. It is used as a
-    // // tag to identify the source string in cases like emitting error
-    // // messages. It doesn't have to be a 'file name'.
-    // // The "entry_point_name" null-terminated string defines the name of
-    // // the entry point to associate with this GLSL source:
-    // fn shaderc_compile_into_spv (compiler: shaderc_compiler_t,
-    //   source_text: [*c] const u8, source_text_size: usize,
-    //   shader_kind: shaderc_shader_kind, input_file_name: [*c] const u8,
-    //   entry_point_name: [*c] const u8,
-    //   additional_options: shaderc_compile_options_t)
-    //     shaderc_compilation_result_t;
+    // The "input_file_name" is a null-termintated string. It is used as a
+    // tag to identify the source string in cases like emitting error
+    // messages. It doesn't have to be a 'file name'.
+    // The "entry_point_name" null-terminated string defines the name of
+    // the entry point to associate with this GLSL source:
     const result = c.shaderc_compile_into_spv (compiler, source.ptr [0 .. : 0],
       source.len, stage, relative.ptr, "main", options);
     defer c.shaderc_result_release (result);

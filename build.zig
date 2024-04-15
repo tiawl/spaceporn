@@ -148,19 +148,16 @@ fn parse_options (builder: *std.Build) !Profile
 
 fn link (builder: *std.Build, profile: *const Profile) !*Package
 {
-  const glfw_lib = glfw.lib (builder, profile);
-
-  const imgui_dep = builder.dependency ("cimgui", .{
+  const cimgui_dep = builder.dependency ("cimgui", .{
     .target = profile.target,
     .optimize = profile.optimize,
   });
-  const cimgui = imgui_dep.artifact ("cimgui");
+  const cimgui = cimgui_dep.artifact ("cimgui");
 
   const c = try Package.init (builder, profile, "c", try builder.build_root.join (
     builder.allocator, &.{ "src", zon.name, "bindings", "raw.zig", }));
-  c.link (glfw_lib);
   c.link (cimgui);
-  c.include (imgui_dep.path ("imgui"));
+  c.include (cimgui_dep.path ("imgui"));
 
   return c;
 }

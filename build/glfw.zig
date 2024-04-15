@@ -42,13 +42,3 @@ pub fn import (builder: *std.Build, profile: *const Profile,
 
   return glfw;
 }
-
-pub fn lib (builder: *std.Build,
-  profile: *const Profile) *std.Build.Step.Compile
-{
-  const dep = builder.dependency ("glfw", .{
-    .target = profile.target,
-    .optimize = profile.optimize,
-  });
-  return dep.artifact ("glfw");
-}

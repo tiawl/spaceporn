@@ -8,11 +8,7 @@
   .dependencies = .{
     .cimgui = .{
       .url = "https://github.com/tiawl/cimgui.zig/archive/refs/tags/v1.90.4.tar.gz",
-      .hash = "1220a6a97a5b5e866f8bfe7ddbbcfc4e9c0928f1ea101b3d1e5c4eb964bd28f1f235",
-    },
-    .glfw = .{
-      .url = "https://github.com/tiawl/glfw.zig/archive/refs/tags/3.4.tar.gz",
-      .hash = "1220cae93f3e4476db397a438fbfb3aadce9da67feb6bb0e6dd87c75d861fea9257d",
+      .hash = "12207f7995ecdb7d0a6d697bd0ddf8cae3e8c152395e8b63b0006004437166c0c092",
     },
     .shaderc = .{
       .url = "https://github.com/tiawl/shaderc.zig/archive/refs/tags/2024.0.0.tar.gz",

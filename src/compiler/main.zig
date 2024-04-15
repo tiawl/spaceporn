@@ -1,5 +1,5 @@
 const std = @import ("std");
-const c = @import ("c");
+const shaderc = @import ("shaderc");
 
 const IncludeContext = struct
 {
@@ -18,25 +18,22 @@ const IncludeContext = struct
 //   valid until the release callback is called on the result object.
 fn resolve_include (user_data: ?*anyopaque, requested_source: [*c] const u8,
   @"type": c_int, requesting_source: [*c] const u8,
-  include_depth: usize) callconv (.C) [*c] c.shaderc_include_result
+  include_depth: usize) callconv (.C) [*c] shaderc.Include.Result
 {
   const context: *const IncludeContext = @alignCast (@ptrCast (user_data.?));
   const includer_name =
     std.mem.span (@as ([*:0] const u8, @ptrCast (requesting_source)));
-  const header_name =
-    std.mem.span (@as ([*:0] const u8, @ptrCast (requested_source)));
+  const c_header_name: [*:0] const u8 = @ptrCast (requested_source);
+  const header_name = std.mem.span (c_header_name);
 
-  // The kinds of include requests:
-  // - shaderc_include_type_relative: E.g. #include "source"
-  // - shaderc_include_type_standard: E.g. #include <source>
-  if (@"type" != c.shaderc_include_type_relative)
+  if (@"type" != @intFromEnum (shaderc.Include.Type.Relative))
   {
     std.debug.print ("Shader compilation error for \"{s}\": Only relative included supported",
       .{ includer_name, });
     std.debug.panic ("", .{});
   }
 
-  const result = std.heap.c_allocator.create (c.shaderc_include_result) catch
+  const result = std.heap.c_allocator.create (shaderc.Include.Result) catch
   {
     std.debug.print ("Shader compilation error for \"{s}\" during include resolution: result allocation failed",
       .{ includer_name, });
@@ -69,7 +66,7 @@ fn resolve_include (user_data: ?*anyopaque, requested_source: [*c] const u8,
   // includer. For example, if the includer maps source names to files in
   // a filesystem, then this name should be the absolute path of the file.
   // For a failed inclusion, this string is empty.
-  result.source_name = header_name.ptr;
+  result.source_name = c_header_name;
   result.source_name_length = header_name.len;
 
   // The text contents of the source file in the normal case.
@@ -85,31 +82,11 @@ fn resolve_include (user_data: ?*anyopaque, requested_source: [*c] const u8,
 
 // An includer callback type for destroying an include result.
 fn release_include (_: ?*anyopaque,
-  include_result: [*c] c.shaderc_include_result) callconv (.C) void
+  include_result: [*c] shaderc.Include.Result) callconv (.C) void
 {
-  std.heap.c_allocator.destroy (@as (*c.shaderc_include_result,
+  std.heap.c_allocator.destroy (@as (*shaderc.Include.Result,
     @ptrCast (include_result)));
 }
-
-const Stage = enum (c.shaderc_shader_kind)
-{
-  vert = c.shaderc_glsl_vertex_shader,
-  frag = c.shaderc_glsl_fragment_shader,
-};
-
-const VulkanEnvVersion = enum (c.shaderc_env_version)
-{
-  @"0" = c.shaderc_env_version_vulkan_1_0,
-  @"1" = c.shaderc_env_version_vulkan_1_1,
-  @"2" = c.shaderc_env_version_vulkan_1_2,
-  @"3" = c.shaderc_env_version_vulkan_1_3,
-};
-
-const Optimization = enum (c.shaderc_optimization_level)
-{
-  Zero = c.shaderc_optimization_level_zero,
-  Performance = c.shaderc_optimization_level_performance,
-};
 
 pub fn main () !void
 {
@@ -119,27 +96,23 @@ pub fn main () !void
 
   var arg = std.process.args ();
   _ = arg.next ().?;
-  const optimization =
-    @intFromEnum (std.meta.stringToEnum (Optimization, arg.next ().?).?);
-  const env_version =
-    @intFromEnum (std.meta.stringToEnum (VulkanEnvVersion, arg.next ().?).?);
+  const optimization = std.meta.stringToEnum (
+    shaderc.OptimizationLevel, arg.next ().?).?;
+  const env_version = std.meta.stringToEnum (
+    shaderc.Env.VulkanVersion, arg.next ().?).?;
 
   var in_dir: std.fs.Dir = undefined;
   var out_dir: std.fs.Dir = undefined;
 
-  const compiler = c.shaderc_compiler_initialize ();
-  defer c.shaderc_compiler_release (compiler);
+  const compiler = shaderc.Compiler.initialize ();
+  defer compiler.release ();
 
-  const options = c.shaderc_compile_options_initialize ();
-  defer c.shaderc_compile_options_release (options);
+  const options = shaderc.CompileOptions.initialize ();
+  defer options.release ();
 
-  c.shaderc_compile_options_set_source_language (options,
-    c.shaderc_source_language_glsl);
-
-  c.shaderc_compile_options_set_target_env (options,
-    c.shaderc_target_env_vulkan, env_version);
-
-  c.shaderc_compile_options_set_optimization_level (options, optimization);
+  options.setSourceLanguage (shaderc.SourceLanguage.GLSL);
+  options.setVulkanVersion (env_version);
+  options.setOptimizationLevel (optimization);
 
   var include_context: IncludeContext = undefined;
   var shaders_path: ?[] const u8 = null;
@@ -167,46 +140,37 @@ pub fn main () !void
     }
 
     const out = arg.next ().?;
-    const stage = @intFromEnum (std.meta.stringToEnum (Stage,
-      std.fs.path.extension (in) [1 ..]).?);
+    const kind = shaderc.ShaderKind.init (std.fs.path.extension (in));
 
     include_context.dirname = std.fs.path.dirname (in).?;
-    c.shaderc_compile_options_set_include_callbacks (options,
-      resolve_include, release_include, &include_context);
+    options.setIncludeCallbacks (resolve_include, release_include,
+      &include_context);
 
     in_dir = try std.fs.openDirAbsolute (include_context.dirname, .{});
     defer in_dir.close ();
 
-    const source = try in_dir.readFileAllocOptions (allocator,
-      std.fs.path.basename (in), std.math.maxInt (usize), null, 1, 0);
+    const source = try in_dir.readFileAlloc (allocator,
+      std.fs.path.basename (in), std.math.maxInt (usize));
 
     const relative = try std.fs.path.relative (allocator, shaders_path.?, in);
 
-    // The "input_file_name" is a null-termintated string. It is used as a
-    // tag to identify the source string in cases like emitting error
-    // messages. It doesn't have to be a 'file name'.
-    // The "entry_point_name" null-terminated string defines the name of
-    // the entry point to associate with this GLSL source:
-    const result = c.shaderc_compile_into_spv (compiler, source.ptr [0 .. : 0],
-      source.len, stage, relative.ptr, "main", options);
-    defer c.shaderc_result_release (result);
+    const result = try compiler.compileIntoSpv (allocator, source, kind,
+      relative, options);
+    defer result.release ();
 
-    const status = c.shaderc_result_get_compilation_status (result);
+    const status = result.getCompilationStatus ();
 
-    if (status != c.shaderc_compilation_status_success)
+    if (status != shaderc.Compilation.Status.Success)
     {
-      std.debug.print ("{s}",
-        .{ c.shaderc_result_get_error_message (result), });
+      std.debug.print ("{s}", .{ result.getErrorMessage (), });
       return error.CompilationFailed;
     }
 
-    const bytes = c.shaderc_result_get_bytes (result);
-    const length = c.shaderc_result_get_length (result);
+    const bytes = result.getBytes ();
 
     out_dir = try std.fs.openDirAbsolute (std.fs.path.dirname (out).?, .{});
     defer out_dir.close ();
 
-    try out_dir.writeFile (std.fs.path.basename (out),
-      std.mem.sliceAsBytes (bytes [0 .. length]));
+    try out_dir.writeFile (std.fs.path.basename (out), bytes);
   }
 }

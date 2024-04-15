@@ -234,7 +234,6 @@ fn run_shaders_compiler (builder: *std.Build,
     .target = profile.target,
     .optimize = profile.optimize,
   });
-  const shaderc = shaderc_dep.artifact ("shaderc");
 
   const c = builder.createModule (.{
     .root_source_file = .{ .path = try builder.build_root.join (
@@ -242,8 +241,18 @@ fn run_shaders_compiler (builder: *std.Build,
     .target = builder.host,
     .optimize = .Debug,
   });
-  c.linkLibrary (shaderc);
-  shaders_compiler.root_module.addImport ("c", c);
+  c.linkLibrary (shaderc_dep.artifact ("shaderc"));
+
+  const shaderc = builder.createModule (.{
+    .root_source_file = .{ .path = try builder.build_root.join (
+      builder.allocator,
+      &.{ "src", "compiler", "bindings", "shaderc", "shaderc.zig", }), },
+    .target = profile.target,
+    .optimize = profile.optimize,
+  });
+  shaderc.addImport ("c", c);
+
+  shaders_compiler.root_module.addImport ("shaderc", shaderc);
 
   const install_shaders_compiler =
     builder.addInstallArtifact (shaders_compiler, .{});

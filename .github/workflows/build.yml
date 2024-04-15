@@ -22,4 +22,4 @@ jobs:
         version: master
 
     - name: Build
-      run: ${{ maxtrix.profile }}
+      run: ${{ matrix.profile }}

@@ -62,11 +62,6 @@ pub const Package = struct
   {
     self.module.linkLibrary (lib);
   }
-
-  pub fn include (self: @This (), path: std.Build.LazyPath) void
-  {
-    self.module.addIncludePath (path);
-  }
 };
 
 // Create a hash from a shader's source contents.

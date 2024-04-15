@@ -154,10 +154,10 @@ fn link (builder: *std.Build, profile: *const Profile) !*Package
   });
   const cimgui = cimgui_dep.artifact ("cimgui");
 
-  const c = try Package.init (builder, profile, "c", try builder.build_root.join (
-    builder.allocator, &.{ "src", zon.name, "bindings", "raw.zig", }));
+  const c = try Package.init (builder, profile, "c",
+    try builder.build_root.join (builder.allocator,
+      &.{ "src", zon.name, "bindings", "raw.zig", }));
   c.link (cimgui);
-  c.include (cimgui_dep.path ("imgui"));
 
   return c;
 }

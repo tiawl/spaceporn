@@ -31,6 +31,7 @@ fn requirements () !void
 
 fn turbo (profile: *Profile) !void
 {
+  // Keep this for debug purpose
   // profile.optimize = .Debug;
   // profile.variables.addOption (u8, "log_level", 2);
   profile.optimize = .ReleaseFast;

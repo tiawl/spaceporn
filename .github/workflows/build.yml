@@ -19,7 +19,7 @@ jobs:
     - name: Setup Zig
       uses: goto-bus-stop/setup-zig@v2.2.0
       with:
-        version: master
+        version: 0.12.0+215de3ee6
 
     - name: Build
       run: ${{ matrix.profile }}

@@ -1,0 +1,25 @@
+name: ci
+
+on:
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [ubuntu-22.04,windows-2022]
+        profile: ['zig build','zig build -Ddev','zig build -Dturbo']
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Zig
+      uses: goto-bus-stop/setup-zig@v2.2.0
+      with:
+        version: master
+
+    - name: Build
+      run: ${{ maxtrix.profile }}

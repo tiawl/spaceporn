@@ -152,12 +152,11 @@ fn link (builder: *std.Build, profile: *const Profile) !*Package
     .target = profile.target,
     .optimize = profile.optimize,
   });
-  const cimgui = cimgui_dep.artifact ("cimgui");
 
   const c = try Package.init (builder, profile, "c",
     try builder.build_root.join (builder.allocator,
       &.{ "src", zon.name, "bindings", "raw.zig", }));
-  c.link (cimgui);
+  c.link (cimgui_dep.artifact ("cimgui"));
 
   return c;
 }

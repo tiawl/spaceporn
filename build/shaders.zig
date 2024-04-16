@@ -8,7 +8,6 @@ const Node = struct
   name: [] const u8,
   nodes: std.ArrayList (@This ()),
   hash: [64] u8 = undefined,
-  depth: usize = 0,
 };
 
 pub const Options = struct
@@ -64,10 +63,8 @@ pub const Step = struct
 
   fn add (self: @This (), builder: *std.Build, dir: *std.fs.Dir,
     entry: *const std.fs.Dir.Walker.WalkerEntry, dupe: [] const u8,
-    ptr: *Node, depth: *usize) !void
+    ptr: *Node) !void
   {
-    depth.* += 1;
-
     if (!std.mem.eql (u8, entry.basename, dupe)) return;
 
     const path = builder.dupe (entry.path);
@@ -80,7 +77,6 @@ pub const Step = struct
       .name = std.fs.path.extension (dupe) [1 ..],
       .nodes = std.ArrayList (Node).init (builder.allocator),
       .hash = digest (self.options, source),
-      .depth = depth.*,
     });
 
     const in = try std.fs.path.join (builder.allocator, &.{
@@ -114,7 +110,6 @@ pub const Step = struct
 
     var walker = try dir.walk (builder.allocator);
     defer walker.deinit ();
-    var depth: usize = undefined;
 
     var pointer: *Node = undefined;
 
@@ -124,7 +119,6 @@ pub const Step = struct
       {
         var iterator = try std.fs.path.componentIterator (entry.path);
         pointer = &self.tree;
-        depth = 0;
         next: while (iterator.next ()) |*component|
         {
           const dupe = builder.dupe (component.name);
@@ -134,17 +128,16 @@ pub const Step = struct
             if (std.mem.eql (u8, node.name, stem))
             {
               pointer = node;
-              try self.add (builder, &dir, entry, dupe, pointer, &depth);
+              try self.add (builder, &dir, entry, dupe, pointer);
               continue :next;
             }
           }
           try pointer.nodes.append (.{
             .name = stem,
             .nodes = std.ArrayList (Node).init (builder.allocator),
-            .depth = depth,
           });
           pointer = &pointer.nodes.items [pointer.nodes.items.len - 1];
-          try self.add (builder, &dir, entry, dupe, pointer, &depth);
+          try self.add (builder, &dir, entry, dupe, pointer);
         }
       }
     }

@@ -2,17 +2,15 @@
   .name = "spaceporn",
   .version = "0.1.0",
   .minimum_zig_version = "0.11.0",
-  .paths = .{
-    "",
-  },
+  .paths = .{ "", },
   .dependencies = .{
     .cimgui = .{
       .url = "https://github.com/tiawl/cimgui.zig/archive/refs/tags/v1.90.4.tar.gz",
-      .hash = "1220055b9089cc310f7f8637c2102494482284479132b730cdec7e374b753dec349e",
+      .hash = "1220c9e6b69bb7fedbb9b1275144c29e5c2e7df721e33830a07a2870933efd7e6eba",
     },
     .shaderc = .{
       .url = "https://github.com/tiawl/shaderc.zig/archive/refs/tags/2024.0.0.tar.gz",
-      .hash = "1220ec8b638d151181ab4d0661824ab21ade02958fb6c24a8f69e321957bc28ee665",
+      .hash = "1220c49536cc681d69eb9aa5536083c405a725ed365d665d9febdb55941e7c94505b",
     },
     .@"zig-datetime" = .{
       .url = "https://github.com/frmdstryr/zig-datetime/archive/a9c75242dfc119a305c1381c2352d2fc16b2e0aa.tar.gz",

@@ -1,6 +1,4 @@
 const std = @import ("std");
-const stdout = std.io.getStdOut ().writer ();
-const stderr = std.io.getStdErr ().writer ();
 
 const Build = struct
 {
@@ -52,8 +50,8 @@ fn print (level: Level, entry: [] const u8) !void
 {
   const writer = switch (level)
   {
-    .DEBUG,.INFO    => stdout,
-    .WARNING,.ERROR => stderr,
+    .DEBUG,.INFO    => std.io.getStdOut ().writer (),
+    .WARNING,.ERROR => std.io.getStdErr ().writer (),
   };
   try writer.print ("{s}", .{ entry, });
 }

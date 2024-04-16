@@ -94,7 +94,7 @@ pub fn main () !void
   defer arena.deinit ();
   const allocator = arena.allocator ();
 
-  var arg = std.process.args ();
+  var arg = try std.process.ArgIterator.initWithAllocator (allocator);
   _ = arg.next ().?;
   const optimization = std.meta.stringToEnum (
     shaderc.OptimizationLevel, arg.next ().?).?;

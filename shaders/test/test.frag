@@ -1,5 +1,5 @@
 #version 450
-#include "add.frag"
+#include "std/add.frag"
 
 layout (location = 0) out vec4 o;
 

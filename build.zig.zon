@@ -9,8 +9,8 @@
       .hash = "1220785ace4b8358abfa96dd65f4e3c9f00e8b488df3ccbb690403d37eb8aaef12c8",
     },
     .shaderc = .{
-      .url = "https://github.com/tiawl/shaderc.zig/archive/refs/tags/2024.0.0.tar.gz",
-      .hash = "122029a40c3a450dde3880558a054ead2a4193f5ef5bbebf2303f35a841936dd908b",
+      .url = "https://github.com/tiawl/shaderc.zig/archive/refs/tags/v2024.0.tar.gz",
+      .hash = "12208bdb4a6b63d3a16df666ca25099db67cbfae3422d1c82bc38419e2dba15553da",
     },
     .@"zig-datetime" = .{
       .url = "https://github.com/frmdstryr/zig-datetime/archive/a9c75242dfc119a305c1381c2352d2fc16b2e0aa.tar.gz",

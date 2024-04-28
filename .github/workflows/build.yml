@@ -19,8 +19,8 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-    - uses: actions/checkout@v4
     - uses: tiawl/spaceporn-dep-action-env@v1.0.0
+    - uses: actions/checkout@v4
 
     - name: Setup Zig
       uses: goto-bus-stop/setup-zig@v2.2.0

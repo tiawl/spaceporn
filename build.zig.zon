@@ -5,8 +5,8 @@
   .paths = .{ "", },
   .dependencies = .{
     .cimgui = .{
-      .url = "https://github.com/tiawl/cimgui.zig/archive/refs/tags/v1.90.5.tar.gz",
-      .hash = "1220cab1aa444e6fd1dfaf57ad268d42ceb533921db2fef5fd666127fc82483ed8f7",
+      .url = "https://github.com/tiawl/cimgui.zig/archive/refs/tags/0.0.0.tar.gz",
+      .hash = "1220b28d181ddc69c37aea1ec6b59de5042685de705a84d249913bc8e190323ce8bf",
     },
     .shaderc = .{
       .url = "https://github.com/tiawl/shaderc.zig/archive/refs/tags/v2024.0.tar.gz",

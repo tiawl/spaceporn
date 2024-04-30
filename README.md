@@ -2,23 +2,49 @@
 
 Wiki and Generator for space contemplators
 
-## [spaceporn-gen](https://github.com/tiawl/spaceporn/tree/gen)
+## Generator
 
-The **spaceporn-gen** is in early stage development and is not ready to be used.
+The **spaceporn generator** is in early stage development and is not ready to be used.
 
-The **spaceporn-gen** is tool which could:
+The **spaceporn generator** is a tool which could:
 - display animated or static procedural pixelized space content,
 - generate procedural pixelized space pictures.
 
-## [spaceporn-wiki](https://github.com/tiawl/spaceporn/wiki)
+### Usage
 
-The **spaceporn-wiki** is a list of GLSL tutorials and online shaders about procedural pixelized space shaders.
+The maintainers will update this section later
+
+### Dependencies
+
+Before installing and building the **spaceporn generator**, you need to install this:
+- [Zig 0.12.0](https://ziglang.org/download/#release-0.12.0),
+
+### Installing
+
+The maintainers will update this section later.
+
+### Supported environments
+
+OS | Building | Running
+--- | --- | ---
+Ubuntu 22.04 | :white_check_mark: | :white_check_mark:
+Windows 2022 | :white_check_mark: | :grey_question:
+
+:white_check_mark: : Functional
+:grey_question: : Currently untested
+
+If you run The **spaceporn-gen** successfully on an unlisted environment, you can open an issue to update this list.
+
+## [Wiki](https://github.com/tiawl/spaceporn/blob/trunk/wiki/README.md)
+
+The **spaceporn wiki** is a list of GLSL tutorials and online shaders about procedural pixelized space shaders.
+More details [here](https://github.com/tiawl/spaceporn/blob/trunk/wiki/README.md)
 
 ## Contributing
 
 Each component of this repository has its own contributing rules:
-- [The spaceporn-gen contributing rules](https://github.com/tiawl/spaceporn/blob/gen/CONTRIBUTING.md)
-- [The spaceporn-wiki contributing rules](https://github.com/tiawl/spaceporn/blob/wiki/CONTRIBUTING.md)
+- [The generator contributing rules](https://github.com/tiawl/spaceporn/blob/trunk/CONTRIBUTING.md)
+- [The wiki contributing rules](https://github.com/tiawl/spaceporn/blob/trunk/wiki/CONTRIBUTING.md)
 
 ## License
 
@@ -34,17 +60,18 @@ Without each one of these links and their authors, this project will never exist
 - [Inigo Quilez's articles][4]
 - [FabriceNeyret2's shaders][5] and [shadertoyunofficial website][6]
 - [Ek_Vitki's star tutorial][7], [Ek_Vitki's nebula tutorial][8] and [Ek_Vitki's celestial bodies tutorial][9]
-- A lot of shaders shared on Shadertoy:
+- A lot of shared Shadertoy shaders:
   - [Shadertoy - CBS' Simplicity Galaxy shader][10]
   - [nimitz's Noise animation - Electric shader][11]
   - [Shadertoy - vegardno's Pixel planet shader][12]
   - [Shadertoy - viclw17's Jupiter shader][13]
-- A lot of wallpaper projects shared on Github:
+- A lot of related Github projects:
   - [lord-123's xshader][14]
   - [mmhobi7's xwinwrap][15]
   - [KEKE046's xjuliabg][16]
   - [Theldus' anipaper][17]
   - [zaranthus' Livepaper][18]
+  - [zkburke's quanta][20]
 - [Daniel Linssen's planetarium][19]
 
 [1]:https://github.com/Deep-Fold/PixelSpace
@@ -66,3 +93,4 @@ Without each one of these links and their authors, this project will never exist
 [17]:https://github.com/Theldus/anipaper
 [18]:https://github.com/zuranthus/LivePaper
 [19]:https://managore.itch.io/planetarium
+[20]:https://github.com/zkburke/quanta

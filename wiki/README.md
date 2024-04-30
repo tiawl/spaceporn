@@ -1,17 +1,19 @@
-The **spaceporn-wiki** is a list of GLSL tutorials and online fragment shaders
+# Wiki
+
+The **spaceporn wiki** is a list of GLSL tutorials and online fragment shaders
 to generate procedural pixelized space content. Shaders documented are or will
-be integrated in the **spaceporn-gen**.
+be integrated in the **spaceporn generator**.
 
-### Before going further
+## Before going further
 
-Tutorials are not written by a pro graphic programmer. The author did not
-receive a formal shadering formation. The author learned by himself (and from
-ressources found on Internet). So details are explained the way the author
-understand them. This is why:
+Tutorials are not written by a professional graphic programmer. The author did
+not receive a formal shadering formation. The author learned by himself (and
+from ressources found on Internet). So details are explained the way the
+author understand them. This is why:
 - tutorials can leak some knowledges and/or precision,
 - articles/tutorials are linked as mush as possible.
 
-### Prerequites
+## Prerequites
 
 The author assumes:
 - you have maths knowledges (or at least curious and not afraid about
@@ -24,11 +26,11 @@ functions (*abs()*, *sin()*, *floor()*, *fract()*, *length()*, ...).
 If not, you can follow this tutorial but it will not be easy. So the authors
 advise you to do some reading/testing first.
 
-### Contributing
+## Contributing
 
 Here are the [instructions](CONTRIBUTING).
 
-### Available tutorials
+## Available tutorials
 
 - [Setup](Setup)
 - [Circled light](Circled-light) (in progress)
@@ -43,7 +45,7 @@ Here are the [instructions](CONTRIBUTING).
 - [Randomize swirls grid](Randomize-swirls-grid) (in progress)
 - [Nebula](Nebula) (in progress)
 
-### Online shaders
+## Online shaders
 
 - [swirl planet](https://www.shadertoy.com/view/NdjyDV)
 - [starfield](https://www.shadertoy.com/view/fsjBzy)

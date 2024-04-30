@@ -4,24 +4,24 @@ Wiki and Generator for space contemplators
 
 ## Generator
 
-The **spaceporn generator** is in early stage development and is not ready to be used.
+- The **spaceporn generator** is in early stage development and is not ready to be used.
 
-The **spaceporn generator** is a tool which could:
-- display animated or static procedural pixelized space content,
-- generate procedural pixelized space pictures.
+- The **spaceporn generator** is a tool which could:
+  - display animated or static procedural pixelized space content,
+  - generate procedural pixelized space pictures.
 
 ### Usage
 
-The maintainers will update this section later
+- The maintainers will update this section later
 
 ### Dependencies
 
-Before installing and building the **spaceporn generator**, you need to install this:
-- [Zig 0.12.0](https://ziglang.org/download/#release-0.12.0),
+- Before installing and building the **spaceporn generator**, you need to install this:
+  - [Zig 0.12.0](https://ziglang.org/download/#release-0.12.0),
 
 ### Installing
 
-The maintainers will update this section later.
+- The maintainers will update this section later.
 
 ### Supported environments
 
@@ -30,10 +30,8 @@ OS | Building | Running
 Ubuntu 22.04 | :white_check_mark: | :white_check_mark:
 Windows 2022 | :white_check_mark: | :grey_question:
 
-:white_check_mark: : Functional
-:grey_question: : Currently untested
-
-If you run The **spaceporn-gen** successfully on an unlisted environment, you can open an issue to update this list.
+- :white_check_mark: : Functional
+- :grey_question: : Currently untested
 
 ## [Wiki](https://github.com/tiawl/spaceporn/blob/trunk/wiki/README.md)
 

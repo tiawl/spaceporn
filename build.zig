@@ -151,6 +151,8 @@ fn link (builder: *std.Build, profile: *const Profile) !*Package
   const cimgui_dep = builder.dependency ("cimgui", .{
     .target = profile.target,
     .optimize = profile.optimize,
+    .platform = .GLFW,
+    .renderer = .Vulkan,
   });
 
   const c = try Package.init (builder, profile, "c",

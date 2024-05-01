@@ -6,7 +6,7 @@
   .dependencies = .{
     .cimgui = .{
       .url = "https://github.com/tiawl/cimgui.zig/archive/refs/tags/v1.90.5.tar.gz",
-      .hash = "1220f4e36b2540cbc1c0a8fb159913b27c4744bbb28c5e932425085247d92deec93a",
+      .hash = "12204492de4b5d3091f7638c8e293330fdf01cdb44cb2f9f3559af104b14061c740e",
     },
     .shaderc = .{
       .url = "https://github.com/tiawl/shaderc.zig/archive/refs/tags/v2024.0.tar.gz",

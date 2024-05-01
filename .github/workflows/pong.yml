@@ -5,8 +5,8 @@ on:
     types:
       - ping-cimgui.zig
       - ping-shaderc.zig
-      - ping-spaceporn-dep-action-env
-      - ping-spaceporn-dep-action-pong
+      - ping-spaceporn-action-env
+      - ping-spaceporn-action-pong
 
 jobs:
   pong:
@@ -15,7 +15,7 @@ jobs:
       pull-requests: write
     runs-on: ubuntu-latest
     steps:
-    - uses: tiawl/spaceporn-dep-action-cd-pong@v1.0.0
+    - uses: tiawl/spaceporn-action-cd-pong@v1.0.0
       with:
         repository: "${{ github.repository }}"
         dependency: "${{ github.event.client_payload.dependency }}"

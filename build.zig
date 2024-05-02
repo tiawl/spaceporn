@@ -296,8 +296,8 @@ fn run_test (builder: *std.Build, profile: *const Profile) !void
   const unit_tests = builder.addTest (.{
     .target = profile.target,
     .optimize = profile.optimize,
-    .test_runner = try builder.build_root.join (builder.allocator,
-      &.{ "test", "runner.zig", }),
+    .test_runner = .{ .path = try builder.build_root.join (builder.allocator,
+      &.{ "test", "runner.zig", }), },
     .root_source_file = .{ .path = try builder.build_root.join (
       builder.allocator, &.{ "test", "main.zig", }), },
   });

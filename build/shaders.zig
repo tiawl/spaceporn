@@ -62,7 +62,7 @@ pub const Step = struct
   }
 
   fn add (self: @This (), builder: *std.Build, dir: *std.fs.Dir,
-    entry: *const std.fs.Dir.Walker.WalkerEntry, dupe: [] const u8,
+    entry: *const std.fs.Dir.Walker.Entry, dupe: [] const u8,
     ptr: *Node) !void
   {
     if (!std.mem.eql (u8, entry.basename, dupe)) return;

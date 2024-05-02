@@ -713,7 +713,7 @@ pub const Context = struct
       .queue_create_info_count    = queue_count,
       .enabled_layer_count        = required_layers.len,
       .pp_enabled_layer_names     = if (required_layers.len > 0)
-        @ptrCast (required_layers [0 ..]) else undefined,
+        required_layers [0 ..].ptr else undefined,
       .enabled_extension_count    = @intCast (self.candidate.extensions.items.len),
       .pp_enabled_extension_names = @ptrCast (self.candidate.extensions.items),
       .p_enabled_features         = &device_features,
@@ -2561,10 +2561,13 @@ pub const Context = struct
     try self.logger.app (.DEBUG, "loop Vulkan OK", .{});
   }
 
-  pub fn cleanup (self: @This ()) !void
+  pub fn waitIdle (self: @This ()) !void
   {
     try self.logical_device.waitIdle ();
+  }
 
+  pub fn cleanup (self: @This ()) !void
+  {
     self.cleanup_swapchain ();
 
     self.offscreen_framebuffer.destroy (self.logical_device);

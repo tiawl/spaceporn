@@ -169,7 +169,8 @@ pub fn import (builder: *std.Build, profile: *const Profile,
   defer ext_dir.close ();
 
   var walker = try ext_dir.walk (builder.allocator);
-  defer walker.deinit();
+  // COMMENTED BECAUSE 0.12.0 fails to compile with:
+  // defer walker.deinit ();
 
   while (try walker.next ()) |entry|
   {

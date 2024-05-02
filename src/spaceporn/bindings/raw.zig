@@ -24,4 +24,3 @@ pub const call_conv: std.builtin.CallingConvention =
       .AAPCSVFP
   else
     .C;
-

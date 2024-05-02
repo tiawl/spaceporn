@@ -50,6 +50,7 @@ pub const Context = struct
 
   pub fn deinit (self: @This ()) !void
   {
+    try self.vk.waitIdle ();
     try self.imgui.deinit ();
     try self.vk.cleanup ();
     try self.glfw.deinit ();

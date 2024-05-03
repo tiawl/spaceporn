@@ -3,10 +3,10 @@ name: cd pong
 on:
   repository_dispatch:
     types:
-      - ping-cimgui.zig
-      - ping-shaderc.zig
-      - ping-spaceporn-action-env
-      - ping-spaceporn-action-pong
+      - ping-from-cimgui.zig
+      - ping-from-shaderc.zig
+      - ping-from-spaceporn-action-env
+      - ping-from-spaceporn-action-pong
 
 jobs:
   pong:
@@ -15,10 +15,10 @@ jobs:
       pull-requests: write
     runs-on: ubuntu-latest
     steps:
-    - uses: tiawl/spaceporn-action-cd-pong@v1.0.0
+    - uses: tiawl/spaceporn-action-cd-pong@v1.0.1
       with:
-        repository: "${{ github.repository }}"
-        dependency: "${{ github.event.client_payload.dependency }}"
+        to: "${{ github.repository }}"
+        from: "${{ github.event.client_payload.from }}"
         tag: "${{ github.event.client_payload.tag }}"
         hash: "${{ github.event.client_payload.hash }}"
         token: "${{ secrets.PAT }}"

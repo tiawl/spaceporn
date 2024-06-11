@@ -188,7 +188,7 @@ fn import (builder: *std.Build, exe: *std.Build.Step.Compile,
 
   const build_options = profile.variables.createModule ();
   const logger = builder.createModule (.{
-    .root_source_file = .{ .path = try builder.build_root.join (
+    .root_source_file = .{ .cwd_relative = try builder.build_root.join (
       builder.allocator, &.{ "src", zon.name, "logger.zig", }), },
     .target = profile.target,
     .optimize = profile.optimize,
@@ -197,7 +197,7 @@ fn import (builder: *std.Build, exe: *std.Build.Step.Compile,
   logger.addImport ("datetime", datetime);
 
   const instance = builder.createModule (.{
-    .root_source_file = .{ .path = try builder.build_root.join (
+    .root_source_file = .{ .cwd_relative = try builder.build_root.join (
       builder.allocator, &.{ "src", zon.name, "vk", "instance",
         if (profile.options.turbo) "turbo.zig" else "default.zig", }), },
     .target = profile.target,

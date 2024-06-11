@@ -119,9 +119,9 @@ fn generate_literals (builder: *std.Build,
   const formatted = try validated.render (builder.allocator);
 
   const hash = &digest (null, formatted);
-  prototypes.path = try std.fs.path.join (builder.allocator, &.{
-    try builder.cache_root.join (builder.allocator, &.{ "prototypes", }), hash,
-  });
+  prototypes.path = try std.fs.path.relative (builder.allocator,
+    builder.build_root.path.?, try builder.cache_root.join (builder.allocator,
+      &.{ "prototypes", hash, }));
 
   std.fs.accessAbsolute (prototypes.path, .{}) catch |err| switch (err)
   {

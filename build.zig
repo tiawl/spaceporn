@@ -188,7 +188,7 @@ fn import (builder: *std.Build, exe: *std.Build.Step.Compile,
 
   const build_options = profile.variables.createModule ();
   const logger = builder.createModule (.{
-    .root_source_file = builder.path (try builder.build_root.join (
+    .root_source_file = builder.path (try std.fs.path.join (
       builder.allocator, &.{ "src", zon.name, "logger.zig", })),
     .target = profile.target,
     .optimize = profile.optimize,
@@ -197,7 +197,7 @@ fn import (builder: *std.Build, exe: *std.Build.Step.Compile,
   logger.addImport ("datetime", datetime);
 
   const instance = builder.createModule (.{
-    .root_source_file = builder.path (try builder.build_root.join (
+    .root_source_file = builder.path (try std.fs.path.join (
       builder.allocator, &.{ "src", zon.name, "vk", "instance",
         if (profile.options.turbo) "turbo.zig" else "default.zig", })),
     .target = profile.target,
@@ -222,7 +222,7 @@ fn run_shaders_compiler (builder: *std.Build,
 {
   const shaders_compiler = builder.addExecutable (.{
     .name = "shaders_compiler",
-    .root_source_file = builder.path (try builder.build_root.join (
+    .root_source_file = builder.path (try std.fs.path.join (
       builder.allocator, &.{ "src", "compiler", "main.zig", })),
     .target = builder.host,
     .optimize = .Debug,
@@ -234,7 +234,7 @@ fn run_shaders_compiler (builder: *std.Build,
   });
 
   const c = builder.createModule (.{
-    .root_source_file = builder.path (try builder.build_root.join (
+    .root_source_file = builder.path (try std.fs.path.join (
       builder.allocator, &.{ "src", "compiler", "bindings", "raw.zig", })),
     .target = builder.host,
     .optimize = .Debug,
@@ -242,7 +242,7 @@ fn run_shaders_compiler (builder: *std.Build,
   c.linkLibrary (shaderc_dep.artifact ("shaderc"));
 
   const shaderc = builder.createModule (.{
-    .root_source_file = builder.path (try builder.build_root.join (
+    .root_source_file = builder.path (try std.fs.path.join (
       builder.allocator,
       &.{ "src", "compiler", "bindings", "shaderc", "shaderc.zig", })),
     .target = profile.target,
@@ -274,7 +274,7 @@ fn run_exe (builder: *std.Build, profile: *const Profile,
 {
   const exe = builder.addExecutable (.{
     .name = zon.name,
-    .root_source_file = builder.path (try builder.build_root.join (
+    .root_source_file = builder.path (try std.fs.path.join (
       builder.allocator, &.{ "src", zon.name, "main.zig", })),
     .target = profile.target,
     .optimize = profile.optimize,
@@ -296,9 +296,9 @@ fn run_test (builder: *std.Build, profile: *const Profile) !void
   const unit_tests = builder.addTest (.{
     .target = profile.target,
     .optimize = profile.optimize,
-    .test_runner = builder.path (try builder.build_root.join (builder.allocator,
+    .test_runner = builder.path (try std.fs.path.join (builder.allocator,
       &.{ "test", "runner.zig", })),
-    .root_source_file = builder.path (try builder.build_root.join (
+    .root_source_file = builder.path (try std.fs.path.join (
       builder.allocator, &.{ "test", "main.zig", })),
   });
   unit_tests.step.dependOn (builder.getInstallStep ());

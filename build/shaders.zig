@@ -197,7 +197,7 @@ pub const Step = struct
     std.debug.print ("[shader module] {s}\n", .{ path, });
   }
 
-  fn make (step: *std.Build.Step, progress_node: *std.Progress.Node) !void
+  fn make (step: *std.Build.Step, progress_node: std.Progress.Node) !void
   {
     const builder = step.owner;
     var self: *@This () = @fieldParentPtr ("step", step);

@@ -35,7 +35,7 @@ pub const Package = struct
     const self = try builder.allocator.create (@This ());
     self.name = name;
     self.module = builder.createModule (.{
-      .root_source_file = .{ .path = path, },
+      .root_source_file = .{ .cwd_relative = path, },
       .target = profile.target,
       .optimize = profile.optimize,
     });

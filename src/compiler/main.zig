@@ -171,6 +171,6 @@ pub fn main () !void
     out_dir = try std.fs.openDirAbsolute (std.fs.path.dirname (out).?, .{});
     defer out_dir.close ();
 
-    try out_dir.writeFile (std.fs.path.basename (out), bytes);
+    try out_dir.writeFile (.{ .sub_path = std.fs.path.basename (out), .data = bytes, });
   }
 }

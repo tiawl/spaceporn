@@ -17,7 +17,7 @@ Wiki and Generator for space contemplators
 ### Dependencies
 
 - Before installing and building the **spaceporn generator**, you need to install this:
-  - [Zig 0.12.0](https://ziglang.org/download/#release-0.12.0),
+  - [Zig 0.13.0](https://ziglang.org/download/#release-0.13.0),
 
 ### Installing
 

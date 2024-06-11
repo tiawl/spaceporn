@@ -189,7 +189,7 @@ pub const Step = struct
     std.fs.accessAbsolute (path, .{}) catch |err| switch (err)
     {
       error.FileNotFound => try builder.cache_root.handle.writeFile (
-        path, formatted),
+        .{ .sub_path = path, .data = formatted, }),
       else => return err,
     };
 
@@ -197,7 +197,7 @@ pub const Step = struct
     std.debug.print ("[shader module] {s}\n", .{ path, });
   }
 
-  fn make (step: *std.Build.Step, progress_node: *std.Progress.Node) !void
+  fn make (step: *std.Build.Step, progress_node: std.Progress.Node) !void
   {
     const builder = step.owner;
     var self: *@This () = @fieldParentPtr ("step", step);
@@ -226,7 +226,7 @@ pub const Step = struct
     const step = try create (dependency, options);
     const builder = dependency.builder;
     return builder.createModule (.{
-      .root_source_file = .{ .generated = &step.generated_file, },
+      .root_source_file = .{ .generated = .{ .file = &step.generated_file }, },
       .target = builder.host,
       .optimize = .Debug,
     });

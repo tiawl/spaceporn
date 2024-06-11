@@ -5,12 +5,12 @@
   .paths = .{ "", },
   .dependencies = .{
     .cimgui = .{
-      .url = "https://github.com/tiawl/cimgui.zig/archive/refs/tags/v1.90.8.tar.gz",
-      .hash = "1220c6c0ea308836f90211be28f266ddc3974760f6d8a2e106e1ea63336384ef660b",
+      .url = "https://github.com/tiawl/cimgui.zig/archive/98688bac80f7330a6b38c8a4a6ec91dd5886bb04.tar.gz",
+      .hash = "12202ba799aaf26e6fbed79b7f2dba78cc5ffed85cf23e6be9131a5ff7ddbbb01d2c",
     },
     .shaderc = .{
-      .url = "https://github.com/tiawl/shaderc.zig/archive/refs/tags/v2024.1.tar.gz",
-      .hash = "1220f9ad0eb75a568519486ef8e58012cf9e175c494c0c5fc756084b05c0b8b0c062",
+      .url = "https://github.com/tiawl/shaderc.zig/archive/3eec8fb9daf3f4669e1e2c4949e3d58f890f35db.tar.gz",
+      .hash = "1220c9bffa694dab80beb93a14f0269379f10dd5af7c1f5322bcdde0b8fbf1ccd1a4",
     },
     .@"zig-datetime" = .{
       .url = "https://github.com/frmdstryr/zig-datetime/archive/a9c75242dfc119a305c1381c2352d2fc16b2e0aa.tar.gz",

@@ -8,7 +8,7 @@ const zon = utils.zon;
 pub fn import (builder: *std.Build, profile: *const Profile,
   c: *Package, glfw: *Package, vk: *Package) !*Package
 {
-  const path = try std.fs.path.join (builder.allocator,
+  const path = try builder.build_root.join (builder.allocator,
     &.{ "src", zon.name, "bindings", "imgui", });
 
   var imgui = try Package.init (builder, profile, "imgui",

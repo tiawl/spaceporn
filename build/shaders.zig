@@ -189,7 +189,7 @@ pub const Step = struct
     std.fs.accessAbsolute (path, .{}) catch |err| switch (err)
     {
       error.FileNotFound => try builder.cache_root.handle.writeFile (
-        path, formatted),
+        .{ .sub_path = path, .data = formatted, }),
       else => return err,
     };
 

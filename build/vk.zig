@@ -126,7 +126,7 @@ fn generate_literals (builder: *std.Build,
   std.fs.accessAbsolute (prototypes.path, .{}) catch |err| switch (err)
   {
     error.FileNotFound => try builder.cache_root.handle.writeFile (
-      prototypes.path, formatted),
+      .{ .sub_path = prototypes.path, .data = formatted, }),
     else => return err,
   };
 

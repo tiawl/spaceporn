@@ -8,7 +8,7 @@ const zon = utils.zon;
 pub fn import (builder: *std.Build, profile: *const Profile,
   c: *Package) !*Package
 {
-  const path = try builder.build_root.join (builder.allocator,
+  const path = try std.fs.path.join (builder.allocator,
     &.{ "src", zon.name, "bindings", "glfw", });
 
   var glfw = try Package.init (builder, profile, "glfw",

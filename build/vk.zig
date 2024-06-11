@@ -137,7 +137,7 @@ fn generate_literals (builder: *std.Build,
 pub fn import (builder: *std.Build, profile: *const Profile,
   c: *Package) !*Package
 {
-  const path = try builder.build_root.join (builder.allocator,
+  const path = try std.fs.path.join (builder.allocator,
     &.{ "src", zon.name, "bindings", "vk", });
 
   var vk = try Package.init (builder, profile, "vk",

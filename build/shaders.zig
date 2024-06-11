@@ -226,7 +226,7 @@ pub const Step = struct
     const step = try create (dependency, options);
     const builder = dependency.builder;
     return builder.createModule (.{
-      .root_source_file = .{ .generated = &step.generated_file, },
+      .root_source_file = .{ .generated = .{ .file = &step.generated_file }, },
       .target = builder.host,
       .optimize = .Debug,
     });

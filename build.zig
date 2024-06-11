@@ -156,7 +156,7 @@ fn link (builder: *std.Build, profile: *const Profile) !*Package
   });
 
   const c = try Package.init (builder, profile, "c",
-    try builder.build_root.join (builder.allocator,
+    try std.fs.path.join (builder.allocator,
       &.{ "src", zon.name, "bindings", "raw.zig", }));
   c.link (cimgui_dep.artifact ("cimgui"));
 

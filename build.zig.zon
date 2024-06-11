@@ -5,16 +5,16 @@
   .paths = .{ "", },
   .dependencies = .{
     .cimgui = .{
-      .url = "https://github.com/tiawl/cimgui.zig/archive/98688bac80f7330a6b38c8a4a6ec91dd5886bb04.tar.gz",
-      .hash = "12202ba799aaf26e6fbed79b7f2dba78cc5ffed85cf23e6be9131a5ff7ddbbb01d2c",
+      .url = "https://github.com/tiawl/cimgui.zig/archive/1d57ca5f7d80bc122a8f3d0c05a65134f540dda0.tar.gz",
+      .hash = "12207c509fe025596132b5cdaf405bbb2a3cbbf7228ca7708dfb89e1243ea3566002",
     },
     .shaderc = .{
-      .url = "https://github.com/tiawl/shaderc.zig/archive/3eec8fb9daf3f4669e1e2c4949e3d58f890f35db.tar.gz",
-      .hash = "1220c9bffa694dab80beb93a14f0269379f10dd5af7c1f5322bcdde0b8fbf1ccd1a4",
+      .url = "https://github.com/tiawl/shaderc.zig/archive/d9c0f87d58d9f52e44853ebb5daa03fbe6ee78b3.tar.gz",
+      .hash = "1220dca25efeb69a1fa4414714900252ec23b01d4de33a1eb90eabc15a60f48430e6",
     },
     .@"zig-datetime" = .{
-      .url = "https://github.com/frmdstryr/zig-datetime/archive/a9c75242dfc119a305c1381c2352d2fc16b2e0aa.tar.gz",
-      .hash = "122038b4b5df08d2af6daf81e5f18d4c244d807c9323224db826cc107ce3894f6fa9",
+      .url = "https://github.com/frmdstryr/zig-datetime/archive/eb05569fc75a18b343f9992e5e628c2b69456d10.tar.gz",
+      .hash = "1220f7f4a9210f6ce3949446276566b0a22775e85dc6b81daf7aae55e0ec5588f4dc",
     },
   },
 }

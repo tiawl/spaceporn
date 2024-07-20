@@ -179,6 +179,12 @@ fn import (builder: *std.Build, exe: *std.Build.Step.Compile,
   });
   const datetime = datetime_dep.module ("zig-datetime");
 
+  const jdz_dep = builder.dependency ("jdz_allocator", .{
+    .target = profile.target,
+    .optimize = profile.optimize,
+  });
+  const jdz = jdz_dep.module ("jdz_allocator");
+
   const c = try link (builder, profile);
   const glfw_pkg = try glfw.import (builder, profile, c);
   const vk_pkg = try vk.import (builder, profile, c);
@@ -195,6 +201,7 @@ fn import (builder: *std.Build, exe: *std.Build.Step.Compile,
   });
   logger.addImport ("build", build_options);
   logger.addImport ("datetime", datetime);
+  logger.addImport ("jdz", jdz);
 
   const instance = builder.createModule (.{
     .root_source_file = .{ .cwd_relative = try builder.build_root.join (
@@ -208,6 +215,7 @@ fn import (builder: *std.Build, exe: *std.Build.Step.Compile,
 
   for ([_] struct { name: [] const u8, ptr: *std.Build.Module, } {
     .{ .name = "datetime", .ptr = datetime, },
+    .{ .name = "jdz", .ptr = jdz, },
     .{ .name = "shader", .ptr = shaders_module, },
     .{ .name = "glfw", .ptr = glfw_pkg.module, },
     .{ .name = "vk", .ptr = vk_pkg.module, },

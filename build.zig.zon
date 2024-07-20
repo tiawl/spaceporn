@@ -13,8 +13,12 @@
       .hash = "1220a2ee465849f3b4462fc4079d7a0dae566671e730678b4b965b98547707253981",
     },
     .@"zig-datetime" = .{
-      .url = "https://github.com/frmdstryr/zig-datetime/archive/eb05569fc75a18b343f9992e5e628c2b69456d10.tar.gz",
-      .hash = "1220f7f4a9210f6ce3949446276566b0a22775e85dc6b81daf7aae55e0ec5588f4dc",
+      .url = "https://github.com/frmdstryr/zig-datetime/archive/70aebf28fb3e137cd84123a9349d157a74708721.tar.gz",
+      .hash = "122077215ce36e125a490e59ec1748ffd4f6ba00d4d14f7308978e5360711d72d77f",
+    },
+    .jdz_allocator = .{
+      .url = "https://github.com/joadnacer/jdz_allocator/archive/ea14e0efc3328a6b9e7dd53bb91b9eec2efe3f96.tar.gz",
+      .hash = "12205353c7f550b1aadf245d70a30d5a0a92eb151f735e15358ff35fcfe53343c93f",
     },
   },
 }

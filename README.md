@@ -46,7 +46,7 @@ Each component of this repository has its own contributing rules:
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE.md).
+This repository is dedicated to the public domain. See the LICENSE file for more details.
 
 ## Credit
 

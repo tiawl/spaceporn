@@ -73,7 +73,7 @@ fn generate_literals (builder: *std.Build,
           std.mem.eql (u8, binding.buffer.items [precedent [5].?.loc.start ..
             precedent [5].?.loc.end], "raw"))
         {
-          inline for (@typeInfo (@TypeOf (prototypes)).Struct.fields) |field|
+          inline for (@typeInfo (@TypeOf (prototypes)).@"struct".fields) |field|
           {
             if (field.type == std.ArrayList ([] const u8))
             {
@@ -99,7 +99,7 @@ fn generate_literals (builder: *std.Build,
 
   const writer = prototypes.buffer.writer ();
 
-  inline for (@typeInfo (@TypeOf (prototypes)).Struct.fields) |field|
+  inline for (@typeInfo (@TypeOf (prototypes)).@"struct".fields) |field|
   {
     if (field.type == std.ArrayList ([] const u8))
     {

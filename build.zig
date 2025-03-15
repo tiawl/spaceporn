@@ -177,7 +177,7 @@ fn import (builder: *std.Build, exe: *std.Build.Step.Compile,
     .target = profile.target,
     .optimize = profile.optimize,
   });
-  const datetime = datetime_dep.module ("zig-datetime");
+  const datetime = datetime_dep.module ("datetime");
 
   const jdz_dep = builder.dependency ("jdz_allocator", .{
     .target = profile.target,
@@ -232,7 +232,7 @@ fn run_shaders_compiler (builder: *std.Build,
     .name = "shaders_compiler",
     .root_source_file = .{ .cwd_relative = try builder.build_root.join (
       builder.allocator, &.{ "src", "compiler", "main.zig", }), },
-    .target = builder.host,
+    .target = builder.graph.host,
     .optimize = .Debug,
   });
 
@@ -244,7 +244,7 @@ fn run_shaders_compiler (builder: *std.Build,
   const c = builder.createModule (.{
     .root_source_file = .{ .cwd_relative = try builder.build_root.join (
       builder.allocator, &.{ "src", "compiler", "bindings", "raw.zig", }), },
-    .target = builder.host,
+    .target = builder.graph.host,
     .optimize = .Debug,
   });
   c.linkLibrary (shaderc_dep.artifact ("shaderc"));
@@ -304,8 +304,8 @@ fn run_test (builder: *std.Build, profile: *const Profile) !void
   const unit_tests = builder.addTest (.{
     .target = profile.target,
     .optimize = profile.optimize,
-    .test_runner = .{ .cwd_relative = try builder.build_root.join (builder.allocator,
-      &.{ "test", "runner.zig", }), },
+    .test_runner = .{ .path = .{ .cwd_relative = try builder.build_root.join (builder.allocator,
+      &.{ "test", "runner.zig", }), }, .mode = .simple, },
     .root_source_file = .{ .cwd_relative = try builder.build_root.join (
       builder.allocator, &.{ "test", "main.zig", }), },
   });

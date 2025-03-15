@@ -154,7 +154,7 @@ pub const Step = struct
 
     while (stack.items.len > 0)
     {
-      node = stack.pop ();
+      node = stack.pop().?;
 
       if (node.name.len == 0)
       {
@@ -197,7 +197,7 @@ pub const Step = struct
     std.debug.print ("[shader module] {s}\n", .{ path, });
   }
 
-  fn make (step: *std.Build.Step, progress_node: std.Progress.Node) !void
+  fn make (step: *std.Build.Step, make_options: std.Build.Step.MakeOptions) !void
   {
     const builder = step.owner;
     var self: *@This () = @fieldParentPtr ("step", step);
@@ -215,7 +215,7 @@ pub const Step = struct
     try self.walk_through (builder);
 
     try self.shaders_compiler.step.makeFn (&self.shaders_compiler.step,
-      progress_node);
+      make_options);
 
     try self.write_index (builder);
   }
@@ -227,7 +227,7 @@ pub const Step = struct
     const builder = dependency.builder;
     return builder.createModule (.{
       .root_source_file = .{ .generated = .{ .file = &step.generated_file }, },
-      .target = builder.host,
+      .target = builder.graph.host,
       .optimize = .Debug,
     });
   }

@@ -15,13 +15,13 @@ fn OptionalExtensions () type
     fields [i] = .{
       .name = @field (fields [i].type, ext.* [ext.len - 1]),
       .type = bool,
-      .default_value = null,
+      .default_value_ptr = null,
       .is_comptime = false,
       .alignment = 0,
     };
   }
   return @Type (.{
-    .Struct = .{
+    .@"struct" = .{
       .layout = .auto,
       .fields = &fields,
       .decls = &.{},

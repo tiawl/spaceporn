@@ -44,22 +44,22 @@ const Prototypes = struct
     var info = @typeInfo (T);
     return switch (info)
     {
-      .Opaque   => blk: {
-                     if (T == anyopaque) break :blk T
-                     else { is_opaque.* = true; break :blk ziggify (T); }
-                   },
-      .Optional => blk: {
-                     const child = cast_rec (info.Optional.child, is_opaque);
-                     if (is_opaque.*) { is_opaque.* = false; break :blk child; }
-                     else { info.Optional.child = child; break :blk @Type (info); }
-                   },
-      .Pointer  => blk: {
-                     const child = cast_rec (info.Pointer.child, is_opaque);
-                     if (is_opaque.*) break :blk child
-                     else { info.Pointer.child = child; break :blk @Type (info); }
-                   },
-      .Struct   => if (info.Struct.layout == .auto) T else ziggify (T),
-      else      => T,
+      .@"opaque" => blk: {
+                      if (T == anyopaque) break :blk T
+                      else { is_opaque.* = true; break :blk ziggify (T); }
+                    },
+      .optional  => blk: {
+                      const child = cast_rec (info.@"optional".child, is_opaque);
+                      if (is_opaque.*) { is_opaque.* = false; break :blk child; }
+                      else { info.@"optional".child = child; break :blk @Type (info); }
+                    },
+      .pointer   => blk: {
+                      const child = cast_rec (info.pointer.child, is_opaque);
+                      if (is_opaque.*) break :blk child
+                      else { info.pointer.child = child; break :blk @Type (info); }
+                    },
+      .@"struct" => if (info.@"struct".layout == .auto) T else ziggify (T),
+      else       => T,
     };
   }
 
@@ -72,14 +72,14 @@ const Prototypes = struct
   fn Dispatch (comptime T: std.meta.DeclEnum (literals)) type
   {
     @setEvalBranchQuota (100_000);
-    const size = @typeInfo (@field (literals, @tagName (T))).Enum.fields.len;
+    const size = @typeInfo (@field (literals, @tagName (T))).@"enum".fields.len;
     var fields: [size] std.builtin.Type.StructField = undefined;
-    for (@typeInfo (@field (literals, @tagName (T))).Enum.fields, 0 ..) |*field, i|
+    for (@typeInfo (@field (literals, @tagName (T))).@"enum".fields, 0 ..) |*field, i|
     {
       const pfn = pfn: {
         const pointer = @typeInfo (@TypeOf (@field (c, field.name)));
-        var params: [pointer.Fn.params.len] std.builtin.Type.Fn.Param = undefined;
-        for (pointer.Fn.params, 0 ..) |*param, j|
+        var params: [pointer.@"fn".params.len] std.builtin.Type.Fn.Param = undefined;
+        for (pointer.@"fn".params, 0 ..) |*param, j|
         {
           params [j] = .{
             .is_generic = param.is_generic,
@@ -89,24 +89,24 @@ const Prototypes = struct
           };
         }
         break :pfn @Type (.{
-          .Pointer = .{
-            .size = .One,
+          .pointer = .{
+            .size = .one,
             .is_const = true,
             .is_volatile = false,
             .alignment = 1,
             .address_space = .generic,
             .child = @Type (.{
-              .Fn = .{
+              .@"fn" = .{
                 .calling_convention = c.call_conv,
-                .is_generic = pointer.Fn.is_generic,
-                .is_var_args = pointer.Fn.is_var_args,
-                .return_type = cast (pointer.Fn.return_type orelse
+                .is_generic = pointer.@"fn".is_generic,
+                .is_var_args = pointer.@"fn".is_var_args,
+                .return_type = cast (pointer.@"fn".return_type orelse
                   @compileError ("Return type is null for " ++ field.name)),
                 .params = &params,
               },
             }),
             .is_allowzero = false,
-            .sentinel = null,
+            .sentinel_ptr = null,
           },
         });
       };
@@ -115,13 +115,13 @@ const Prototypes = struct
       fields [i] = .{
         .name = field.name,
         .type = pfn,
-        .default_value = null,
+        .default_value_ptr = null,
         .is_comptime = false,
         .alignment = @alignOf (pfn),
       };
     }
     return @Type (.{
-      .Struct = .{
+      .@"struct" = .{
         .layout = .auto,
         .fields = &fields,
         .decls = &.{},

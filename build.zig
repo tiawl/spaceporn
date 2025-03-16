@@ -148,7 +148,7 @@ fn parse_options (builder: *std.Build) !Profile
 
 fn link (builder: *std.Build, profile: *const Profile) !*Package
 {
-  const cimgui_dep = builder.dependency ("cimgui", .{
+  const cimgui_dep = builder.dependency ("cimgui_zig", .{
     .target = profile.target,
     .optimize = profile.optimize,
     .platform = .GLFW,
@@ -236,7 +236,7 @@ fn run_shaders_compiler (builder: *std.Build,
     .optimize = .Debug,
   });
 
-  const shaderc_dep = builder.dependency ("shaderc", .{
+  const shaderc_dep = builder.dependency ("shaderc_zig", .{
     .target = profile.target,
     .optimize = profile.optimize,
   });

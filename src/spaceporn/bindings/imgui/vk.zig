@@ -60,7 +60,7 @@ fn loader (function_name: [*c] const u8, instance: ?*anyopaque)
 
 pub fn load () !void
 {
-  if (!c.cImGui_ImplVulkan_LoadFunctions (vk.API_VERSION.@"1", loader))
+  if (!c.cImGui_ImplVulkan_LoadFunctions (vk.API_VERSION.@"1".@"1", loader))
     return error.ImGuiVulkanLoadFunctionsFailure;
 }
 

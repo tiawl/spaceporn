@@ -1,3 +1,3 @@
-pub usingnamespace @cImport ({
-  @cInclude ("shaderc/shaderc.h");
+pub usingnamespace @cImport({
+    @cInclude("shaderc/shaderc.h");
 });

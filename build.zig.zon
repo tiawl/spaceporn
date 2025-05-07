@@ -7,8 +7,8 @@
     },
     .dependencies = .{
         .cimgui_zig = .{
-            .url = "git+https://github.com/tiawl/cimgui.zig?ref=vulkan.zig-v1.4.313#e2ca3744975055a525d6cb02bc353738367232d5",
-            .hash = "cimgui_zig-1.0.0-2XubkhxkUAD-7Ka5rF4H64K_6nVLF56M86_Nt_DgAaXS",
+            .url = "git+https://github.com/tiawl/cimgui.zig?ref=xkbcommon-1.9.2#bc54be9a8da61badc8f9a8d8da29d383e4de6462",
+            .hash = "cimgui_zig-1.0.0-2XubkiBkUACs5tPguQoenTR96p35hKWBALbir_Rfvv-e",
         },
         .shaderc_zig = .{
             .url = "git+https://github.com/tiawl/shaderc.zig?ref=glslang.zig-15.3.0#303e37266f453a1a7d25ccc69de453dac88d7c82",

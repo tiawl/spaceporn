@@ -7,12 +7,12 @@
     },
     .dependencies = .{
         .cimgui_zig = .{
-            .url = "git+https://github.com/tiawl/cimgui.zig?ref=toolbox-1.12.2#87ca6f06d24d9c0e4c1e3aa2df196619bc7b971f",
-            .hash = "cimgui_zig-1.0.0-2XubknU0SgCp3RDThCgE2jBNgIbyOmeyzWy3YL8tXEc8",
+            .url = "git+https://github.com/tiawl/cimgui.zig?ref=xkbcommon-1.9.2#bc54be9a8da61badc8f9a8d8da29d383e4de6462",
+            .hash = "cimgui_zig-1.0.0-2XubkiBkUACs5tPguQoenTR96p35hKWBALbir_Rfvv-e",
         },
         .shaderc_zig = .{
-            .url = "git+https://github.com/tiawl/shaderc.zig?ref=toolbox-1.12.2#39b1dd8877fab33afbc4b8aeba7303c7d0b4ddb8",
-            .hash = "shaderc_zig-1.0.0-mOl841ZjAwDkJ50yeZolO1tqV9E4-rP-Nff7PjlsKf-1",
+            .url = "git+https://github.com/tiawl/shaderc.zig?ref=glslang.zig-15.3.0#303e37266f453a1a7d25ccc69de453dac88d7c82",
+            .hash = "shaderc_zig-1.0.0-mOl840tjAwAZqNdE42EP2s5NVqScr8JLp2cateh7r7Fe",
         },
         .@"zig-datetime" = .{
             .url = "https://github.com/frmdstryr/zig-datetime/archive/4d0e84cd8844c0672e0cbe247a3130750c9e0f27.tar.gz",

@@ -145,6 +145,7 @@ fn link(builder: *std.Build, profile: *const Profile) !*Package {
         .optimize = profile.optimize,
         .platform = .GLFW,
         .renderer = .Vulkan,
+        .@"toolbox-logging" = true,
     });
 
     const c = try Package.init(builder, profile, "c", try builder.build_root.join(builder.allocator, &.{

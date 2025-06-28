@@ -12,11 +12,11 @@ pub const DrawData = struct {
     };
 };
 
-pub const FontsTexture = struct {
-    pub fn create() !void {
-        if (!c.cImGui_ImplVulkan_CreateFontsTexture()) return error.ImGuiVulkanCreateFontsTexture;
-    }
-};
+//pub const FontsTexture = struct {
+//    pub fn create() !void {
+//        if (!c.cImGui_ImplVulkan_CreateFontsTexture()) return error.ImGuiVulkanCreateFontsTexture;
+//    }
+//};
 
 pub const Frame = struct {
     pub fn new() void {

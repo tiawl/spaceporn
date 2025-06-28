@@ -86,7 +86,7 @@ pub const Context = struct {
 
         try command_buffers[0].begin(&begin_info);
 
-        try imgui.vk.FontsTexture.create();
+        //try imgui.vk.FontsTexture.create();
 
         const submit_info = [_]vk.Submit.Info{
             .{

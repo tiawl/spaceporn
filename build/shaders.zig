@@ -49,7 +49,7 @@ pub const Step = struct {
             .options = options,
             .tree = .{
                 .name = "shaders",
-                .nodes = std.ArrayList(Node).init(builder.allocator),
+                .nodes = .empty,
             },
         };
         self.generated_file = .{
@@ -67,9 +67,9 @@ pub const Step = struct {
 
         if (!std.mem.startsWith(u8, source, "#version ")) return;
 
-        try ptr.nodes.append(.{
+        try ptr.nodes.append(builder.allocator, .{
             .name = std.fs.path.extension(dupe)[1..],
-            .nodes = std.ArrayList(Node).init(builder.allocator),
+            .nodes = .empty,
             .hash = digest(self.options, source),
         });
 
@@ -81,8 +81,10 @@ pub const Step = struct {
         });
 
         const out = try std.fs.path.join(builder.allocator, &.{
-            try builder.cache_root.join(builder.allocator, &.{
-                "shaders",
+            try builder.build_root.join(builder.allocator, &.{
+                try builder.cache_root.join(builder.allocator, &.{
+                    "shaders",
+                }),
             }),
             &ptr.nodes.items[ptr.nodes.items.len - 1].hash,
         });
@@ -128,9 +130,9 @@ pub const Step = struct {
                             continue :next;
                         }
                     }
-                    try pointer.nodes.append(.{
+                    try pointer.nodes.append(builder.allocator, .{
                         .name = stem,
-                        .nodes = std.ArrayList(Node).init(builder.allocator),
+                        .nodes = .empty,
                     });
                     pointer = &pointer.nodes.items[pointer.nodes.items.len - 1];
                     try self.add(builder, &dir, entry, dupe, pointer);
@@ -140,51 +142,52 @@ pub const Step = struct {
     }
 
     fn write_index(self: *@This(), builder: *std.Build) !void {
-        var buffer = std.ArrayList(u8).init(builder.allocator);
-        const writer = buffer.writer();
+        var buffer: std.ArrayList(u8) = .empty;
 
-        var stack = std.ArrayList(Node).init(builder.allocator);
-        try stack.appendSlice(self.tree.nodes.items);
+        var stack: std.ArrayList(Node) = .empty;
+        try stack.appendSlice(builder.allocator, self.tree.nodes.items);
         var node: Node = undefined;
 
         while (stack.items.len > 0) {
             node = stack.pop().?;
 
             if (node.name.len == 0) {
-                try writer.print("{c};\n", .{
+                try buffer.print(builder.allocator, "{c};\n", .{
                     '}',
                 });
             } else if (node.nodes.items.len == 0 and
                 (std.mem.eql(u8, node.name, "frag") or
                     std.mem.eql(u8, node.name, "vert")))
             {
-                try writer.print("pub const @\"{s}\" align(@alignOf(u32)) = @embedFile(\"{s}\").*;\n", .{
+                try buffer.print(builder.allocator, "pub const @\"{s}\" align(@alignOf(u32)) = @embedFile(\"{s}\").*;\n", .{
                     node.name,
                     node.hash,
                 });
             } else {
-                try writer.print("pub const @\"{s}\" = struct {c}\n", .{
+                try buffer.print(builder.allocator, "pub const @\"{s}\" = struct {c}\n", .{
                     node.name,
                     '{',
                 });
-                try stack.append(.{
+                try stack.append(builder.allocator, .{
                     .name = "",
                     .nodes = undefined,
                 });
-                try stack.appendSlice(node.nodes.items);
+                try stack.appendSlice(builder.allocator, node.nodes.items);
             }
         }
 
-        try buffer.append(0);
+        try buffer.append(builder.allocator, 0);
         const source = buffer.items[0 .. buffer.items.len - 1 :0];
 
         const validated = try std.zig.Ast.parse(builder.allocator, source, .zig);
-        const formatted = try validated.render(builder.allocator);
+        const formatted = try validated.renderAlloc(builder.allocator);
 
         const hash = &digest(null, formatted);
         const path = try std.fs.path.join(builder.allocator, &.{
-            try builder.cache_root.join(builder.allocator, &.{
-                "shaders",
+            try builder.build_root.join(builder.allocator, &.{
+                try builder.cache_root.join(builder.allocator, &.{
+                    "shaders",
+                }),
             }),
             hash,
         });

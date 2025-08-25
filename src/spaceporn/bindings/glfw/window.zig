@@ -1,4 +1,4 @@
-const c = @import("c");
+const c = @import("c").c;
 const std = @import("std");
 
 const glfw = @import("glfw");
@@ -108,7 +108,7 @@ pub const Window = struct {
                     const window = try glfw.Context.get();
                     if (callback) |user_callback| {
                         const Wrapper = struct {
-                            pub fn framebufferSizeCallbackWrapper(handle: ?*c.GLFWwindow, width: c_int, height: c_int) callconv(.C) void {
+                            pub fn framebufferSizeCallbackWrapper(handle: ?*c.GLFWwindow, width: c_int, height: c_int) callconv(std.builtin.CallingConvention.c) void {
                                 @call(.always_inline, user_callback, .{
                                     from(handle.?),
                                     @as(u32, @intCast(width)),

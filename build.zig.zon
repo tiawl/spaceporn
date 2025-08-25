@@ -1,26 +1,30 @@
 .{
     .name = .spaceporn,
     .version = "0.1.0",
-    .minimum_zig_version = "0.14.1",
+    .minimum_zig_version = "0.15.1",
     .paths = .{
         "",
     },
     .dependencies = .{
         .cimgui_zig = .{
-            .url = "git+https://github.com/tiawl/cimgui.zig?ref=v1.92.2b#7613777415be737330272ad7bd9ed7d8ae2d82cd",
-            .hash = "cimgui_zig-1.0.0-2XubknimVQBmbXYhhAxOTaxKCpN6v49Nj9ArsfCmSBBE",
+            .url = "git+https://github.com/tiawl/cimgui.zig#ec5380e3e96c0fe4b4a309706eb2e134d1ddb427",
+            .hash = "cimgui_zig-1.0.0-2Xubks6mVQAvhmiq5bHJ1OYMQM8-0pHFcSKNCtoqUD4i",
         },
         .shaderc_zig = .{
-            .url = "git+https://github.com/tiawl/shaderc.zig?ref=glslang.zig-15.4.0#06565d2af3beec9780b11524984211ebd104fd21",
-            .hash = "shaderc_zig-1.0.0-mOl840tjAwBiAnMSfRskq0Iq3JJ9jPRHy2JoEgnUvSpV",
+            .url = "git+https://github.com/tiawl/shaderc.zig#b8a471db8c1b4734a43db389b2fc6d60c8d79940",
+            .hash = "shaderc_zig-1.0.0-mOl8439jAwAx5QWGm7WIDNucf2pJeSYfkDjHol4cctN8",
         },
         .@"zig-datetime" = .{
-            .url = "https://github.com/frmdstryr/zig-datetime/archive/4d0e84cd8844c0672e0cbe247a3130750c9e0f27.tar.gz",
-            .hash = "datetime-0.8.0-cJNXzJSJAQB5RKwPglxoEq875GmehZoLjuAlKzvWp4_O",
+            .url = "git+https://github.com/frmdstryr/zig-datetime#07f6d6afb415072155b4387a58b9405ddd080c83",
+            .hash = "datetime-0.8.0-cJNXzJXZAQD27WnDm84SsbHVWpNMWH5aqaFIz8U2vB9M",
         },
-        .jdz_allocator = .{
-            .url = "https://github.com/joadnacer/jdz_allocator/archive/ea14e0efc3328a6b9e7dd53bb91b9eec2efe3f96.tar.gz",
-            .hash = "12205353c7f550b1aadf245d70a30d5a0a92eb151f735e15358ff35fcfe53343c93f",
+        // .jdz_allocator = .{
+        //     .url = "https://github.com/joadnacer/jdz_allocator/archive/ea14e0efc3328a6b9e7dd53bb91b9eec2efe3f96.tar.gz",
+        //     .hash = "12205353c7f550b1aadf245d70a30d5a0a92eb151f735e15358ff35fcfe53343c93f",
+        // },
+        .datetime = .{
+            .url = "git+https://github.com/frmdstryr/zig-datetime#07f6d6afb415072155b4387a58b9405ddd080c83",
+            .hash = "datetime-0.8.0-cJNXzJXZAQD27WnDm84SsbHVWpNMWH5aqaFIz8U2vB9M",
         },
     },
     .fingerprint = 0xeeb3c31cc9dd406c,

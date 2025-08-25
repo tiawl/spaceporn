@@ -66,7 +66,7 @@ pub const Context = struct {
         try self.logger.app(.DEBUG, "init Imgui GLFW OK", .{});
     }
 
-    fn check_vk_result(err: c_int) callconv(.C) void {
+    fn check_vk_result(err: c_int) callconv(std.builtin.CallingConvention.c) void {
         if (err == 0) return;
         std.debug.print("[vulkan ERROR from Imgui] VkResult = {d}\n", .{
             err,

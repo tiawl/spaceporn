@@ -1,4 +1,4 @@
-const c = @import("c");
+const c = @import("c").c;
 const std = @import("std");
 
 const glfw = @This();
@@ -56,7 +56,7 @@ pub const Error = struct {
         pub fn set(comptime callback: ?fn (Code, [:0]const u8) void) void {
             if (callback) |user_callback| {
                 const Wrapper = struct {
-                    pub fn errorCallbackWrapper(int: c_int, description: [*c]const u8) callconv(.C) void {
+                    pub fn errorCallbackWrapper(int: c_int, description: [*c]const u8) callconv(std.builtin.CallingConvention.c) void {
                         convert(int) catch |err|
                             {
                                 user_callback(err, std.mem.sliceTo(description, 0));

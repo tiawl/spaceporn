@@ -15,8 +15,9 @@ const zon = utils.zon;
 pub fn build(builder: *std.Build) !void {
     try requirements();
     const profile = try parse_options(builder);
-    const shaders_module = try run_shaders_compiler(builder, &profile);
-    try run_exe(builder, &profile, shaders_module);
+    _ = try run_shaders_compiler(builder, &profile);
+    //const shaders_module = try run_shaders_compiler(builder, &profile);
+    //try run_exe(builder, &profile, shaders_module);
     try run_test(builder, &profile);
 }
 
@@ -174,11 +175,11 @@ fn import(builder: *std.Build, exe: *std.Build.Step.Compile, profile: *const Pro
     });
     const datetime = datetime_dep.module("datetime");
 
-    const jdz_dep = builder.dependency("jdz_allocator", .{
-        .target = profile.target,
-        .optimize = profile.optimize,
-    });
-    const jdz = jdz_dep.module("jdz_allocator");
+    //const jdz_dep = builder.dependency("jdz_allocator", .{
+    //    .target = profile.target,
+    //    .optimize = profile.optimize,
+    //});
+    //const jdz = jdz_dep.module("jdz_allocator");
 
     const c = try link(builder, profile);
     const glfw_pkg = try glfw.import(builder, profile, c);
@@ -201,7 +202,7 @@ fn import(builder: *std.Build, exe: *std.Build.Step.Compile, profile: *const Pro
     });
     logger.addImport("build", build_options);
     logger.addImport("datetime", datetime);
-    logger.addImport("jdz", jdz);
+    //logger.addImport("jdz", jdz);
 
     const instance = builder.createModule(.{
         .root_source_file = .{
@@ -224,10 +225,10 @@ fn import(builder: *std.Build, exe: *std.Build.Step.Compile, profile: *const Pro
             .name = "datetime",
             .ptr = datetime,
         },
-        .{
-            .name = "jdz",
-            .ptr = jdz,
-        },
+        //.{
+        //    .name = "jdz",
+        //    .ptr = jdz,
+        //},
         .{
             .name = "shader",
             .ptr = shaders_module,
@@ -258,15 +259,17 @@ fn import(builder: *std.Build, exe: *std.Build.Step.Compile, profile: *const Pro
 fn run_shaders_compiler(builder: *std.Build, profile: *const Profile) !*std.Build.Module {
     const shaders_compiler = builder.addExecutable(.{
         .name = "shaders_compiler",
-        .root_source_file = .{
-            .cwd_relative = try builder.build_root.join(builder.allocator, &.{
-                "src",
-                "compiler",
-                "main.zig",
-            }),
-        },
-        .target = builder.graph.host,
-        .optimize = .Debug,
+        .root_module = std.Build.Module.create(builder, .{
+            .root_source_file = .{
+                .cwd_relative = try builder.build_root.join(builder.allocator, &.{
+                    "src",
+                    "compiler",
+                    "main.zig",
+                }),
+            },
+            .target = builder.graph.host,
+            .optimize = .Debug,
+        }),
     });
 
     const shaderc_dep = builder.dependency("shaderc_zig", .{
@@ -326,15 +329,17 @@ fn run_shaders_compiler(builder: *std.Build, profile: *const Profile) !*std.Buil
 fn run_exe(builder: *std.Build, profile: *const Profile, shaders_module: *std.Build.Module) !void {
     const exe = builder.addExecutable(.{
         .name = zon.name,
-        .root_source_file = .{
-            .cwd_relative = try builder.build_root.join(builder.allocator, &.{
-                "src",
-                zon.name,
-                "main.zig",
-            }),
-        },
-        .target = profile.target,
-        .optimize = profile.optimize,
+        .root_module = std.Build.Module.create(builder, .{
+            .root_source_file = .{
+                .cwd_relative = try builder.build_root.join(builder.allocator, &.{
+                    "src",
+                    zon.name,
+                    "main.zig",
+                }),
+            },
+            .target = profile.target,
+            .optimize = profile.optimize,
+        }),
     });
 
     try import(builder, exe, profile, shaders_module);
@@ -350,8 +355,6 @@ fn run_exe(builder: *std.Build, profile: *const Profile, shaders_module: *std.Bu
 
 fn run_test(builder: *std.Build, profile: *const Profile) !void {
     const unit_tests = builder.addTest(.{
-        .target = profile.target,
-        .optimize = profile.optimize,
         .test_runner = .{
             .path = .{
                 .cwd_relative = try builder.build_root.join(builder.allocator, &.{
@@ -361,12 +364,16 @@ fn run_test(builder: *std.Build, profile: *const Profile) !void {
             },
             .mode = .simple,
         },
-        .root_source_file = .{
-            .cwd_relative = try builder.build_root.join(builder.allocator, &.{
-                "test",
-                "main.zig",
-            }),
-        },
+        .root_module = std.Build.Module.create(builder, .{
+            .root_source_file = .{
+                .cwd_relative = try builder.build_root.join(builder.allocator, &.{
+                    "test",
+                    "main.zig",
+                }),
+            },
+            .target = profile.target,
+            .optimize = profile.optimize,
+        }),
     });
     unit_tests.step.dependOn(builder.getInstallStep());
 

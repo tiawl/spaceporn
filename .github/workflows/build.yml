@@ -19,8 +19,8 @@ jobs:
     strategy:
       matrix:
         os:
-          - ubuntu-22.04
-          - windows-2022
+          - ubuntu-latest
+          - windows-latest
         profile:
           - 'zig build'
           - 'zig build -Ddev'

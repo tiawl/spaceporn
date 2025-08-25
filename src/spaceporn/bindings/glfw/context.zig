@@ -1,4 +1,4 @@
-const c = @import("c");
+const c = @import("c").c;
 const std = @import("std");
 
 const glfw = @import("glfw");

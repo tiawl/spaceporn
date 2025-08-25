@@ -1,5 +1,5 @@
 const std = @import("std");
-const c = @import("c");
+const c = @import("c").c;
 const literals = @import("literals");
 
 const vk = @import("vk");

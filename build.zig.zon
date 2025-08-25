@@ -11,16 +11,20 @@
             .hash = "cimgui_zig-1.0.0-2Xubks6mVQAvhmiq5bHJ1OYMQM8-0pHFcSKNCtoqUD4i",
         },
         .shaderc_zig = .{
-            .url = "git+https://github.com/tiawl/shaderc.zig#eae89bc046666b9559ab7ef4a1c21bc77de52c48",
-            .hash = "shaderc_zig-1.0.0-mOl8439jAwAsNGW8CE_nbg9QiTCvtph6VvdolkUSTOqm",
+            .url = "git+https://github.com/tiawl/shaderc.zig#b8a471db8c1b4734a43db389b2fc6d60c8d79940",
+            .hash = "shaderc_zig-1.0.0-mOl8439jAwAx5QWGm7WIDNucf2pJeSYfkDjHol4cctN8",
         },
         .@"zig-datetime" = .{
-            .url = "https://github.com/frmdstryr/zig-datetime/archive/4d0e84cd8844c0672e0cbe247a3130750c9e0f27.tar.gz",
-            .hash = "datetime-0.8.0-cJNXzJSJAQB5RKwPglxoEq875GmehZoLjuAlKzvWp4_O",
+            .url = "git+https://github.com/frmdstryr/zig-datetime#07f6d6afb415072155b4387a58b9405ddd080c83",
+            .hash = "datetime-0.8.0-cJNXzJXZAQD27WnDm84SsbHVWpNMWH5aqaFIz8U2vB9M",
         },
-        .jdz_allocator = .{
-            .url = "https://github.com/joadnacer/jdz_allocator/archive/ea14e0efc3328a6b9e7dd53bb91b9eec2efe3f96.tar.gz",
-            .hash = "12205353c7f550b1aadf245d70a30d5a0a92eb151f735e15358ff35fcfe53343c93f",
+        // .jdz_allocator = .{
+        //     .url = "https://github.com/joadnacer/jdz_allocator/archive/ea14e0efc3328a6b9e7dd53bb91b9eec2efe3f96.tar.gz",
+        //     .hash = "12205353c7f550b1aadf245d70a30d5a0a92eb151f735e15358ff35fcfe53343c93f",
+        // },
+        .datetime = .{
+            .url = "git+https://github.com/frmdstryr/zig-datetime#07f6d6afb415072155b4387a58b9405ddd080c83",
+            .hash = "datetime-0.8.0-cJNXzJXZAQD27WnDm84SsbHVWpNMWH5aqaFIz8U2vB9M",
         },
     },
     .fingerprint = 0xeeb3c31cc9dd406c,

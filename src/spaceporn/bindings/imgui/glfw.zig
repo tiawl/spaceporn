@@ -1,5 +1,5 @@
 const std = @import("std");
-const c = @import("c");
+const c = @import("c").c;
 const glfw = @import("glfw");
 
 pub const Frame = struct {

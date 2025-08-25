@@ -1,4 +1,4 @@
-const c = @import("c");
+const c = @import("c").c;
 
 pub const VKProc = *const fn () callconv(c.call_conv) void;
 

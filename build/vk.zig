@@ -45,10 +45,10 @@ fn generate_literals(builder: *std.Build, profile: *const Profile) ![]const u8 {
         instance: std.ArrayList([]const u8),
         device: std.ArrayList([]const u8),
     } = undefined;
-    prototypes.structless = std.ArrayList([]const u8).init(builder.allocator);
-    prototypes.instance = std.ArrayList([]const u8).init(builder.allocator);
-    prototypes.device = std.ArrayList([]const u8).init(builder.allocator);
-    prototypes.buffer = std.ArrayList(u8).init(builder.allocator);
+    prototypes.structless = .empty;
+    prototypes.instance = .empty;
+    prototypes.device = .empty;
+    prototypes.buffer = .empty;
 
     while (try walker.next()) |*entry| {
         if (entry.kind != .file) continue;
@@ -57,11 +57,11 @@ fn generate_literals(builder: *std.Build, profile: *const Profile) ![]const u8 {
             vk.path,
             entry.path,
         });
-        binding.buffer = std.ArrayList(u8).init(builder.allocator);
+        binding.buffer = .empty;
         binding.source = try builder.build_root.handle.readFileAlloc(builder.allocator, binding.path, std.math.maxInt(usize));
 
-        try binding.buffer.appendSlice(binding.source);
-        try binding.buffer.append(0);
+        try binding.buffer.appendSlice(builder.allocator, binding.source);
+        try binding.buffer.append(builder.allocator, 0);
 
         var iterator = std.zig.Tokenizer.init(binding.buffer.items[0 .. binding.buffer.items.len - 1 :0]);
         var token = iterator.next();
@@ -83,7 +83,7 @@ fn generate_literals(builder: *std.Build, profile: *const Profile) ![]const u8 {
                     inline for (@typeInfo(@TypeOf(prototypes)).@"struct".fields) |field| {
                         if (field.type == std.ArrayList([]const u8)) {
                             if (std.mem.eql(u8, binding.buffer.items[precedent[1].?.loc.start..precedent[1].?.loc.end], field.name)) {
-                                try @field(prototypes, field.name).append(binding.buffer.items[token.loc.start..token.loc.end]);
+                                try @field(prototypes, field.name).append(builder.allocator, binding.buffer.items[token.loc.start..token.loc.end]);
                                 break;
                             }
                         }
@@ -98,35 +98,35 @@ fn generate_literals(builder: *std.Build, profile: *const Profile) ![]const u8 {
         }
     }
 
-    const writer = prototypes.buffer.writer();
-
     inline for (@typeInfo(@TypeOf(prototypes)).@"struct".fields) |field| {
         if (field.type == std.ArrayList([]const u8)) {
-            try writer.print("pub const {s} = enum {c}", .{
+            try prototypes.buffer.print(builder.allocator, "pub const {s} = enum {c}", .{
                 field.name,
                 '{',
             });
             for (@field(prototypes, field.name).items) |prototype|
-                try writer.print("  {s},\n", .{
+                try prototypes.buffer.print(builder.allocator, "  {s},\n", .{
                     prototype,
                 });
-            try writer.print("{c};", .{
+            try prototypes.buffer.print(builder.allocator, "{c};", .{
                 '}',
             });
         }
     }
 
-    try prototypes.buffer.append(0);
+    try prototypes.buffer.append(builder.allocator, 0);
     prototypes.source =
         prototypes.buffer.items[0 .. prototypes.buffer.items.len - 1 :0];
 
     const validated = try std.zig.Ast.parse(builder.allocator, prototypes.source, std.zig.Ast.Mode.zig);
-    const formatted = try validated.render(builder.allocator);
+    const formatted = try validated.renderAlloc(builder.allocator);
 
     const hash = &digest(null, formatted);
     prototypes.path = try std.fs.path.join(builder.allocator, &.{
-        try builder.cache_root.join(builder.allocator, &.{
-            "prototypes",
+        try builder.build_root.join(builder.allocator, &.{
+            try builder.cache_root.join(builder.allocator, &.{
+                "prototypes",
+            }),
         }),
         hash,
     });

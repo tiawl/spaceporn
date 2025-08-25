@@ -59,7 +59,7 @@ fn resolve_include(user_data: ?*anyopaque, requested_source: [*c]const u8, @"typ
         };
     defer dir.close();
 
-    const content = dir.readFileAllocOptions(std.heap.c_allocator, header_name, std.math.maxInt(usize), null, 1, 0) catch
+    const content = dir.readFileAllocOptions(std.heap.c_allocator, header_name, std.math.maxInt(usize), null, .@"2", 0) catch
         {
             std.debug.print("Shader compilation error for \"{s}\" during include resolution: read file allocation failed", .{
                 includer_name,
@@ -127,11 +127,11 @@ pub fn main() !void {
             var skip = it.last();
             while (skip != null and !std.mem.eql(u8, skip.?.name, "shaders"))
                 skip = it.previous();
-            var components = std.ArrayList([]const u8).init(allocator);
+            var components: std.ArrayList([]const u8) = .empty;
             if (skip != null and std.mem.eql(u8, skip.?.name, "shaders")) {
-                try components.append(try allocator.dupe(u8, skip.?.name));
-                while (it.previous()) |prev| try components.append(try allocator.dupe(u8, prev.name));
-                try components.append("/");
+                try components.append(allocator, try allocator.dupe(u8, skip.?.name));
+                while (it.previous()) |prev| try components.append(allocator, try allocator.dupe(u8, prev.name));
+                try components.append(allocator, "/");
                 std.mem.reverse([]const u8, components.items);
                 shaders_path = try std.fs.path.join(allocator, components.items);
             } else return error.FailedToBuildShadersPath;

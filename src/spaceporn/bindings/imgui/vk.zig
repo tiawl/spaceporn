@@ -1,5 +1,5 @@
 const std = @import("std");
-const c = @import("c");
+const c = @import("c").c;
 const vk = @import("vk");
 const glfw = @import("glfw");
 const imgui = @import("imgui");

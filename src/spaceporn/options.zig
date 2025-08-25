@@ -153,10 +153,10 @@ pub const Options = struct {
         while (index < options.items.len) {
             // Handle '-abc' the same as '-a -bc' for short-form no-arg options
             if (options.items[index][0] == '-' and options.items[index].len > 2 and (options.items[index][1] == SHORT_HELP[1] or options.items[index][1] == SHORT_VERSION[1])) {
-                try options.insert(index + 1, options.items[index][0..2]);
+                try options.insert(logger.allocator.*, index + 1, options.items[index][0..2]);
                 new_opt = try std.fmt.allocPrint(logger.allocator.*, "-{s}", .{options.items[index][2..]});
                 new_opt_used = true;
-                try options.insert(index + 2, new_opt);
+                try options.insert(logger.allocator.*, index + 2, new_opt);
                 _ = options.orderedRemove(index);
                 continue;
             }
@@ -231,10 +231,10 @@ pub const Options = struct {
                 return error.NoExecutableName;
             };
 
-        var options = std.ArrayList([]const u8).init(logger.allocator.*);
+        var options: std.ArrayList([]const u8) = .empty;
 
         while (options_iterator.next()) |opt| {
-            try options.append(opt);
+            try options.append(logger.allocator.*, opt);
         }
 
         try self.parse(logger, &options);

@@ -49,13 +49,16 @@ fn access(path: []const u8) bool {
 }
 
 fn print(level: Level, entry: []const u8) !void {
-    const writer = switch (level) {
-        .DEBUG, .INFO => std.io.getStdOut().writer(),
-        .WARNING, .ERROR => std.io.getStdErr().writer(),
+    var buffer: [1024]u8 = undefined;
+    var writer = switch (level) {
+        .DEBUG, .INFO => std.fs.File.stdout().writer(&buffer),
+        .WARNING, .ERROR => std.fs.File.stderr().writer(&buffer),
     };
-    try writer.print("{s}", .{
+    const stream = &writer.interface;
+    try stream.print("{s}", .{
         entry,
     });
+    try stream.flush();
 }
 
 fn create_file(path: []const u8) !void {

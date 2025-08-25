@@ -15,7 +15,7 @@ const IncludeContext = struct {
 //   containing the #include request.
 // - The includer owns the result object and its contents,and both must remain
 //   valid until the release callback is called on the result object.
-fn resolve_include(user_data: ?*anyopaque, requested_source: [*c]const u8, @"type": c_int, requesting_source: [*c]const u8, include_depth: usize) callconv(.C) [*c]shaderc.Include.Result {
+fn resolve_include(user_data: ?*anyopaque, requested_source: [*c]const u8, @"type": c_int, requesting_source: [*c]const u8, include_depth: usize) callconv(std.builtin.CallingConvention.c) [*c]shaderc.Include.Result {
     const context: *const IncludeContext = @alignCast(@ptrCast(user_data.?));
     const includer_name =
         std.mem.span(@as([*:0]const u8, @ptrCast(requesting_source)));
@@ -87,7 +87,7 @@ fn resolve_include(user_data: ?*anyopaque, requested_source: [*c]const u8, @"typ
 }
 
 // An includer callback type for destroying an include result.
-fn release_include(_: ?*anyopaque, include_result: [*c]shaderc.Include.Result) callconv(.C) void {
+fn release_include(_: ?*anyopaque, include_result: [*c]shaderc.Include.Result) callconv(std.builtin.CallingConvention.c) void {
     std.heap.c_allocator.destroy(@as(*shaderc.Include.Result, @ptrCast(include_result)));
 }
 

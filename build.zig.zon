@@ -1,18 +1,18 @@
 .{
     .name = .spaceporn,
     .version = "0.1.0",
-    .minimum_zig_version = "0.14.1",
+    .minimum_zig_version = "0.15.1",
     .paths = .{
         "",
     },
     .dependencies = .{
         .cimgui_zig = .{
-            .url = "git+https://github.com/tiawl/cimgui.zig?ref=vulkan.zig-v1.4.319#bb8ba866cf00faf13b6db352f2a8b48cabb232ac",
-            .hash = "cimgui_zig-1.0.0-2XubkhqBUAA8GhLSsLiZA3ZTTX6b4iX6jGAhfowQyXRb",
+            .url = "git+https://github.com/tiawl/cimgui.zig#ec5380e3e96c0fe4b4a309706eb2e134d1ddb427",
+            .hash = "cimgui_zig-1.0.0-2Xubks6mVQAvhmiq5bHJ1OYMQM8-0pHFcSKNCtoqUD4i",
         },
         .shaderc_zig = .{
-            .url = "git+https://github.com/tiawl/shaderc.zig?ref=v2025.3#b7e6089c083d49881dc5da37f917f78537b9b32b",
-            .hash = "shaderc_zig-1.0.0-mOl841NjAwBEuQ5NJYPdzdNICWP5AV2ADq3jGcYmFmzP",
+            .url = "git+https://github.com/tiawl/shaderc.zig#eae89bc046666b9559ab7ef4a1c21bc77de52c48",
+            .hash = "shaderc_zig-1.0.0-mOl8439jAwAsNGW8CE_nbg9QiTCvtph6VvdolkUSTOqm",
         },
         .@"zig-datetime" = .{
             .url = "https://github.com/frmdstryr/zig-datetime/archive/4d0e84cd8844c0672e0cbe247a3130750c9e0f27.tar.gz",

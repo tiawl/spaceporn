@@ -258,15 +258,17 @@ fn import(builder: *std.Build, exe: *std.Build.Step.Compile, profile: *const Pro
 fn run_shaders_compiler(builder: *std.Build, profile: *const Profile) !*std.Build.Module {
     const shaders_compiler = builder.addExecutable(.{
         .name = "shaders_compiler",
-        .root_source_file = .{
-            .cwd_relative = try builder.build_root.join(builder.allocator, &.{
-                "src",
-                "compiler",
-                "main.zig",
-            }),
-        },
-        .target = builder.graph.host,
-        .optimize = .Debug,
+        .root_module = std.Build.Module.create(builder, .{
+            .root_source_file = .{
+                .cwd_relative = try builder.build_root.join(builder.allocator, &.{
+                    "src",
+                    "compiler",
+                    "main.zig",
+                }),
+            },
+            .target = builder.graph.host,
+            .optimize = .Debug,
+        }),
     });
 
     const shaderc_dep = builder.dependency("shaderc_zig", .{
@@ -326,15 +328,17 @@ fn run_shaders_compiler(builder: *std.Build, profile: *const Profile) !*std.Buil
 fn run_exe(builder: *std.Build, profile: *const Profile, shaders_module: *std.Build.Module) !void {
     const exe = builder.addExecutable(.{
         .name = zon.name,
-        .root_source_file = .{
-            .cwd_relative = try builder.build_root.join(builder.allocator, &.{
-                "src",
-                zon.name,
-                "main.zig",
-            }),
-        },
-        .target = profile.target,
-        .optimize = profile.optimize,
+        .root_module = std.Build.Module.create(builder, .{
+            .root_source_file = .{
+                .cwd_relative = try builder.build_root.join(builder.allocator, &.{
+                    "src",
+                    zon.name,
+                    "main.zig",
+                }),
+            },
+            .target = profile.target,
+            .optimize = profile.optimize,
+        }),
     });
 
     try import(builder, exe, profile, shaders_module);

@@ -16,7 +16,7 @@ const IncludeContext = struct {
 // - The includer owns the result object and its contents,and both must remain
 //   valid until the release callback is called on the result object.
 fn resolve_include(user_data: ?*anyopaque, requested_source: [*c]const u8, @"type": c_int, requesting_source: [*c]const u8, include_depth: usize) callconv(std.builtin.CallingConvention.c) [*c]shaderc.Include.Result {
-    const context: *const IncludeContext = @alignCast(@ptrCast(user_data.?));
+    const context: *const IncludeContext = @ptrCast(@alignCast(user_data.?));
     const includer_name =
         std.mem.span(@as([*:0]const u8, @ptrCast(requesting_source)));
     const c_header_name: [*:0]const u8 = @ptrCast(requested_source);

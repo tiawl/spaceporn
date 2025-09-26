@@ -11,8 +11,8 @@
             .hash = "cimgui_zig-1.0.0-2XubkqcyVgDn85cAP9mv43Bk6pOBS2oyI250iW7Vdlex",
         },
         .shaderc_zig = .{
-            .url = "git+https://github.com/tiawl/shaderc.zig?ref=spirv.zig-v2025.4#888af076778fc00c4545d91d01b25886a80c2045",
-            .hash = "shaderc_zig-1.0.0-mOl8455jAwCp7_Rhm80d10FvqFOGIRPk3GlPZVqLU_HF",
+            .url = "git+https://github.com/tiawl/shaderc.zig?ref=glslang.zig-16.0.0#1701475608ed0090ec66456aa5c6cd25be5f189e",
+            .hash = "shaderc_zig-1.0.0-mOl845ZjAwDzEmFYp6pS7vjxjPpiH9k7Su9luGssuiQo",
         },
         .@"zig-datetime" = .{
             .url = "git+https://github.com/frmdstryr/zig-datetime#07f6d6afb415072155b4387a58b9405ddd080c83",

@@ -1,30 +1,14 @@
 .{
     .name = .spaceporn,
     .version = "0.1.0",
-    .minimum_zig_version = "0.15.1",
+    .minimum_zig_version = "0.16.0",
     .paths = .{
         "",
     },
     .dependencies = .{
         .cimgui_zig = .{
-            .url = "git+https://github.com/tiawl/cimgui.zig?ref=vulkan.zig-v1.4.335#9aac092c7f1df66dcc1d410bdd4e9b5a6095d03b",
-            .hash = "cimgui_zig-1.0.0-2XubkgYNVwAjoNKGsQWB3pEG8-EDUGNGU3cqpszup8CW",
-        },
-        .shaderc_zig = .{
-            .url = "git+https://github.com/tiawl/shaderc.zig?ref=glslang.zig-16.1.0#7c6c9f6ad8d8455288c60edf246d79cf2cbb5542",
-            .hash = "shaderc_zig-1.0.0-mOl844xlAwDS6XR_ivLhXvTEtO5NeoV7qjlpCOHxTCp2",
-        },
-        .@"zig-datetime" = .{
-            .url = "git+https://github.com/frmdstryr/zig-datetime#07f6d6afb415072155b4387a58b9405ddd080c83",
-            .hash = "datetime-0.8.0-cJNXzJXZAQD27WnDm84SsbHVWpNMWH5aqaFIz8U2vB9M",
-        },
-        // .jdz_allocator = .{
-        //     .url = "https://github.com/joadnacer/jdz_allocator/archive/ea14e0efc3328a6b9e7dd53bb91b9eec2efe3f96.tar.gz",
-        //     .hash = "12205353c7f550b1aadf245d70a30d5a0a92eb151f735e15358ff35fcfe53343c93f",
-        // },
-        .datetime = .{
-            .url = "git+https://github.com/frmdstryr/zig-datetime#07f6d6afb415072155b4387a58b9405ddd080c83",
-            .hash = "datetime-0.8.0-cJNXzJXZAQD27WnDm84SsbHVWpNMWH5aqaFIz8U2vB9M",
+            .url = "git+https://github.com/tiawl/cimgui.zig#0ec0638bdc26137d641c7529b5b0c6fd4eefdc4a",
+            .hash = "cimgui_zig-1.0.0-2Xubkn0ywgBKzd8PaBofujPEMmk607qhGifp59H7pJky",
         },
     },
     .fingerprint = 0xeeb3c31cc9dd406c,

@@ -1,0 +1,11 @@
+- imgui inputs:
+  - time reset
+  - pixelization
+  - zoom
+  - seed reset
+- zig shaders:
+  - uniforms (UBO):
+    - atlas (random & noise)
+    - pixelization
+    - zoom
+    - seed

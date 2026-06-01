@@ -2,5 +2,5 @@
 Session.vim
 .zig-cache/
 zig-out/
-log/
+zig-pkg/
 imgui.ini

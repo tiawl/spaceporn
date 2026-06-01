@@ -1,384 +1,367 @@
 const std = @import("std");
-const zig_version = @import("builtin").zig_version;
+const zon = @import("build.zig.zon");
+const name = @tagName(zon.name);
+const upname = blk: {
+    var buf: [name.len]u8 = undefined;
+    for (name, 0..) |c, i| buf[i] = std.ascii.toUpper(c);
+    break :blk buf;
+};
+const cimgui = @import("cimgui_zig");
+const Renderer = cimgui.Renderer;
+const Platform = cimgui.Platform;
 
-const glfw = @import("build/glfw.zig");
-const vk = @import("build/vk.zig");
-const imgui = @import("build/imgui.zig");
-const shaders = @import("build/shaders.zig");
-
-const utils = @import("build/utils.zig");
-const Options = utils.Options;
-const Package = utils.Package;
-const Profile = utils.Profile;
-const zon = utils.zon;
-
-pub fn build(builder: *std.Build) !void {
-    try requirements();
-    const profile = try parse_options(builder);
-    _ = try run_shaders_compiler(builder, &profile);
-    //const shaders_module = try run_shaders_compiler(builder, &profile);
-    //try run_exe(builder, &profile, shaders_module);
-    try run_test(builder, &profile);
+fn addIncludePathsToTranslateC(translate_c: *std.Build.Step.TranslateC, lib: *std.Build.Step.Compile) void {
+    for (lib.root_module.include_dirs.items) |*included| {
+        switch (included.*) {
+            .path => translate_c.addIncludePath(included.path),
+            .config_header_step => translate_c.addConfigHeader(included.config_header_step),
+            .path_system => translate_c.addSystemIncludePath(included.path_system),
+            .other_step => addIncludePathsToTranslateC(translate_c, included.other_step),
+            else => unreachable,
+        }
+    }
 }
 
-fn requirements() !void {
-    if (zig_version.order(try std.SemanticVersion.parse(zon.min_zig_version)) == .lt)
-        std.debug.panic("{s} needs at least Zig {s} to be build", .{
-            zon.name,
-            zon.min_zig_version,
-        });
-}
-
-fn turbo(profile: *Profile) !void {
-    // Keep this for debug purpose
-    // profile.optimize = .Debug;
-    // profile.variables.addOption (u8, "log_level", 2);
-    profile.optimize = .ReleaseFast;
-    profile.variables.addOption([]const u8, "log_dir", "");
-    profile.variables.addOption(u8, "log_level", 0);
-    profile.variables.addOption([]const []const []const u8, "vk_optional_extensions", &.{});
-    profile.compile_options = .{
-        .optimization = .Performance,
-        .vulkan_env_version = std.meta.stringToEnum(shaders.Options.VulkanEnvVersion, profile.options.vkminor).?,
-    };
-}
-
-fn dev(builder: *std.Build, profile: *Profile) !void {
-    const log_dir = "log";
-
-    // Make log directory if not present only in dev mode
-    builder.build_root.handle.makeDir(log_dir) catch |err|
-        {
-            // Do not return error if log directory already exists
-            if (err != std.fs.File.OpenError.PathAlreadyExists) return err;
+fn run(builder: *std.Build, argv: []const []const u8) ![]u8 {
+    if (@hasDecl(std.Build, "runFaillible")) {
+        return switch (builder.runFaillible(argv, .{ .stderr_behavior = .ignore })) {
+            .success => |stdout| return stdout,
+            .spawn_failed => |err| return err,
+            .bad_exit_code => return error.ExitCodeFailure,
+            .crashed => return error.ProcessTerminated,
         };
+    } else if (@hasDecl(std.Build, "runAllowFail")) {
+        var code: u8 = undefined;
+        return builder.runAllowFail(argv, &code, .ignore);
+    } else unreachable;
+}
 
-    profile.optimize = .Debug;
-    profile.variables.addOption([]const u8, "log_dir", try builder.build_root.join(builder.allocator, &.{
-        log_dir,
-    }));
-    profile.variables.addOption(u8, "log_level", 2);
-    profile.variables.addOption([]const []const []const u8, "vk_optional_extensions", &.{
-        &.{
-            "EXT",
-            "DEVICE_ADDRESS_BINDING_REPORT",
+fn buildOptions(builder: *std.Build) !*std.Build.Module {
+    const options = builder.addOptions();
+
+    const git = builder.findProgram(.{ .names = &.{"git"} }) orelse "git";
+    const raw_taglist = try run(builder, &[_][]const u8{
+        git,   "-C", (if (@hasField(std.Build, "build_root")) builder.build_root else if (@hasField(std.Build, "root")) builder.root.root_dir else unreachable).path orelse ".", "--git-dir", ".git",
+        "tag", "-l", "0.0.0",
+    });
+    if (std.mem.eql(u8, "0.0.0", std.mem.trim(u8, raw_taglist, &std.ascii.whitespace))) {
+        _ = try run(builder, &[_][]const u8{
+            git,   "-C", (if (@hasField(std.Build, "build_root")) builder.build_root else if (@hasField(std.Build, "root")) builder.root.root_dir else unreachable).path orelse ".", "--git-dir", ".git",
+            "tag", "-d", "0.0.0",
+        });
+    }
+    const raw_init_commit = try run(builder, &[_][]const u8{
+        git,        "-C",              (if (@hasField(std.Build, "build_root")) builder.build_root else if (@hasField(std.Build, "root")) builder.root.root_dir else unreachable).path orelse ".", "--git-dir", ".git",
+        "rev-list", "--max-parents=0", "HEAD",
+    });
+    const init_commit = std.mem.trim(u8, raw_init_commit, &std.ascii.whitespace);
+    _ = try run(builder, &[_][]const u8{
+        git,   "-C",    (if (@hasField(std.Build, "build_root")) builder.build_root else if (@hasField(std.Build, "root")) builder.root.root_dir else unreachable).path orelse ".", "--git-dir", ".git",
+        "tag", "0.0.0", init_commit,
+    });
+    const raw_git_describe = try run(builder, &[_][]const u8{
+        git,        "-C",      (if (@hasField(std.Build, "build_root")) builder.build_root else if (@hasField(std.Build, "root")) builder.root.root_dir else unreachable).path orelse ".", "--git-dir", ".git",
+        "describe", "--match", "*.*.*",                                                                                                                                                    "--tags",    "--abbrev=9",
+    });
+    const git_describe = std.mem.trim(u8, raw_git_describe, &std.ascii.whitespace);
+
+    var it = std.mem.splitScalar(u8, git_describe, '.');
+    const sem_breaking = it.next().?;
+    const sem_feature = it.next().?;
+    _ = try std.fmt.parseUnsigned(u32, sem_breaking, 10);
+    _ = try std.fmt.parseUnsigned(u32, sem_feature, 10);
+
+    const sem_patch = switch (std.mem.count(u8, git_describe, "-")) {
+        // Tagged commit
+        0 => it.next().?,
+        // Untagged commit
+        2 => blk: {
+            it = std.mem.splitScalar(u8, git_describe, '-');
+            const tagged_ancestor = it.first();
+            const commit_height = it.next().?;
+            const commit_id = it.next().?;
+
+            const sem_version = try std.SemanticVersion.parse(builder.fmt("{s}.{s}.0", .{
+                sem_breaking, sem_feature,
+            }));
+            const ancestor_version = try std.SemanticVersion.parse(tagged_ancestor);
+            if (sem_version.order(ancestor_version) != .eq) {
+                std.debug.print("Semantic version '{}.{}.{}' must be equal to tagged ancestor '{}.{}.{}'\n", .{
+                    sem_version.major, sem_version.minor, sem_version.patch, ancestor_version.major, ancestor_version.minor, ancestor_version.patch,
+                });
+                std.process.exit(1);
+            }
+
+            // Check that the commit hash is prefixed with a 'g' (a Git convention).
+            if (commit_id.len < 1 or commit_id[0] != 'g') {
+                std.debug.print("Unexpected `git describe` output: {s}\n", .{
+                    git_describe,
+                });
+                std.process.exit(1);
+            }
+
+            _ = try std.fmt.parseUnsigned(u32, commit_height, 10);
+            break :blk builder.fmt("{s}+{s}", .{
+                commit_height, commit_id[1..],
+            });
         },
-        &.{
-            "EXT",
-            "VALIDATION_FEATURES",
+        else => {
+            std.debug.print("Unexpected `git describe` output: {s}\n", .{
+                git_describe,
+            });
+            std.process.exit(1);
         },
-        &.{
-            "KHR",
-            "SHADER_NON_SEMANTIC_INFO",
+    };
+    const version = builder.fmt("{s}.{s}.{s}", .{
+        sem_breaking, sem_feature, sem_patch,
+    });
+    options.addOption([:0]const u8, "name", name);
+    options.addOption([]const u8, "upname", &upname);
+    options.addOption([:0]const u8, "version", try builder.allocator.dupeSentinel(u8, version, 0));
+    return options.createModule();
+}
+
+fn compileShader(builder: *std.Build, target: std.Build.ResolvedTarget, optimize: std.builtin.OptimizeMode, module: *std.Build.Module, path: []const u8, out_name: []const u8) void {
+    const shader = builder.addObject(.{
+        .name = out_name,
+        .root_module = builder.createModule(.{
+            .root_source_file = builder.path(path),
+            .target = target,
+            .optimize = optimize,
+        }),
+        .use_llvm = false,
+        .use_lld = false,
+    });
+    module.addAnonymousImport(out_name, .{
+        .root_source_file = shader.getEmittedBin(),
+    });
+}
+
+fn compileShaders(builder: *std.Build, optimize: std.builtin.OptimizeMode, exe: *std.Build.Step.Compile) !void {
+    const vulkan12_target = builder.resolveTargetQuery(.{
+        .cpu_arch = .spirv64,
+        .cpu_model = .{ .explicit = &std.Target.spirv.cpu.vulkan_v1_2 },
+        .cpu_features_add = std.Target.spirv.featureSet(&.{.int64}),
+        .os_tag = .vulkan,
+        .ofmt = .spirv,
+    });
+
+    var shaders_dir = try (if (@hasField(std.Build, "build_root")) builder.build_root else if (@hasField(std.Build, "root")) builder.root.root_dir else unreachable).handle.openDir(builder.graph.io, builder.pathResolve(&.{ "src", "shaders" }), .{ .iterate = true });
+    defer shaders_dir.close(builder.graph.io);
+    var shaders_dir_it = shaders_dir.iterate();
+    while (try shaders_dir_it.next(builder.graph.io)) |shader| {
+        if (shader.kind != .file or !(std.mem.endsWith(u8, shader.name, ".vert.zig") or std.mem.endsWith(u8, shader.name, ".frag.zig"))) continue;
+        const spv_name = try std.mem.replaceOwned(u8, builder.allocator, shader.name, ".zig", ".spv");
+        const shader_path = builder.pathResolve(&.{ "src", "shaders", shader.name });
+        compileShader(builder, vulkan12_target, optimize, exe.root_module, shader_path, spv_name);
+    }
+}
+
+fn prototypesModule(builder: *std.Build, target: std.Build.ResolvedTarget, optimize: std.builtin.OptimizeMode, c_module: *std.Build.Module) !*std.Build.Module {
+    var main_source: std.ArrayList(u8) = .empty;
+    var prototypes_source: std.ArrayList(u8) = .empty;
+
+    const dir = try (if (@hasField(std.Build, "build_root")) builder.build_root else if (@hasField(std.Build, "root")) builder.root.root_dir else unreachable).handle.openDir(builder.graph.io, ".", .{});
+    defer dir.close(builder.graph.io);
+    main_source.appendSlice(builder.allocator, dir.readFileAlloc(builder.graph.io, builder.pathResolve(&.{ "src", "main.zig" }), builder.allocator, .unlimited) catch @panic("OOM")) catch @panic("OOM");
+    main_source.append(builder.allocator, 0) catch @panic("OOM");
+
+    prototypes_source.appendSlice(builder.allocator,
+        \\const std = @import("std");
+        \\const c = @import("c");
+        \\
+        \\const logCallback = std.log.debug;
+        \\
+        \\fn _loadStructless(comptime log_callback: ?*const fn(comptime fmt: []const u8, args: anytype) void) void {
+        \\    inline for (@typeInfo(@This()).@"struct".decl_names) |decl_name| {
+        \\        if (comptime !std.mem.startsWith(u8, decl_name, "vk")) continue;
+        \\        if (@field(@This(), "_" ++ decl_name) == null) {
+        \\            if (c.glfwGetInstanceProcAddress(null, decl_name ++ "\x00")) |addr| {
+        \\                @field(@This(), "_" ++ decl_name) = @ptrCast(addr);
+        \\                @field(@This(), decl_name) = @field(@This(), "_" ++ decl_name).?;
+        \\                if (log_callback) |logFn| {
+        \\                    logFn("loadStructless: {s} loaded", .{decl_name});
+        \\                }
+        \\            }
+        \\        }
+        \\    }
+        \\}
+        \\
+        \\pub fn loadStructless() void {
+        \\    _loadStructless(null);
+        \\}
+        \\
+        \\pub fn debugLoadStructless() void {
+        \\    _loadStructless(logCallback);
+        \\}
+        \\
+        \\fn _loadInstance(instance: *c.VkInstance, comptime log_callback: ?*const fn(comptime fmt: []const u8, args: anytype) void) void {
+        \\    inline for (@typeInfo(@This()).@"struct".decl_names) |decl_name| {
+        \\        if (comptime !std.mem.startsWith(u8, decl_name, "vk")) continue;
+        \\        if (@field(@This(), "_" ++ decl_name) == null) {
+        \\            if (c.glfwGetInstanceProcAddress(instance.*, decl_name ++ "\x00")) |addr| {
+        \\                @field(@This(), "_" ++ decl_name) = @ptrCast(addr);
+        \\                @field(@This(), decl_name) = @field(@This(), "_" ++ decl_name).?;
+        \\                if (log_callback) |logFn| {
+        \\                    logFn("loadInstance: {s} loaded", .{decl_name});
+        \\                }
+        \\            }
+        \\        }
+        \\    }
+        \\}
+        \\
+        \\pub fn loadInstance(instance: *c.VkInstance) void {
+        \\    _loadInstance(instance, null);
+        \\}
+        \\
+        \\pub fn debugLoadInstance(instance: *c.VkInstance) void {
+        \\    _loadInstance(instance, logCallback);
+        \\}
+        \\
+        \\fn _loadDevice(device: *c.VkDevice, comptime log_callback: ?*const fn(comptime fmt: []const u8, args: anytype) void) void {
+        \\    inline for (@typeInfo(@This()).@"struct".decl_names) |decl_name| {
+        \\        if (comptime !std.mem.startsWith(u8, decl_name, "vk")) continue;
+        \\        if (@field(@This(), "_" ++ decl_name) == null) {
+        \\            if (vkGetDeviceProcAddr(device.*, decl_name ++ "\x00")) |addr| {
+        \\                @field(@This(), "_" ++ decl_name) = @ptrCast(addr);
+        \\                @field(@This(), decl_name) = @field(@This(), "_" ++ decl_name).?;
+        \\                if (log_callback) |logFn| {
+        \\                    logFn("loadDevice: {s} loaded", .{decl_name});
+        \\                }
+        \\            }
+        \\        }
+        \\    }
+        \\}
+        \\
+        \\pub fn loadDevice(device: *c.VkDevice) void {
+        \\    _loadDevice(device, null);
+        \\}
+        \\
+        \\pub fn debugLoadDevice(device: *c.VkDevice) void {
+        \\    _loadDevice(device, logCallback);
+        \\}
+        \\
+        \\var _vkGetDeviceProcAddr: c.PFN_vkGetDeviceProcAddr = null;
+        \\pub var vkGetDeviceProcAddr: @typeInfo(c.PFN_vkGetDeviceProcAddr).optional.child = undefined;
+        \\
+    ) catch @panic("OOM");
+
+    var it = std.zig.Tokenizer.init(main_source.items[0 .. main_source.items.len - 1 :0]);
+    var token = it.next();
+
+    var precedent: [2]?std.zig.Token = @splat(null);
+    var set = std.BufSet.init(builder.allocator);
+
+    while (token.tag != .eof) {
+        if (precedent[precedent.len - 1] != null) {
+            if (std.mem.eql(u8, main_source.items[precedent[1].?.loc.start..precedent[1].?.loc.end], "prototypes") and precedent[0].?.tag == .period and std.mem.startsWith(u8, main_source.items[token.loc.start..token.loc.end], "vk") and !set.contains(main_source.items[token.loc.start..token.loc.end])) {
+                prototypes_source.appendSlice(builder.allocator, "var _") catch @panic("OOM");
+                prototypes_source.appendSlice(builder.allocator, main_source.items[token.loc.start..token.loc.end]) catch @panic("OOM");
+                prototypes_source.appendSlice(builder.allocator, ": c.PFN_") catch @panic("OOM");
+                prototypes_source.appendSlice(builder.allocator, main_source.items[token.loc.start..token.loc.end]) catch @panic("OOM");
+                prototypes_source.appendSlice(builder.allocator, " = null;\npub var ") catch @panic("OOM");
+                prototypes_source.appendSlice(builder.allocator, main_source.items[token.loc.start..token.loc.end]) catch @panic("OOM");
+                prototypes_source.appendSlice(builder.allocator, " : @typeInfo(c.PFN_") catch @panic("OOM");
+                prototypes_source.appendSlice(builder.allocator, main_source.items[token.loc.start..token.loc.end]) catch @panic("OOM");
+                prototypes_source.appendSlice(builder.allocator, ").optional.child = undefined;\n") catch @panic("OOM");
+                try set.insert(main_source.items[token.loc.start..token.loc.end]);
+            }
+        }
+
+        for (1..precedent.len) |i| precedent[precedent.len - i] = precedent[precedent.len - i - 1];
+        precedent[0] = token;
+        token = it.next();
+    }
+
+    return builder.createModule(.{
+        .root_source_file = builder.addWriteFiles().add("prototypes.zig", prototypes_source.items),
+        .target = target,
+        .optimize = optimize,
+        .imports = &.{
+            .{
+                .name = "c",
+                .module = c_module,
+            },
         },
     });
-    profile.compile_options = .{
-        .optimization = .Zero,
-        .vulkan_env_version = std.meta.stringToEnum(shaders.Options.VulkanEnvVersion, profile.options.vkminor).?,
-    };
 }
 
-fn default(builder: *std.Build, profile: *Profile) !void {
-    profile.optimize = builder.standardOptimizeOption(.{});
-    profile.variables.addOption([]const u8, "log_dir", profile.options.logdir);
-    profile.variables.addOption(u8, "log_level", 1);
-    profile.variables.addOption([]const []const []const u8, "vk_optional_extensions", &.{
-        &.{
-            "EXT",
-            "DEVICE_ADDRESS_BINDING_REPORT",
-        },
-    });
-    profile.compile_options = .{
-        .optimization = .Zero,
-        .vulkan_env_version = std.meta.stringToEnum(shaders.Options.VulkanEnvVersion, profile.options.vkminor).?,
-    };
-}
+fn compileExe(builder: *std.Build, target: std.Build.ResolvedTarget, optimize: std.builtin.OptimizeMode) !*std.Build.Step.Compile {
+    const options_module = try buildOptions(builder);
 
-fn parse_options(builder: *std.Build) !Profile {
-    const options = Options{
-        .dev = builder.option(bool, std.meta.fieldInfo(Options, .dev).name, "Build " ++ zon.name ++ " with full logging features. Default: " ++
-            (if (@field(Options.default, std.meta.fieldInfo(Options, .dev).name))
-                "enabled"
-            else
-                "disabled") ++ ".") orelse @field(Options.default, std.meta.fieldInfo(Options, .dev).name),
-        .turbo = builder.option(bool, std.meta.fieldInfo(Options, .turbo).name, "Build " ++ zon.name ++ " with optimized features. Default: " ++
-            (if (@field(Options.default, std.meta.fieldInfo(Options, .turbo).name))
-                "enabled"
-            else
-                "disabled") ++ ".") orelse @field(Options.default, std.meta.fieldInfo(Options, .turbo).name),
-        .logdir = builder.option([]const u8, std.meta.fieldInfo(Options, .logdir).name, "Absolute path to log directory. If not specified, logs are not registered in a file.") orelse @field(Options.default, std.meta.fieldInfo(Options, .logdir).name),
-        .vkminor = builder.option([]const u8, std.meta.fieldInfo(Options, .vkminor).name, "Vulkan minor version to use: Possible values: 0, 1, 2 or 3. Default value: " ++
-            @field(Options.default, std.meta.fieldInfo(Options, .vkminor).name) ++ ".") orelse @field(Options.default, std.meta.fieldInfo(Options, .vkminor).name),
-    };
-
-    _ = std.fmt.parseInt(u2, options.vkminor, 10) catch
-        std.debug.panic("-D{s} value should be 0, 1, 2 or 3", .{
-            std.meta.fieldInfo(Options, .vkminor).name,
-        });
-
-    if (options.turbo and options.dev)
-        std.debug.panic("-D{s} and -D{s} can not be used together", .{
-            std.meta.fieldInfo(Options, .turbo).name,
-            std.meta.fieldInfo(Options, .dev).name,
-        })
-    else if (options.turbo and options.logdir.len > 0)
-        std.debug.panic("-D{s} and -D{s} can not be used together", .{
-            std.meta.fieldInfo(Options, .turbo).name,
-            std.meta.fieldInfo(Options, .logdir).name,
-        });
-
-    var profile: Profile = undefined;
-    profile.target = builder.standardTargetOptions(.{});
-    profile.options = options;
-    profile.variables = builder.addOptions();
-    profile.variables.addOption([]const u8, std.meta.fieldInfo(@TypeOf(zon), .name).name, zon.name);
-    profile.variables.addOption([]const u8, std.meta.fieldInfo(@TypeOf(zon), .version).name, zon.version);
-    profile.variables.addOption([]const u8, "vk_minor", profile.options.vkminor);
-
-    if (profile.options.turbo) try turbo(&profile) else if (profile.options.dev) try dev(builder, &profile) else try default(builder, &profile);
-
-    return profile;
-}
-
-fn link(builder: *std.Build, profile: *const Profile) !*Package {
     const cimgui_dep = builder.dependency("cimgui_zig", .{
-        .target = profile.target,
-        .optimize = profile.optimize,
-        .platform = .GLFW,
-        .renderer = .Vulkan,
-        .@"toolbox-logging" = true,
+        .target = target,
+        .optimize = optimize,
+        .platforms = &[_]Platform{.GLFW},
+        .renderers = &[_]Renderer{.Vulkan},
     });
 
-    const c = try Package.init(builder, profile, "c", try builder.build_root.join(builder.allocator, &.{
-        "src",
-        zon.name,
-        "bindings",
-        "raw.zig",
-    }));
-    c.link(cimgui_dep.artifact("cimgui"));
+    const cimgui_lib = cimgui_dep.artifact("cimgui");
 
-    return c;
-}
-
-fn manage_deps(glfw_pkg: *Package, vk_pkg: *Package) !void {
-    try glfw_pkg.get("window").put(vk_pkg.get("instance"), .{});
-    try glfw_pkg.get("window").put(vk_pkg.get("khr").get("surface"), .{});
-    try vk_pkg.put(glfw_pkg.get("vk"), .{
-        .pkg_name = "glfw",
-    });
-}
-
-fn import(builder: *std.Build, exe: *std.Build.Step.Compile, profile: *const Profile, shaders_module: *std.Build.Module) !void {
-    const datetime_dep = builder.dependency("zig-datetime", .{
-        .target = profile.target,
-        .optimize = profile.optimize,
-    });
-    const datetime = datetime_dep.module("datetime");
-
-    //const jdz_dep = builder.dependency("jdz_allocator", .{
-    //    .target = profile.target,
-    //    .optimize = profile.optimize,
-    //});
-    //const jdz = jdz_dep.module("jdz_allocator");
-
-    const c = try link(builder, profile);
-    const glfw_pkg = try glfw.import(builder, profile, c);
-    const vk_pkg = try vk.import(builder, profile, c);
-    const imgui_pkg = try imgui.import(builder, profile, c, glfw_pkg, vk_pkg);
-
-    try manage_deps(glfw_pkg, vk_pkg);
-
-    const build_options = profile.variables.createModule();
-    const logger = builder.createModule(.{
-        .root_source_file = .{
-            .cwd_relative = try builder.build_root.join(builder.allocator, &.{
-                "src",
-                zon.name,
-                "logger.zig",
-            }),
-        },
-        .target = profile.target,
-        .optimize = profile.optimize,
-    });
-    logger.addImport("build", build_options);
-    logger.addImport("datetime", datetime);
-    //logger.addImport("jdz", jdz);
-
-    const instance = builder.createModule(.{
-        .root_source_file = .{
-            .cwd_relative = try builder.build_root.join(builder.allocator, &.{
-                "src",                                                     zon.name, "vk", "instance",
-                if (profile.options.turbo) "turbo.zig" else "default.zig",
-            }),
-        },
-        .target = profile.target,
-        .optimize = profile.optimize,
-    });
-    instance.addImport("logger", logger);
-    instance.addImport("vk", vk_pkg.module);
-
-    for ([_]struct {
-        name: []const u8,
-        ptr: *std.Build.Module,
-    }{
-        .{
-            .name = "datetime",
-            .ptr = datetime,
-        },
-        //.{
-        //    .name = "jdz",
-        //    .ptr = jdz,
-        //},
-        .{
-            .name = "shader",
-            .ptr = shaders_module,
-        },
-        .{
-            .name = "glfw",
-            .ptr = glfw_pkg.module,
-        },
-        .{
-            .name = "vk",
-            .ptr = vk_pkg.module,
-        },
-        .{
-            .name = "imgui",
-            .ptr = imgui_pkg.module,
-        },
-        .{
-            .name = "logger",
-            .ptr = logger,
-        },
-        .{
-            .name = "instance",
-            .ptr = instance,
-        },
-    }) |module| exe.root_module.addImport(module.name, module.ptr);
-}
-
-fn run_shaders_compiler(builder: *std.Build, profile: *const Profile) !*std.Build.Module {
-    const shaders_compiler = builder.addExecutable(.{
-        .name = "shaders_compiler",
-        .root_module = std.Build.Module.create(builder, .{
-            .root_source_file = .{
-                .cwd_relative = try builder.build_root.join(builder.allocator, &.{
-                    "src",
-                    "compiler",
-                    "main.zig",
-                }),
-            },
-            .target = builder.graph.host,
-            .optimize = .Debug,
-        }),
+    const translate_c = builder.addTranslateC(.{
+        .root_source_file = builder.addWriteFiles().add("c.h",
+            \\#define GLFW_INCLUDE_VULKAN 1
+            \\#define GLFW_INCLUDE_NONE 1
+            \\#include "GLFW/glfw3.h"
+            \\#include "dcimgui.h"
+            \\#include "backends/dcimgui_impl_glfw.h"
+            \\#include "backends/dcimgui_impl_vulkan.h"
+            \\
+        ),
+        .target = target,
+        .optimize = optimize,
     });
 
-    const shaderc_dep = builder.dependency("shaderc_zig", .{
-        .target = profile.target,
-        .optimize = profile.optimize,
-    });
+    addIncludePathsToTranslateC(translate_c, cimgui_lib);
+    const c_module = translate_c.createModule();
+    c_module.linkLibrary(cimgui_lib);
 
-    const c = builder.createModule(.{
-        .root_source_file = .{
-            .cwd_relative = try builder.build_root.join(builder.allocator, &.{
-                "src",
-                "compiler",
-                "bindings",
-                "raw.zig",
-            }),
-        },
-        .target = builder.graph.host,
-        .optimize = .Debug,
-    });
-    c.linkLibrary(shaderc_dep.artifact("shaderc"));
+    const prototypes_module = try prototypesModule(builder, target, optimize, c_module);
 
-    const shaderc = builder.createModule(.{
-        .root_source_file = .{
-            .cwd_relative = try builder.build_root.join(builder.allocator, &.{
-                "src",
-                "compiler",
-                "bindings",
-                "shaderc",
-                "shaderc.zig",
-            }),
-        },
-        .target = profile.target,
-        .optimize = profile.optimize,
-    });
-    shaderc.addImport("c", c);
-
-    shaders_compiler.root_module.addImport("shaderc", shaderc);
-
-    const install_shaders_compiler =
-        builder.addInstallArtifact(shaders_compiler, .{});
-
-    builder.install_tls.step.dependOn(&install_shaders_compiler.step);
-
-    var self_dependency = std.Build.Dependency{
-        .builder = builder,
-    };
-
-    const shaders_module = try shaders.Step.compileModule(&self_dependency, profile.compile_options);
-
-    const shaders_compile_step = builder.addRunArtifact(shaders_compiler);
-
-    shaders_compile_step.step.dependOn(&install_shaders_compiler.step);
-
-    return shaders_module;
-}
-
-fn run_exe(builder: *std.Build, profile: *const Profile, shaders_module: *std.Build.Module) !void {
     const exe = builder.addExecutable(.{
-        .name = zon.name,
-        .root_module = std.Build.Module.create(builder, .{
-            .root_source_file = .{
-                .cwd_relative = try builder.build_root.join(builder.allocator, &.{
-                    "src",
-                    zon.name,
-                    "main.zig",
-                }),
+        .name = name,
+        .root_module = builder.createModule(.{
+            .root_source_file = builder.path(builder.pathResolve(&.{ "src", "main.zig" })),
+            .target = target,
+            .optimize = optimize,
+            .imports = &.{
+                .{
+                    .name = "build",
+                    .module = options_module,
+                },
+                .{
+                    .name = "c",
+                    .module = c_module,
+                },
+                .{
+                    .name = "prototypes",
+                    .module = prototypes_module,
+                },
             },
-            .target = profile.target,
-            .optimize = profile.optimize,
         }),
     });
-
-    try import(builder, exe, profile, shaders_module);
 
     builder.installArtifact(exe);
+
+    return exe;
+}
+
+pub fn build(builder: *std.Build) !void {
+    const target = builder.standardTargetOptions(.{});
+    const optimize = builder.standardOptimizeOption(.{});
+
+    const exe = try compileExe(builder, target, optimize);
+    try compileShaders(builder, optimize, exe);
 
     const run_cmd = builder.addRunArtifact(exe);
     run_cmd.step.dependOn(builder.getInstallStep());
 
-    const run_step = builder.step("run", "Run " ++ zon.name);
+    const dev = builder.option(bool, "dev", "Run for dev usage") orelse false;
+    if (dev) {
+        run_cmd.setEnvironmentVariable("VK_INSTANCE_LAYERS", "VK_LAYER_KHRONOS_validation");
+        run_cmd.setEnvironmentVariable(upname ++ "_DEBUG", "true");
+    }
+
+    const run_step = builder.step("run", "Run with Vulkan validation layer");
     run_step.dependOn(&run_cmd.step);
-}
-
-fn run_test(builder: *std.Build, profile: *const Profile) !void {
-    const unit_tests = builder.addTest(.{
-        .test_runner = .{
-            .path = .{
-                .cwd_relative = try builder.build_root.join(builder.allocator, &.{
-                    "test",
-                    "runner.zig",
-                }),
-            },
-            .mode = .simple,
-        },
-        .root_module = std.Build.Module.create(builder, .{
-            .root_source_file = .{
-                .cwd_relative = try builder.build_root.join(builder.allocator, &.{
-                    "test",
-                    "main.zig",
-                }),
-            },
-            .target = profile.target,
-            .optimize = profile.optimize,
-        }),
-    });
-    unit_tests.step.dependOn(builder.getInstallStep());
-
-    const run_unit_tests = builder.addRunArtifact(unit_tests);
-
-    const test_step = builder.step("test", "Run tests");
-    test_step.dependOn(&run_unit_tests.step);
 }

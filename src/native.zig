@@ -2,21 +2,130 @@ const std = @import("std");
 const c = @import("c");
 const build = @import("build");
 const prototypes = @import("prototypes");
-const shader = @import("shaders/shader.zig");
+const shader = @import("shaders/types.zig");
+const log = @import("log");
+const UI = @import("ui").UI;
 
-extern fn glfwCreateWindow(width: u32, height: u32, title: [*c]const u8, monitor: ?*c.GLFWmonitor, share: ?*c.GLFWwindow) ?*c.GLFWwindow;
-extern fn glfwGetFramebufferSize(window: ?*c.GLFWwindow, width: [*c]u32, height: [*c]u32) void;
-extern fn glfwSetWindowMaximizeCallback(window: ?*c.GLFWwindow, callback: ?*const fn (?*c.GLFWwindow, u32) callconv(std.builtin.CallingConvention.c) void) c.GLFWwindowmaximizefun;
-extern fn glfwSetFramebufferSizeCallback(window: ?*c.GLFWwindow, callback: ?*const fn (?*c.GLFWwindow, u32, u32) callconv(std.builtin.CallingConvention.c) void) c.GLFWframebuffersizefun;
-extern fn glfwSetWindowSizeLimits(window: ?*c.GLFWwindow, u32, u32, u32, u32) void;
+extern "c" fn glfwCreateWindow(width: u32, height: u32, title: [*c]const u8, monitor: ?*c.GLFWmonitor, share: ?*c.GLFWwindow) ?*c.GLFWwindow;
+extern "c" fn glfwGetFramebufferSize(window: ?*c.GLFWwindow, width: [*c]u32, height: [*c]u32) void;
+extern "c" fn glfwSetWindowMaximizeCallback(window: ?*c.GLFWwindow, callback: ?*const fn (?*c.GLFWwindow, u32) callconv(.c) void) c.GLFWwindowmaximizefun;
+extern "c" fn glfwSetFramebufferSizeCallback(window: ?*c.GLFWwindow, callback: ?*const fn (?*c.GLFWwindow, u32, u32) callconv(.c) void) c.GLFWframebuffersizefun;
+extern "c" fn glfwSetWindowSizeLimits(window: ?*c.GLFWwindow, u32, u32, u32, u32) void;
 
+const ImplementedUI = struct {
+    window: **c.GLFWwindow,
+    instance: *c.VkInstance,
+    physical_device: *c.VkPhysicalDevice,
+    device: *c.VkDevice,
+    queue_family: *u32,
+    queue: *c.VkQueue,
+    descriptor_pool: *c.VkDescriptorPool,
+    render_pass: *c.VkRenderPass,
+    command_buffers: *[]c.VkCommandBuffer,
+    current_frame: *u32,
+
+    fn ui(self: *@This(), root: *Root, comptime erase_gamma: bool) !UI {
+        self.window = &root.window;
+        self.instance = &root.instance;
+        self.physical_device = &root.physical_device.handle;
+        self.device = &root.device;
+        self.queue_family = &root.physical_device.queues.graphics.family;
+        self.queue = &root.physical_device.queues.graphics.handle;
+        self.descriptor_pool = &root.descriptor_pool;
+        self.render_pass = &root.render_pass;
+        self.command_buffers = &root.command_buffers;
+        self.current_frame = &root.current_frame;
+        return UI.implement(self, &vtable, root.init.gpa, erase_gamma);
+    }
+
+    const vtable: UI.VTable = .{
+        .init_fn = @This().init,
+        .deinit_fn = @This().deinit,
+        .new_frame_fn = @This().newFrame,
+        .render_fn = @This().render,
+        .get_scale_fn = @This().getScale,
+    };
+
+    fn init(ptr: *anyopaque) !void {
+        const self: *@This() = @ptrCast(@alignCast(ptr));
+
+        if (!c.cImGui_ImplGlfw_InitForVulkan(self.window.*, true)) return error.ImGuiGlfwInit;
+        errdefer c.cImGui_ImplGlfw_Shutdown();
+
+        var init_info: c.ImGui_ImplVulkan_InitInfo = .{
+            .ApiVersion = VULKAN_API_VERSION,
+            .Instance = self.instance.*,
+            .PhysicalDevice = self.physical_device.*,
+            .Device = self.device.*,
+            .QueueFamily = self.queue_family.*,
+            .Queue = self.queue.*,
+            .PipelineCache = @ptrCast(c.VK_NULL_HANDLE),
+            .DescriptorPool = self.descriptor_pool.*,
+            .DescriptorPoolSize = 0,
+            .UseDynamicRendering = false,
+            .MinAllocationSize = 0,
+            .MinImageCount = 2,
+            .ImageCount = 2,
+            .Allocator = null,
+            .PipelineInfoMain = .{
+                .RenderPass = self.render_pass.*,
+                .Subpass = 0,
+                .MSAASamples = c.VK_SAMPLE_COUNT_1_BIT,
+                .ExtraDynamicStates = std.mem.zeroes(c.ImVector_VkDynamicState),
+                .PipelineRenderingCreateInfo = std.mem.zeroes(c.VkPipelineRenderingCreateInfo),
+            },
+            .CheckVkResultFn = panic,
+            .CustomShaderVertCreateInfo = std.mem.zeroes(c.VkShaderModuleCreateInfo),
+            .CustomShaderFragCreateInfo = std.mem.zeroes(c.VkShaderModuleCreateInfo),
+        };
+        if (!c.cImGui_ImplVulkan_LoadFunctions(VULKAN_API_VERSION, @This().load)) return error.ImGuiVulkanLoad;
+
+        if (!c.cImGui_ImplVulkan_Init(&init_info)) return error.ImGuiVulkanInit;
+        errdefer c.cImGui_ImplVulkan_Shutdown();
+    }
+
+    fn deinit(ptr: *anyopaque) void {
+        const self: *@This() = @ptrCast(@alignCast(ptr));
+        _ = self;
+
+        c.cImGui_ImplVulkan_Shutdown();
+        c.cImGui_ImplGlfw_Shutdown();
+    }
+
+    fn newFrame(ptr: *anyopaque) void {
+        const self: *@This() = @ptrCast(@alignCast(ptr));
+        _ = self;
+
+        c.cImGui_ImplVulkan_NewFrame();
+        c.cImGui_ImplGlfw_NewFrame();
+    }
+
+    fn render(ptr: *anyopaque) void {
+        const self: *@This() = @ptrCast(@alignCast(ptr));
+
+        c.cImGui_ImplVulkan_RenderDrawDataEx(c.ImGui_GetDrawData(), self.command_buffers.*[self.current_frame.*], @ptrCast(c.VK_NULL_HANDLE));
+    }
+
+    fn getScale(ptr: *anyopaque) f32 {
+        const self: *@This() = @ptrCast(@alignCast(ptr));
+        _ = self;
+
+        return c.cImGui_ImplGlfw_GetContentScaleForMonitor(c.glfwGetPrimaryMonitor());
+    }
+
+    fn load(name: [*c]const u8, instance: ?*anyopaque) callconv(.c) ?*const fn () callconv(.c) void {
+        return c.glfwGetInstanceProcAddress(@ptrCast(@alignCast(instance)), name);
+    }
+};
+
+const LAYERS_COUNT = 2;
 const MAX_FRAMES_IN_FLIGHT: u32 = 2;
 const TIMEOUT = std.math.maxInt(u64);
 const VULKAN_API_VERSION = c.VK_API_VERSION_1_2;
 
-const PIXELLIZATION_MAX = 600;
+const PIXELLIZATION_MAX = 200;
 
-const vertices = [_]@Vector(2, f32){
+const vertices = [_]shader.Vec2{
     .{ -1.0, -1.0 }, .{ 3.0, -1.0 }, .{ -1.0, 3.0 },
 };
 const indices = [_]u32{ 0, 1, 2 };
@@ -107,7 +216,7 @@ const PhysicalDevice = struct {
         var physical_device_properties: c.VkPhysicalDeviceProperties = undefined;
         prototypes.vkGetPhysicalDeviceProperties(physical_device, &physical_device_properties);
 
-        if (root.init.environ_map.contains(build.upname ++ "_DEBUG")) std.log.debug("Physical device name: {s}", .{physical_device_properties.deviceName});
+        if (root.init.environ_map.contains(build.upname ++ "_DEBUG")) log.debug("Physical device name: {s}", .{physical_device_properties.deviceName});
 
         var physical_device_features: c.VkPhysicalDeviceFeatures = undefined;
         prototypes.vkGetPhysicalDeviceFeatures(physical_device, &physical_device_features);
@@ -117,7 +226,7 @@ const PhysicalDevice = struct {
             .buffer_image_granularity = physical_device_properties.limits.bufferImageGranularity,
             .min_uniform_buffer_offset_alignment = physical_device_properties.limits.minUniformBufferOffsetAlignment,
             .non_coherent_atom_size = physical_device_properties.limits.nonCoherentAtomSize,
-            .extensions = try std.ArrayList([*:0]const u8).initCapacity(root.arena_allocator, required_device_extensions_z.len),
+            .extensions = try std.ArrayList([*:0]const u8).initCapacity(root.arena, required_device_extensions_z.len),
             .features = .{
                 .discrete = (physical_device_properties.deviceType == c.VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU),
                 .required = .{
@@ -143,10 +252,10 @@ const PhysicalDevice = struct {
                     .is_lt_max_descriptor_set_sampled_images = (physical_device_properties.limits.maxDescriptorSetSampledImages > 0),
                     .is_lt_max_fragment_input_components = (physical_device_properties.limits.maxFragmentInputComponents > 1),
                     .is_lt_max_viewports = (physical_device_properties.limits.maxViewports > 0),
-                    .is_lt_max_viewport_dimension_width = (physical_device_properties.limits.maxViewportDimensions[0] >= root.max_extent.width),
-                    .is_lt_max_viewport_dimension_height = (physical_device_properties.limits.maxViewportDimensions[1] >= root.max_extent.height),
-                    .is_lt_max_framebuffer_width = (physical_device_properties.limits.maxFramebufferWidth >= @max(root.offscreen.extent.width, root.max_extent.width)),
-                    .is_lt_max_framebuffer_height = (physical_device_properties.limits.maxFramebufferHeight >= @max(root.offscreen.extent.height, root.max_extent.height)),
+                    .is_lt_max_viewport_dimension_width = (physical_device_properties.limits.maxViewportDimensions[0] >= root.extent.width),
+                    .is_lt_max_viewport_dimension_height = (physical_device_properties.limits.maxViewportDimensions[1] >= root.extent.height),
+                    .is_lt_max_framebuffer_width = (physical_device_properties.limits.maxFramebufferWidth >= @max(root.offscreen.extent.width, root.extent.width)),
+                    .is_lt_max_framebuffer_height = (physical_device_properties.limits.maxFramebufferHeight >= @max(root.offscreen.extent.height, root.extent.height)),
                     .is_lt_max_color_attachments = (physical_device_properties.limits.maxColorAttachments > 0),
                 },
             },
@@ -161,10 +270,10 @@ const PhysicalDevice = struct {
 
         try errify(prototypes.vkEnumerateDeviceExtensionProperties(physical_device, null, &supported_device_extension_count, supported_device_extensions.ptr));
 
-        if (root.init.environ_map.contains(build.upname ++ "_DEBUG")) std.log.debug("  - supported extensions:", .{});
+        if (root.init.environ_map.contains(build.upname ++ "_DEBUG")) log.debug("  - supported extensions:", .{});
 
         for (supported_device_extensions) |supported_ext| {
-            if (root.init.environ_map.contains(build.upname ++ "_DEBUG")) std.log.debug("    - {s}", .{supported_ext.extensionName});
+            if (root.init.environ_map.contains(build.upname ++ "_DEBUG")) log.debug("    - {s}", .{supported_ext.extensionName});
             inline for (required_device_extensions) |required_ext| {
                 if (std.mem.eql(u8, required_ext, supported_ext.extensionName[0..std.mem.indexOfScalar(u8, &(supported_ext.extensionName), 0).?])) {
                     @field(self.features.required, required_ext) = true;
@@ -178,13 +287,13 @@ const PhysicalDevice = struct {
         try self.querySwapchainSupport(root);
 
         if (root.init.environ_map.contains(build.upname ++ "_DEBUG")) {
-            std.log.debug("  - features:", .{});
-            inline for (comptime std.meta.fieldNames(@TypeOf(physical_device_features))) |field_name| {
-                std.log.debug("    - {s}: {any}", .{ field_name, @field(physical_device_features, field_name) });
+            log.debug("  - features:", .{});
+            inline for (@typeInfo(@TypeOf(physical_device_features)).@"struct".field_names) |field_name| {
+                log.debug("    - {s}: {any}", .{ field_name, @field(physical_device_features, field_name) });
             }
-            std.log.debug("  - limits:", .{});
-            inline for (comptime std.meta.fieldNames(@TypeOf(physical_device_properties.limits))) |field_name| {
-                std.log.debug("    - {s}: {any}", .{ field_name, @field(physical_device_properties.limits, field_name) });
+            log.debug("  - limits:", .{});
+            inline for (@typeInfo(@TypeOf(physical_device_properties.limits)).@"struct".field_names) |field_name| {
+                log.debug("    - {s}: {any}", .{ field_name, @field(physical_device_properties.limits, field_name) });
             }
         }
 
@@ -218,11 +327,11 @@ const PhysicalDevice = struct {
         self.queues.present.family = present.?;
 
         if (root.init.environ_map.contains(build.upname ++ "_DEBUG")) {
-            std.log.debug("  - score:", .{});
-            std.log.debug("    - required features: ({})", .{self.supportsRequiredFeatures()});
-            std.log.debug("    - same queue: {} ({d})", .{ self.queues.graphics.family == self.queues.present.family, 2 * @as(u32, @intFromBool(self.queues.graphics.family == self.queues.present.family)) });
-            std.log.debug("    - discrete: {} ({d})", .{ self.features.discrete, 4 * @as(u32, @intFromBool(self.features.discrete)) });
-            std.log.debug("    - total: {d}", .{self.score()});
+            log.debug("  - score:", .{});
+            log.debug("    - required features: ({})", .{self.supportsRequiredFeatures()});
+            log.debug("    - same queue: {} ({d})", .{ self.queues.graphics.family == self.queues.present.family, 2 * @as(u32, @intFromBool(self.queues.graphics.family == self.queues.present.family)) });
+            log.debug("    - discrete: {} ({d})", .{ self.features.discrete, 4 * @as(u32, @intFromBool(self.features.discrete)) });
+            log.debug("    - total: {d}", .{self.score()});
         }
 
         return self;
@@ -237,7 +346,7 @@ const PhysicalDevice = struct {
 
         if (surface_format_count > 0) {
             self.features.required.has_surface_format = true;
-            self.surface_formats = try root.arena_allocator.alloc(c.VkSurfaceFormatKHR, surface_format_count);
+            self.surface_formats = try root.arena.alloc(c.VkSurfaceFormatKHR, surface_format_count);
             try errify(prototypes.vkGetPhysicalDeviceSurfaceFormatsKHR(self.handle, root.surface, &surface_format_count, self.surface_formats.ptr));
         }
 
@@ -247,14 +356,14 @@ const PhysicalDevice = struct {
 
         if (present_mode_count > 0) {
             self.features.required.has_present_mode = true;
-            self.present_modes = try root.arena_allocator.alloc(c.VkPresentModeKHR, present_mode_count);
+            self.present_modes = try root.arena.alloc(c.VkPresentModeKHR, present_mode_count);
             try errify(prototypes.vkGetPhysicalDeviceSurfacePresentModesKHR(self.handle, root.surface, &present_mode_count, self.present_modes.ptr));
         }
     }
 
     fn supportsRequiredFeatures(self: @This()) bool {
         var supported = true;
-        inline for (comptime std.meta.fieldNames(@TypeOf(self.features.required))) |field_name| {
+        inline for (@typeInfo(@TypeOf(self.features.required)).@"struct".field_names) |field_name| {
             supported = supported and @field(self.features.required, field_name);
         }
         return supported;
@@ -288,7 +397,8 @@ const Offscreen = struct {
     descriptor_set_layouts: []c.VkDescriptorSetLayout = undefined,
     pipelines: Pipelines = undefined,
     descriptor_sets: []c.VkDescriptorSet = undefined,
-    render: bool = true,
+    ubo: shader.OffscreenUBO = undefined,
+    render: bool = undefined,
 };
 
 const Memory = struct {
@@ -324,17 +434,13 @@ const Memory = struct {
 
 const Root = struct {
     init: *const std.process.Init,
-    arena_allocator: std.mem.Allocator,
+    arena: std.mem.Allocator,
     window: *c.GLFWwindow = undefined,
     required_platform_extensions: [][*:0]const u8 = undefined,
     instance: c.VkInstance = undefined,
     surface: c.VkSurfaceKHR = undefined,
     surface_format: c.VkSurfaceFormatKHR = undefined,
     extent: c.VkExtent2D = .{
-        .width = 0,
-        .height = 0,
-    },
-    max_extent: c.VkExtent2D = .{
         .width = 0,
         .height = 0,
     },
@@ -356,6 +462,7 @@ const Root = struct {
     geometry_buffer: c.VkBuffer = undefined,
     staging_buffer: c.VkBuffer = undefined,
     uniform_buffer: c.VkBuffer = undefined,
+    ubo: shader.OnscreenUBO = undefined,
     descriptor_pool: c.VkDescriptorPool = undefined,
     descriptor_sets: []c.VkDescriptorSet = undefined,
     command_buffers: []c.VkCommandBuffer = undefined,
@@ -365,11 +472,9 @@ const Root = struct {
     current_frame: u32 = 0,
     framebuffer_resized: bool = false,
     start_time: std.Io.Timestamp = undefined,
-    imgui_window_created: bool = false,
-    imgui_window_hidden: bool = false,
     prng: std.Random.DefaultPrng,
-    random: std.Random,
-    seed: u32 = 0,
+    impl_ui: ImplementedUI = undefined,
+    ui: UI = undefined,
 };
 
 fn errify(result: c.VkResult) error{Vulkan}!void {
@@ -378,16 +483,12 @@ fn errify(result: c.VkResult) error{Vulkan}!void {
     return error.Vulkan;
 }
 
-fn panic(result: c.VkResult) callconv(std.builtin.CallingConvention.c) void {
+fn panic(result: c.VkResult) callconv(.c) void {
     if (result == c.VK_SUCCESS) return;
     std.debug.panic("[vulkan] Error: VkResult = {d}\n", .{result});
 }
 
-fn imguiLoader(name: [*c]const u8, instance: ?*anyopaque) callconv(std.builtin.CallingConvention.c) ?*const fn () callconv(std.builtin.CallingConvention.c) void {
-    return c.glfwGetInstanceProcAddress(@ptrCast(@alignCast(instance)), name);
-}
-
-fn GLFWErrorCallback(err: c_int, description: [*c]const u8) callconv(std.builtin.CallingConvention.c) void {
+fn GLFWErrorCallback(err: c_int, description: [*c]const u8) callconv(.c) void {
     std.debug.print("GLFW Error {d}: {s}\n", .{ err, description });
 }
 
@@ -398,216 +499,29 @@ fn GLFWFramebuferResized(window: ?*c.GLFWwindow) void {
     } else unreachable;
 }
 
-fn GLFWWindowMaximizeCallback(window: ?*c.GLFWwindow, maximized: u32) callconv(std.builtin.CallingConvention.c) void {
+fn GLFWWindowMaximizeCallback(window: ?*c.GLFWwindow, maximized: u32) callconv(.c) void {
     _ = maximized;
     GLFWFramebuferResized(window);
 }
 
-fn GLFWFramebufferSizeCallback(window: ?*c.GLFWwindow, width: u32, height: u32) callconv(std.builtin.CallingConvention.c) void {
-    _ = width;
-    _ = height;
+fn GLFWFramebufferSizeCallback(window: ?*c.GLFWwindow, width: u32, height: u32) callconv(.c) void {
+    _ = .{ width, height };
     GLFWFramebuferResized(window);
 }
 
-fn GLFWKeyCallback(window: ?*c.GLFWwindow, key: c_int, scancode: c_int, action: c_int, mods: c_int) callconv(std.builtin.CallingConvention.c) void {
-    _ = scancode;
-    _ = mods;
+fn GLFWKeyCallback(window: ?*c.GLFWwindow, key: c_int, scancode: c_int, action: c_int, mods: c_int) callconv(.c) void {
+    _ = .{ scancode, mods };
     var root: ?*Root = undefined;
     if (action == c.GLFW_PRESS) {
         if (c.glfwGetWindowUserPointer(window)) |user_pointer| {
             root = @ptrCast(@alignCast(user_pointer));
         } else unreachable;
-        // WARNING: US keyboard layout used here
         switch (key) {
-            c.GLFW_KEY_SPACE => root.?.imgui_window_hidden = !root.?.imgui_window_hidden,
+            c.GLFW_KEY_SPACE => root.?.ui.is_hidden = !root.?.ui.is_hidden,
             c.GLFW_KEY_ESCAPE => c.glfwSetWindowShouldClose(root.?.window, c.GLFW_TRUE),
             else => {},
         }
     }
-}
-
-fn initImguiStyle() void {
-    var style: *c.ImGuiStyle = c.ImGui_GetStyle();
-
-    // --- 1. Sizing and Spacing (Sharp & Aggressive) ---
-    style.WindowPadding = c.ImVec2{ .x = 10.0, .y = 10.0 };
-    style.FramePadding = c.ImVec2{ .x = 6.0, .y = 4.0 };
-    style.ItemSpacing = c.ImVec2{ .x = 8.0, .y = 4.0 };
-    style.ScrollbarSize = 13.0;
-    style.GrabMinSize = 10.0;
-
-    // --- 2. Borders & Rounding (Cyberpunk = Hard Edges) ---
-    style.WindowRounding = 0.0;
-    style.FrameRounding = 0.0;
-    style.PopupRounding = 0.0;
-    style.ScrollbarRounding = 0.0;
-    style.GrabRounding = 0.0;
-    style.TabRounding = 0.0;
-
-    style.WindowBorderSize = 1.0;
-    style.FrameBorderSize = 1.0;
-    style.PopupBorderSize = 1.0;
-
-    // --- 3. The Neon Palette ---
-    // Background: Pitch Black / Deep Navy
-    // Neon Cyan: #00f9 | Neon Pink: #ff003 | Neon Yellow: #fcee0a
-
-    // Text
-    style.Colors[c.ImGuiCol_Text] = c.ImVec4{ .x = 0.00, .y = 1.00, .z = 0.62, .w = 1.00 }; // Neon Green/Cyan
-    style.Colors[c.ImGuiCol_TextDisabled] = c.ImVec4{ .x = 0.20, .y = 0.40, .z = 0.35, .w = 1.00 };
-
-    // Backgrounds
-    style.Colors[c.ImGuiCol_WindowBg] = c.ImVec4{ .x = 0.02, .y = 0.02, .z = 0.04, .w = 0.95 }; // Near black
-    style.Colors[c.ImGuiCol_ChildBg] = c.ImVec4{ .x = 0.02, .y = 0.02, .z = 0.04, .w = 0.00 };
-    style.Colors[c.ImGuiCol_PopupBg] = c.ImVec4{ .x = 0.02, .y = 0.02, .z = 0.04, .w = 0.98 };
-
-    // Borders (The "Glow" look)
-    style.Colors[c.ImGuiCol_Border] = c.ImVec4{ .x = 1.00, .y = 0.00, .z = 0.25, .w = 0.60 }; // Neon Pink Border
-    style.Colors[c.ImGuiCol_BorderShadow] = c.ImVec4{ .x = 1.00, .y = 0.00, .z = 0.25, .w = 0.20 };
-
-    // Frames
-    style.Colors[c.ImGuiCol_FrameBg] = c.ImVec4{ .x = 0.05, .y = 0.05, .z = 0.10, .w = 1.00 };
-    style.Colors[c.ImGuiCol_FrameBgHovered] = c.ImVec4{ .x = 1.00, .y = 0.00, .z = 0.25, .w = 0.20 };
-    style.Colors[c.ImGuiCol_FrameBgActive] = c.ImVec4{ .x = 1.00, .y = 0.00, .z = 0.25, .w = 0.40 };
-
-    // Title Barsc.
-    style.Colors[c.ImGuiCol_TitleBg] = c.ImVec4{ .x = 0.02, .y = 0.02, .z = 0.04, .w = 1.00 };
-    style.Colors[c.ImGuiCol_TitleBgActive] = c.ImVec4{ .x = 0.05, .y = 0.05, .z = 0.10, .w = 1.00 };
-    style.Colors[c.ImGuiCol_TitleBgCollapsed] = c.ImVec4{ .x = 0.02, .y = 0.02, .z = 0.04, .w = 1.00 };
-
-    // Menus
-    style.Colors[c.ImGuiCol_MenuBarBg] = c.ImVec4{ .x = 0.05, .y = 0.05, .z = 0.10, .w = 1.00 };
-
-    // Scrollbars
-    style.Colors[c.ImGuiCol_ScrollbarBg] = c.ImVec4{ .x = 0.02, .y = 0.02, .z = 0.04, .w = 1.00 };
-    style.Colors[c.ImGuiCol_ScrollbarGrab] = c.ImVec4{ .x = 1.00, .y = 0.93, .z = 0.04, .w = 0.60 }; // Neon Yellow
-    style.Colors[c.ImGuiCol_ScrollbarGrabHovered] = c.ImVec4{ .x = 1.00, .y = 0.93, .z = 0.04, .w = 0.80 };
-    style.Colors[c.ImGuiCol_ScrollbarGrabActive] = c.ImVec4{ .x = 1.00, .y = 0.93, .z = 0.04, .w = 1.00 };
-
-    // Interactables
-    style.Colors[c.ImGuiCol_CheckMark] = c.ImVec4{ .x = 1.00, .y = 0.93, .z = 0.04, .w = 1.00 }; // Yellow
-    style.Colors[c.ImGuiCol_SliderGrab] = c.ImVec4{ .x = 1.00, .y = 0.00, .z = 0.25, .w = 0.80 }; // Pink
-    style.Colors[c.ImGuiCol_SliderGrabActive] = c.ImVec4{ .x = 1.00, .y = 0.00, .z = 0.25, .w = 1.00 };
-    style.Colors[c.ImGuiCol_Button] = c.ImVec4{ .x = 0.00, .y = 1.00, .z = 0.62, .w = 0.20 }; // Cyan Ghost
-    style.Colors[c.ImGuiCol_ButtonHovered] = c.ImVec4{ .x = 0.00, .y = 1.00, .z = 0.62, .w = 0.50 };
-    style.Colors[c.ImGuiCol_ButtonActive] = c.ImVec4{ .x = 0.00, .y = 1.00, .z = 0.62, .w = 1.00 };
-    style.Colors[c.ImGuiCol_Header] = c.ImVec4{ .x = 1.00, .y = 0.00, .z = 0.25, .w = 0.30 };
-    style.Colors[c.ImGuiCol_HeaderHovered] = c.ImVec4{ .x = 1.00, .y = 0.00, .z = 0.25, .w = 0.50 };
-    style.Colors[c.ImGuiCol_HeaderActive] = c.ImVec4{ .x = 1.00, .y = 0.00, .z = 0.25, .w = 1.00 };
-
-    // Tabs
-    style.Colors[c.ImGuiCol_Tab] = c.ImVec4{ .x = 0.05, .y = 0.05, .z = 0.10, .w = 1.00 };
-    style.Colors[c.ImGuiCol_TabHovered] = c.ImVec4{ .x = 1.00, .y = 0.00, .z = 0.25, .w = 0.80 };
-    style.Colors[c.ImGuiCol_TabActive] = c.ImVec4{ .x = 0.80, .y = 0.00, .z = 0.20, .w = 1.00 };
-
-    // Misc
-    style.Colors[c.ImGuiCol_TextSelectedBg] = c.ImVec4{ .x = 1.00, .y = 0.93, .z = 0.04, .w = 0.30 };
-    style.Colors[c.ImGuiCol_NavHighlight] = c.ImVec4{ .x = 1.00, .y = 0.00, .z = 0.25, .w = 1.00 };
-}
-
-fn initImgui(root: *Root) error{ ImGuiCreateContext, ImGuiGlfwInit, ImGuiVulkanInit, ImGuiVulkanLoad }!void {
-    _ = c.CIMGUI_CHECKVERSION();
-    if (c.ImGui_CreateContext(null) == null) return error.ImGuiCreateContext;
-    errdefer c.ImGui_DestroyContext(null);
-
-    var io: *c.ImGuiIO = c.ImGui_GetIO();
-    io.ConfigFlags |= c.ImGuiConfigFlags_NavEnableKeyboard | c.ImGuiConfigFlags_NavEnableGamepad;
-
-    initImguiStyle();
-
-    if (!c.cImGui_ImplGlfw_InitForVulkan(root.window, true)) return error.ImGuiGlfwInit;
-    errdefer c.cImGui_ImplGlfw_Shutdown();
-
-    var init_info: c.ImGui_ImplVulkan_InitInfo = .{
-        .Instance = root.instance,
-        .PhysicalDevice = root.physical_device.handle,
-        .Device = root.device,
-        .QueueFamily = root.physical_device.queues.graphics.family,
-        .Queue = root.physical_device.queues.graphics.handle,
-        .PipelineCache = @ptrCast(c.VK_NULL_HANDLE),
-        .DescriptorPool = root.descriptor_pool,
-        .MinImageCount = 2,
-        .ImageCount = 2,
-        .Allocator = null,
-        .PipelineInfoMain = .{
-            .RenderPass = root.render_pass,
-            .Subpass = 0,
-            .MSAASamples = c.VK_SAMPLE_COUNT_1_BIT,
-        },
-        .CheckVkResultFn = panic,
-    };
-    if (!c.cImGui_ImplVulkan_LoadFunctions(VULKAN_API_VERSION, imguiLoader)) return error.ImGuiVulkanLoad;
-
-    if (!c.cImGui_ImplVulkan_Init(&init_info)) return error.ImGuiVulkanInit;
-    errdefer c.cImGui_ImplVulkan_Shutdown();
-}
-
-fn deinitImgui() void {
-    c.cImGui_ImplVulkan_Shutdown();
-    c.cImGui_ImplGlfw_Shutdown();
-    c.ImGui_DestroyContext(null);
-}
-
-fn drawImgui(root: *Root) (std.mem.Allocator.Error || error{ImGuiBegin})!void {
-    c.cImGui_ImplVulkan_NewFrame();
-    c.cImGui_ImplGlfw_NewFrame();
-    c.ImGui_NewFrame();
-
-    if (!root.imgui_window_created) {
-        const window_pos: c.ImVec2 = .{ .x = 0.0, .y = 0.0 };
-        const window_pivot: c.ImVec2 = .{ .x = 0.0, .y = 0.0 };
-
-        c.ImGui_SetNextWindowPosEx(window_pos, 0, window_pivot);
-
-        root.imgui_window_created = true;
-    }
-
-    var extent: c.VkExtent2D = undefined;
-    glfwGetFramebufferSize(root.window, &extent.width, &extent.height);
-    extent = .{
-        .width = std.math.clamp(extent.width, root.physical_device.capabilities.minImageExtent.width, root.physical_device.capabilities.maxImageExtent.width),
-        .height = std.math.clamp(extent.height, root.physical_device.capabilities.minImageExtent.height, root.physical_device.capabilities.maxImageExtent.height),
-    };
-    const window_size = c.ImVec2{ .x = 300.0, .y = @floatFromInt(extent.height) };
-    c.ImGui_SetNextWindowSize(window_size, 0);
-
-    const flags = c.ImGuiWindowFlags_NoCollapse | c.ImGuiWindowFlags_NoMove | c.ImGuiWindowFlags_NoResize | c.ImGuiWindowFlags_NoTitleBar;
-
-    if (!root.imgui_window_hidden) {
-        if (!c.ImGui_Begin("tweaker", null, flags)) return error.ImGuiBegin;
-        defer c.ImGui_End();
-        const io: *c.ImGuiIO = c.ImGui_GetIO();
-
-        if (c.ImGui_CollapsingHeader("Help", 0)) {
-            c.ImGui_BulletText("Press SPACE to hide/show this panel");
-            c.ImGui_BulletText("Press ESPACE to close " ++ build.name);
-        }
-
-        if (c.ImGui_CollapsingHeader("Stats", 0)) {
-            const fps_text = try std.fmt.allocPrintSentinel(root.init.gpa, "Average {d:.1} ms/frame ({d:.0} FPS)", .{ std.time.ms_per_s / io.Framerate, io.Framerate }, 0);
-            defer root.init.gpa.free(fps_text);
-            c.ImGui_Text(fps_text.ptr);
-        }
-
-        if (c.ImGui_CollapsingHeader("Settings", 0)) {
-            const seed_text = try std.fmt.allocPrintSentinel(root.init.gpa, "Seed: {d}", .{root.seed}, 0);
-            defer root.init.gpa.free(seed_text);
-            if (c.ImGui_Button("New Seed")) {
-                root.seed = root.random.int(u32);
-                root.offscreen.render = true;
-            }
-            c.ImGui_SameLine();
-            c.ImGui_Text(seed_text.ptr);
-        }
-
-        //if (c.ImGui_CollapsingHeader("Stars", 0)) {
-    }
-
-    c.ImGui_Render();
-}
-
-fn renderImGui(root: *Root) void {
-    c.cImGui_ImplVulkan_RenderDrawDataEx(c.ImGui_GetDrawData(), root.command_buffers[root.current_frame], @ptrCast(c.VK_NULL_HANDLE));
 }
 
 fn initGLFW(root: *Root) error{ GLFWInit, GLFWCreateWindow, VulkanNotSupported }!void {
@@ -617,23 +531,10 @@ fn initGLFW(root: *Root) error{ GLFWInit, GLFWCreateWindow, VulkanNotSupported }
     if (c.glfwVulkanSupported() == 0) return error.VulkanNotSupported;
     c.glfwWindowHint(c.GLFW_CLIENT_API, c.GLFW_NO_API);
 
-    // This is the only disgusting way I found to get maximized size of a window in pixels with GLFW
-    {
-        c.glfwWindowHint(c.GLFW_MAXIMIZED, c.GLFW_TRUE);
-
-        var hidden_window: *c.GLFWwindow = undefined;
-        if (glfwCreateWindow(1, 1, "hidden", null, null)) |*win| {
-            hidden_window = win.*;
-        } else return error.GLFWCreateWindow;
-        defer c.glfwDestroyWindow(hidden_window);
-
-        glfwGetFramebufferSize(hidden_window, &root.max_extent.width, &root.max_extent.height);
-    }
-
     if (root.init.environ_map.contains(build.upname ++ "_DEBUG") or std.mem.indexOf(u8, root.init.environ_map.get("VK_INSTANCE_LAYERS") orelse "", "VK_LAYER_KHRONOS_validation") != null) c.glfwWindowHint(c.GLFW_MAXIMIZED, c.GLFW_FALSE);
-    const main_scale = c.cImGui_ImplGlfw_GetContentScaleForMonitor(c.glfwGetPrimaryMonitor());
+    const main_scale = root.ui.getScale();
 
-    if (glfwCreateWindow(std.math.lossyCast(u32, main_scale) * 1280, std.math.lossyCast(u32, main_scale) * 720, build.name ++ " " ++ build.version, null, null)) |*win| {
+    if (glfwCreateWindow(std.math.lossyCast(u32, main_scale * 1280.0), std.math.lossyCast(u32, main_scale * 800.0), build.name ++ " " ++ build.version, null, null)) |*win| {
         root.window = win.*;
     } else return error.GLFWCreateWindow;
     errdefer c.glfwDestroyWindow(root.window);
@@ -661,6 +562,7 @@ fn initInstance(root: *Root) error{ Vulkan, UnknownFunction }!void {
 
     const app_info: c.VkApplicationInfo = .{
         .sType = c.VK_STRUCTURE_TYPE_APPLICATION_INFO,
+        .pNext = null,
         .pApplicationName = build.name ++ " " ++ build.version,
         .applicationVersion = c.VK_MAKE_API_VERSION(0, 0, 0, 0),
         .pEngineName = "No Engine",
@@ -670,6 +572,8 @@ fn initInstance(root: *Root) error{ Vulkan, UnknownFunction }!void {
 
     const create_info: c.VkInstanceCreateInfo = .{
         .sType = c.VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
+        .pNext = null,
+        .flags = 0,
         .pApplicationInfo = &app_info,
         .enabledExtensionCount = @intCast(root.required_platform_extensions.len),
         .ppEnabledExtensionNames = root.required_platform_extensions[0..].ptr,
@@ -718,18 +622,22 @@ fn pickPhysicalDevice(root: *Root) (std.mem.Allocator.Error || error{ Vulkan, Qu
 
 fn initLogicalDevice(root: *Root) (std.mem.Allocator.Error || error{ Vulkan, UnknownFunction })!void {
     var device_extensions: std.ArrayList([*:0]const u8) = .empty;
-    try device_extensions.append(root.arena_allocator, "VK_KHR_swapchain");
+    try device_extensions.append(root.arena, "VK_KHR_swapchain");
 
     const queue_priorities = [_]f32{1.0};
     const device_queue_create_info = [_]c.VkDeviceQueueCreateInfo{
         .{
             .sType = c.VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+            .pNext = null,
+            .flags = 0,
             .queueFamilyIndex = root.physical_device.queues.graphics.family,
             .queueCount = queue_priorities.len,
             .pQueuePriorities = &queue_priorities,
         },
         .{
             .sType = c.VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+            .pNext = null,
+            .flags = 0,
             .queueFamilyIndex = root.physical_device.queues.present.family,
             .queueCount = queue_priorities.len,
             .pQueuePriorities = &queue_priorities,
@@ -740,18 +648,117 @@ fn initLogicalDevice(root: *Root) (std.mem.Allocator.Error || error{ Vulkan, Unk
 
     var physical_device_vk12_features: c.VkPhysicalDeviceVulkan12Features = .{
         .sType = c.VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES,
+        .pNext = null,
         .shaderInt8 = c.VK_TRUE,
         .bufferDeviceAddress = c.VK_TRUE,
+        .samplerMirrorClampToEdge = c.VK_FALSE,
+        .drawIndirectCount = c.VK_FALSE,
+        .storageBuffer8BitAccess = c.VK_FALSE,
+        .uniformAndStorageBuffer8BitAccess = c.VK_FALSE,
+        .storagePushConstant8 = c.VK_FALSE,
+        .shaderBufferInt64Atomics = c.VK_FALSE,
+        .shaderSharedInt64Atomics = c.VK_FALSE,
+        .shaderFloat16 = c.VK_FALSE,
+        .descriptorIndexing = c.VK_FALSE,
+        .shaderInputAttachmentArrayDynamicIndexing = c.VK_FALSE,
+        .shaderUniformTexelBufferArrayDynamicIndexing = c.VK_FALSE,
+        .shaderStorageTexelBufferArrayDynamicIndexing = c.VK_FALSE,
+        .shaderUniformBufferArrayNonUniformIndexing = c.VK_FALSE,
+        .shaderSampledImageArrayNonUniformIndexing = c.VK_FALSE,
+        .shaderStorageBufferArrayNonUniformIndexing = c.VK_FALSE,
+        .shaderStorageImageArrayNonUniformIndexing = c.VK_FALSE,
+        .shaderInputAttachmentArrayNonUniformIndexing = c.VK_FALSE,
+        .shaderUniformTexelBufferArrayNonUniformIndexing = c.VK_FALSE,
+        .shaderStorageTexelBufferArrayNonUniformIndexing = c.VK_FALSE,
+        .descriptorBindingUniformBufferUpdateAfterBind = c.VK_FALSE,
+        .descriptorBindingSampledImageUpdateAfterBind = c.VK_FALSE,
+        .descriptorBindingStorageImageUpdateAfterBind = c.VK_FALSE,
+        .descriptorBindingStorageBufferUpdateAfterBind = c.VK_FALSE,
+        .descriptorBindingUniformTexelBufferUpdateAfterBind = c.VK_FALSE,
+        .descriptorBindingStorageTexelBufferUpdateAfterBind = c.VK_FALSE,
+        .descriptorBindingUpdateUnusedWhilePending = c.VK_FALSE,
+        .descriptorBindingPartiallyBound = c.VK_FALSE,
+        .descriptorBindingVariableDescriptorCount = c.VK_FALSE,
+        .runtimeDescriptorArray = c.VK_FALSE,
+        .samplerFilterMinmax = c.VK_FALSE,
+        .scalarBlockLayout = c.VK_FALSE,
+        .imagelessFramebuffer = c.VK_FALSE,
+        .uniformBufferStandardLayout = c.VK_FALSE,
+        .shaderSubgroupExtendedTypes = c.VK_FALSE,
+        .separateDepthStencilLayouts = c.VK_FALSE,
+        .hostQueryReset = c.VK_FALSE,
+        .timelineSemaphore = c.VK_FALSE,
+        .bufferDeviceAddressCaptureReplay = c.VK_FALSE,
+        .bufferDeviceAddressMultiDevice = c.VK_FALSE,
+        .vulkanMemoryModel = c.VK_FALSE,
+        .vulkanMemoryModelDeviceScope = c.VK_FALSE,
+        .vulkanMemoryModelAvailabilityVisibilityChains = c.VK_FALSE,
+        .shaderOutputViewportIndex = c.VK_FALSE,
+        .shaderOutputLayer = c.VK_FALSE,
+        .subgroupBroadcastDynamicId = c.VK_FALSE,
     };
 
     const physical_device_features: c.VkPhysicalDeviceFeatures = .{
         .samplerAnisotropy = c.VK_TRUE,
         .shaderInt16 = c.VK_TRUE,
         .shaderInt64 = c.VK_TRUE,
+        .robustBufferAccess = c.VK_FALSE,
+        .fullDrawIndexUint32 = c.VK_FALSE,
+        .imageCubeArray = c.VK_FALSE,
+        .independentBlend = c.VK_FALSE,
+        .geometryShader = c.VK_FALSE,
+        .tessellationShader = c.VK_FALSE,
+        .sampleRateShading = c.VK_FALSE,
+        .dualSrcBlend = c.VK_FALSE,
+        .logicOp = c.VK_FALSE,
+        .multiDrawIndirect = c.VK_FALSE,
+        .drawIndirectFirstInstance = c.VK_FALSE,
+        .depthClamp = c.VK_FALSE,
+        .depthBiasClamp = c.VK_FALSE,
+        .fillModeNonSolid = c.VK_FALSE,
+        .depthBounds = c.VK_FALSE,
+        .wideLines = c.VK_FALSE,
+        .largePoints = c.VK_FALSE,
+        .alphaToOne = c.VK_FALSE,
+        .multiViewport = c.VK_FALSE,
+        .textureCompressionETC2 = c.VK_FALSE,
+        .textureCompressionASTC_LDR = c.VK_FALSE,
+        .textureCompressionBC = c.VK_FALSE,
+        .occlusionQueryPrecise = c.VK_FALSE,
+        .pipelineStatisticsQuery = c.VK_FALSE,
+        .vertexPipelineStoresAndAtomics = c.VK_FALSE,
+        .fragmentStoresAndAtomics = c.VK_FALSE,
+        .shaderTessellationAndGeometryPointSize = c.VK_FALSE,
+        .shaderImageGatherExtended = c.VK_FALSE,
+        .shaderStorageImageExtendedFormats = c.VK_FALSE,
+        .shaderStorageImageMultisample = c.VK_FALSE,
+        .shaderStorageImageReadWithoutFormat = c.VK_FALSE,
+        .shaderStorageImageWriteWithoutFormat = c.VK_FALSE,
+        .shaderUniformBufferArrayDynamicIndexing = c.VK_FALSE,
+        .shaderSampledImageArrayDynamicIndexing = c.VK_FALSE,
+        .shaderStorageBufferArrayDynamicIndexing = c.VK_FALSE,
+        .shaderStorageImageArrayDynamicIndexing = c.VK_FALSE,
+        .shaderClipDistance = c.VK_FALSE,
+        .shaderCullDistance = c.VK_FALSE,
+        .shaderFloat64 = c.VK_FALSE,
+        .shaderResourceResidency = c.VK_FALSE,
+        .shaderResourceMinLod = c.VK_FALSE,
+        .sparseBinding = c.VK_FALSE,
+        .sparseResidencyBuffer = c.VK_FALSE,
+        .sparseResidencyImage2D = c.VK_FALSE,
+        .sparseResidencyImage3D = c.VK_FALSE,
+        .sparseResidency2Samples = c.VK_FALSE,
+        .sparseResidency4Samples = c.VK_FALSE,
+        .sparseResidency8Samples = c.VK_FALSE,
+        .sparseResidency16Samples = c.VK_FALSE,
+        .sparseResidencyAliased = c.VK_FALSE,
+        .variableMultisampleRate = c.VK_FALSE,
+        .inheritedQueries = c.VK_FALSE,
     };
 
     var device_create_info: c.VkDeviceCreateInfo = .{
         .sType = c.VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
+        .flags = 0,
         .pNext = &physical_device_vk12_features,
         .queueCreateInfoCount = queue_count,
         .pQueueCreateInfos = &device_queue_create_info,
@@ -777,6 +784,8 @@ fn deinitLogicalDevice(root: *Root) void {
 fn initOffscreenImage(root: *Root) error{Vulkan}!void {
     const offscreen_image_create_info: c.VkImageCreateInfo = .{
         .sType = c.VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
+        .pNext = null,
+        .flags = 0,
         .imageType = c.VK_IMAGE_TYPE_2D,
         .format = c.VK_FORMAT_R8G8B8A8_UNORM,
         .extent = .{
@@ -791,6 +800,8 @@ fn initOffscreenImage(root: *Root) error{Vulkan}!void {
         .usage = c.VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | c.VK_IMAGE_USAGE_SAMPLED_BIT,
         .sharingMode = c.VK_SHARING_MODE_EXCLUSIVE,
         .initialLayout = c.VK_IMAGE_LAYOUT_UNDEFINED,
+        .queueFamilyIndexCount = 0,
+        .pQueueFamilyIndices = null,
     };
 
     try errify(prototypes.vkCreateImage(root.device, &offscreen_image_create_info, null, &root.offscreen.image));
@@ -840,6 +851,8 @@ fn initSwapchain(root: *Root) (std.mem.Allocator.Error || error{Vulkan})!void {
 
     const swapchain_create_info: c.VkSwapchainCreateInfoKHR = .{
         .sType = c.VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
+        .pNext = null,
+        .flags = 0,
         .surface = root.surface,
         .minImageCount = image_count,
         .imageFormat = root.surface_format.format,
@@ -854,6 +867,7 @@ fn initSwapchain(root: *Root) (std.mem.Allocator.Error || error{Vulkan})!void {
         .compositeAlpha = c.VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
         .presentMode = present_mode,
         .clipped = c.VK_TRUE,
+        .oldSwapchain = @ptrCast(c.VK_NULL_HANDLE),
     };
 
     try errify(prototypes.vkCreateSwapchainKHR(root.device, &swapchain_create_info, null, &root.swapchain));
@@ -881,9 +895,13 @@ fn initGeometryBuffer(root: *Root) error{Vulkan}!void {
     const alignment = @max(root.physical_device.min_uniform_buffer_offset_alignment, root.physical_device.non_coherent_atom_size);
     const staging_buffer_create_info: c.VkBufferCreateInfo = .{
         .sType = c.VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+        .pNext = null,
+        .flags = 0,
         .size = alignUp(@sizeOf(@TypeOf(vertices)) + @sizeOf(@TypeOf(indices)), alignment),
         .usage = c.VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
         .sharingMode = c.VK_SHARING_MODE_EXCLUSIVE,
+        .queueFamilyIndexCount = 0,
+        .pQueueFamilyIndices = null,
     };
 
     try errify(prototypes.vkCreateBuffer(root.device, &staging_buffer_create_info, null, &root.staging_buffer));
@@ -891,9 +909,13 @@ fn initGeometryBuffer(root: *Root) error{Vulkan}!void {
 
     const buffer_create_info: c.VkBufferCreateInfo = .{
         .sType = c.VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+        .pNext = null,
+        .flags = 0,
         .size = @sizeOf(@TypeOf(vertices)) + @sizeOf(@TypeOf(indices)),
         .usage = c.VK_BUFFER_USAGE_TRANSFER_DST_BIT | c.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | c.VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
         .sharingMode = c.VK_SHARING_MODE_EXCLUSIVE,
+        .queueFamilyIndexCount = 0,
+        .pQueueFamilyIndices = null,
     };
 
     try errify(prototypes.vkCreateBuffer(root.device, &buffer_create_info, null, &root.geometry_buffer));
@@ -909,9 +931,13 @@ fn initUniformBuffers(root: *Root) (std.mem.Allocator.Error || error{Vulkan})!vo
     const alignment = @max(root.physical_device.min_uniform_buffer_offset_alignment, root.physical_device.non_coherent_atom_size);
     const uniform_buffer_create_info: c.VkBufferCreateInfo = .{
         .sType = c.VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
-        .size = alignUp(@sizeOf(shader.OffscreenUBO), alignment) + alignUp(@sizeOf(shader.OnscreenUBO), alignment) * MAX_FRAMES_IN_FLIGHT,
+        .pNext = null,
+        .flags = 0,
+        .size = alignUp(@sizeOf(shader.OffscreenUBO), alignment) * root.offscreen.layers + alignUp(@sizeOf(shader.OnscreenUBO), alignment) * MAX_FRAMES_IN_FLIGHT,
         .usage = c.VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
         .sharingMode = c.VK_SHARING_MODE_EXCLUSIVE,
+        .queueFamilyIndexCount = 0,
+        .pQueueFamilyIndices = null,
     };
 
     try errify(prototypes.vkCreateBuffer(root.device, &uniform_buffer_create_info, null, &root.uniform_buffer));
@@ -964,6 +990,7 @@ fn allocMemory(root: *Root) error{ Vulkan, NoSuitableMemoryType }!void {
 
     const device_local_memory_alloc_info: c.VkMemoryAllocateInfo = .{
         .sType = c.VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+        .pNext = null,
         .allocationSize = allocation_size,
         .memoryTypeIndex = try findMemoryType(root, memory_type_bits, c.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT),
     };
@@ -1003,6 +1030,7 @@ fn allocMemory(root: *Root) error{ Vulkan, NoSuitableMemoryType }!void {
 
     const host_visible_memory_alloc_info: c.VkMemoryAllocateInfo = .{
         .sType = c.VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+        .pNext = null,
         .allocationSize = allocation_size,
         .memoryTypeIndex = try findMemoryType(root, memory_type_bits, c.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT),
     };
@@ -1032,6 +1060,8 @@ fn freeMemory(root: *Root) void {
 fn initOffscreenImageViews(root: *Root) (std.mem.Allocator.Error || error{Vulkan})!void {
     const offscreen_array_image_view_create_info: c.VkImageViewCreateInfo = .{
         .sType = c.VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+        .pNext = null,
+        .flags = 0,
         .viewType = c.VK_IMAGE_VIEW_TYPE_2D_ARRAY,
         .format = c.VK_FORMAT_R8G8B8A8_UNORM,
         .subresourceRange = .{
@@ -1060,6 +1090,8 @@ fn initOffscreenImageViews(root: *Root) (std.mem.Allocator.Error || error{Vulkan
     for (0..root.offscreen.layers) |index| {
         offscreen_layer_image_view_create_info = .{
             .sType = c.VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+            .pNext = null,
+            .flags = 0,
             .image = root.offscreen.image,
             .viewType = c.VK_IMAGE_VIEW_TYPE_2D,
             .format = c.VK_FORMAT_R8G8B8A8_UNORM,
@@ -1098,6 +1130,8 @@ fn initOnscreenImageViews(root: *Root) (std.mem.Allocator.Error || error{Vulkan}
     for (0..root.images.len) |index| {
         image_view_create_info = .{
             .sType = c.VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+            .pNext = null,
+            .flags = 0,
             .image = root.images[index],
             .viewType = c.VK_IMAGE_VIEW_TYPE_2D,
             .format = root.surface_format.format,
@@ -1129,6 +1163,8 @@ fn deinitOnscreenImageViews(root: *Root) void {
 fn initOffscreenSampler(root: *Root) error{Vulkan}!void {
     const offscreen_sampler_create_info: c.VkSamplerCreateInfo = .{
         .sType = c.VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
+        .pNext = null,
+        .flags = 0,
         .magFilter = c.VK_FILTER_NEAREST,
         .minFilter = c.VK_FILTER_NEAREST,
         .mipmapMode = c.VK_SAMPLER_MIPMAP_MODE_NEAREST,
@@ -1157,6 +1193,7 @@ fn deinitOffscreenSampler(root: *Root) void {
 fn initRenderPasses(root: *Root) error{Vulkan}!void {
     const offscreen_attachment_descriptions = [_]c.VkAttachmentDescription{
         .{
+            .flags = 0,
             .format = c.VK_FORMAT_R8G8B8A8_UNORM,
             .samples = c.VK_SAMPLE_COUNT_1_BIT,
             .loadOp = c.VK_ATTACHMENT_LOAD_OP_CLEAR,
@@ -1178,8 +1215,15 @@ fn initRenderPasses(root: *Root) error{Vulkan}!void {
     const offscreen_subpass_descriptions = [_]c.VkSubpassDescription{
         .{
             .pipelineBindPoint = c.VK_PIPELINE_BIND_POINT_GRAPHICS,
+            .flags = 0,
             .colorAttachmentCount = offscreen_attachment_references.len,
             .pColorAttachments = &offscreen_attachment_references,
+            .inputAttachmentCount = 0,
+            .pInputAttachments = null,
+            .pResolveAttachments = null,
+            .pDepthStencilAttachment = null,
+            .preserveAttachmentCount = 0,
+            .pPreserveAttachments = null,
         },
     };
 
@@ -1206,6 +1250,8 @@ fn initRenderPasses(root: *Root) error{Vulkan}!void {
 
     const offscreen_render_pass_create_info: c.VkRenderPassCreateInfo = .{
         .sType = c.VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
+        .pNext = null,
+        .flags = 0,
         .attachmentCount = offscreen_attachment_descriptions.len,
         .pAttachments = &offscreen_attachment_descriptions,
         .subpassCount = offscreen_subpass_descriptions.len,
@@ -1219,6 +1265,7 @@ fn initRenderPasses(root: *Root) error{Vulkan}!void {
 
     const onscreen_attachment_descriptions = [_]c.VkAttachmentDescription{
         .{
+            .flags = 0,
             .format = root.surface_format.format,
             .samples = c.VK_SAMPLE_COUNT_1_BIT,
             .loadOp = c.VK_ATTACHMENT_LOAD_OP_CLEAR,
@@ -1242,6 +1289,13 @@ fn initRenderPasses(root: *Root) error{Vulkan}!void {
             .pipelineBindPoint = c.VK_PIPELINE_BIND_POINT_GRAPHICS,
             .colorAttachmentCount = onscreen_attachment_references.len,
             .pColorAttachments = &onscreen_attachment_references,
+            .flags = 0,
+            .inputAttachmentCount = 0,
+            .pInputAttachments = null,
+            .pResolveAttachments = null,
+            .pDepthStencilAttachment = null,
+            .preserveAttachmentCount = 0,
+            .pPreserveAttachments = null,
         },
     };
 
@@ -1251,11 +1305,16 @@ fn initRenderPasses(root: *Root) error{Vulkan}!void {
             .dstSubpass = 0,
             .srcStageMask = c.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
             .dstStageMask = c.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+            .srcAccessMask = 0,
+            .dstAccessMask = 0,
+            .dependencyFlags = 0,
         },
     };
 
     const onscreen_render_pass_create_info: c.VkRenderPassCreateInfo = .{
         .sType = c.VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
+        .pNext = null,
+        .flags = 0,
         .attachmentCount = onscreen_attachment_descriptions.len,
         .pAttachments = &onscreen_attachment_descriptions,
         .subpassCount = onscreen_subpass_descriptions.len,
@@ -1303,12 +1362,16 @@ fn initDescriptorSetLayouts(root: *Root) (std.mem.Allocator.Error || error{Vulka
 
     const offscreen_descriptor_set_layout_create_info: c.VkDescriptorSetLayoutCreateInfo = .{
         .sType = c.VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+        .pNext = null,
+        .flags = 0,
         .bindingCount = offscreen_ubo_layout_bindings.len,
         .pBindings = &offscreen_ubo_layout_bindings,
     };
 
     const onscreen_descriptor_set_layout_create_info: c.VkDescriptorSetLayoutCreateInfo = .{
         .sType = c.VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+        .pNext = null,
+        .flags = 0,
         .bindingCount = onscreen_ubo_layout_bindings.len,
         .pBindings = &onscreen_ubo_layout_bindings,
     };
@@ -1333,11 +1396,36 @@ fn deinitDescriptorSetLayouts(root: *Root) void {
     root.init.gpa.free(root.offscreen.descriptor_set_layouts);
 }
 
+fn initViewportsAndScissors(root: *Root) void {
+    root.viewports = [_]c.VkViewport{
+        .{
+            .x = 0,
+            .y = 0,
+            .width = @floatFromInt(root.extent.width),
+            .height = @floatFromInt(root.extent.height),
+            .minDepth = 0,
+            .maxDepth = 1,
+        },
+    };
+
+    root.scissors = [_]c.VkRect2D{
+        .{
+            .offset = .{
+                .x = 0,
+                .y = 0,
+            },
+            .extent = root.extent,
+        },
+    };
+}
+
 fn initGraphicsPipelines(root: *Root) (std.mem.Allocator.Error || error{Vulkan})!void {
     const fullscreen_vertex_shader_module_code = @embedFile("fullscreen.vert.spv");
     var fullscreen_vertex_shader_module: c.VkShaderModule = undefined;
     const fullscreen_vertex_shader_module_create_info: c.VkShaderModuleCreateInfo = .{
         .sType = c.VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
+        .pNext = null,
+        .flags = 0,
         .codeSize = fullscreen_vertex_shader_module_code.len,
         .pCode = @ptrCast(@alignCast(fullscreen_vertex_shader_module_code.ptr)),
     };
@@ -1348,6 +1436,8 @@ fn initGraphicsPipelines(root: *Root) (std.mem.Allocator.Error || error{Vulkan})
     var onscreen_fragment_shader_module: c.VkShaderModule = undefined;
     const onscreen_fragment_shader_module_create_info: c.VkShaderModuleCreateInfo = .{
         .sType = c.VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
+        .pNext = null,
+        .flags = 0,
         .codeSize = onscreen_fragment_shader_module_code.len,
         .pCode = @ptrCast(@alignCast(onscreen_fragment_shader_module_code.ptr)),
     };
@@ -1358,6 +1448,8 @@ fn initGraphicsPipelines(root: *Root) (std.mem.Allocator.Error || error{Vulkan})
     var offscreen_fragment_shader_module: c.VkShaderModule = undefined;
     const offscreen_fragment_shader_module_create_info: c.VkShaderModuleCreateInfo = .{
         .sType = c.VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
+        .pNext = null,
+        .flags = 0,
         .codeSize = offscreen_fragment_shader_module_code.len,
         .pCode = @ptrCast(@alignCast(offscreen_fragment_shader_module_code.ptr)),
     };
@@ -1367,6 +1459,8 @@ fn initGraphicsPipelines(root: *Root) (std.mem.Allocator.Error || error{Vulkan})
     const offscreen_pipeline_shader_stage_create_infos = [_]c.VkPipelineShaderStageCreateInfo{
         .{
             .sType = c.VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+            .pNext = null,
+            .flags = 0,
             .stage = c.VK_SHADER_STAGE_VERTEX_BIT,
             .module = fullscreen_vertex_shader_module,
             .pName = "main",
@@ -1374,6 +1468,8 @@ fn initGraphicsPipelines(root: *Root) (std.mem.Allocator.Error || error{Vulkan})
         },
         .{
             .sType = c.VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+            .pNext = null,
+            .flags = 0,
             .stage = c.VK_SHADER_STAGE_FRAGMENT_BIT,
             .module = offscreen_fragment_shader_module,
             .pName = "main",
@@ -1384,6 +1480,8 @@ fn initGraphicsPipelines(root: *Root) (std.mem.Allocator.Error || error{Vulkan})
     const onscreen_pipeline_shader_stage_create_infos = [_]c.VkPipelineShaderStageCreateInfo{
         .{
             .sType = c.VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+            .pNext = null,
+            .flags = 0,
             .stage = c.VK_SHADER_STAGE_VERTEX_BIT,
             .module = fullscreen_vertex_shader_module,
             .pName = "main",
@@ -1391,6 +1489,8 @@ fn initGraphicsPipelines(root: *Root) (std.mem.Allocator.Error || error{Vulkan})
         },
         .{
             .sType = c.VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+            .pNext = null,
+            .flags = 0,
             .stage = c.VK_SHADER_STAGE_FRAGMENT_BIT,
             .module = onscreen_fragment_shader_module,
             .pName = "main",
@@ -1404,6 +1504,8 @@ fn initGraphicsPipelines(root: *Root) (std.mem.Allocator.Error || error{Vulkan})
 
     const pipeline_dynamic_state_create_info: c.VkPipelineDynamicStateCreateInfo = .{
         .sType = c.VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO,
+        .pNext = null,
+        .flags = 0,
         .dynamicStateCount = dynamic_states.len,
         .pDynamicStates = &dynamic_states,
     };
@@ -1411,7 +1513,7 @@ fn initGraphicsPipelines(root: *Root) (std.mem.Allocator.Error || error{Vulkan})
     const vertex_input_binding_descriptions = [_]c.VkVertexInputBindingDescription{
         .{
             .binding = 0,
-            .stride = @sizeOf(@Vector(2, f32)),
+            .stride = @sizeOf(shader.Vec2),
             .inputRate = c.VK_VERTEX_INPUT_RATE_VERTEX,
         },
     };
@@ -1427,6 +1529,8 @@ fn initGraphicsPipelines(root: *Root) (std.mem.Allocator.Error || error{Vulkan})
 
     const pipeline_vertex_input_state_create_info: c.VkPipelineVertexInputStateCreateInfo = .{
         .sType = c.VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
+        .pNext = null,
+        .flags = 0,
         .vertexBindingDescriptionCount = vertex_input_binding_descriptions.len,
         .pVertexBindingDescriptions = &vertex_input_binding_descriptions,
         .vertexAttributeDescriptionCount = vertex_input_attribute_descriptions.len,
@@ -1435,33 +1539,18 @@ fn initGraphicsPipelines(root: *Root) (std.mem.Allocator.Error || error{Vulkan})
 
     const pipeline_input_assembly_state_create_info: c.VkPipelineInputAssemblyStateCreateInfo = .{
         .sType = c.VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
+        .pNext = null,
+        .flags = 0,
         .topology = c.VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
         .primitiveRestartEnable = c.VK_FALSE,
     };
 
-    root.viewports = [_]c.VkViewport{
-        .{
-            .x = 0,
-            .y = 0,
-            .width = @floatFromInt(root.max_extent.width),
-            .height = @floatFromInt(root.max_extent.height),
-            .minDepth = 0,
-            .maxDepth = 1,
-        },
-    };
-
-    root.scissors = [_]c.VkRect2D{
-        .{
-            .offset = .{
-                .x = 0,
-                .y = 0,
-            },
-            .extent = root.max_extent,
-        },
-    };
+    initViewportsAndScissors(root);
 
     const pipeline_viewport_state_create_info: c.VkPipelineViewportStateCreateInfo = .{
         .sType = c.VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
+        .pNext = null,
+        .flags = 0,
         .viewportCount = root.viewports.len,
         .pViewports = &root.viewports,
         .scissorCount = root.scissors.len,
@@ -1470,6 +1559,8 @@ fn initGraphicsPipelines(root: *Root) (std.mem.Allocator.Error || error{Vulkan})
 
     const pipeline_rasterization_state_create_info: c.VkPipelineRasterizationStateCreateInfo = .{
         .sType = c.VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
+        .pNext = null,
+        .flags = 0,
         .depthClampEnable = c.VK_FALSE,
         .rasterizerDiscardEnable = c.VK_FALSE,
         .polygonMode = c.VK_POLYGON_MODE_FILL,
@@ -1484,6 +1575,8 @@ fn initGraphicsPipelines(root: *Root) (std.mem.Allocator.Error || error{Vulkan})
 
     const pipeline_multisample_state_create_info: c.VkPipelineMultisampleStateCreateInfo = .{
         .sType = c.VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
+        .pNext = null,
+        .flags = 0,
         .sampleShadingEnable = c.VK_FALSE,
         .rasterizationSamples = c.VK_SAMPLE_COUNT_1_BIT,
         .minSampleShading = 1,
@@ -1494,11 +1587,17 @@ fn initGraphicsPipelines(root: *Root) (std.mem.Allocator.Error || error{Vulkan})
 
     const pipeline_depth_stencil_state_create_info = c.VkPipelineDepthStencilStateCreateInfo{
         .sType = c.VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
+        .pNext = null,
+        .flags = 0,
         .depthTestEnable = c.VK_TRUE,
         .depthWriteEnable = c.VK_TRUE,
         .depthCompareOp = c.VK_COMPARE_OP_LESS,
         .depthBoundsTestEnable = c.VK_FALSE,
         .stencilTestEnable = c.VK_FALSE,
+        .front = std.mem.zeroes(c.VkStencilOpState),
+        .back = std.mem.zeroes(c.VkStencilOpState),
+        .minDepthBounds = 0.0,
+        .maxDepthBounds = 0.0,
     };
 
     const pipeline_color_blend_attachment_states = [_]c.VkPipelineColorBlendAttachmentState{
@@ -1516,6 +1615,8 @@ fn initGraphicsPipelines(root: *Root) (std.mem.Allocator.Error || error{Vulkan})
 
     const pipeline_color_blend_state_create_info: c.VkPipelineColorBlendStateCreateInfo = .{
         .sType = c.VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
+        .pNext = null,
+        .flags = 0,
         .logicOpEnable = c.VK_FALSE,
         .logicOp = c.VK_LOGIC_OP_COPY,
         .attachmentCount = pipeline_color_blend_attachment_states.len,
@@ -1523,24 +1624,20 @@ fn initGraphicsPipelines(root: *Root) (std.mem.Allocator.Error || error{Vulkan})
         .blendConstants = @splat(0.0),
     };
 
-    const offscreen_push_constant_ranges = [_]c.VkPushConstantRange{
-        .{
-            .stageFlags = c.VK_SHADER_STAGE_FRAGMENT_BIT,
-            .offset = 0,
-            .size = @sizeOf(shader.PushConstants),
-        },
-    };
-
     const offscreen_pipeline_layout_create_info: c.VkPipelineLayoutCreateInfo = .{
         .sType = c.VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+        .pNext = null,
+        .flags = 0,
         .setLayoutCount = @intCast(root.offscreen.descriptor_set_layouts.len),
         .pSetLayouts = root.offscreen.descriptor_set_layouts.ptr,
-        .pushConstantRangeCount = @intCast(offscreen_push_constant_ranges.len),
-        .pPushConstantRanges = &offscreen_push_constant_ranges,
+        .pushConstantRangeCount = 0,
+        .pPushConstantRanges = undefined,
     };
 
     const onscreen_pipeline_layout_create_info: c.VkPipelineLayoutCreateInfo = .{
         .sType = c.VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+        .pNext = null,
+        .flags = 0,
         .setLayoutCount = @intCast(root.descriptor_set_layouts.len),
         .pSetLayouts = root.descriptor_set_layouts.ptr,
         .pushConstantRangeCount = 0,
@@ -1556,6 +1653,8 @@ fn initGraphicsPipelines(root: *Root) (std.mem.Allocator.Error || error{Vulkan})
     const offscreen_graphics_pipeline_create_infos = [_]c.VkGraphicsPipelineCreateInfo{
         .{
             .sType = c.VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
+            .pNext = null,
+            .flags = 0,
             .stageCount = offscreen_pipeline_shader_stage_create_infos.len,
             .pStages = &offscreen_pipeline_shader_stage_create_infos,
             .pVertexInputState = &pipeline_vertex_input_state_create_info,
@@ -1566,6 +1665,7 @@ fn initGraphicsPipelines(root: *Root) (std.mem.Allocator.Error || error{Vulkan})
             .pDepthStencilState = &pipeline_depth_stencil_state_create_info,
             .pColorBlendState = &pipeline_color_blend_state_create_info,
             .pDynamicState = &pipeline_dynamic_state_create_info,
+            .pTessellationState = null,
             .layout = root.offscreen.pipelines.layout,
             .renderPass = root.offscreen.render_pass,
             .subpass = 0,
@@ -1577,6 +1677,8 @@ fn initGraphicsPipelines(root: *Root) (std.mem.Allocator.Error || error{Vulkan})
     const onscreen_graphics_pipeline_create_infos = [_]c.VkGraphicsPipelineCreateInfo{
         .{
             .sType = c.VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
+            .pNext = null,
+            .flags = 0,
             .stageCount = onscreen_pipeline_shader_stage_create_infos.len,
             .pStages = &onscreen_pipeline_shader_stage_create_infos,
             .pVertexInputState = &pipeline_vertex_input_state_create_info,
@@ -1587,6 +1689,7 @@ fn initGraphicsPipelines(root: *Root) (std.mem.Allocator.Error || error{Vulkan})
             .pDepthStencilState = &pipeline_depth_stencil_state_create_info,
             .pColorBlendState = &pipeline_color_blend_state_create_info,
             .pDynamicState = &pipeline_dynamic_state_create_info,
+            .pTessellationState = null,
             .layout = root.pipelines.layout,
             .renderPass = root.render_pass,
             .subpass = 0,
@@ -1631,6 +1734,8 @@ fn initOffscreenFramebuffers(root: *Root) error{ OutOfMemory, Vulkan }!void {
 
         offscreen_framebuffer_create_info = .{
             .sType = c.VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
+            .pNext = null,
+            .flags = 0,
             .renderPass = root.offscreen.render_pass,
             .attachmentCount = offscreen_framebuffer_attachments.len,
             .pAttachments = &offscreen_framebuffer_attachments,
@@ -1660,6 +1765,8 @@ fn initOnscreenFramebuffers(root: *Root) (std.mem.Allocator.Error || error{Vulka
         attachments = .{root.views[index]};
         framebuffer_create_info = .{
             .sType = c.VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
+            .pNext = null,
+            .flags = 0,
             .renderPass = root.render_pass,
             .attachmentCount = attachments.len,
             .pAttachments = &attachments,
@@ -1681,6 +1788,7 @@ fn deinitOnscreenFramebuffers(root: *Root) void {
 fn initCommandPools(root: *Root) error{Vulkan}!void {
     const command_pool_create_info: c.VkCommandPoolCreateInfo = .{
         .sType = c.VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
+        .pNext = null,
         .flags = c.VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
         .queueFamilyIndex = root.physical_device.queues.graphics.family,
     };
@@ -1690,6 +1798,7 @@ fn initCommandPools(root: *Root) error{Vulkan}!void {
 
     const buffers_command_pool_create_info: c.VkCommandPoolCreateInfo = .{
         .sType = c.VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
+        .pNext = null,
         .flags = c.VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT | c.VK_COMMAND_POOL_CREATE_TRANSIENT_BIT,
         .queueFamilyIndex = root.physical_device.queues.graphics.family,
     };
@@ -1708,6 +1817,7 @@ fn copyBuffer(root: *Root, src_buffer: c.VkBuffer, dst_buffer: c.VkBuffer, size:
 
     const command_buffer_alloc_info: c.VkCommandBufferAllocateInfo = .{
         .sType = c.VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+        .pNext = null,
         .commandPool = root.buffers_command_pool,
         .level = c.VK_COMMAND_BUFFER_LEVEL_PRIMARY,
         .commandBufferCount = command_buffers.len,
@@ -1718,7 +1828,9 @@ fn copyBuffer(root: *Root, src_buffer: c.VkBuffer, dst_buffer: c.VkBuffer, size:
 
     const command_buffer_begin_info: c.VkCommandBufferBeginInfo = .{
         .sType = c.VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+        .pNext = null,
         .flags = c.VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
+        .pInheritanceInfo = null,
     };
 
     try errify(prototypes.vkBeginCommandBuffer(command_buffers[0], &command_buffer_begin_info));
@@ -1737,8 +1849,14 @@ fn copyBuffer(root: *Root, src_buffer: c.VkBuffer, dst_buffer: c.VkBuffer, size:
     const submit_infos = [_]c.VkSubmitInfo{
         .{
             .sType = c.VK_STRUCTURE_TYPE_SUBMIT_INFO,
+            .pNext = null,
             .commandBufferCount = command_buffers.len,
             .pCommandBuffers = &command_buffers,
+            .waitSemaphoreCount = 0,
+            .pWaitSemaphores = null,
+            .signalSemaphoreCount = 0,
+            .pSignalSemaphores = null,
+            .pWaitDstStageMask = null,
         },
     };
 
@@ -1753,6 +1871,7 @@ fn updateGeometryBuffer(root: *Root) error{Vulkan}!void {
     const mapped_memory_ranges = [_]c.VkMappedMemoryRange{
         .{
             .sType = c.VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE,
+            .pNext = null,
             .memory = root.memory.host_visible.handle,
             .offset = root.memory.host_visible.offset.staging_buffer,
             .size = alignUp(@sizeOf(@TypeOf(vertices)) + @sizeOf(@TypeOf(indices)), alignment),
@@ -1786,6 +1905,7 @@ fn initDescriptorPool(root: *Root) error{Vulkan}!void {
 
     const descriptor_pool_create_info: c.VkDescriptorPoolCreateInfo = .{
         .sType = c.VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+        .pNext = null,
         .flags = c.VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
         .poolSizeCount = descriptor_pool_sizes.len,
         .pPoolSizes = &descriptor_pool_sizes,
@@ -1803,6 +1923,7 @@ fn deinitDescriptorPool(root: *Root) void {
 fn initDescriptorSets(root: *Root) (std.mem.Allocator.Error || error{Vulkan})!void {
     const offscreen_descriptor_set_alloc_info: c.VkDescriptorSetAllocateInfo = .{
         .sType = c.VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+        .pNext = null,
         .descriptorPool = root.descriptor_pool,
         .descriptorSetCount = @intCast(root.offscreen.descriptor_set_layouts.len),
         .pSetLayouts = root.offscreen.descriptor_set_layouts.ptr,
@@ -1825,6 +1946,7 @@ fn initDescriptorSets(root: *Root) (std.mem.Allocator.Error || error{Vulkan})!vo
     const offscreen_write_descriptor_sets = [_]c.VkWriteDescriptorSet{
         .{
             .sType = c.VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .pNext = null,
             .dstSet = root.offscreen.descriptor_sets[0],
             .dstBinding = 0,
             .dstArrayElement = 0,
@@ -1840,6 +1962,7 @@ fn initDescriptorSets(root: *Root) (std.mem.Allocator.Error || error{Vulkan})!vo
 
     const onscreen_descriptor_set_alloc_info: c.VkDescriptorSetAllocateInfo = .{
         .sType = c.VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+        .pNext = null,
         .descriptorPool = root.descriptor_pool,
         .descriptorSetCount = MAX_FRAMES_IN_FLIGHT,
         .pSetLayouts = &[_]c.VkDescriptorSetLayout{
@@ -1877,6 +2000,7 @@ fn initDescriptorSets(root: *Root) (std.mem.Allocator.Error || error{Vulkan})!vo
         onscreen_write_descriptor_sets = [_]c.VkWriteDescriptorSet{
             .{
                 .sType = c.VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+                .pNext = null,
                 .dstSet = root.descriptor_sets[index],
                 .dstBinding = 0,
                 .dstArrayElement = 0,
@@ -1888,6 +2012,7 @@ fn initDescriptorSets(root: *Root) (std.mem.Allocator.Error || error{Vulkan})!vo
             },
             .{
                 .sType = c.VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+                .pNext = null,
                 .dstSet = root.descriptor_sets[index],
                 .dstBinding = 1,
                 .dstArrayElement = 0,
@@ -1914,6 +2039,7 @@ fn initCommandBuffers(root: *Root) (std.mem.Allocator.Error || error{Vulkan})!vo
 
     const command_buffer_alloc_info: c.VkCommandBufferAllocateInfo = .{
         .sType = c.VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+        .pNext = null,
         .commandPool = root.command_pool,
         .level = c.VK_COMMAND_BUFFER_LEVEL_PRIMARY,
         .commandBufferCount = MAX_FRAMES_IN_FLIGHT,
@@ -1938,10 +2064,13 @@ fn initSyncObjects(root: *Root) (std.mem.Allocator.Error || error{Vulkan})!void 
 
     const semaphore_create_info: c.VkSemaphoreCreateInfo = .{
         .sType = c.VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
+        .pNext = null,
+        .flags = 0,
     };
 
     const fence_create_info: c.VkFenceCreateInfo = .{
         .sType = c.VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
+        .pNext = null,
         .flags = c.VK_FENCE_CREATE_SIGNALED_BIT,
     };
 
@@ -1985,22 +2114,15 @@ fn rebuildSwapchain(root: *Root) (std.mem.Allocator.Error || error{Vulkan})!void
 
     try root.physical_device.querySwapchainSupport(root);
     try initSwapchain(root);
+    initViewportsAndScissors(root);
     try initOnscreenImageViews(root);
     try initOnscreenFramebuffers(root);
 }
 
-fn updateUniformBuffer(root: *Root) (std.mem.Allocator.Error || error{Vulkan})!void {
-    const onscreen_ubo: shader.OnscreenUBO = .{
-        .time = std.math.lossyCast(f32, root.start_time.untilNow(root.init.io, .real).toNanoseconds()) / std.time.ns_per_s,
-        .resolution = .{
-            std.math.lossyCast(f32, root.extent.width),
-            std.math.lossyCast(f32, root.extent.height),
-        },
-        .max_resolution = .{
-            std.math.lossyCast(f32, root.max_extent.width),
-            std.math.lossyCast(f32, root.max_extent.height),
-        },
-    };
+fn updateUniformBuffers(root: *Root) (std.mem.Allocator.Error || error{Vulkan})!void {
+    root.ubo.time = std.math.lossyCast(f32, root.start_time.untilNow(root.init.io, .real).toNanoseconds()) / std.time.ns_per_s;
+    root.ubo.resolution_x = std.math.lossyCast(f32, root.extent.width);
+    root.ubo.resolution_y = std.math.lossyCast(f32, root.extent.height);
 
     var ubo_memory_mapped: ?*anyopaque = undefined;
 
@@ -2010,6 +2132,7 @@ fn updateUniformBuffer(root: *Root) (std.mem.Allocator.Error || error{Vulkan})!v
     const alignment = @max(root.physical_device.non_coherent_atom_size, root.physical_device.min_uniform_buffer_offset_alignment);
     mapped_memory_ranges.appendAssumeCapacity(.{
         .sType = c.VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE,
+        .pNext = null,
         .memory = root.memory.host_visible.handle,
         .offset = root.memory.host_visible.offset.onscreen_uniform_buffer[root.current_frame],
         .size = alignUp(@sizeOf(shader.OnscreenUBO), alignment),
@@ -2018,31 +2141,29 @@ fn updateUniformBuffer(root: *Root) (std.mem.Allocator.Error || error{Vulkan})!v
     if (root.offscreen.render) {
         mapped_memory_ranges.appendAssumeCapacity(.{
             .sType = c.VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE,
+            .pNext = null,
             .memory = root.memory.host_visible.handle,
             .offset = root.memory.host_visible.offset.offscreen_uniform_buffer,
-            .size = alignUp(@sizeOf(shader.OffscreenUBO), alignment),
+            .size = alignUp(@sizeOf(shader.OffscreenUBO), alignment) * root.offscreen.layers,
         });
     }
 
-    try errify(prototypes.vkMapMemory(root.device, root.memory.host_visible.handle, root.memory.host_visible.offset.uniform_buffer, alignUp(@sizeOf(shader.OnscreenUBO), alignment) * MAX_FRAMES_IN_FLIGHT + alignUp(@sizeOf(shader.OffscreenUBO), alignment), 0, &ubo_memory_mapped));
+    try errify(prototypes.vkMapMemory(root.device, root.memory.host_visible.handle, root.memory.host_visible.offset.uniform_buffer, alignUp(@sizeOf(shader.OnscreenUBO), alignment) * MAX_FRAMES_IN_FLIGHT + alignUp(@sizeOf(shader.OffscreenUBO), alignment) * root.offscreen.layers, 0, &ubo_memory_mapped));
     defer prototypes.vkUnmapMemory(root.device, root.memory.host_visible.handle);
 
     try errify(prototypes.vkInvalidateMappedMemoryRanges(root.device, @intCast(mapped_memory_ranges.items.len), mapped_memory_ranges.items.ptr));
 
     const onscreen_start = root.memory.host_visible.offset.onscreen_uniform_buffer[root.current_frame] - root.memory.host_visible.offset.uniform_buffer;
-    @memcpy(@as([*]u8, @ptrCast(ubo_memory_mapped.?))[onscreen_start .. onscreen_start + @sizeOf(shader.OnscreenUBO)], std.mem.asBytes(&onscreen_ubo));
+    @memcpy(@as([*]u8, @ptrCast(ubo_memory_mapped.?))[onscreen_start .. onscreen_start + @sizeOf(shader.OnscreenUBO)], std.mem.asBytes(&root.ubo));
 
     if (root.offscreen.render) {
-        const offscreen_ubo: shader.OffscreenUBO = .{
-            .seed = std.math.lossyCast(f32, root.seed),
-            .resolution = .{
-                std.math.lossyCast(f32, root.offscreen.extent.width),
-                std.math.lossyCast(f32, root.offscreen.extent.height),
-            },
-        };
-
-        const offscreen_start = root.memory.host_visible.offset.offscreen_uniform_buffer - root.memory.host_visible.offset.uniform_buffer;
-        @memcpy(@as([*]u8, @ptrCast(ubo_memory_mapped.?))[offscreen_start .. offscreen_start + @sizeOf(shader.OffscreenUBO)], std.mem.asBytes(&offscreen_ubo));
+        for (0..root.offscreen.layers) |index| {
+            root.offscreen.ubo.resolution_x = std.math.lossyCast(f32, root.offscreen.extent.width);
+            root.offscreen.ubo.resolution_y = std.math.lossyCast(f32, root.offscreen.extent.height);
+            root.offscreen.ubo.layer = @intCast(index);
+            const offscreen_start = root.memory.host_visible.offset.offscreen_uniform_buffer - root.memory.host_visible.offset.uniform_buffer + alignUp(@sizeOf(shader.OffscreenUBO), alignment) * index;
+            @memcpy(@as([*]u8, @ptrCast(ubo_memory_mapped.?))[offscreen_start .. offscreen_start + @sizeOf(shader.OffscreenUBO)], std.mem.asBytes(&root.offscreen.ubo));
+        }
     }
 
     try errify(prototypes.vkFlushMappedMemoryRanges(root.device, @intCast(mapped_memory_ranges.items.len), mapped_memory_ranges.items.ptr));
@@ -2053,6 +2174,8 @@ fn recordCommandBuffer(root: *Root, image_index: u32) !void {
 
     const command_buffer_begin_info: c.VkCommandBufferBeginInfo = .{
         .sType = c.VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+        .pNext = null,
+        .flags = 0,
         .pInheritanceInfo = null,
     };
 
@@ -2066,21 +2189,19 @@ fn recordCommandBuffer(root: *Root, image_index: u32) !void {
         },
     };
 
-    const offscreen_dynamic_offsets = [_]u32{std.math.lossyCast(u32, root.memory.host_visible.offset.offscreen_uniform_buffer - root.memory.host_visible.offset.uniform_buffer)};
-
     const vertex_buffers_offsets = [_]c.VkDeviceSize{root.memory.device_local.offset.vertex_buffer};
     const vertex_buffers = [_]c.VkBuffer{root.geometry_buffer};
     prototypes.vkCmdBindVertexBuffers(root.command_buffers[root.current_frame], 0, vertex_buffers.len, &vertex_buffers, &vertex_buffers_offsets);
     prototypes.vkCmdBindIndexBuffer(root.command_buffers[root.current_frame], root.geometry_buffer, root.memory.device_local.offset.index_buffer, c.VK_INDEX_TYPE_UINT32);
 
     if (root.offscreen.render) {
+        const alignment = @max(root.physical_device.min_uniform_buffer_offset_alignment, root.physical_device.non_coherent_atom_size);
         for (0..root.offscreen.layers) |index| {
-            const push: shader.PushConstants = .{
-                .layer_index = @intCast(index),
-            };
+            const offscreen_dynamic_offsets = [_]u32{std.math.lossyCast(u32, root.memory.host_visible.offset.offscreen_uniform_buffer - root.memory.host_visible.offset.uniform_buffer + alignUp(@sizeOf(shader.OffscreenUBO), alignment) * index)};
 
             const offscreen_render_pass_begin_info: c.VkRenderPassBeginInfo = .{
                 .sType = c.VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
+                .pNext = null,
                 .renderPass = root.offscreen.render_pass,
                 .framebuffer = root.offscreen.framebuffers[index],
                 .renderArea = .{
@@ -2099,7 +2220,6 @@ fn recordCommandBuffer(root: *Root, image_index: u32) !void {
             prototypes.vkCmdSetViewport(root.command_buffers[root.current_frame], 0, root.viewports.len, &root.viewports);
             prototypes.vkCmdSetScissor(root.command_buffers[root.current_frame], 0, root.scissors.len, &root.scissors);
             prototypes.vkCmdBindDescriptorSets(root.command_buffers[root.current_frame], c.VK_PIPELINE_BIND_POINT_GRAPHICS, root.offscreen.pipelines.layout, 0, @intCast(root.offscreen.descriptor_sets.len), root.offscreen.descriptor_sets.ptr, offscreen_dynamic_offsets.len, &offscreen_dynamic_offsets);
-            prototypes.vkCmdPushConstants(root.command_buffers[root.current_frame], root.offscreen.pipelines.layout, c.VK_SHADER_STAGE_FRAGMENT_BIT, 0, @sizeOf(shader.PushConstants), &push);
             prototypes.vkCmdBindPipeline(root.command_buffers[root.current_frame], c.VK_PIPELINE_BIND_POINT_GRAPHICS, root.offscreen.pipelines.handles[0]);
             prototypes.vkCmdDrawIndexed(root.command_buffers[root.current_frame], indices.len, 1, 0, 0, 0);
         }
@@ -2115,6 +2235,7 @@ fn recordCommandBuffer(root: *Root, image_index: u32) !void {
 
     const onscreen_render_pass_begin_info: c.VkRenderPassBeginInfo = .{
         .sType = c.VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
+        .pNext = null,
         .renderPass = root.render_pass,
         .framebuffer = root.framebuffers[image_index],
         .renderArea = .{
@@ -2141,12 +2262,28 @@ fn recordCommandBuffer(root: *Root, image_index: u32) !void {
         const onscreen_descriptor_sets = [_]c.VkDescriptorSet{root.descriptor_sets[root.current_frame]};
         prototypes.vkCmdBindDescriptorSets(root.command_buffers[root.current_frame], c.VK_PIPELINE_BIND_POINT_GRAPHICS, root.pipelines.layout, 0, onscreen_descriptor_sets.len, &onscreen_descriptor_sets, onscreen_dynamic_offsets.len, &onscreen_dynamic_offsets);
         prototypes.vkCmdDrawIndexed(root.command_buffers[root.current_frame], indices.len, 1, 0, 0, 0);
-        renderImGui(root);
+        root.ui.render();
     }
 
     try errify(prototypes.vkEndCommandBuffer(root.command_buffers[root.current_frame]));
 
     root.offscreen.render = false;
+}
+
+fn drawUI(root: *Root) (std.mem.Allocator.Error || error{ImGuiBegin})!void {
+    var extent: c.VkExtent2D = undefined;
+    glfwGetFramebufferSize(root.window, &extent.width, &extent.height);
+    extent = .{
+        .width = std.math.clamp(extent.width, root.physical_device.capabilities.minImageExtent.width, root.physical_device.capabilities.maxImageExtent.width),
+        .height = std.math.clamp(extent.height, root.physical_device.capabilities.minImageExtent.height, root.physical_device.capabilities.maxImageExtent.height),
+    };
+    try root.ui.draw(extent.width, extent.height, root.offscreen.ubo.seed);
+
+    if (root.ui.buttons.new_seed.isPressed()) {
+        root.offscreen.ubo.seed = root.prng.random().int(u32);
+        root.offscreen.render = true;
+        root.ui.buttons.new_seed.release();
+    }
 }
 
 fn draw(root: *Root) (std.mem.Allocator.Error || error{ Vulkan, ImGuiBegin })!void {
@@ -2155,16 +2292,19 @@ fn draw(root: *Root) (std.mem.Allocator.Error || error{ Vulkan, ImGuiBegin })!vo
     const fences = [_]c.VkFence{root.in_flight_fences[root.current_frame]};
     try errify(prototypes.vkWaitForFences(root.device, fences.len, &fences, c.VK_TRUE, TIMEOUT));
 
-    try drawImgui(root);
+    try drawUI(root);
 
     var image_index: u32 = undefined;
     switch (prototypes.vkAcquireNextImageKHR(root.device, root.swapchain, TIMEOUT, root.image_available_semaphores[root.current_frame], @ptrCast(c.VK_NULL_HANDLE), &image_index)) {
         c.VK_SUCCESS => {},
-        c.VK_ERROR_OUT_OF_DATE_KHR => try rebuildSwapchain(root),
+        c.VK_ERROR_OUT_OF_DATE_KHR => {
+            try rebuildSwapchain(root);
+            return;
+        },
         else => |result| try errify(result),
     }
 
-    try updateUniformBuffer(root);
+    try updateUniformBuffers(root);
     try errify(prototypes.vkResetFences(root.device, fences.len, &fences));
     try recordCommandBuffer(root, image_index);
 
@@ -2176,6 +2316,7 @@ fn draw(root: *Root) (std.mem.Allocator.Error || error{ Vulkan, ImGuiBegin })!vo
     const submit_infos = [_]c.VkSubmitInfo{
         .{
             .sType = c.VK_STRUCTURE_TYPE_SUBMIT_INFO,
+            .pNext = null,
             .waitSemaphoreCount = image_available_semaphores.len,
             .pWaitSemaphores = &image_available_semaphores,
             .pWaitDstStageMask = &pipeline_stages,
@@ -2192,6 +2333,7 @@ fn draw(root: *Root) (std.mem.Allocator.Error || error{ Vulkan, ImGuiBegin })!vo
 
     const present_info: c.VkPresentInfoKHR = .{
         .sType = c.VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
+        .pNext = null,
         .waitSemaphoreCount = render_finished_semaphores.len,
         .pWaitSemaphores = &render_finished_semaphores,
         .swapchainCount = swapchains.len,
@@ -2203,7 +2345,7 @@ fn draw(root: *Root) (std.mem.Allocator.Error || error{ Vulkan, ImGuiBegin })!vo
     var present_result_suboptimal_khr = false;
     switch (prototypes.vkQueuePresentKHR(root.physical_device.queues.present.handle, &present_info)) {
         c.VK_SUCCESS => {},
-        c.VK_ERROR_OUT_OF_DATE_KHR => present_result_suboptimal_khr = true,
+        c.VK_SUBOPTIMAL_KHR, c.VK_ERROR_OUT_OF_DATE_KHR => present_result_suboptimal_khr = true,
         else => |result| try errify(result),
     }
 
@@ -2235,26 +2377,22 @@ fn loop(root: *Root) (std.mem.Allocator.Error || std.Io.Cancelable || error{ Vul
     try errify(prototypes.vkDeviceWaitIdle(root.device));
 }
 
-pub fn main(init: std.process.Init) (std.mem.Allocator.Error || std.Io.Cancelable || error{ Vulkan, GLFWCreateWindow, GLFWInit, VulkanNotSupported, QueueFamilies, UnknownFunction, NoSuitableMemoryType, NoAvailablePhysicalDevice, NoSuitablePhysicalDevice, ImGuiCreateContext, ImGuiGlfwInit, ImGuiVulkanInit, ImGuiVulkanLoad, ImGuiBegin })!void {
+pub fn main(init: std.process.Init) !void {
+    var seed: u64 = undefined;
+    init.io.random(std.mem.asBytes(&seed));
     var root: Root = .{
         .init = &init,
-        .arena_allocator = init.arena.allocator(),
+        .arena = init.arena.allocator(),
         .offscreen = .{
             .extent = .{
                 .width = PIXELLIZATION_MAX,
                 .height = PIXELLIZATION_MAX,
             },
-            .layers = 2,
+            .layers = LAYERS_COUNT,
         },
-        .prng = .init(blk: {
-            var seed: u64 = undefined;
-            init.io.random(std.mem.asBytes(&seed));
-            break :blk seed;
-        }),
-        .random = undefined,
+        .prng = .init(seed),
     };
-    root.random = root.prng.random();
-    root.seed = root.random.int(u32);
+    root.ui = try root.impl_ui.ui(&root, true);
 
     try initGLFW(&root);
     defer deinitGLFW(&root);
@@ -2313,8 +2451,8 @@ pub fn main(init: std.process.Init) (std.mem.Allocator.Error || std.Io.Cancelabl
     defer deinitSemaphores(&root);
     defer deinitFences(&root);
 
-    try initImgui(&root);
-    defer deinitImgui();
+    try root.ui.init();
+    defer root.ui.deinit();
 
     try loop(&root);
 }

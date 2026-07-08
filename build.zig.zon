@@ -1,14 +1,38 @@
 .{
     .name = .spaceporn,
-    .version = "0.1.0",
+    .version = "0.0.0",
     .minimum_zig_version = "0.16.0",
     .paths = .{
         "",
     },
     .dependencies = .{
         .cimgui_zig = .{
-            .url = "git+https://github.com/tiawl/cimgui.zig#0ec0638bdc26137d641c7529b5b0c6fd4eefdc4a",
-            .hash = "cimgui_zig-1.0.0-2Xubkn0ywgBKzd8PaBofujPEMmk607qhGifp59H7pJky",
+            .url = "git+https://github.com/tiawl/cimgui.zig#641dac18c7d718bd4ae892791ced5f2e1b346d07",
+            .hash = "cimgui_zig-1.0.0-2XubkhwIxgDBt3gp7eh2wgZFuDQG2ArFQcXAGQ26WqLs",
+        },
+        .translate_c = .{
+            .url = "git+https://codeberg.org/ziglang/translate-c#0944784e197e419433a21d4b28bfc65e48e7d514",
+            .hash = "translate_c-0.0.0-Q_BUWo5NBwBs3K0a-B1XbxEF3gFdTb75VgOE0FL-2qKL",
+        },
+        .mimalloc = .{
+            .url = "git+https://github.com/microsoft/mimalloc#39448a96aae7eab35840b2a9d19adaf175cf9b34",
+            .hash = "N-V-__8AAHeBWgChIbefEJ9IRzhZ8s2NuYqApa3KOfh_Pjct",
+            .lazy = true,
+        },
+        .@"SPIRV-Headers" = .{
+            .url = "git+https://github.com/KhronosGroup/SPIRV-Headers#04fd3caa1e8267e4d95c806cad901181728e1006",
+            .hash = "N-V-__8AADfWPwDeuBnRPneVxuif7fpyfwwwYCbin0p6IEdt",
+            .lazy = true,
+        },
+        .@"SPIRV-Tools" = .{
+            .url = "git+https://github.com/KhronosGroup/SPIRV-Tools#25318da789b94854908a15b4c718145e4e63fc87",
+            .hash = "N-V-__8AAASrlwEDX-lsdrqhvOgsfAhn15sBBVE6Y8Wjfv_-",
+            .lazy = true,
+        },
+        .dawn = .{
+            .url = "git+https://dawn.googlesource.com/dawn#aa02747dfae033881f4334ad7e2b04a5e06bc492",
+            .hash = "N-V-__8AAOaLDhBmeqPgUZvF2DRv3SIuy-f-Ij_h_hgol_8U",
+            .lazy = true,
         },
     },
     .fingerprint = 0xeeb3c31cc9dd406c,

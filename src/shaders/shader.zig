@@ -1,9 +1,12 @@
 const std = @import("std");
 
-pub const Vec2 = @Vector(2, f32);
-pub const Vec3 = @Vector(3, f32);
-pub const Vec4 = @Vector(4, f32);
-pub const Uvec4 = @Vector(4, u32);
+const types = @import("types.zig");
+pub const Vec2 = types.Vec2;
+pub const Vec3 = types.Vec3;
+pub const Vec4 = types.Vec4;
+pub const Uvec4 = types.Uvec4;
+pub const OnscreenUBO = types.OnscreenUBO;
+pub const OffscreenUBO = types.OffscreenUBO;
 
 const ImageArray = @SpirvType(.{
     .image = .{
@@ -27,38 +30,15 @@ pub fn Uvec4FromVec4(v: Vec4) Uvec4 {
     };
 }
 
-const max_u32f: f32 = @floatFromInt(std.math.maxInt(u32));
+pub const max_u32f: f32 = @floatFromInt(std.math.maxInt(u32));
 
 pub fn Vec4FromUvec4(u: Uvec4) Vec4 {
     return .{
-        std.math.lossyCast(f32, u[0]) / max_u32f,
-        std.math.lossyCast(f32, u[1]) / max_u32f,
-        std.math.lossyCast(f32, u[2]) / max_u32f,
-        std.math.lossyCast(f32, u[3]) / max_u32f,
+        std.math.lossyCast(f32, u[0]),
+        std.math.lossyCast(f32, u[1]),
+        std.math.lossyCast(f32, u[2]),
+        std.math.lossyCast(f32, u[3]),
     };
-}
-
-// WARNING: manage alignment when adding new field
-pub const OnscreenUBO = extern struct {
-    time: f32,
-    // TODO: use Vec2 instead of [2]f32
-    resolution: [2]f32,
-    max_resolution: [2]f32,
-};
-
-// WARNING: manage alignment when adding new field
-pub const OffscreenUBO = extern struct {
-    seed: f32,
-    // TODO: use Vec2 instead of [2]f32
-    resolution: [2]f32,
-};
-
-pub const PushConstants = extern struct {
-    layer_index: u32,
-};
-
-pub inline fn pushConstant(comptime T: type, comptime name: []const u8) *addrspace(.push_constant) T {
-    return externSymbol(T, .push_constant, name, null);
 }
 
 pub inline fn uniform(comptime T: type, comptime name: []const u8, comptime deco: std.builtin.ExternOptions.Decoration) *addrspace(.uniform) T {

@@ -9,3 +9,27 @@
     - pixelization
     - zoom
     - seed
+- pages:
+  - glfw impl
+  - catch up native
+  - js.zig: more singleton lika device/adapter
+  - ui.zig: common imgui panel file
+  - frontend.zig: common main functions between native and pages builds
+  - check wgpu limits and features
+  - implement persistence (imgui.ini) through browser caching
+- native:
+  - use Vk debug ext
+  - remove MAXIMIZED_WINDOW width and height
+  - implement persistence (imgui.ini) with options
+- build.zig:
+  - could we generate wgsl shaders from zig shaders without extra build dependency ?
+  - add trace for native build
+  - make trace a runtime option
+- projects:
+  - rewrite README
+  - filter issues
+  - stable/nightly branches
+  - Do we keep wiki ? glsl -> zig + how to store images efficiently ?
+- code:
+  - maybe could we take some advices from the TigerStyle chart ?
+  - review panic and js.console.err calls

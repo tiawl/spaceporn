@@ -1,0 +1,55 @@
+## A file to track useful resources I found (Credits for all of their authors)
+
+- WebGPU:
+  - starting:
+    - https://github.com/webgpu/webgpu-samples
+    - https://webgpufundamentals.org/webgpu/lessons/webgpu-inter-stage-variables.html
+    - https://developer.mozilla.org/en-US/docs/Web/API/GPU
+    - https://github.com/samdauwe/webgpu-native-examples
+  - offscreen rendering:
+    - https://gist.github.com/greggman/75fea750283c11851e9e5f45e73c8134
+- WebGPU implementation:
+  - https://github.com/manuel5975p/WGVK
+- wasm with zig:
+  - https://0xkiire.com/wasm-with-zig/#9-the-stdio-situation-in-freestanding-wasm
+  - https://github.com/daneelsan/minimal-zig-wasm-canvas
+  - https://github.com/daneelsan/zig-wasm-logger
+  - https://github.com/hotschmoe/zig-wasm-ffi and the 'webgpu_ref_projects'
+- SPIRV with zig:
+  - https://codeberg.org/shahwali/knots
+  - https://codeberg.org/andrewrk/daw
+  - https://gist.github.com/alichraghi/cc4b1db0a0a556de4f85cf06f0e7a400
+  - https://github.com/LuuucasM/Imaginengion
+  - https://codeberg.org/7Games/zig-sdl3/src/branch/master/gpu_examples/shaders/zig
+  - https://github.com/Gota7/zig-sdl3-gpu-examples/tree/master/src/shaders
+- Vulkan:
+  - starting:
+    - https://vulkan-tutorial.com/
+  - offscreen rendering:
+    - https://github.com/SaschaWillems/Vulkan/blob/master/examples/offscreen/offscreen.cpp
+  - texture array:
+    - https://github.com/SaschaWillems/Vulkan/tree/master/examples/texturearray
+- LibC implementation with zig:
+  - zig std lib
+  - https://github.com/ringtailsoftware/zeptolibc
+  - https://github.com/marler8997/ziglibc
+- Imgui:
+  - WebGPU:
+    - backend: https://github.com/ocornut/imgui/blob/master/backends/imgui_impl_wgpu.cpp
+    - example: https://github.com/ocornut/imgui/blob/master/examples/example_glfw_wgpu/main.cpp
+  - features: https://pthom.github.io/imgui_explorer/
+- Shaders:
+  - random:
+    - http://www.jcgt.org/published/0009/03/02/
+  - noise:
+    - https://iquilezles.org/www/index.htm
+  - space:
+    - https://github.com/Deep-Fold/PixelSpace
+    - https://github.com/Deep-Fold/PixelPlanets
+  - tips:
+    - https://www.shadertoy.com/user/FabriceNeyret2
+- GLFW:
+  - WASM implementation:
+    - https://github.com/pongasoft/emscripten-glfw
+- Pixel art:
+  - https://www.slynyrd.com/blog

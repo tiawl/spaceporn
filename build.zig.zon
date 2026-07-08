@@ -1,14 +1,46 @@
 .{
     .name = .spaceporn,
-    .version = "0.1.0",
-    .minimum_zig_version = "0.16.0",
+    .version = "0.0.0",
+    .minimum_zig_version = "0.17.0",
     .paths = .{
-        "",
+        "build.zig",
+        "build.zig.zon",
+        "LICENSE",
+        "src",
     },
     .dependencies = .{
         .cimgui_zig = .{
-            .url = "git+https://github.com/tiawl/cimgui.zig#0ec0638bdc26137d641c7529b5b0c6fd4eefdc4a",
-            .hash = "cimgui_zig-1.0.0-2Xubkn0ywgBKzd8PaBofujPEMmk607qhGifp59H7pJky",
+            .url = "git+https://github.com/tiawl/cimgui.zig#a72d2022962fcba6d112e8f1b2d99021ddc961ba",
+            .hash = "cimgui_zig-1.0.0-2XubkjZLxgB6E1ToqHclKswl7bri7I80aBosQeEqKnOI",
+        },
+        .translate_c = .{
+            .url = "git+https://codeberg.org/tiawl/translate-c?ref=fix#43272fe55f079c0a34bc4140d28a1f1a471e883f",
+            .hash = "translate_c-0.0.0-Q_BUWqJPBwC86nStjWUUiky19HRGb0Qv3wlZ1TdLwAl1",
+        },
+        .mimalloc = .{
+            .url = "git+https://github.com/microsoft/mimalloc#31d034d94cdb8e22f7d7ed55967f581a2d6e831d",
+            .hash = "N-V-__8AAJ2kWgAyMSn9Yf-t-pUPi1ZkFkG6UUOmXod6BvPG",
+            .lazy = true,
+        },
+        .@"SPIRV-Headers" = .{
+            .url = "git+https://github.com/KhronosGroup/SPIRV-Headers#86f980c731e62ae4eaf383d320449d71687936bf",
+            .hash = "N-V-__8AAGHjPwAeCqtS7ypfPLWKFRD0sfV77tqOxFtHI72o",
+            .lazy = true,
+        },
+        .@"SPIRV-Tools" = .{
+            .url = "git+https://github.com/KhronosGroup/SPIRV-Tools#35fe089ca8c614715bda29465ccfb093576331e2",
+            .hash = "N-V-__8AAO97mQEtVEFIrnBpCwv5qlK0pNzrdb9jtczJhdMw",
+            .lazy = true,
+        },
+        .dawn = .{
+            .url = "git+https://dawn.googlesource.com/dawn#92924972621d60cdb60c51ade7ad8c7af4b90c7d",
+            .hash = "N-V-__8AAAw2KRDo5U_dh81N1vzffHRKEq3KYhTZhIZyYx7z",
+            .lazy = true,
+        },
+        .binaryen = .{
+            .url = "git+https://github.com/WebAssembly/binaryen#57ee9917b8dcbbf0c9c2ef176287ac6c798394c4",
+            .hash = "N-V-__8AAFLkpAKNAkozF-nU9GwHyYYMqkLa7kSQSvQ0KTnR",
+            .lazy = true,
         },
     },
     .fingerprint = 0xeeb3c31cc9dd406c,

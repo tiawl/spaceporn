@@ -1,0 +1,27 @@
+- imgui inputs:
+  - time reset
+  - pixelization
+  - zoom
+- common:
+  - common main functions between native and pages builds:
+    - frontend.zig: args parsing / options
+    - backend.zig: platform + renderer + ui
+- pages:
+  - make 'root' a local var
+  - check wgpu limits and features
+  - implement persistence (imgui.ini) through browser caching
+- native:
+  - use Vk debug ext
+  - implement persistence (imgui.ini) with options
+- build.zig:
+  - add trace for native build
+  - make trace a runtime option
+- projects:
+  - rewrite README
+  - filter issues
+  - stable/nightly branches
+  - Do we keep wiki ? glsl -> zig + how to store images efficiently ?
+- code:
+  - maybe could we take some advices from the TigerStyle chart ?
+  - review panic and js.console.err calls
+  - functions should return specific errors instead of anyerror (or should not)

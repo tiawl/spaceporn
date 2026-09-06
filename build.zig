@@ -18,7 +18,7 @@ const BuildOptions = struct {
 
 const ShadersBuildOptions = struct {
     native: BuildOptions,
-    tint: BuildOptions,
+    tint_input: BuildOptions,
 };
 
 const Root = struct {
@@ -104,7 +104,7 @@ fn buildOptionsModule(root: *Root) !*std.Build.Module {
             }
 
             _ = try std.fmt.parseUnsigned(u32, commit_height, 10);
-            break :blk root.builder.fmt("-dev.{s}+{s}", .{ commit_height, commit_id[1..] });
+            break :blk root.builder.fmt("-nightly.{s}+{s}", .{ commit_height, commit_id[1..] });
         },
         else => {
             std.debug.print("Unexpected `git describe` output: {s}\n", .{git_describe});
@@ -145,9 +145,10 @@ fn importSPIRVShaders(root: *Root, module: *std.Build.Module) !void {
     var shaders_dir_it = shaders_dir.iterate();
     while (try shaders_dir_it.next(root.builder.graph.io)) |shader| {
         if (shader.kind != .file or !(std.mem.endsWith(u8, shader.name, ".vert.zig") or std.mem.endsWith(u8, shader.name, ".frag.zig"))) continue;
-        const spv_name = std.mem.replaceOwned(u8, root.builder.allocator, shader.name, ".zig", ".spv") catch @panic("OOM");
+        const stemed_shader_name = std.fs.path.stem(shader.name);
+        const spv_name = root.builder.fmt("{s}.spv", .{stemed_shader_name});
         const shader_path = root.builder.pathResolve(&.{ "src", "shaders", shader.name });
-        const spirv_path = buildSPIRVShaderExecutable(root, shader_path, spv_name, "native");
+        const spirv_path = buildSPIRVShaderExecutable(root, shader_path, stemed_shader_name, "native");
         module.addAnonymousImport(spv_name, .{
             .root_source_file = spirv_path,
         });
@@ -331,7 +332,7 @@ fn buildLogModule(root: *Root, ffi_imports_mod: *std.Build.Module, pages_build: 
     });
 }
 
-fn buildNativeExecutable(root: *Root, options_mod: *std.Build.Module) !void {
+fn buildNativeExecutable(root: *Root, options_mod: *std.Build.Module) !*std.Build.Step.Compile {
     const cimgui_mod = buildNativeCImGuiModule(root);
     const log_mod = buildLogModule(root, root.builder.createModule(.{ .root_source_file = root.builder.addWriteFiles().add("dummy.zig", "") }), false);
     const prototypes_mod = try buildPrototypesModule(root, log_mod, cimgui_mod);
@@ -360,6 +361,8 @@ fn buildNativeExecutable(root: *Root, options_mod: *std.Build.Module) !void {
         },
     });
 
+    try importSPIRVShaders(root, native_mod);
+
     const native_exe = root.builder.addExecutable(.{
         .name = name,
         .version = try std.SemanticVersion.parse(zon.version),
@@ -368,6 +371,10 @@ fn buildNativeExecutable(root: *Root, options_mod: *std.Build.Module) !void {
 
     root.builder.installArtifact(native_exe);
 
+    return native_exe;
+}
+
+fn runNativeExecutable(root: *Root, native_exe: *std.Build.Step.Compile) void {
     const run_cmd = root.builder.addRunArtifact(native_exe);
     run_cmd.step.dependOn(root.builder.getInstallStep());
 
@@ -378,8 +385,6 @@ fn buildNativeExecutable(root: *Root, options_mod: *std.Build.Module) !void {
 
     const run_step = root.builder.step("run", "Run natively");
     run_step.dependOn(&run_cmd.step);
-
-    try importSPIRVShaders(root, native_exe.root_module);
 }
 
 fn buildShaderTypeModule(root: *Root) *std.Build.Module {
@@ -524,6 +529,7 @@ fn buildTraceLibrary(root: *Root, log_mod: *std.Build.Module) *std.Build.Step.Co
         .name = "trace",
         .root_module = trace_mod,
     });
+    root.builder.installArtifact(trace_lib);
 
     return trace_lib;
 }
@@ -626,6 +632,7 @@ fn buildOpLibrary(root: *Root, trace_lib: *std.Build.Step.Compile) *std.Build.St
         .name = "op",
         .root_module = op_mod,
     });
+    root.builder.installArtifact(op_lib);
 
     return op_lib;
 }
@@ -641,6 +648,7 @@ fn buildWASMCImGuiModule(root: *Root, op_lib: *std.Build.Step.Compile, trace_lib
         .link_libc = false,
     });
     const cimgui_lib = cimgui_dep.artifact("cimgui");
+    root.builder.installArtifact(cimgui_lib);
     const cimgui_builder = cimgui_dep.builder;
 
     const webgpu_flags = [_][]const u8{"-DIMGUI_IMPL_WEBGPU_BACKEND_WGVK"};
@@ -684,6 +692,7 @@ fn buildSPIRVToolsLibrary(root: *Root) !*std.Build.Step.Compile {
         .linkage = .static,
         .root_module = spirv_tools_mod,
     });
+    root.builder.installArtifact(spirv_tools_lib);
 
     const python3 = root.builder.findProgram(.{ .names = &.{"python3"} }) orelse return error.ProgramNotFound;
 
@@ -796,6 +805,7 @@ fn buildTintLibrary(root: *Root) !*std.Build.Step.Compile {
         .name = "google.tint",
         .root_module = tint_mod,
     });
+    root.builder.installArtifact(tint_lib);
 
     const flags = [_][]const u8{
         "-std=c++20",
@@ -812,29 +822,14 @@ fn buildTintLibrary(root: *Root) !*std.Build.Step.Compile {
     };
 
     var resolved_path: []const u8 = undefined;
+    var it: std.fs.path.NativeComponentIterator = undefined;
     var dir: std.Io.Dir = undefined;
     var walker: std.Io.Dir.Walker = undefined;
 
     for ([_][]const []const u8{
-        &.{ "src", "tint", "lang", "core", "constant" },
-        &.{ "src", "tint", "lang", "core", "intrinsic" },
-        &.{ "src", "tint", "lang", "core", "ir", "analysis" },
-        &.{ "src", "tint", "lang", "core", "ir", "transform" },
-        &.{ "src", "tint", "lang", "core", "ir", "validator" },
-        &.{ "src", "tint", "lang", "core", "type" },
-        &.{ "src", "tint", "lang", "spirv", "intrinsic" },
-        &.{ "src", "tint", "lang", "spirv", "ir" },
-        &.{ "src", "tint", "lang", "spirv", "reader" },
-        &.{ "src", "tint", "lang", "spirv", "type" },
-        &.{ "src", "tint", "lang", "spirv", "validate" },
-        &.{ "src", "tint", "lang", "wgsl", "ast" },
-        &.{ "src", "tint", "lang", "wgsl", "inspector" },
-        &.{ "src", "tint", "lang", "wgsl", "intrinsic" },
-        &.{ "src", "tint", "lang", "wgsl", "ir" },
-        &.{ "src", "tint", "lang", "wgsl", "program" },
-        &.{ "src", "tint", "lang", "wgsl", "resolver" },
-        &.{ "src", "tint", "lang", "wgsl", "sem" },
-        &.{ "src", "tint", "lang", "wgsl", "writer" },
+        &.{ "src", "tint", "lang", "core" },
+        &.{ "src", "tint", "lang", "spirv" },
+        &.{ "src", "tint", "lang", "wgsl" },
         &.{ "src", "tint", "utils" },
     }) |paths| {
         resolved_path = root.dawn_dep.builder.pathResolve(paths);
@@ -843,32 +838,25 @@ fn buildTintLibrary(root: *Root) !*std.Build.Step.Compile {
 
         walker = try dir.walk(root.builder.allocator);
         defer walker.deinit();
-        while (try walker.next(root.builder.graph.io)) |entry| {
+        next_walker_entry: while (try walker.next(root.builder.graph.io)) |entry| {
             const entry_path = root.dawn_dep.builder.pathResolve(&.{ resolved_path, entry.path });
+            next_skipped_path: for ([_][]const []const u8{
+                &.{ "src", "tint", "lang", "core", "ir", "binary" },
+                &.{ "src", "tint", "lang", "spirv", "writer" },
+                &.{ "src", "tint", "lang", "wgsl", "reader" },
+            }) |skipped_path_components| {
+                it = std.fs.path.componentIterator(entry_path);
+                next_component: for (skipped_path_components) |skipped_path_component| {
+                    if (it.next()) |entry_path_component| {
+                        if (std.mem.eql(u8, entry_path_component.name, skipped_path_component)) continue :next_component;
+                        continue :next_skipped_path;
+                    }
+                    continue :next_skipped_path;
+                }
+                continue :next_walker_entry;
+            }
             switch (entry.kind) {
                 .file => addTintCSourceFile(root, tint_mod, entry.basename, entry_path, &flags),
-                else => {},
-            }
-        }
-    }
-
-    var it: std.Io.Dir.Iterator = undefined;
-
-    for ([_][]const []const u8{
-        &.{ "src", "tint", "lang", "wgsl" },
-        &.{ "src", "tint", "lang", "core" },
-        &.{ "src", "tint", "lang", "core", "ir" },
-        &.{ "src", "tint", "lang", "spirv" },
-    }) |paths| {
-        resolved_path = root.dawn_dep.builder.pathResolve(paths);
-        dir = try root.dawn_dep.builder.root.root_dir.handle.openDir(root.builder.graph.io, resolved_path, .{ .iterate = true });
-        defer dir.close(root.builder.graph.io);
-
-        it = dir.iterate();
-        while (try it.next(root.builder.graph.io)) |entry| {
-            const entry_path = root.dawn_dep.builder.pathResolve(&.{ resolved_path, entry.name });
-            switch (entry.kind) {
-                .file => addTintCSourceFile(root, tint_mod, entry.name, entry_path, &flags),
                 else => {},
             }
         }
@@ -945,9 +933,9 @@ fn importWGSLShaders(root: *Root, module: *std.Build.Module) !void {
     while (try shaders_dir_it.next(root.builder.graph.io)) |shader| {
         if (shader.kind != .file or !(std.mem.endsWith(u8, shader.name, ".vert.zig") or std.mem.endsWith(u8, shader.name, ".frag.zig"))) continue;
         const shader_path = root.builder.pathResolve(&.{ "src", "shaders", shader.name });
-        const wgsl_name = std.mem.replaceOwned(u8, root.builder.allocator, shader.name, ".zig", ".wgsl") catch @panic("OOM");
-        const spv_name = std.mem.replaceOwned(u8, root.builder.allocator, shader.name, ".zig", ".spv") catch @panic("OOM");
-        const spirv_path = buildSPIRVShaderExecutable(root, shader_path, spv_name, "tint");
+        const stemed_shader_name = std.fs.path.stem(shader.name);
+        const wgsl_name = root.builder.fmt("{s}.wgsl", .{stemed_shader_name});
+        const spirv_path = buildSPIRVShaderExecutable(root, shader_path, stemed_shader_name, "tint_input");
 
         spirv2wgsl = root.builder.addRunArtifact(spirv2wgsl_exe);
         spirv2wgsl.step.dependOn(&spirv2wgsl_install.step);
@@ -960,7 +948,7 @@ fn importWGSLShaders(root: *Root, module: *std.Build.Module) !void {
     }
 }
 
-fn buildPagesExecutable(root: *Root, options_mod: *std.Build.Module) !void {
+fn buildPagesExecutable(root: *Root, options_mod: *std.Build.Module) !*std.Build.Step.Compile {
     const shader_types_mod = buildShaderTypeModule(root);
     const ffi_imports_mod = buildFFIImportsModule(root);
     const log_mod = buildLogModule(root, ffi_imports_mod, true);
@@ -1030,6 +1018,8 @@ fn buildPagesExecutable(root: *Root, options_mod: *std.Build.Module) !void {
         install.step.dependOn(&wasm_opt_run_cmd.step);
     }
     root.builder.getInstallStep().dependOn(&install.step);
+
+    return pages_exe;
 }
 
 pub fn build(builder: *std.Build) !void {
@@ -1065,7 +1055,7 @@ pub fn build(builder: *std.Build) !void {
                 }),
                 .mode = .fast,
             },
-            .tint = .{
+            .tint_input = .{
                 .target = builder.resolveTargetQuery(.{
                     .cpu_arch = .spirv32,
                     .cpu_model = .{ .explicit = &std.Target.spirv.cpu.generic },
@@ -1095,13 +1085,14 @@ pub fn build(builder: *std.Build) !void {
     };
 
     const options_mod = try buildOptionsModule(&root);
-    try buildNativeExecutable(&root, options_mod);
+    const native_exe = try buildNativeExecutable(&root, options_mod);
+    runNativeExecutable(&root, native_exe);
     if (root.pages_build) {
         var fetched_deps = true;
         if (builder.dependencyLazy("mimalloc", .{})) |dep| root.mimalloc_dep = dep else |_| fetched_deps = false;
         if (builder.dependencyLazy("SPIRV-Headers", .{})) |dep| root.spirv_headers_dep = dep else |_| fetched_deps = false;
         if (builder.dependencyLazy("SPIRV-Tools", .{})) |dep| root.spirv_tools_dep = dep else |_| fetched_deps = false;
         if (builder.dependencyLazy("dawn", .{})) |dep| root.dawn_dep = dep else |_| fetched_deps = false;
-        if (fetched_deps) try buildPagesExecutable(&root, options_mod);
+        if (fetched_deps) _ = try buildPagesExecutable(&root, options_mod);
     }
 }

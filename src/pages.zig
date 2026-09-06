@@ -10,52 +10,67 @@ pub const std_options: std.Options = .{
 };
 var allocator = std.heap.wasm_allocator;
 
-export fn SizeOfBindGroupEntry() js.BigUint64 {
+export fn sizeOfBindGroupEntry() js.BigUint64 {
     return @sizeOf(js.gpu.BindGroupEntry);
 }
-export fn SizeOfBindGroupLayoutEntry() js.BigUint64 {
+
+export fn sizeOfBindGroupLayoutEntry() js.BigUint64 {
     return @sizeOf(js.gpu.BindGroupLayoutEntry);
 }
-export fn SizeOfColor() js.BigUint64 {
+
+export fn sizeOfColor() js.BigUint64 {
     return @sizeOf(js.gpu.Color);
 }
-export fn SizeOfColorTargetState() js.BigUint64 {
+
+export fn sizeOfColorTargetState() js.BigUint64 {
     return @sizeOf(js.gpu.ColorTargetState);
 }
-export fn SizeOfExtent3D() js.BigUint64 {
+
+export fn sizeOfExtent3D() js.BigUint64 {
     return @sizeOf(js.gpu.Extent3D);
 }
-export fn SizeOfFragmentState() js.BigUint64 {
+
+export fn sizeOfFragmentState() js.BigUint64 {
     return @sizeOf(js.gpu.FragmentState);
 }
-export fn SizeOfPrimitiveState() js.BigUint64 {
+
+export fn sizeOfPrimitiveState() js.BigUint64 {
     return @sizeOf(js.gpu.PrimitiveState);
 }
-export fn SizeOfRenderPassDescriptor() js.BigUint64 {
+
+export fn sizeOfRenderPassDescriptor() js.BigUint64 {
     return @sizeOf(js.gpu.RenderPassDescriptor);
 }
-export fn SizeOfSamplerDescriptor() js.BigUint64 {
+
+export fn sizeOfSamplerDescriptor() js.BigUint64 {
     return @sizeOf(js.gpu.SamplerDescriptor);
 }
-export fn SizeOfTexelCopyBufferLayout() js.BigUint64 {
+
+export fn sizeOfTexelCopyBufferLayout() js.BigUint64 {
     return @sizeOf(js.gpu.TexelCopyBufferLayout);
 }
-export fn SizeOfTexelCopyTextureInfo() js.BigUint64 {
+
+export fn sizeOfTexelCopyTextureInfo() js.BigUint64 {
     return @sizeOf(js.gpu.TexelCopyTextureInfo);
 }
-export fn SizeOfTextureDescriptor() js.BigUint64 {
+
+export fn sizeOfTextureDescriptor() js.BigUint64 {
     return @sizeOf(js.gpu.TextureDescriptor);
 }
-export fn SizeOfTextureViewDescriptor() js.BigUint64 {
+
+export fn sizeOfTextureViewDescriptor() js.BigUint64 {
     return @sizeOf(js.gpu.TextureViewDescriptor);
 }
-export fn SizeOfVertexAttribute() js.BigUint64 {
+
+export fn sizeOfVertexAttribute() js.BigUint64 {
     return @sizeOf(js.gpu.VertexAttribute);
 }
-export fn SizeOfVertexBufferLayout() js.BigUint64 {
+
+export fn sizeOfVertexBufferLayout() js.BigUint64 {
     return @sizeOf(js.gpu.VertexBufferLayout);
 }
-export fn SizeOfVertexState() js.BigUint64 {
+
+export fn sizeOfVertexState() js.BigUint64 {
     return @sizeOf(js.gpu.VertexState);
 }
 
@@ -95,10 +110,6 @@ const LAYER_COUNT = 2;
 
 const Root = struct {
     window: js.platform.Window = undefined,
-    surface: js.gpu.Surface = .{
-        .width = undefined,
-        .height = undefined,
-    },
     surface_texture_format: js.gpu.TextureFormat = undefined,
     context: js.gpu.Context = .{},
     instance: js.gpu.Instance = .{},
@@ -122,6 +133,9 @@ const Root = struct {
     onscreen_render_pipeline: js.gpu.RenderPipeline = .{},
     start_time: ?js.Float64 = null,
     failed: bool = false,
+
+    last_valid_mouse_pos: c.ImVec2 = undefined,
+    mouse_window: ?*js.platform.Window = null,
 };
 var root: Root = .{};
 
@@ -143,61 +157,138 @@ export fn allocUint8(len: u32) [*]const u8 {
     return slice.ptr;
 }
 
-fn resizeCallback() void {
-    root.surface.syncSize();
-    root.window.width = root.surface.width;
-    root.window.height = root.surface.height;
-    root.window.framebuffer_width = root.surface.width;
-    root.window.framebuffer_height = root.surface.height;
-    root.onscreen_ubo.resolution_x = std.math.lossyCast(f32, root.surface.width);
-    root.onscreen_ubo.resolution_y = std.math.lossyCast(f32, root.surface.height);
-    root.offscreen_ubo.resolution_x = std.math.lossyCast(f32, root.surface.width);
-    root.offscreen_ubo.resolution_y = std.math.lossyCast(f32, root.surface.height);
+fn onResize() void {
+    root.window.canvas.syncSize();
+    root.onscreen_ubo.resolution_x = std.math.lossyCast(f32, root.window.canvas.viewport.width);
+    root.onscreen_ubo.resolution_y = std.math.lossyCast(f32, root.window.canvas.viewport.height);
+    root.offscreen_ubo.resolution_x = std.math.lossyCast(f32, root.window.canvas.viewport.width);
+    root.offscreen_ubo.resolution_y = std.math.lossyCast(f32, root.window.canvas.viewport.height);
     updateOffscreen();
+}
+
+// Instead, we should use this function but, for an unknown reason, g_ContextMap (from imgui_impl_glfw) resets between ImGui_ImplGlfw_Init() and ImGui_ImplGlfw_WindowFocusCallback() calls:
+// fn onWindowFocus(focused: bool) void {
+//     c.cImGui_ImplGlfw_WindowFocusCallback(@ptrCast(@alignCast(&root.window)), focused);
+// }
+fn onWindowFocus(focused: bool) void {
+    const io: *c.ImGuiIO = c.ImGui_GetIO();
+    io.AddFocusEvent(focused);
+}
+
+// We should use this function but, for an unknown reason, g_ContextMap (from imgui_impl_glfw) resets between ImGui_ImplGlfw_Init() and ImGui_ImplGlfw_CursorEnterCallback() calls:
+fn onCursorEnter(entered: bool) void {
+    _ = entered;
+//     c.cImGui_ImplGlfw_CursorEnterCallback(@ptrCast(@alignCast(&root.window)), entered);
+}
+
+// Instead, we should use this function but, for an unknown reason, g_ContextMap (from imgui_impl_glfw) resets between ImGui_ImplGlfw_Init() and ImGui_ImplGlfw_CursorPosCallback() calls:
+// fn onCursorPos(x: f32, y: f32) void {
+//     c.cImGui_ImplGlfw_CursorPosCallback(@ptrCast(@alignCast(&root.window)), x, y);
+// }
+fn onCursorPos(x: f32, y: f32) void {
+    const io: *c.ImGuiIO = c.ImGui_GetIO();
+    io.AddMousePosEvent(x, y);
+    root.last_valid_mouse_pos.x = x;
+    root.last_valid_mouse_pos.y = y;
+}
+
+// Instead, we should use this function but, for an unknown reason, g_ContextMap (from imgui_impl_glfw) resets between ImGui_ImplGlfw_Init() and ImGui_ImplGlfw_MouseButtonCallback() calls:
+// fn onMouseButton(pressed: bool) void {
+//     c.cImGui_ImplGlfw_MouseButtonCallback(
+//         @ptrCast(@alignCast(&root.window)),
+//         @backingInt(js.platform.MouseButton.fromDOM(root.window.canvas.getButtonFromMouseButtonEvent())),
+//         @backingInt(if (pressed) js.platform.Action.press else js.platform.Action.release),
+//         root.window.keyboard.computeModifierBits(),
+//     );
+// }
+fn onMouseButton(button: js.platform.MouseButton, client_x: js.Uint32, client_y: js.Uint32, pressed: bool) void {
+    const io: *c.ImGuiIO = c.ImGui_GetIO();
+    io.AddKeyEvent(c.ImGuiMod_Ctrl, root.window.keyboard.isControlPressed());
+    io.AddKeyEvent(c.ImGuiMod_Shift, root.window.keyboard.isShiftPressed());
+    io.AddKeyEvent(c.ImGuiMod_Alt, root.window.keyboard.isAltPressed());
+    io.AddKeyEvent(c.ImGuiMod_Super, root.window.keyboard.isSuperPressed());
+
+    const raw_button = @backingInt(button);
+
+    onMouseMove(client_x, client_y);
+
+    if (raw_button >= 0 and raw_button < c.ImGuiMouseButton_COUNT) io.AddMouseButtonEvent(raw_button, pressed);
+}
+
+// Instead, we should use this function but, for an unknown reason, g_ContextMap (from imgui_impl_glfw) resets between ImGui_ImplGlfw_Init() and ImGui_ImplGlfw_ScrollCallback() calls:
+// fn onScroll(xoffset: f32, yoffset: f32) void {
+//     c.cImGui_ImplGlfw_ScrollCallback(@ptrCast(@alignCast(&root.window)), xoffset, yoffset);
+// }
+fn onScroll(xoffset: f32, yoffset: f32) void {
+    const io: *c.ImGuiIO = c.ImGui_GetIO();
+    io.AddMouseWheelEvent(xoffset, yoffset);
+}
+
+// Instead, we should use this function but, for an unknown reason, g_ContextMap (from imgui_impl_glfw) resets between ImGui_ImplGlfw_Init() and ImGui_ImplGlfw_CharCallback() calls:
+// fn onChar(code_point: u32) void {
+//     c.cImGui_ImplGlfw_CharCallback(@ptrCast(@alignCast(&root.window)), code_point);
+// }
+fn onChar(io: *c.ImGuiIO, code_point: u32) void {
+    io.AddInputCharacter(code_point);
+}
+
+fn onFocus() void {
+    onWindowFocus(true);
+}
+
+fn onBlur() void {
+    onWindowFocus(false);
+}
+
+fn onMouseDown(button: js.platform.MouseButton, client_x: js.Uint32, client_y: js.Uint32) void {
+    onMouseButton(button, client_x, client_y, true);
+}
+
+fn onMouseUp(button: js.platform.MouseButton, client_x: js.Uint32, client_y: js.Uint32) void {
+    onMouseButton(button, client_x, client_y, false);
+}
+
+fn onMouseMove(client_x: js.Uint32, client_y: js.Uint32) void {
+    const dpr = root.window.monitor_scale;
+    const x = (std.math.lossyCast(f32, client_x - root.window.canvas.viewport.left) * dpr * std.math.lossyCast(f32, root.window.canvas.width)) / std.math.lossyCast(f32, root.window.canvas.viewport.width);
+    const y = (std.math.lossyCast(f32, client_y - root.window.canvas.viewport.top) * dpr * std.math.lossyCast(f32, root.window.canvas.height)) / std.math.lossyCast(f32, root.window.canvas.viewport.height);
+    root.window.mouse.cursor_pos_x = x;
+    root.window.mouse.cursor_pos_y = y;
+    onCursorPos(x, y);
+}
+
+fn onMouseEnter() void {
+    const io: *c.ImGuiIO = c.ImGui_GetIO();
+    root.mouse_window = &root.window;
+    io.AddMousePosEvent(root.last_valid_mouse_pos.x, root.last_valid_mouse_pos.y);
+}
+
+fn onMouseLeave() void {
+    const io: *c.ImGuiIO = c.ImGui_GetIO();
+    if (root.mouse_window != null and root.mouse_window.? == &root.window) {
+        root.last_valid_mouse_pos = io.MousePos;
+        root.mouse_window = null;
+        io.AddMousePosEvent(std.math.floatMin(f32), std.math.floatMax(f32));
+    }
+}
+
+fn onKeyDown(code_point: u32) void {
+    const io: *c.ImGuiIO = c.ImGui_GetIO();
+    onChar(io, code_point);
+}
+
+fn onKeyUp() void {
+}
+
+fn onWheel(delta_x: f32, delta_y: f32) void {
+    onScroll(delta_x, delta_y);
 }
 
 fn requestAdapterCallback() void {
     js.gpu.Adapter.requestDevice(requestDeviceCallback);
 }
 
-fn initImgui() void {
-    _ = c.CIMGUI_CHECKVERSION();
-    if (c.ImGui_CreateContext(null) == null) {
-        js.console.err("ImGui_CreateContext() failed", .{});
-    }
-
-    var io: *c.ImGuiIO = c.ImGui_GetIO();
-    io.IniFilename = null;
-    io.ConfigFlags |= c.ImGuiConfigFlags_NavEnableKeyboard | c.ImGuiConfigFlags_NavEnableGamepad;
-    io.BackendFlags |= c.ImGuiBackendFlags_RendererHasTextures;
-
-    // TODO: replace this line with initImguiStyle();
-    c.ImGui_StyleColorsDark(null);
-
-    if (!c.cImGui_ImplGlfw_InitForOther(@ptrCast(@alignCast(&root.window)), true)) {
-        js.console.err("cImGui_ImplGlfw_InitForOther() failed", .{});
-    }
-
-    var dummy_device: u32 = undefined;
-    var init_info: c.ImGui_ImplWGPU_InitInfo = .{
-        .Device = @ptrCast(@alignCast(&dummy_device)),
-        .NumFramesInFlight = 3,
-        .RenderTargetFormat = @backingInt(root.surface_texture_format),
-        .DepthStencilFormat = c.WGPUTextureFormat_Undefined,
-        .PipelineMultisampleState = .{
-            .count = 1,
-            .mask = std.math.maxInt(u32),
-            .alphaToCoverageEnabled = c.WGPU_FALSE,
-        },
-    };
-
-    if (!c.cImGui_ImplWGPU_Init(&init_info)) {
-        js.console.err("cImGui_ImplWGPU_Init() failed", .{});
-    }
-}
-
 fn requestDeviceCallback() void {
-    root.surface_texture_format = root.instance.getPreferredSurfaceFormat();
     root.context.configure(root.surface_texture_format);
     const vertex_attributes = [_]js.gpu.VertexAttribute{
         .init(0, .float32x2, 0),
@@ -218,8 +309,8 @@ fn requestDeviceCallback() void {
     const offscreen_texture_descriptor = js.gpu.TextureDescriptor.init(
         root.offscreen_texture_format,
         .@"2d",
-        root.surface.width,
-        root.surface.height,
+        root.window.canvas.viewport.width,
+        root.window.canvas.viewport.height,
         LAYER_COUNT,
         1,
         1,
@@ -257,8 +348,8 @@ fn requestDeviceCallback() void {
 
     root.offscreen_render_pipeline = js.gpu.Device.createRenderPipeline(offscreen_pipeline_layout, fullscreen_vertex_state, offscreen_fragment_state, .{});
 
-    root.offscreen_ubo.resolution_x = std.math.lossyCast(f32, root.surface.width);
-    root.offscreen_ubo.resolution_y = std.math.lossyCast(f32, root.surface.height);
+    root.offscreen_ubo.resolution_x = std.math.lossyCast(f32, root.window.canvas.viewport.width);
+    root.offscreen_ubo.resolution_y = std.math.lossyCast(f32, root.window.canvas.viewport.height);
     root.offscreen_ubo.seed = 0;
     updateOffscreen();
 
@@ -294,12 +385,10 @@ fn requestDeviceCallback() void {
     const onscreen_fragment_state: js.gpu.FragmentState = .init(root.onscreen_shader_module, &onscreen_color_target_states);
 
     root.onscreen_render_pipeline = js.gpu.Device.createRenderPipeline(onscreen_pipeline_layout, fullscreen_vertex_state, onscreen_fragment_state, .{});
-    root.onscreen_ubo.resolution_x = std.math.lossyCast(f32, root.surface.width);
-    root.onscreen_ubo.resolution_y = std.math.lossyCast(f32, root.surface.height);
+    root.onscreen_ubo.resolution_x = std.math.lossyCast(f32, root.window.canvas.viewport.width);
+    root.onscreen_ubo.resolution_y = std.math.lossyCast(f32, root.window.canvas.viewport.height);
     root.onscreen_ubo.max_resolution_x = root.onscreen_ubo.resolution_x;
     root.onscreen_ubo.max_resolution_y = root.onscreen_ubo.resolution_y;
-
-    initImgui();
 
     js.requestAnimationFrame();
 }
@@ -313,19 +402,69 @@ export fn triggerCallback(cb_handle: js.Handle) void {
     js.gpu.triggerCallback(callback);
 }
 
+fn initImgui() void {
+    _ = c.CIMGUI_CHECKVERSION();
+    if (c.ImGui_CreateContext(null) == null) {
+        js.console.err("ImGui_CreateContext() failed", .{});
+    }
+
+    var io: *c.ImGuiIO = c.ImGui_GetIO();
+    io.IniFilename = null;
+    io.ConfigFlags |= c.ImGuiConfigFlags_NavEnableKeyboard | c.ImGuiConfigFlags_NavEnableGamepad;
+    io.BackendFlags |= c.ImGuiBackendFlags_RendererHasTextures;
+
+    // TODO: replace this line with initImguiStyle();
+    c.ImGui_StyleColorsDark(null);
+
+    if (!c.cImGui_ImplGlfw_InitForOther(@ptrCast(@alignCast(&root.window)), false)) {
+        js.console.err("cImGui_ImplGlfw_InitForOther() failed", .{});
+    }
+
+    var dummy_device: u32 = undefined;
+    var init_info: c.ImGui_ImplWGPU_InitInfo = .{
+        .Device = @ptrCast(@alignCast(&dummy_device)),
+        .NumFramesInFlight = 3,
+        .RenderTargetFormat = @backingInt(root.surface_texture_format),
+        .DepthStencilFormat = c.WGPUTextureFormat_Undefined,
+        .PipelineMultisampleState = .{
+            .count = 1,
+            .mask = std.math.maxInt(u32),
+            .alphaToCoverageEnabled = c.WGPU_FALSE,
+        },
+    };
+
+    if (!c.cImGui_ImplWGPU_Init(&init_info)) {
+        js.console.err("cImGui_ImplWGPU_Init() failed", .{});
+    }
+}
+
 export fn init() void {
     js.platform.init();
-    const main_scale = c.cImGui_ImplGlfw_GetContentScaleForMonitor(@ptrCast(@alignCast(&js.platform.Monitor.primary)));
-    root.window = .init(200.0 * main_scale, 150.0 * main_scale, &js.platform.Monitor.primary);
-    root.window.listenEvent(.resize, resizeCallback);
-    root.surface = root.window.getGpuSurface();
-    root.context = root.surface.getContext();
+    root.window = .init(200.0, 150.0, &js.platform.Monitor.primary);
+    root.window.listenEvent(.resize, onResize);
+    root.window.listenEvent(.focus, onFocus);
+    root.window.listenEvent(.blur, onBlur);
+    root.window.listenEvent(.keydown, onKeyDown);
+    root.window.listenEvent(.keyup, onKeyUp);
+    root.context = root.window.canvas.getGpuContext();
     root.instance = root.window.getGpuInstance();
+    root.surface_texture_format = root.instance.getPreferredSurfaceFormat();
+    initImgui();
+    root.window.canvas.listenEvent(.mouseup, onMouseUp);
+    root.window.canvas.listenEvent(.mousedown, onMouseDown);
+    root.window.canvas.listenEvent(.mousemove, onMouseMove);
+    root.window.canvas.listenEvent(.mouseenter, onMouseEnter);
+    root.window.canvas.listenEvent(.mouseleave, onMouseLeave);
+    root.window.canvas.listenEvent(.wheel, onWheel);
     root.instance.requestAdapter(requestAdapterCallback);
 }
 
 export fn onWindowEvent(event_type: js.String) void {
     root.window.onEvent(event_type);
+}
+
+export fn onCanvasEvent(event_type: js.String) void {
+    root.window.canvas.onEvent(&root.window, event_type);
 }
 
 fn updateOffscreen() void {
@@ -364,8 +503,8 @@ export fn update() void {
     c.ImGui_NewFrame();
     c.ImGui_GetStyle().*.Colors[c.ImGuiCol_WindowBg] = .{ .x = 1, .y = 0, .z = 0, .w = 1 }; // opaque red
     c.ImGui_GetStyle().*.Colors[c.ImGuiCol_Text] = .{ .x = 1, .y = 1, .z = 1, .w = 1 };
-    c.ImGui_SetNextWindowPos(.{ .x = 50, .y = 30 }, c.ImGuiCond_Always);
-    c.ImGui_SetNextWindowSize(.{ .x = 100, .y = 90 }, c.ImGuiCond_Always);
+    c.ImGui_SetNextWindowPos(.{ .x = 50, .y = 30 }, c.ImGuiCond_FirstUseEver);
+    c.ImGui_SetNextWindowSize(.{ .x = 100, .y = 90 }, c.ImGuiCond_FirstUseEver);
     if (c.ImGui_Begin("Test", null, 0)) {
         c.ImGui_Text("Hello world");
     }

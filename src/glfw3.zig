@@ -7,119 +7,50 @@ var allocator = std.heap.wasm_allocator;
 // This GLFW implementation is minimal. It aims to allow imgui compilation with GLFW backend on a wasm-freestanding target.
 // It is not aimed to be fully implemented.
 
-var c_windowfocus_callback_opt: c.GLFWwindowfocusfun = null;
-var c_cursorpos_callback_opt: c.GLFWcursorposfun = null;
-var c_cursorenter_callback_opt: c.GLFWcursorenterfun = null;
-var c_mousebutton_callback_opt: c.GLFWmousebuttonfun = null;
-var c_scroll_callback_opt: c.GLFWscrollfun = null;
-var c_key_callback_opt: c.GLFWkeyfun = null;
-var c_char_callback_opt: c.GLFWcharfun = null;
-var c_monitor_callback_opt: c.GLFWmonitorfun = null;
 var c_error_callback_opt: c.GLFWerrorfun = null;
-
-fn windowFocusCallbackWrapper(window: *js.platform.Window, focused: bool) void {
-    if (c_windowfocus_callback_opt) |c_windowfocusCallback| c_windowfocusCallback(@ptrCast(@alignCast(window)), if (focused) c.GLFW_TRUE else c.GLFW_FALSE);
-}
-
-fn cursorPosCallbackWrapper(window: *js.platform.Window, xpos: f64, ypos: f64) void {
-    if (c_cursorpos_callback_opt) |c_cursorposCallback| c_cursorposCallback(@ptrCast(@alignCast(window)), xpos, ypos);
-}
-
-fn cursorEnterCallbackWrapper(window: *js.platform.Window, entered: bool) void {
-    if (c_cursorenter_callback_opt) |c_cursorenterCallback| c_cursorenterCallback(@ptrCast(@alignCast(window)), if (entered) c.GLFW_TRUE else c.GLFW_FALSE);
-}
-
-fn mouseButtonCallbackWrapper(window: *js.platform.Window, button: js.platform.MouseButton, action: js.platform.Action, mods: js.platform.Mods) void {
-    if (c_mousebutton_callback_opt) |c_mousebuttonCallback| c_mousebuttonCallback(@ptrCast(@alignCast(window)), @backingInt(button), @backingInt(action), @backingInt(mods));
-}
-
-fn scrollCallbackWrapper(window: *js.platform.Window, xoffset: f64, yoffset: f64) void {
-    if (c_scroll_callback_opt) |c_scrollCallback| c_scrollCallback(@ptrCast(@alignCast(window)), xoffset, yoffset);
-}
-
-fn keyCallbackWrapper(window: *js.platform.Window, key: js.platform.Key, scancode: i32, action: js.platform.Action, mods: js.platform.Mods) void {
-    if (c_key_callback_opt) |c_keyCallback| c_keyCallback(@ptrCast(@alignCast(window)), @backingInt(key), scancode, @backingInt(action), @backingInt(mods));
-}
-
-fn charCallbackWrapper(window: *js.platform.Window, codepoint: u32) void {
-    if (c_char_callback_opt) |c_charCallback| c_charCallback(@ptrCast(@alignCast(window)), codepoint);
-}
-
-fn monitorCallbackWrapper(monitor: *js.platform.Monitor, event: c_int) void {
-    if (c_monitor_callback_opt) |c_monitorCallback| c_monitorCallback(@ptrCast(@alignCast(monitor)), event);
-}
 
 fn errorCallbackWrapper(error_code: c_int, description: ?[:0]const u8) void {
     if (c_error_callback_opt) |c_errorCallback| c_errorCallback(error_code, description orelse "");
 }
 
-pub fn setWindowFocusCallback(c_window_opt: ?*c.GLFWwindow, c_callback: c.GLFWwindowfocusfun) callconv(.c) c.GLFWwindowfocusfun {
-    if (c_window_opt) |c_window| {
-        const window: *js.platform.Window = @ptrCast(@alignCast(c_window));
-        window.focusCallback = windowFocusCallbackWrapper;
-        defer c_windowfocus_callback_opt = c_callback;
-        return c_windowfocus_callback_opt;
-    } else js.console.err("{s}: window parameter is null", .{@src().fn_name});
+pub fn setWindowFocusCallback(window: ?*c.GLFWwindow, callback: c.GLFWwindowfocusfun) callconv(.c) c.GLFWwindowfocusfun {
+    _ = .{ window, callback };
+    @panic(@src().fn_name ++ " not implemented");
 }
 
-pub fn setCursorPosCallback(c_window_opt: ?*c.GLFWwindow, c_callback: c.GLFWcursorposfun) callconv(.c) c.GLFWcursorposfun {
-    if (c_window_opt) |c_window| {
-        const window: *js.platform.Window = @ptrCast(@alignCast(c_window));
-        window.cursorposCallback = cursorPosCallbackWrapper;
-        defer c_cursorpos_callback_opt = c_callback;
-        return c_cursorpos_callback_opt;
-    } else js.console.err("{s}: window parameter is null", .{@src().fn_name});
+pub fn setCursorPosCallback(window: ?*c.GLFWwindow, callback: c.GLFWcursorposfun) callconv(.c) c.GLFWcursorposfun {
+    _ = .{ window, callback };
+    @panic(@src().fn_name ++ " not implemented");
 }
 
-pub fn setCursorEnterCallback(c_window_opt: ?*c.GLFWwindow, c_callback: c.GLFWcursorenterfun) callconv(.c) c.GLFWcursorenterfun {
-    if (c_window_opt) |c_window| {
-        const window: *js.platform.Window = @ptrCast(@alignCast(c_window));
-        window.cursorenterCallback = cursorEnterCallbackWrapper;
-        defer c_cursorenter_callback_opt = c_callback;
-        return c_cursorenter_callback_opt;
-    } else js.console.err("{s}: window parameter is null", .{@src().fn_name});
+pub fn setCursorEnterCallback(window: ?*c.GLFWwindow, callback: c.GLFWcursorenterfun) callconv(.c) c.GLFWcursorenterfun {
+    _ = .{ window, callback };
+    @panic(@src().fn_name ++ " not implemented");
 }
 
-pub fn setMouseButtonCallback(c_window_opt: ?*c.GLFWwindow, c_callback: c.GLFWmousebuttonfun) callconv(.c) c.GLFWmousebuttonfun {
-    if (c_window_opt) |c_window| {
-        const window: *js.platform.Window = @ptrCast(@alignCast(c_window));
-        window.mousebuttonCallback = mouseButtonCallbackWrapper;
-        defer c_mousebutton_callback_opt = c_callback;
-        return c_mousebutton_callback_opt;
-    } else js.console.err("{s}: window parameter is null", .{@src().fn_name});
+pub fn setMouseButtonCallback(window: ?*c.GLFWwindow, callback: c.GLFWmousebuttonfun) callconv(.c) c.GLFWmousebuttonfun {
+    _ = .{ window, callback };
+    @panic(@src().fn_name ++ " not implemented");
 }
 
-pub fn setScrollCallback(c_window_opt: ?*c.GLFWwindow, c_callback: c.GLFWscrollfun) callconv(.c) c.GLFWscrollfun {
-    if (c_window_opt) |c_window| {
-        const window: *js.platform.Window = @ptrCast(@alignCast(c_window));
-        window.scrollCallback = scrollCallbackWrapper;
-        defer c_scroll_callback_opt = c_callback;
-        return c_scroll_callback_opt;
-    } else js.console.err("{s}: window parameter is null", .{@src().fn_name});
+pub fn setScrollCallback(window: ?*c.GLFWwindow, callback: c.GLFWscrollfun) callconv(.c) c.GLFWscrollfun {
+    _ = .{ window, callback };
+    @panic(@src().fn_name ++ " not implemented");
 }
 
-pub fn setKeyCallback(c_window_opt: ?*c.GLFWwindow, c_callback: c.GLFWkeyfun) callconv(.c) c.GLFWkeyfun {
-    if (c_window_opt) |c_window| {
-        const window: *js.platform.Window = @ptrCast(@alignCast(c_window));
-        window.keyCallback = keyCallbackWrapper;
-        defer c_key_callback_opt = c_callback;
-        return c_key_callback_opt;
-    } else js.console.err("{s}: window parameter is null", .{@src().fn_name});
+pub fn setKeyCallback(window: ?*c.GLFWwindow, callback: c.GLFWkeyfun) callconv(.c) c.GLFWkeyfun {
+    _ = .{ window, callback };
+    @panic(@src().fn_name ++ " not implemented");
 }
 
-pub fn setCharCallback(c_window_opt: ?*c.GLFWwindow, c_callback: c.GLFWcharfun) callconv(.c) c.GLFWcharfun {
-    if (c_window_opt) |c_window| {
-        const window: *js.platform.Window = @ptrCast(@alignCast(c_window));
-        window.charCallback = charCallbackWrapper;
-        defer c_char_callback_opt = c_callback;
-        return c_char_callback_opt;
-    } else js.console.err("{s}: window parameter is null", .{@src().fn_name});
+pub fn setCharCallback(window: ?*c.GLFWwindow, callback: c.GLFWcharfun) callconv(.c) c.GLFWcharfun {
+    _ = .{ window, callback };
+    @panic(@src().fn_name ++ " not implemented");
 }
 
-pub fn setMonitorCallback(c_callback: c.GLFWmonitorfun) callconv(.c) c.GLFWmonitorfun {
-    js.platform.monitorCallback = monitorCallbackWrapper;
-    defer c_monitor_callback_opt = c_callback;
-    return c_monitor_callback_opt;
+pub fn setMonitorCallback(callback: c.GLFWmonitorfun) callconv(.c) c.GLFWmonitorfun {
+    _ = callback;
+    @panic(@src().fn_name ++ " not implemented");
 }
 
 pub fn setErrorCallback(c_callback: c.GLFWerrorfun) callconv(.c) c.GLFWerrorfun {
@@ -236,9 +167,8 @@ pub fn getGamepadState(jid: c_int, state: ?*c.GLFWgamepadstate) callconv(.c) c_i
 pub fn getWindowContentScale(c_window_opt: ?*c.GLFWwindow, xscale: ?*f32, yscale: ?*f32) callconv(.c) void {
     if (c_window_opt) |c_window| {
         const window: *js.platform.Window = @ptrCast(@alignCast(c_window));
-        const scale = if (window.isHiDPIAware()) window.monitor_scale else 1.0;
-        if (xscale) |x| x.* = scale;
-        if (yscale) |y| y.* = scale;
+        if (xscale) |x| x.* = window.monitor_scale;
+        if (yscale) |y| y.* = window.monitor_scale;
     } else js.console.err("{s}: window parameter is null", .{@src().fn_name});
 }
 
@@ -253,17 +183,13 @@ pub fn getMonitorContentScale(c_monitor_opt: ?*c.GLFWmonitor, xscale: ?*f32, ysc
 pub fn getWindowSize(c_window_opt: ?*c.GLFWwindow, width: ?*c_int, height: ?*c_int) callconv(.c) void {
     if (c_window_opt) |c_window| {
         const window: *js.platform.Window = @ptrCast(@alignCast(c_window));
-        if (width) |w| w.* = std.math.cast(c_int, window.width) orelse std.debug.panic("{s}: failed to cast {s} to c_int", .{ @typeName(@TypeOf(window.framebuffer_height)), @src().fn_name });
-        if (height) |h| h.* = std.math.cast(c_int, window.height) orelse std.debug.panic("{s}: failed to cast {s} to c_int", .{ @typeName(@TypeOf(window.framebuffer_height)), @src().fn_name });
+        if (width) |w| w.* = std.math.cast(c_int, window.canvas.width) orelse std.debug.panic("{s}: failed to cast {s} to c_int", .{ @typeName(@TypeOf(window.canvas.width)), @src().fn_name });
+        if (height) |h| h.* = std.math.cast(c_int, window.canvas.height) orelse std.debug.panic("{s}: failed to cast {s} to c_int", .{ @typeName(@TypeOf(window.canvas.height)), @src().fn_name });
     } else js.console.err("{s}: window parameter is null", .{@src().fn_name});
 }
 
-pub fn getFramebufferSize(c_window_opt: ?*c.GLFWwindow, width: ?*c_int, height: ?*c_int) callconv(.c) void {
-    if (c_window_opt) |c_window| {
-        const window: *js.platform.Window = @ptrCast(@alignCast(c_window));
-        if (width) |w| w.* = std.math.cast(c_int, window.framebuffer_width) orelse std.debug.panic("{s}: failed to cast {s} to c_int", .{ @typeName(@TypeOf(window.framebuffer_height)), @src().fn_name });
-        if (height) |h| h.* = std.math.cast(c_int, window.framebuffer_height) orelse std.debug.panic("{s}: failed to cast {s} to c_int", .{ @typeName(@TypeOf(window.framebuffer_height)), @src().fn_name });
-    } else js.console.err("{s}: window parameter is null", .{@src().fn_name});
+pub fn getFramebufferSize(window: ?*c.GLFWwindow, width: ?*c_int, height: ?*c_int) callconv(.c) void {
+    getWindowSize(window, width, height);
 }
 
 pub fn getTime() callconv(.c) f64 {

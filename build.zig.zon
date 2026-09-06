@@ -7,8 +7,8 @@
     },
     .dependencies = .{
         .cimgui_zig = .{
-            .url = "git+https://github.com/tiawl/cimgui.zig#40729fe6a1eb14f6686ef3c80ea7b568099e6650",
-            .hash = "cimgui_zig-1.0.0-2XubkpEFxgD4s4yTHUC_okbbBVv1GXDxRhcYXHZTsPfo",
+            .url = "git+https://github.com/tiawl/cimgui.zig#e3eeebc88f9e4b1839c07eedefcc9f2b0eb4cce3",
+            .hash = "cimgui_zig-1.0.0-2XubkrUFxgBO9wwsHVrX9RqpLyndZuIBv5HOEw-OCjbf",
         },
         .translate_c = .{
             .url = "git+https://codeberg.org/ziglang/translate-c#0944784e197e419433a21d4b28bfc65e48e7d514",
@@ -20,18 +20,18 @@
             .lazy = true,
         },
         .@"SPIRV-Headers" = .{
-            .url = "git+https://github.com/KhronosGroup/SPIRV-Headers#496543121ce6419f23d6fa5d7194ba66c36212d2",
-            .hash = "N-V-__8AAGbTPwCpO5RqFsSkao-YQrp4sYtjDvquqfjmh9pW",
+            .url = "git+https://github.com/KhronosGroup/SPIRV-Headers#04fd3caa1e8267e4d95c806cad901181728e1006",
+            .hash = "N-V-__8AADfWPwDeuBnRPneVxuif7fpyfwwwYCbin0p6IEdt",
             .lazy = true,
         },
         .@"SPIRV-Tools" = .{
-            .url = "git+https://github.com/KhronosGroup/SPIRV-Tools#8f573649bca4158325f394a9c4951a6eb5de8f7f",
-            .hash = "N-V-__8AADKClgG5ptu-th7j6fRBuemH_1bgyx45rrQ6PPhW",
+            .url = "git+https://github.com/KhronosGroup/SPIRV-Tools#4bbc4f1ea60d0907c9ee3f9597539bfec1b04d24",
+            .hash = "N-V-__8AAOw6lwFbrsgKGptLLfN0l26w2vrlRwcuL4MZWlMm",
             .lazy = true,
         },
         .dawn = .{
-            .url = "git+https://dawn.googlesource.com/dawn#34b1fca4d6c3d7025a2231d82b4fc719ca57fd71",
-            .hash = "N-V-__8AADjADRD8RlUsgYfcI7meEfj-P409soVpNvjq_GVs",
+            .url = "git+https://dawn.googlesource.com/dawn#d9f22ca51ed43b89156e6ad4de5ab3362ca26733",
+            .hash = "N-V-__8AAFM8DRCnbUFRpE1PDr8N0zhEwgsUj2A_vGRUKEB6",
             .lazy = true,
         },
     },

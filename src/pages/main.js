@@ -108,6 +108,7 @@ const root = {
     device: null,
     timestamp: null,
     error_scope: null,
+    event: null,
 
     // Handle management for WebGPU objects
     // Zig will reference WebGPU objects by handle ID
@@ -406,7 +407,7 @@ const decode = {
             const array_stride = Number(view.getBigUint64(offset, true));
             const vertex_attributes_ptr = view.getUint32(offset + 16, true);
             const vertex_attributes_len = view.getUint32(offset + 20, true);
-            const vertex_attribute_size = Number(root.wasm.exports.SizeOfVertexAttribute());
+            const vertex_attribute_size = Number(root.wasm.exports.sizeOfVertexAttribute());
 
             let vertex_attributes = [];
             const vertex_attributes_view = new DataView(root.wasm.exports.memory.buffer, vertex_attributes_ptr, vertex_attributes_len * vertex_attribute_size);
@@ -498,7 +499,7 @@ const decode = {
         },
 
         VertexState: function(view) {
-            const vertex_buffer_layout_size = Number(root.wasm.exports.SizeOfVertexBufferLayout());
+            const vertex_buffer_layout_size = Number(root.wasm.exports.sizeOfVertexBufferLayout());
             const vertex_buffer_layouts_ptr = view.getUint32(0, true);
             const vertex_buffer_layouts_len = view.getUint32(4, true);
             let vertex_buffer_layouts = [];
@@ -518,7 +519,7 @@ const decode = {
         FragmentState: function(view) {
             const color_target_states_ptr = view.getUint32(0, true);
             const color_target_states_len = view.getUint32(4, true);
-            const color_target_state_size = Number(root.wasm.exports.SizeOfColorTargetState());
+            const color_target_state_size = Number(root.wasm.exports.sizeOfColorTargetState());
 
             let color_target_states = [];
             const color_target_states_view = new DataView(root.wasm.exports.memory.buffer, color_target_states_ptr, color_target_states_len * color_target_state_size);
@@ -627,45 +628,6 @@ var wasm_imports = {
             return root.handles.create(root.device);
         },
 
-        jsGpuSurfaceGetWidth: function(surface_id) {
-            const surface = root.handles.get(surface_id);
-            console.assert(typeof surface !== 'undefined', `Invalid surface (${surface_id}) handle`);
-
-            // console.log('jsGpuSurfaceGetWidth'); deepLog(surface, 'surface');
-
-            return surface.width;
-        },
-
-        jsGpuSurfaceGetHeight: function(surface_id) {
-            const surface = root.handles.get(surface_id);
-            console.assert(typeof surface !== 'undefined', `Invalid surface (${surface_id}) handle`);
-
-            // console.log('jsGpuSurfaceGetHeight'); deepLog(surface, 'surface');
-
-            return surface.height;
-        },
-
-        jsGpuSurfaceGetContext: function(surface_id) {
-            const surface = root.handles.get(surface_id);
-            console.assert(typeof surface !== 'undefined', `Invalid surface (${surface_id}) handle`);
-
-            // console.log('jsGpuSurfaceGetContext'); deepLog(surface, 'surface');
-
-            return root.handles.create(surface.getContext('webgpu'));
-        },
-
-        jsGpuSurfaceResize: function(surface_id, width, height) {
-            let surface = root.handles.get(surface_id);
-            console.assert(typeof surface !== 'undefined', `Invalid surface (${surface_id}) handle`);
-
-            // TODO: uncomment this later:
-            //const dpr = 0.1;//window.devicePixelRatio || 1;
-            surface.width = width;//surface.clientWidth * dpr;
-            surface.height = height;//surface.clientHeight * dpr;
-
-            // console.log('jsGpuSurfaceResize'); deepLog(surface, 'surface'); deepLog(width, 'width'); deepLog(height, 'height');
-        },
-
         jsGpuContextConfigure: function(context_id, device_id, texture_format_ptr, texture_format_len) {
             const context = root.handles.get(context_id);
             const device = root.handles.get(device_id);
@@ -772,9 +734,9 @@ var wasm_imports = {
             const pipeline_layout = root.handles.get(pipeline_layout_id);
             console.assert(typeof device !== 'undefined' && typeof pipeline_layout !== 'undefined', `Invalid device (${device_id}) or pipeline layout (${pipeline_layout_id}) handle`);
 
-            const vertex_state_view = new DataView(root.wasm.exports.memory.buffer, vertex_state_ptr, Number(root.wasm.exports.SizeOfVertexState()));
-            const fragment_state_view = new DataView(root.wasm.exports.memory.buffer, fragment_state_ptr, Number(root.wasm.exports.SizeOfFragmentState()));
-            const primitive_state_view = new DataView(root.wasm.exports.memory.buffer, primitive_state_ptr, Number(root.wasm.exports.SizeOfPrimitiveState()));
+            const vertex_state_view = new DataView(root.wasm.exports.memory.buffer, vertex_state_ptr, Number(root.wasm.exports.sizeOfVertexState()));
+            const fragment_state_view = new DataView(root.wasm.exports.memory.buffer, fragment_state_ptr, Number(root.wasm.exports.sizeOfFragmentState()));
+            const primitive_state_view = new DataView(root.wasm.exports.memory.buffer, primitive_state_ptr, Number(root.wasm.exports.sizeOfPrimitiveState()));
 
             const vertex = decode.view.VertexState(vertex_state_view);
             const fragment = decode.view.FragmentState(fragment_state_view);
@@ -803,7 +765,7 @@ var wasm_imports = {
             const device = root.handles.get(device_id);
             console.assert(typeof device !== 'undefined', `Invalid device (${device_id}) handle`);
 
-            const descriptor_view = new DataView(root.wasm.exports.memory.buffer, descriptor_ptr, Number(root.wasm.exports.SizeOfTextureDescriptor()));
+            const descriptor_view = new DataView(root.wasm.exports.memory.buffer, descriptor_ptr, Number(root.wasm.exports.sizeOfTextureDescriptor()));
             const descriptor = decode.view.TextureDescriptor(descriptor_view);
 
             // console.log('jsGpuDeviceCreateTexture'); deepLog(device, 'device'); deepLog(descriptor, 'descriptor');
@@ -836,7 +798,7 @@ var wasm_imports = {
             const device = root.handles.get(device_id);
             console.assert(typeof device !== 'undefined', `Invalid device (${device_id}) handle`);
 
-            const entry_size = Number(root.wasm.exports.SizeOfBindGroupLayoutEntry());
+            const entry_size = Number(root.wasm.exports.sizeOfBindGroupLayoutEntry());
             let bind_group_layout_entries = [];
             const bind_group_layout_entries_view = new DataView(root.wasm.exports.memory.buffer, bind_group_layout_entries_ptr, bind_group_layout_entries_len * entry_size);
 
@@ -898,7 +860,7 @@ var wasm_imports = {
             console.assert(typeof device !== 'undefined' && typeof bind_group_layout !== 'undefined', `Invalid device (${device_id}) or bind group layout (${bind_group_layout_id}) handle`);
 
             let bind_group_entries = [];
-            const entry_size = Number(root.wasm.exports.SizeOfBindGroupEntry());
+            const entry_size = Number(root.wasm.exports.sizeOfBindGroupEntry());
             const bind_group_entries_view = new DataView(root.wasm.exports.memory.buffer, bind_group_entries_ptr, bind_group_entries_len * entry_size);
 
             for (let i = 0; i < bind_group_entries_len; i++) {
@@ -940,7 +902,7 @@ var wasm_imports = {
             const device = root.handles.get(device_id);
             console.assert(typeof device !== 'undefined', `Invalid device (${device_id}) handle`);
 
-            const descriptor_view = new DataView(root.wasm.exports.memory.buffer, descriptor_ptr, Number(root.wasm.exports.SizeOfSamplerDescriptor()));
+            const descriptor_view = new DataView(root.wasm.exports.memory.buffer, descriptor_ptr, Number(root.wasm.exports.sizeOfSamplerDescriptor()));
             const descriptor = decode.view.SamplerDescriptor(descriptor_view);
 
             // console.log('jsGpuDeviceCreateSampler'); deepLog(device, 'device'); deepLog(descriptor, 'descriptor');
@@ -1044,7 +1006,7 @@ var wasm_imports = {
             const texture = root.handles.get(texture_id);
             console.assert(typeof texture !== 'undefined', `Invalid texture (${texture_id}) handle`);
 
-            const descriptor_view = new DataView(root.wasm.exports.memory.buffer, descriptor_ptr, Number(root.wasm.exports.SizeOfTextureViewDescriptor()));
+            const descriptor_view = new DataView(root.wasm.exports.memory.buffer, descriptor_ptr, Number(root.wasm.exports.sizeOfTextureViewDescriptor()));
             const descriptor = decode.view.TextureViewDescriptor(descriptor_view);
 
             // console.log('jsGpuTextureCreateView'); deepLog(texture, 'texture'); deepLog(descriptor, 'descriptor');
@@ -1057,7 +1019,7 @@ var wasm_imports = {
             const texture_view = root.handles.get(texture_view_id);
             console.assert(typeof command_encoder !== 'undefined' && typeof texture_view !== 'undefined', `Invalid command encoder (${command_encoder_id}) or texture view (${texture_view_id}) handle`);
 
-            const descriptor_view = new DataView(root.wasm.exports.memory.buffer, descriptor_ptr, Number(root.wasm.exports.SizeOfRenderPassDescriptor()));
+            const descriptor_view = new DataView(root.wasm.exports.memory.buffer, descriptor_ptr, Number(root.wasm.exports.sizeOfRenderPassDescriptor()));
             const descriptor = decode.view.RenderPassDescriptor(descriptor_view, texture_view);
 
             // console.log('jsGpuCommandEncoderBeginRenderPass'); deepLog(command_encoder, 'command_encoder'); deepLog(texture_view, 'texture_view'); deepLog(descriptor, 'descriptor');
@@ -1140,7 +1102,7 @@ var wasm_imports = {
             const render_pass_encoder = root.handles.get(render_pass_encoder_id);
             console.assert(typeof render_pass_encoder !== 'undefined', `Invalid render pass encoder (${render_pass_encoder_id}) handle`);
 
-            const color_view = new DataView(root.wasm.exports.memory.buffer, color_ptr, Number(root.wasm.exports.SizeOfColor()));
+            const color_view = new DataView(root.wasm.exports.memory.buffer, color_ptr, Number(root.wasm.exports.sizeOfColor()));
             const color = decode.view.Color(color_view);
 
             // console.log('jsGpuRenderPassEncoderSetBlendConstant'); deepLog(render_pass_encoder, 'render_pass_encoder'); deepLog(color, 'color');
@@ -1193,13 +1155,13 @@ var wasm_imports = {
             const queue = root.handles.get(queue_id);
             console.assert(typeof queue !== 'undefined', `Invalid queue (${queue_id}) handle`);
 
-            const info_view = new DataView(root.wasm.exports.memory.buffer, info_ptr, Number(root.wasm.exports.SizeOfTexelCopyTextureInfo()));
+            const info_view = new DataView(root.wasm.exports.memory.buffer, info_ptr, Number(root.wasm.exports.sizeOfTexelCopyTextureInfo()));
             const info = decode.view.TexelCopyTextureInfo(info_view);
 
-            const data_layout_view = new DataView(root.wasm.exports.memory.buffer, data_layout_ptr, Number(root.wasm.exports.SizeOfTexelCopyBufferLayout()));
+            const data_layout_view = new DataView(root.wasm.exports.memory.buffer, data_layout_ptr, Number(root.wasm.exports.sizeOfTexelCopyBufferLayout()));
             const data_layout = decode.view.TexelCopyBufferLayout(data_layout_view);
 
-            const size_extent_view = new DataView(root.wasm.exports.memory.buffer, size_extent_ptr, Number(root.wasm.exports.SizeOfExtent3D()));
+            const size_extent_view = new DataView(root.wasm.exports.memory.buffer, size_extent_ptr, Number(root.wasm.exports.sizeOfExtent3D()));
             const size_extent = decode.view.Extent3D(size_extent_view, 0);
 
             const data = new Uint8Array(root.wasm.exports.memory.buffer, data_ptr, data_len);
@@ -1214,11 +1176,11 @@ var wasm_imports = {
             return root.handles.create(window);
         },
 
-        jsPlatformWindowGetGpuSurface: function(win_id) {
+        jsPlatformWindowGetCanvas: function(win_id) {
             const win = root.handles.get(win_id);
             console.assert(typeof win !== 'undefined', `Invalid window (${win_id}) handle`);
 
-            // console.log('jsPlatformWindowGetGpuSurface');
+            // console.log('jsPlatformWindowGetCanvas');
 
             return root.handles.create(win.document.getElementById('canvas'));
         },
@@ -1246,8 +1208,16 @@ var wasm_imports = {
             // console.log('jsPlatformWindowListenEvent'); deepLog(event, 'event');
 
             win.addEventListener(event, (win_event) => {
+                root.event = win_event;
                 root.wasm.exports.onWindowEvent(encode.str(win_event.type));
             });
+        },
+
+        jsPlatformWindowKeyboardEventGetCodepoint: function(win_id) {
+            const win = root.handles.get(win_id);
+            console.assert(typeof win !== 'undefined', `Invalid window (${win_id}) handle`);
+
+            return root.event.key.charCodeAt(0);
         },
 
         jsPlatformWindowGetDevicePixelRatio: function(win_id) {
@@ -1257,6 +1227,115 @@ var wasm_imports = {
             // console.log('jsPlatformWindowGetDevicePixelRatio');
 
             return win.devicePixelRatio || 1;
+        },
+
+        jsPlatformCanvasGetGpuContext: function(canvas_id) {
+            const canvas = root.handles.get(canvas_id);
+            console.assert(typeof canvas !== 'undefined', `Invalid canvas (${canvas_id}) handle`);
+
+            // console.log('jsPlatformCanvasGetGpuContext'); deepLog(canvas, 'canvas');
+
+            return root.handles.create(canvas.getContext('webgpu'));
+        },
+
+        jsPlatformCanvasResize: function(canvas_id, width, height) {
+            let canvas = root.handles.get(canvas_id);
+            console.assert(typeof canvas !== 'undefined', `Invalid canvas (${canvas_id}) handle`);
+
+            // TODO: uncomment this later:
+            //const dpr = 0.1;//window.devicePixelRatio || 1;
+            canvas.width = width;//canvas.clientWidth * dpr;
+            canvas.height = height;//canvas.clientHeight * dpr;
+
+            // console.log('jsPlatformCanvasResize'); deepLog(canvas, 'canvas'); deepLog(width, 'width'); deepLog(height, 'height');
+        },
+
+        jsPlatformCanvasListenEvent: function(canvas_id, event_ptr, event_len) {
+            const canvas = root.handles.get(canvas_id);
+            console.assert(typeof canvas !== 'undefined', `Invalid canvas (${canvas_id}) handle`);
+
+            const event = decode.str(event_ptr, event_len);
+
+            // console.log('jsPlatformCanvasListenEvent'); deepLog(event, 'event');
+
+            canvas.addEventListener(event, (canvas_event) => {
+                root.event = canvas_event;
+                root.wasm.exports.onCanvasEvent(encode.str(canvas_event.type));
+            });
+        },
+
+        jsPlatformCanvasMouseButtonEventGetButton: function(canvas_id) {
+            const canvas = root.handles.get(canvas_id);
+            console.assert(typeof canvas !== 'undefined', `Invalid canvas (${canvas_id}) handle`);
+
+            return root.event.button;
+        },
+
+        jsPlatformCanvasMouseMoveEventGetClientX: function(canvas_id) {
+            const canvas = root.handles.get(canvas_id);
+            console.assert(typeof canvas !== 'undefined', `Invalid canvas (${canvas_id}) handle`);
+
+            return root.event.clientX;
+        },
+
+        jsPlatformCanvasMouseMoveEventGetClientY: function(canvas_id) {
+            const canvas = root.handles.get(canvas_id);
+            console.assert(typeof canvas !== 'undefined', `Invalid canvas (${canvas_id}) handle`);
+
+            return root.event.clientY;
+        },
+
+        jsPlatformCanvasWheelEventGetDeltaMode: function(canvas_id) {
+            const canvas = root.handles.get(canvas_id);
+            console.assert(typeof canvas !== 'undefined', `Invalid canvas (${canvas_id}) handle`);
+
+            return root.event.deltaMode;
+        },
+
+        jsPlatformCanvasWheelEventGetDeltaX: function(canvas_id) {
+            const canvas = root.handles.get(canvas_id);
+            console.assert(typeof canvas !== 'undefined', `Invalid canvas (${canvas_id}) handle`);
+
+            return root.event.deltaX;
+        },
+
+        jsPlatformCanvasWheelEventGetDeltaY: function(canvas_id) {
+            const canvas = root.handles.get(canvas_id);
+            console.assert(typeof canvas !== 'undefined', `Invalid canvas (${canvas_id}) handle`);
+
+            return root.event.deltaY;
+        },
+
+        jsPlatformCanvasGetBoundingClientRectWidth: function(canvas_id) {
+            const canvas = root.handles.get(canvas_id);
+            console.assert(typeof canvas !== 'undefined', `Invalid canvas (${canvas_id}) handle`);
+
+            // console.log('jsPlatformCanvasGetWidth'); deepLog(canvas, 'canvas');
+
+            return canvas.getBoundingClientRect().width;
+        },
+
+        jsPlatformCanvasGetBoundingClientRectHeight: function(canvas_id) {
+            const canvas = root.handles.get(canvas_id);
+            console.assert(typeof canvas !== 'undefined', `Invalid canvas (${canvas_id}) handle`);
+
+            // console.log('jsPlatformCanvasGetHeight'); deepLog(canvas, 'canvas');
+
+            return canvas.getBoundingClientRect().height;
+        },
+
+        jsPlatformCanvasGetBoundingClientRectLeft: function(canvas_id) {
+            const canvas = root.handles.get(canvas_id);
+            console.assert(typeof canvas !== 'undefined', `Invalid canvas (${canvas_id}) handle`);
+
+            return canvas.getBoundingClientRect().left;
+        },
+
+        jsPlatformCanvasGetBoundingClientRectTop: function(canvas_id) {
+            const canvas = root.handles.get(canvas_id);
+            console.assert(typeof canvas !== 'undefined', `Invalid canvas (${canvas_id}) handle`);
+
+            return canvas.getBoundingClientRect().top;
         },
 
         jsPlatformGetClipboard: function() {

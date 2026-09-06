@@ -13,7 +13,7 @@ pub const Uint32 = imports.Uint32;
 pub const BigUint64 = imports.BigUint64;
 pub const Float32 = imports.Float32;
 pub const Float64 = imports.Float64;
-pub const Pointer = imports.Pointer;
+pub const OpaquePtr = imports.OpaquePtr;
 pub const Handle = imports.Handle;
 pub const Flags = imports.Flags;
 pub const Size = imports.Size;
@@ -68,22 +68,6 @@ fn gpuGetDevice() js.Handle {
     return trace(@src(), .{});
 }
 
-fn gpuSurfaceGetWidth(surface_handle: js.Handle) js.Uint32 {
-    return trace(@src(), .{surface_handle});
-}
-
-fn gpuSurfaceGetHeight(surface_handle: js.Handle) js.Uint32 {
-    return trace(@src(), .{surface_handle});
-}
-
-fn gpuSurfaceGetContext(surface_handle: js.Handle) js.Handle {
-    return trace(@src(), .{surface_handle});
-}
-
-fn gpuSurfaceResize(surface_handle: js.Handle, width: js.Uint32, height: js.Uint32) void {
-    trace(@src(), .{ surface_handle, width, height });
-}
-
 fn gpuContextConfigure(context_handle: js.Handle, device_handle: js.Handle, texture_format_ptr: js.StringPtr, texture_format_len: js.Uint32) void {
     trace(@src(), .{ context_handle, device_handle, texture_format_ptr, texture_format_len });
 }
@@ -112,11 +96,11 @@ fn gpuDeviceCreateShaderModule(device_handle: js.Handle, source_ptr: js.StringPt
     return trace(@src(), .{ device_handle, source_ptr, source_len });
 }
 
-fn gpuDeviceCreatePipelineLayout(device_handle: js.Handle, bind_group_layouts_ptr: js.Pointer, bind_group_layouts_len: js.Uint32) js.Handle {
+fn gpuDeviceCreatePipelineLayout(device_handle: js.Handle, bind_group_layouts_ptr: js.OpaquePtr, bind_group_layouts_len: js.Uint32) js.Handle {
     return trace(@src(), .{ device_handle, bind_group_layouts_ptr, bind_group_layouts_len });
 }
 
-fn gpuDeviceCreateRenderPipeline(device_handle: js.Handle, pipeline_layout_handle: js.Handle, vertex_state_ptr: js.Pointer, fragment_state_ptr: js.Pointer, primitive_state_ptr: js.Pointer) js.Handle {
+fn gpuDeviceCreateRenderPipeline(device_handle: js.Handle, pipeline_layout_handle: js.Handle, vertex_state_ptr: js.OpaquePtr, fragment_state_ptr: js.OpaquePtr, primitive_state_ptr: js.OpaquePtr) js.Handle {
     return trace(@src(), .{ device_handle, pipeline_layout_handle, vertex_state_ptr, fragment_state_ptr, primitive_state_ptr });
 }
 
@@ -124,7 +108,7 @@ fn gpuDeviceCreateCommandEncoder(device_handle: js.Handle) js.Handle {
     return trace(@src(), .{device_handle});
 }
 
-fn gpuDeviceCreateTexture(device_handle: js.Handle, descriptor_ptr: js.Pointer) js.Handle {
+fn gpuDeviceCreateTexture(device_handle: js.Handle, descriptor_ptr: js.OpaquePtr) js.Handle {
     return trace(@src(), .{ device_handle, descriptor_ptr });
 }
 
@@ -136,15 +120,15 @@ fn gpuDestroyBuffer(buffer_handle: js.Handle) void {
     trace(@src(), .{buffer_handle});
 }
 
-fn gpuDeviceCreateBindGroup(device_handle: js.Handle, bind_group_layout: js.Handle, entries_ptr: js.Pointer, entries_len: js.Uint32) js.Handle {
+fn gpuDeviceCreateBindGroup(device_handle: js.Handle, bind_group_layout: js.Handle, entries_ptr: js.OpaquePtr, entries_len: js.Uint32) js.Handle {
     return trace(@src(), .{ device_handle, bind_group_layout, entries_ptr, entries_len });
 }
 
-fn gpuDeviceCreateBindGroupLayout(device_handle: js.Handle, entries_ptr: js.Pointer, entries_len: js.Uint32) js.Handle {
+fn gpuDeviceCreateBindGroupLayout(device_handle: js.Handle, entries_ptr: js.OpaquePtr, entries_len: js.Uint32) js.Handle {
     return trace(@src(), .{ device_handle, entries_ptr, entries_len });
 }
 
-fn gpuDeviceCreateSampler(device_handle: js.Handle, descriptor_ptr: js.Pointer) js.Handle {
+fn gpuDeviceCreateSampler(device_handle: js.Handle, descriptor_ptr: js.OpaquePtr) js.Handle {
     return trace(@src(), .{ device_handle, descriptor_ptr });
 }
 
@@ -188,11 +172,11 @@ fn gpuTextureGetDimension(texture_handle: js.Handle) js.String {
     return trace(@src(), .{texture_handle});
 }
 
-fn gpuTextureCreateView(texture_handle: js.Handle, descriptor_ptr: js.Pointer) js.Handle {
+fn gpuTextureCreateView(texture_handle: js.Handle, descriptor_ptr: js.OpaquePtr) js.Handle {
     return trace(@src(), .{ texture_handle, descriptor_ptr });
 }
 
-fn gpuCommandEncoderBeginRenderPass(command_encoder_handle: js.Handle, texture_view_handle: js.Handle, descriptor_ptr: js.Pointer) js.Handle {
+fn gpuCommandEncoderBeginRenderPass(command_encoder_handle: js.Handle, texture_view_handle: js.Handle, descriptor_ptr: js.OpaquePtr) js.Handle {
     return trace(@src(), .{ command_encoder_handle, texture_view_handle, descriptor_ptr });
 }
 
@@ -204,7 +188,7 @@ fn gpuRenderPassEncoderSetPipeline(render_pass_encoder_handle: js.Handle, render
     trace(@src(), .{ render_pass_encoder_handle, render_pipeline_handle });
 }
 
-fn gpuRenderPassEncoderSetBindGroup(render_pass_encoder_handle: js.Handle, index: js.Uint32, bind_group_handle: js.Handle, dynamic_offsets_ptr: js.Pointer, dynamic_offsets_len: js.Uint32) void {
+fn gpuRenderPassEncoderSetBindGroup(render_pass_encoder_handle: js.Handle, index: js.Uint32, bind_group_handle: js.Handle, dynamic_offsets_ptr: js.OpaquePtr, dynamic_offsets_len: js.Uint32) void {
     trace(@src(), .{ render_pass_encoder_handle, index, bind_group_handle, dynamic_offsets_ptr, dynamic_offsets_len });
 }
 
@@ -224,7 +208,7 @@ fn gpuRenderPassEncoderSetViewport(render_pass_encoder_handle: js.Handle, x: js.
     trace(@src(), .{ render_pass_encoder_handle, x, y, width, height, min_depth, max_depth });
 }
 
-fn gpuRenderPassEncoderSetBlendConstant(render_pass_encoder_handle: js.Handle, color_ptr: js.Pointer) void {
+fn gpuRenderPassEncoderSetBlendConstant(render_pass_encoder_handle: js.Handle, color_ptr: js.OpaquePtr) void {
     trace(@src(), .{ render_pass_encoder_handle, color_ptr });
 }
 
@@ -236,7 +220,7 @@ fn gpuRenderPassEncoderEnd(render_pass_encoder_handle: js.Handle) void {
     trace(@src(), .{render_pass_encoder_handle});
 }
 
-fn gpuQueueSubmit(queue_handle: js.Handle, command_buffers_ptr: js.Pointer, command_buffers_len: js.Uint32) void {
+fn gpuQueueSubmit(queue_handle: js.Handle, command_buffers_ptr: js.OpaquePtr, command_buffers_len: js.Uint32) void {
     trace(@src(), .{ queue_handle, command_buffers_ptr, command_buffers_len });
 }
 
@@ -244,7 +228,7 @@ fn gpuQueueWriteBuffer(queue_handle: js.Handle, buffer_handle: js.Handle, buffer
     trace(@src(), .{ queue_handle, buffer_handle, buffer_offset, data_ptr, data_len, data_offset, size });
 }
 
-fn gpuQueueWriteTexture(queue_handle: js.Handle, info_ptr: js.Pointer, data_ptr: js.StringPtr, data_len: js.Uint32, data_layout_ptr: js.Pointer, size_extent_ptr: js.Pointer) void {
+fn gpuQueueWriteTexture(queue_handle: js.Handle, info_ptr: js.OpaquePtr, data_ptr: js.StringPtr, data_len: js.Uint32, data_layout_ptr: js.OpaquePtr, size_extent_ptr: js.OpaquePtr) void {
     trace(@src(), .{ queue_handle, info_ptr, data_ptr, data_len, data_layout_ptr, size_extent_ptr });
 }
 
@@ -252,7 +236,7 @@ fn platformGetWindow() js.Handle {
     return trace(@src(), .{});
 }
 
-fn platformWindowGetGpuSurface(window_handle: js.Handle) js.Handle {
+fn platformWindowGetCanvas(window_handle: js.Handle) js.Handle {
     return trace(@src(), .{window_handle});
 }
 
@@ -264,8 +248,64 @@ fn platformWindowListenEvent(window_handle: js.Handle, event_ptr: js.StringPtr, 
     trace(@src(), .{ window_handle, event_ptr, event_len });
 }
 
-fn platformWindowGetDevicePixelRatio(window_handle: js.Handle) f32 {
+fn platformWindowKeyboardEventGetCodepoint(canvas_handle: js.Handle) js.Uint32 {
+    return trace(@src(), .{canvas_handle});
+}
+
+fn platformWindowGetDevicePixelRatio(window_handle: js.Handle) js.Float32 {
     return trace(@src(), .{window_handle});
+}
+
+fn platformCanvasGetBoundingClientRectWidth(canvas_handle: js.Handle) js.Uint32 {
+    return trace(@src(), .{canvas_handle});
+}
+
+fn platformCanvasGetBoundingClientRectHeight(canvas_handle: js.Handle) js.Uint32 {
+    return trace(@src(), .{canvas_handle});
+}
+
+fn platformCanvasGetBoundingClientRectLeft(canvas_handle: js.Handle) js.Uint32 {
+    return trace(@src(), .{canvas_handle});
+}
+
+fn platformCanvasGetBoundingClientRectTop(canvas_handle: js.Handle) js.Uint32 {
+    return trace(@src(), .{canvas_handle});
+}
+
+fn platformCanvasGetGpuContext(canvas_handle: js.Handle) js.Handle {
+    return trace(@src(), .{canvas_handle});
+}
+
+fn platformCanvasResize(canvas_handle: js.Handle, width: js.Uint32, height: js.Uint32) void {
+    trace(@src(), .{ canvas_handle, width, height });
+}
+
+fn platformCanvasListenEvent(canvas_handle: js.Handle, event_ptr: js.StringPtr, event_len: js.Uint32) void {
+    trace(@src(), .{ canvas_handle, event_ptr, event_len });
+}
+
+fn platformCanvasMouseButtonEventGetButton(canvas_handle: js.Handle) js.Uint32 {
+    return trace(@src(), .{canvas_handle});
+}
+
+fn platformCanvasMouseMoveEventGetClientX(canvas_handle: js.Handle) js.Uint32 {
+    return trace(@src(), .{canvas_handle});
+}
+
+fn platformCanvasMouseMoveEventGetClientY(canvas_handle: js.Handle) js.Uint32 {
+    return trace(@src(), .{canvas_handle});
+}
+
+fn platformCanvasWheelEventGetDeltaMode(canvas_handle: js.Handle) js.platform.DeltaMode {
+    return trace(@src(), .{canvas_handle});
+}
+
+fn platformCanvasWheelEventGetDeltaX(canvas_handle: js.Handle) js.Float32 {
+    return trace(@src(), .{canvas_handle});
+}
+
+fn platformCanvasWheelEventGetDeltaY(canvas_handle: js.Handle) js.Float32 {
+    return trace(@src(), .{canvas_handle});
 }
 
 fn platformGetClipboard() js.Handle {
@@ -413,40 +453,6 @@ pub const gpu = struct {
             .null_handle => |captured| std.debug.panic("{s}: called with {s}", .{ @src().fn_name, @tagName(captured) }),
         }
     }
-
-    pub const Surface = struct {
-        handle: js.Handle = null_handle,
-        width: js.Uint32,
-        height: js.Uint32,
-
-        pub fn isInit(self: @This()) bool {
-            return self.handle != null_handle;
-        }
-
-        pub fn getContext(self: @This()) Context {
-            js.console.assert(self.isInit(), @src());
-            if (js.gpu.Device.instance.isInit()) js.gpu.Device.pushErrorScope(.validation);
-            defer if (js.gpu.Device.instance.isInit()) js.gpu.Device.popErrorScope();
-            return Context.init(js.gpuSurfaceGetContext(self.handle));
-        }
-
-        fn resize(self: *@This(), width: js.Uint32, height: js.Uint32) void {
-            js.console.assert(self.isInit(), @src());
-            if (js.gpu.Device.instance.isInit()) js.gpu.Device.pushErrorScope(.validation);
-            defer if (js.gpu.Device.instance.isInit()) js.gpu.Device.popErrorScope();
-            js.gpuSurfaceResize(self.handle, width, height);
-            self.width = width;
-            self.height = height;
-        }
-
-        pub fn syncSize(self: *@This()) void {
-            js.console.assert(self.isInit(), @src());
-            if (js.gpu.Device.instance.isInit()) js.gpu.Device.pushErrorScope(.validation);
-            defer if (js.gpu.Device.instance.isInit()) js.gpu.Device.popErrorScope();
-            self.width = js.gpuSurfaceGetWidth(self.handle);
-            self.height = js.gpuSurfaceGetHeight(self.handle);
-        }
-    };
 
     pub const Context = struct {
         handle: js.Handle = null_handle,
@@ -773,7 +779,7 @@ pub const gpu = struct {
         array_stride: js.BigUint64,
         step_mode_ptr: js.StringPtr = @tagName(DEFAULT_VERTEX_STEP_MODE).ptr,
         step_mode_len: js.Uint32 = @tagName(DEFAULT_VERTEX_STEP_MODE).len,
-        vertex_attributes_ptr: js.Pointer,
+        vertex_attributes_ptr: js.OpaquePtr,
         vertex_attributes_len: js.Uint32,
 
         const DEFAULT_VERTEX_STEP_MODE: VertexStepMode = .vertex;
@@ -788,7 +794,7 @@ pub const gpu = struct {
     };
 
     pub const VertexState = extern struct {
-        buffers_ptr: js.Pointer,
+        buffers_ptr: js.OpaquePtr,
         buffers_len: js.Uint32,
         module_handle: js.Handle,
 
@@ -862,7 +868,7 @@ pub const gpu = struct {
     };
 
     pub const FragmentState = extern struct {
-        targets_ptr: js.Pointer,
+        targets_ptr: js.OpaquePtr,
         targets_len: js.Uint32,
         module_handle: js.Handle,
 
@@ -1662,6 +1668,8 @@ pub const platform = struct {
     var is_init = false;
     const DEFAULT_MONITOR_SCALE = 1.0;
 
+    pub const DeltaMode = imports.PlatformDeltaMode;
+
     pub fn init() void {
         js.console.assert(!is_init, @src());
         defer is_init = true;
@@ -1679,15 +1687,32 @@ pub const platform = struct {
     }
 
     pub const MouseButton = enum(c_int) {
-        TODO = 0,
+        left = c.GLFW_MOUSE_BUTTON_LEFT,
+        right = c.GLFW_MOUSE_BUTTON_RIGHT,
+        middle = c.GLFW_MOUSE_BUTTON_MIDDLE,
+
+        pub fn fromDOM(code: c_int) @This() {
+            return switch (code) {
+                0 => .left,
+                1 => .middle,
+                2 => .right,
+                else => std.debug.panic("{s}.{s}: unknown code ({d})", .{ @typeName(@This()), @src().fn_name, code }),
+            };
+        }
     };
 
     pub const Action = enum(c_int) {
-        TODO = 0,
+        release = c.GLFW_RELEASE,
+        press = c.GLFW_PRESS,
     };
 
-    pub const Mods = enum(c_int) {
-        TODO = 0,
+    pub const Mod = enum(c_int) {
+        shift = c.GLFW_MOD_SHIFT,
+        control = c.GLFW_MOD_CONTROL,
+        alt = c.GLFW_MOD_ALT,
+        super = c.GLFW_MOD_SUPER,
+        caps_lock = c.GLFW_MOD_CAPS_LOCK,
+        num_lock = c.GLFW_MOD_NUM_LOCK,
     };
 
     pub const Key = blk: {
@@ -1882,21 +1907,16 @@ pub const platform = struct {
     pub var monitorCallback: ?*const fn (*Monitor, c_int) void = null;
 
     pub const Monitor = struct {
-        scale: f32,
+        scale: js.Float32,
 
         pub var primary: @This() = .{ .scale = DEFAULT_MONITOR_SCALE };
 
-        fn init(self: *@This(), window: js.platform.Window) void {
+        fn init(self: *@This(), window: Window) void {
             js.console.assert(js.platform.is_init, @src());
             js.console.assert(window.isInit(), @src());
             self.scale = js.platformWindowGetDevicePixelRatio(window.handle);
         }
     };
-
-    pub fn onMonitor() void {
-        js.console.assert(js.platform.is_init, @src());
-        // TODO: trigger this event from js code
-    }
 
     pub const Cursor = struct {
         const Shape = enum(c_int) {
@@ -1929,6 +1949,7 @@ pub const platform = struct {
         cursor_mode: Cursor.Mode,
         cursor_pos_x: f64 = 0,
         cursor_pos_y: f64 = 0,
+        buttons: std.enums.EnumMap(MouseButton, KeyState) = .initFull(.release),
 
         fn isPointerLock(self: @This()) bool {
             js.console.assert(js.platform.is_init, @src());
@@ -1939,15 +1960,29 @@ pub const platform = struct {
             js.console.assert(js.platform.is_init, @src());
             return self.cursor_mode == .hidden;
         }
+
+        fn press(self: *@This(), button: MouseButton) void {
+            js.console.assert(js.platform.is_init, @src());
+            self.buttons.put(button, .press);
+        }
+
+        fn release(self: *@This(), button: MouseButton) void {
+            js.console.assert(js.platform.is_init, @src());
+            self.buttons.put(button, .release);
+        }
     };
 
     pub const Keyboard = struct {
         key_states: std.enums.EnumMap(Key, KeyState) = .initFull(.release),
 
-        fn getKeyState(self: @This(), key: Key) KeyState {
+        pub fn getKeyState(self: @This(), key: Key) KeyState {
             js.console.assert(js.platform.is_init, @src());
             // TODO: here check for stycky press ?
             return self.key_states.get(key) orelse std.debug.panic("{s}.{s}: unknown Key", .{ @typeName(@This()), @src().fn_name });
+        }
+
+        fn reset(self: *@This()) void {
+            self.key_states = .initFull(.release);
         }
 
         fn getKeyScancode(key: Key) Scancode {
@@ -2077,61 +2112,114 @@ pub const platform = struct {
         pub fn getKeyName(key: Key, scancode: Scancode) [:0]const u8 {
             js.console.assert(js.platform.is_init, @src());
             const input = if (key == .unknown) scancode else getKeyScancode(key);
-            return @tagName(input); // TODO: do we really want the tagName here ?
+            return @tagName(input);
         }
+
+        pub fn isShiftPressed(self: @This()) bool {
+            js.console.assert(js.platform.is_init, @src());
+            return self.getKeyState(.left_shift) != .release or self.getKeyState(.right_shift) != .release;
+        }
+
+        pub fn isControlPressed(self: @This()) bool {
+            js.console.assert(js.platform.is_init, @src());
+            return self.getKeyState(.left_control) != .release or self.getKeyState(.right_control) != .release;
+        }
+
+        pub fn isAltPressed(self: @This()) bool {
+            js.console.assert(js.platform.is_init, @src());
+            return self.getKeyState(.left_alt) != .release or self.getKeyState(.right_alt) != .release;
+        }
+
+        pub fn isSuperPressed(self: @This()) bool {
+            js.console.assert(js.platform.is_init, @src());
+            return self.getKeyState(.left_super) != .release or self.getKeyState(.right_super) != .release;
+        }
+
+        pub fn computeModifierBits(self: @This()) c_int {
+            js.console.assert(js.platform.is_init, @src());
+            var bits: c_int = 0;
+            if (self.isShiftPressed()) bits |= @backingInt(Mod.shift);
+            if (self.isControlPressed()) bits |= @backingInt(Mod.control);
+            if (self.isAltPressed()) bits |= @backingInt(Mod.alt);
+            if (self.isSuperPressed()) bits |= @backingInt(Mod.super);
+
+            // TODO: need to implement our own event callback... to call e.getModifierState("CapsLock") and e.getModifierState("NumLock")
+            //  if(iKeyboardEvent && fInputModeLockKeyMods) {
+            //    if(toCBool(iKeyboardEvent->capsLockKey))
+            //      bits |= GLFW_MOD_CAPS_LOCK;
+            //    if(toCBool(iKeyboardEvent->numLockKey))
+            //      bits |= GLFW_MOD_NUM_LOCK;
+            //  }
+
+            return bits;
+        }
+    };
+
+    const Viewport = struct {
+        width: js.Uint32,
+        height: js.Uint32,
+        left: js.Uint32,
+        top: js.Uint32,
     };
 
     pub const Window = struct {
         pub const Event = enum(u32) {
             resize,
-        };
-
-        pub const Config = struct {
-            scale_framebuffer: bool,
-            scale_to_monitor: bool,
+            focus,
+            blur,
+            keydown,
+            keyup,
         };
 
         handle: js.Handle,
+        canvas: Canvas,
 
         resizeCallback: ?*const fn () void,
-        focusCallback: ?*const fn (*@This(), bool) void,
-        cursorposCallback: ?*const fn (*@This(), f64, f64) void,
-        cursorenterCallback: ?*const fn (*@This(), bool) void,
-        mousebuttonCallback: ?*const fn (*@This(), MouseButton, Action, Mods) void,
-        scrollCallback: ?*const fn (*@This(), f64, f64) void,
-        keyCallback: ?*const fn (*@This(), Key, i32, Action, Mods) void,
-        charCallback: ?*const fn (*@This(), u32) void,
+        focusCallback: ?*const fn () void,
+        blurCallback: ?*const fn () void,
+        keydownCallback: ?*const fn (js.Uint32) void,
+        keyupCallback: ?*const fn () void,
 
         mouse: Mouse,
         keyboard: Keyboard,
 
         focused: bool,
-        config: Config,
-        monitor_scale: f32,
+        monitor_scale: js.Float32,
 
-        width: js.Uint32,
-        height: js.Uint32,
-        framebuffer_width: js.Uint32,
-        framebuffer_height: js.Uint32,
-
-        pub fn init(width_f: f32, height_f: f32, monitor: *js.platform.Monitor) @This() {
+        pub fn init(canvas_width_f: f32, canvas_height_f: f32, monitor: *js.platform.Monitor) @This() {
             js.console.assert(js.platform.is_init, @src());
             const handle = js.platformGetWindow();
             js.console.assert(handle != null_handle, @src());
-            const width = std.math.lossyCast(js.Uint32, width_f);
-            const height = std.math.lossyCast(js.Uint32, height_f);
-            js.console.assert(width > 0, @src());
-            js.console.assert(height > 0, @src());
+            const canvas_width = std.math.lossyCast(js.Uint32, canvas_width_f);
+            const canvas_height = std.math.lossyCast(js.Uint32, canvas_height_f);
+            js.console.assert(canvas_width > 0, @src());
+            js.console.assert(canvas_height > 0, @src());
+            const canvas_handle = js.platformWindowGetCanvas(handle);
+            js.console.assert(canvas_handle != null_handle, @src());
             var self: @This() = .{
                 .handle = handle,
+                .canvas = .{
+                    .handle = canvas_handle,
+                    .mouseupCallback = null,
+                    .mousedownCallback = null,
+                    .mousemoveCallback = null,
+                    .mouseenterCallback = null,
+                    .mouseleaveCallback = null,
+                    .wheelCallback = null,
+                    .width = canvas_width,
+                    .height = canvas_height,
+                    .viewport = .{
+                        .width = js.platformCanvasGetBoundingClientRectWidth(canvas_handle),
+                        .height = js.platformCanvasGetBoundingClientRectHeight(canvas_handle),
+                        .left = js.platformCanvasGetBoundingClientRectLeft(canvas_handle),
+                        .top = js.platformCanvasGetBoundingClientRectTop(canvas_handle),
+                    },
+                },
                 .resizeCallback = null,
                 .focusCallback = null,
-                .cursorposCallback = null,
-                .cursorenterCallback = null,
-                .mousebuttonCallback = null,
-                .scrollCallback = null,
-                .keyCallback = null,
-                .charCallback = null,
+                .blurCallback = null,
+                .keydownCallback = null,
+                .keyupCallback = null,
                 .mouse = .{
                     .cursor = &.default,
                     .visible_cursor = &.default,
@@ -2139,22 +2227,11 @@ pub const platform = struct {
                 },
                 .keyboard = .{},
                 .focused = true,
-                .config = .{
-                    .scale_to_monitor = false,
-                    .scale_framebuffer = true,
-                },
                 .monitor_scale = DEFAULT_MONITOR_SCALE,
-                .width = width,
-                .height = height,
-                .framebuffer_width = width,
-                .framebuffer_height = height,
             };
             monitor.init(self);
             self.monitor_scale = monitor.scale;
-            if (self.isHiDPIAware()) {
-                self.framebuffer_width = std.math.lossyCast(u32, std.math.lossyCast(f32, width) * monitor.scale);
-                self.framebuffer_height = std.math.lossyCast(u32, std.math.lossyCast(f32, height) * monitor.scale);
-            }
+            self.canvas.resize(self.canvas.width, self.canvas.height);
             return self;
         }
 
@@ -2162,58 +2239,72 @@ pub const platform = struct {
             return self.handle != null_handle;
         }
 
-        pub fn onFocus(self: @This()) void {
+        //pub fn onKey(self: @This()) void {
+        //    js.console.assert(js.platform.is_init, @src());
+        //    js.console.assert(self.isInit(), @src());
+        //    // TODO: trigger this event from js code
+        //}
+
+        fn getCodepointFromKeyboardEvent(self: @This()) js.Uint32 {
             js.console.assert(js.platform.is_init, @src());
             js.console.assert(self.isInit(), @src());
-            // TODO: trigger this event from js code
+            return js.platformWindowKeyboardEventGetCodepoint(self.handle);
         }
 
-        pub fn onCursorPos(self: @This()) void {
+        fn onResize(self: @This()) void {
             js.console.assert(js.platform.is_init, @src());
             js.console.assert(self.isInit(), @src());
-            // TODO: trigger this event from js code
+            if (self.resizeCallback) |cb| cb();
         }
 
-        pub fn onCursorEnter(self: @This()) void {
+        fn onFocus(self: *@This()) void {
             js.console.assert(js.platform.is_init, @src());
             js.console.assert(self.isInit(), @src());
-            // TODO: trigger this event from js code
+            if (self.focusCallback) |cb| {
+                self.focused = true;
+                cb();
+            }
         }
 
-        pub fn onMouseButton(self: @This()) void {
+        fn onBlur(self: *@This()) void {
             js.console.assert(js.platform.is_init, @src());
             js.console.assert(self.isInit(), @src());
-            // TODO: trigger this event from js code
+            if (self.blurCallback) |cb| {
+                self.focused = false;
+                self.keyboard.reset();
+                cb();
+            }
         }
 
-        pub fn onScroll(self: @This()) void {
+        fn onKeyDown(self: @This()) void {
             js.console.assert(js.platform.is_init, @src());
             js.console.assert(self.isInit(), @src());
-            // TODO: trigger this event from js code
+            if (self.keydownCallback) |cb| {
+                const code_point = self.getCodepointFromKeyboardEvent();
+                cb(code_point);
+            }
         }
 
-        pub fn onKey(self: @This()) void {
+        fn onKeyUp(self: @This()) void {
             js.console.assert(js.platform.is_init, @src());
             js.console.assert(self.isInit(), @src());
-            // TODO: trigger this event from js code
+            if (self.keyupCallback) |cb| cb();
         }
 
-        pub fn onChar(self: @This()) void {
-            js.console.assert(js.platform.is_init, @src());
-            js.console.assert(self.isInit(), @src());
-            // TODO: trigger this event from js code
-        }
-
-        pub fn onEvent(self: @This(), event_type: js.String) void {
+        pub fn onEvent(self: *@This(), event_type: js.String) void {
             js.console.assert(js.platform.is_init, @src());
             js.console.assert(self.isInit(), @src());
             defer allocator.free(std.mem.span(event_type)); // Allocated into jsPlatformWindowListenEvent
             switch (std.meta.stringToEnum(js.platform.Window.Event, std.mem.span(event_type)) orelse std.debug.panic("{s}: Unknown js.platform.Window.Event: {s}", .{ @src().fn_name, event_type })) {
-                .resize => if (self.resizeCallback) |cb| cb(),
+                .resize => self.onResize(),
+                .focus => self.onFocus(),
+                .blur => self.onBlur(),
+                .keydown => self.onKeyDown(),
+                .keyup => self.onKeyUp(),
             }
         }
 
-        pub fn listenEvent(self: *@This(), comptime event: js.platform.Window.Event, callback: @TypeOf(@field(self.*, @tagName(event) ++ "Callback"))) void {
+        pub fn listenEvent(self: *@This(), comptime event: Event, callback: @TypeOf(@field(self.*, @tagName(event) ++ "Callback"))) void {
             js.console.assert(js.platform.is_init, @src());
             js.console.assert(self.isInit(), @src());
             js.platformWindowListenEvent(self.handle, @tagName(event).ptr, @tagName(event).len);
@@ -2234,26 +2325,6 @@ pub const platform = struct {
             js.console.assert(js.platform.is_init, @src());
             js.console.assert(self.isInit(), @src());
             return self.keyboard.getKeyState(key);
-        }
-
-        pub fn isHiDPIAware(self: @This()) bool {
-            js.console.assert(js.platform.is_init, @src());
-            js.console.assert(self.isInit(), @src());
-            return self.config.scale_framebuffer or self.config.scale_to_monitor;
-        }
-
-        pub fn getGpuSurface(self: @This()) js.gpu.Surface {
-            js.console.assert(js.platform.is_init, @src());
-            js.console.assert(self.isInit(), @src());
-            const handle = js.platformWindowGetGpuSurface(self.handle);
-            js.console.assert(handle != null_handle, @src());
-            var surface: js.gpu.Surface = .{
-                .handle = handle,
-                .width = undefined,
-                .height = undefined,
-            };
-            surface.resize(self.width, self.height);
-            return surface;
         }
 
         pub fn getGpuInstance(self: @This()) js.gpu.Instance {
@@ -2296,6 +2367,167 @@ pub const platform = struct {
             js.console.assert(js.platform.is_init, @src());
             _ = self;
             // TODO: trigger this event from js code
+        }
+    };
+
+    pub const Canvas = struct {
+        pub const Event = enum(u32) {
+            mouseup,
+            mousedown,
+            mousemove,
+            mouseenter,
+            mouseleave,
+            wheel,
+        };
+
+        mouseupCallback: ?*const fn (js.platform.MouseButton, js.Uint32, js.Uint32) void,
+        mousedownCallback: ?*const fn (js.platform.MouseButton, js.Uint32, js.Uint32) void,
+        mousemoveCallback: ?*const fn (js.Uint32, js.Uint32) void,
+        mouseenterCallback: ?*const fn () void,
+        mouseleaveCallback: ?*const fn () void,
+        wheelCallback: ?*const fn (js.Float32, js.Float32) void,
+
+        handle: js.Handle = null_handle,
+        viewport: Viewport,
+        width: js.Uint32,
+        height: js.Uint32,
+
+        pub fn isInit(self: @This()) bool {
+            return self.handle != null_handle;
+        }
+
+        pub fn getGpuContext(self: @This()) js.gpu.Context {
+            js.console.assert(js.platform.is_init, @src());
+            js.console.assert(self.isInit(), @src());
+            return .init(js.platformCanvasGetGpuContext(self.handle));
+        }
+
+        fn resize(self: *@This(), width: js.Uint32, height: js.Uint32) void {
+            js.console.assert(js.platform.is_init, @src());
+            js.console.assert(self.isInit(), @src());
+            js.platformCanvasResize(self.handle, width, height);
+        }
+
+        pub fn syncSize(self: *@This()) void {
+            js.console.assert(js.platform.is_init, @src());
+            js.console.assert(self.isInit(), @src());
+            self.viewport.width = js.platformCanvasGetBoundingClientRectWidth(self.handle);
+            self.viewport.height = js.platformCanvasGetBoundingClientRectHeight(self.handle);
+            self.viewport.left = js.platformCanvasGetBoundingClientRectLeft(self.handle);
+            self.viewport.top = js.platformCanvasGetBoundingClientRectTop(self.handle);
+        }
+
+        fn getButtonFromMouseButtonEvent(self: @This()) c_int {
+            js.console.assert(js.platform.is_init, @src());
+            js.console.assert(self.isInit(), @src());
+            return @intCast(js.platformCanvasMouseButtonEventGetButton(self.handle));
+        }
+
+        fn getClientXFromMouseMoveEvent(self: @This()) js.Uint32 {
+            js.console.assert(js.platform.is_init, @src());
+            js.console.assert(self.isInit(), @src());
+            return js.platformCanvasMouseMoveEventGetClientX(self.handle);
+        }
+
+        fn getClientYFromMouseMoveEvent(self: @This()) js.Uint32 {
+            js.console.assert(js.platform.is_init, @src());
+            js.console.assert(self.isInit(), @src());
+            return js.platformCanvasMouseMoveEventGetClientY(self.handle);
+        }
+
+        fn getDeltaModeFromWheelEvent(self: @This()) DeltaMode {
+            js.console.assert(js.platform.is_init, @src());
+            js.console.assert(self.isInit(), @src());
+            return js.platformCanvasWheelEventGetDeltaMode(self.handle);
+        }
+
+        fn getDeltaXFromWheelEvent(self: @This()) js.Float32 {
+            js.console.assert(js.platform.is_init, @src());
+            js.console.assert(self.isInit(), @src());
+            return js.platformCanvasWheelEventGetDeltaX(self.handle);
+        }
+
+        fn getDeltaYFromWheelEvent(self: @This()) js.Float32 {
+            js.console.assert(js.platform.is_init, @src());
+            js.console.assert(self.isInit(), @src());
+            return js.platformCanvasWheelEventGetDeltaY(self.handle);
+        }
+
+        fn onMouseUp(self: *@This(), window: *Window, client_x: js.Uint32, client_y: js.Uint32) void {
+            js.console.assert(js.platform.is_init, @src());
+            js.console.assert(self.isInit(), @src());
+            if (self.mouseupCallback) |cb| {
+                const button: MouseButton = .fromDOM(self.getButtonFromMouseButtonEvent());
+                window.mouse.release(button);
+                cb(button, client_x, client_y);
+            }
+        }
+
+        fn onMouseDown(self: *@This(), window: *Window, client_x: js.Uint32, client_y: js.Uint32) void {
+            js.console.assert(js.platform.is_init, @src());
+            js.console.assert(self.isInit(), @src());
+            if (self.mousedownCallback) |cb| {
+                const button: MouseButton = .fromDOM(self.getButtonFromMouseButtonEvent());
+                window.mouse.press(button);
+                window.onFocus();
+                cb(button, client_x, client_y);
+            }
+        }
+
+        fn onMouseMove(self: @This(), client_x: js.Uint32, client_y: js.Uint32) void {
+            js.console.assert(js.platform.is_init, @src());
+            js.console.assert(self.isInit(), @src());
+            if (self.mousemoveCallback) |cb| cb(client_x, client_y);
+        }
+
+        fn onMouseEnter(self: @This()) void {
+            js.console.assert(js.platform.is_init, @src());
+            js.console.assert(self.isInit(), @src());
+            if (self.mouseenterCallback) |cb| cb();
+        }
+
+        fn onMouseLeave(self: @This()) void {
+            js.console.assert(js.platform.is_init, @src());
+            js.console.assert(self.isInit(), @src());
+            if (self.mouseleaveCallback) |cb| cb();
+        }
+
+        fn onWheel(self: @This()) void {
+            js.console.assert(js.platform.is_init, @src());
+            js.console.assert(self.isInit(), @src());
+            if (self.wheelCallback) |cb| {
+                const multiplier: f32 = switch (self.getDeltaModeFromWheelEvent()) {
+                    .pixel => -0.01,
+                    .line => -1.0 / 3.0,
+                    .page => -80.0,
+                };
+                const delta_x = self.getDeltaXFromWheelEvent();
+                const delta_y = self.getDeltaYFromWheelEvent();
+                cb(delta_x * multiplier, delta_y * multiplier);
+            }
+        }
+
+        pub fn onEvent(self: *@This(), window: *Window, event_type: js.String) void {
+            js.console.assert(js.platform.is_init, @src());
+            js.console.assert(self.isInit(), @src());
+            defer allocator.free(std.mem.span(event_type)); // Allocated into jsPlatformCanvasListenEvent
+            const client_x = self.getClientXFromMouseMoveEvent();
+            const client_y = self.getClientYFromMouseMoveEvent();
+            switch (std.meta.stringToEnum(js.platform.Canvas.Event, std.mem.span(event_type)) orelse std.debug.panic("{s}: Unknown js.platform.Canvas.Event: {s}", .{ @src().fn_name, event_type })) {
+                .mouseup => self.onMouseUp(window, client_x, client_y),
+                .mousedown => self.onMouseDown(window, client_x, client_y),
+                .mousemove => self.onMouseMove(client_x, client_y),
+                .mouseenter => self.onMouseEnter(),
+                .mouseleave => self.onMouseLeave(),
+                .wheel => self.onWheel(),
+            }
+        }
+
+        pub fn listenEvent(self: *@This(), comptime event: Event, callback: @TypeOf(@field(self.*, @tagName(event) ++ "Callback"))) void {
+            js.console.assert(js.platform.is_init, @src());
+            js.console.assert(self.isInit(), @src());
+            js.platformCanvasListenEvent(self.handle, @tagName(event).ptr, @tagName(event).len);
+            @field(self.*, @tagName(event) ++ "Callback") = callback;
         }
     };
 

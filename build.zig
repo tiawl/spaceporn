@@ -42,6 +42,7 @@ const Root = struct {
     spirv_headers_dep: *std.Build.Dependency,
     spirv_tools_dep: *std.Build.Dependency,
     dawn_dep: *std.Build.Dependency,
+    binaryen_dep: *std.Build.Dependency,
 };
 
 fn run(root: *Root, argv: []const []const u8, cwd: std.process.Child.Cwd) ![]u8 {
@@ -322,10 +323,26 @@ fn buildLogModule(root: *Root, ffi_imports_mod: *std.Build.Module, pages_build: 
     });
 }
 
+fn buildUIModule(root: *Root, cimgui_mod: *std.Build.Module, options_mod: *std.Build.Module, pages_build: bool) *std.Build.Module {
+    return root.builder.createModule(.{
+        .root_source_file = root.builder.path(root.builder.pathResolve(&.{ "src", "ui.zig" })),
+        .target = if (pages_build) root.pages.target else root.native.target,
+        .optimize = if (pages_build) root.pages.mode else root.native.mode,
+        .link_libc = false,
+        .link_libcpp = false,
+        .single_threaded = pages_build,
+        .imports = &.{
+            .{ .name = "build", .module = options_mod },
+            .{ .name = "c", .module = cimgui_mod },
+        },
+    });
+}
+
 fn buildNativeExecutable(root: *Root, options_mod: *std.Build.Module) !*std.Build.Step.Compile {
     const cimgui_mod = buildNativeCImGuiModule(root);
     const log_mod = buildLogModule(root, root.builder.createModule(.{ .root_source_file = root.builder.addWriteFiles().add("dummy.zig", "") }), false);
     const prototypes_mod = try buildPrototypesModule(root, log_mod, cimgui_mod);
+    const ui_mod = buildUIModule(root, cimgui_mod, options_mod, false);
 
     const native_mod = root.builder.createModule(.{
         .root_source_file = root.builder.path(root.builder.pathResolve(&.{ "src", "native.zig" })),
@@ -336,6 +353,7 @@ fn buildNativeExecutable(root: *Root, options_mod: *std.Build.Module) !*std.Buil
             .{ .name = "c", .module = cimgui_mod },
             .{ .name = "prototypes", .module = prototypes_mod },
             .{ .name = "log", .module = log_mod },
+            .{ .name = "ui", .module = ui_mod },
         },
     });
 
@@ -658,7 +676,6 @@ fn buildWASMCImGuiModule(root: *Root, op_lib: *std.Build.Step.Compile, trace_lib
 
 fn buildSPIRVToolsLibrary(root: *Root) !*std.Build.Step.Compile {
     const spirv_tools_mod = root.builder.createModule(.{
-        .root_source_file = root.builder.addWriteFiles().add("dummy.zig", ""),
         .target = root.native.target,
         .optimize = root.native.mode,
         .link_libc = true,
@@ -672,51 +689,55 @@ fn buildSPIRVToolsLibrary(root: *Root) !*std.Build.Step.Compile {
     });
     root.builder.installArtifact(spirv_tools_lib);
 
+    const spirv_tools_builder = root.spirv_tools_dep.builder;
+    const spirv_headers_builder = root.spirv_headers_dep.builder;
+    const mimalloc_builder = root.mimalloc_dep.builder;
+
     const python3 = root.builder.findProgram(.{ .names = &.{"python3"} }) orelse return error.ProgramNotFound;
 
     const build_version_inc_cmd = root.builder.addSystemCommand(&.{python3});
-    build_version_inc_cmd.addFileArg2(root.spirv_tools_dep.builder.path(root.spirv_tools_dep.builder.pathResolve(&.{ "utils", "update_build_version.py" })), .{});
-    build_version_inc_cmd.addFileArg2(root.spirv_tools_dep.builder.path("CHANGES"), .{});
-    build_version_inc_cmd.addFileArg2(root.spirv_tools_dep.builder.path(root.spirv_tools_dep.builder.pathResolve(&.{ "build", "build-version.inc" })), .{});
-    build_version_inc_cmd.setCwd(root.spirv_tools_dep.builder.path(root.spirv_tools_dep.builder.pathResolve(&.{ "build", "source" })));
+    build_version_inc_cmd.addFileArg2(spirv_tools_builder.path(spirv_tools_builder.pathResolve(&.{ "utils", "update_build_version.py" })), .{});
+    build_version_inc_cmd.addFileArg2(spirv_tools_builder.path("CHANGES"), .{});
+    build_version_inc_cmd.addFileArg2(spirv_tools_builder.path(spirv_tools_builder.pathResolve(&.{ "build", "build-version.inc" })), .{});
+    build_version_inc_cmd.setCwd(spirv_tools_builder.path(spirv_tools_builder.pathResolve(&.{ "build", "source" })));
     spirv_tools_lib.step.dependOn(&build_version_inc_cmd.step);
 
     const ggt_cmd = root.builder.addSystemCommand(&.{python3});
-    ggt_cmd.addFileArg2(root.spirv_tools_dep.builder.path(root.spirv_tools_dep.builder.pathResolve(&.{ "utils", "ggt.py" })), .{});
-    ggt_cmd.addFileArg2(root.spirv_tools_dep.builder.path("core_tables_body.inc"), .{ .prefix = "--core-tables-body-output=" });
-    ggt_cmd.addFileArg2(root.spirv_tools_dep.builder.path("core_tables_header.inc"), .{ .prefix = "--core-tables-header-output=" });
-    ggt_cmd.addFileArg2(root.spirv_headers_dep.builder.path(root.spirv_headers_dep.builder.pathResolve(&.{ "include", "spirv", "unified1", "spirv.core.grammar.json" })), .{ .prefix = "--spirv-core-grammar=" });
-    ggt_cmd.addFileArg2(root.spirv_headers_dep.builder.path(root.spirv_headers_dep.builder.pathResolve(&.{ "include", "spirv", "unified1", "extinst.glsl.std.450.grammar.json" })), .{ .prefix = "--extinst=," });
-    ggt_cmd.addFileArg2(root.spirv_headers_dep.builder.path(root.spirv_headers_dep.builder.pathResolve(&.{ "include", "spirv", "unified1", "extinst.opencl.std.100.grammar.json" })), .{ .prefix = "--extinst=," });
-    ggt_cmd.addFileArg2(root.spirv_headers_dep.builder.path(root.spirv_headers_dep.builder.pathResolve(&.{ "include", "spirv", "unified1", "extinst.opencl.debuginfo.100.grammar.json" })), .{ .prefix = "--extinst=CLDEBUG100_," });
-    ggt_cmd.addFileArg2(root.spirv_headers_dep.builder.path(root.spirv_headers_dep.builder.pathResolve(&.{ "include", "spirv", "unified1", "extinst.nonsemantic.shader.debuginfo.100.grammar.json" })), .{ .prefix = "--extinst=SHDEBUG100_," });
-    ggt_cmd.addFileArg2(root.spirv_headers_dep.builder.path(root.spirv_headers_dep.builder.pathResolve(&.{ "include", "spirv", "unified1", "extinst.spv-amd-shader-explicit-vertex-parameter.grammar.json" })), .{ .prefix = "--extinst=," });
-    ggt_cmd.addFileArg2(root.spirv_headers_dep.builder.path(root.spirv_headers_dep.builder.pathResolve(&.{ "include", "spirv", "unified1", "extinst.spv-amd-shader-trinary-minmax.grammar.json" })), .{ .prefix = "--extinst=," });
-    ggt_cmd.addFileArg2(root.spirv_headers_dep.builder.path(root.spirv_headers_dep.builder.pathResolve(&.{ "include", "spirv", "unified1", "extinst.spv-amd-gcn-shader.grammar.json" })), .{ .prefix = "--extinst=," });
-    ggt_cmd.addFileArg2(root.spirv_headers_dep.builder.path(root.spirv_headers_dep.builder.pathResolve(&.{ "include", "spirv", "unified1", "extinst.spv-amd-shader-ballot.grammar.json" })), .{ .prefix = "--extinst=," });
-    ggt_cmd.addFileArg2(root.spirv_headers_dep.builder.path(root.spirv_headers_dep.builder.pathResolve(&.{ "include", "spirv", "unified1", "extinst.debuginfo.grammar.json" })), .{ .prefix = "--extinst=," });
-    ggt_cmd.addFileArg2(root.spirv_headers_dep.builder.path(root.spirv_headers_dep.builder.pathResolve(&.{ "include", "spirv", "unified1", "extinst.nonsemantic.clspvreflection.grammar.json" })), .{ .prefix = "--extinst=," });
-    ggt_cmd.addFileArg2(root.spirv_headers_dep.builder.path(root.spirv_headers_dep.builder.pathResolve(&.{ "include", "spirv", "unified1", "extinst.nonsemantic.vkspreflection.grammar.json" })), .{ .prefix = "--extinst=," });
-    ggt_cmd.addFileArg2(root.spirv_headers_dep.builder.path(root.spirv_headers_dep.builder.pathResolve(&.{ "include", "spirv", "unified1", "extinst.tosa.001000.1.grammar.json" })), .{ .prefix = "--extinst=TOSA_," });
-    ggt_cmd.addFileArg2(root.spirv_headers_dep.builder.path(root.spirv_headers_dep.builder.pathResolve(&.{ "include", "spirv", "unified1", "extinst.arm.motion-engine.100.grammar.json" })), .{ .prefix = "--extinst=," });
-    ggt_cmd.setCwd(root.spirv_tools_dep.builder.path(root.spirv_tools_dep.builder.pathResolve(&.{ "build", "source" })));
+    ggt_cmd.addFileArg2(spirv_tools_builder.path(spirv_tools_builder.pathResolve(&.{ "utils", "ggt.py" })), .{});
+    ggt_cmd.addFileArg2(spirv_tools_builder.path("core_tables_body.inc"), .{ .prefix = "--core-tables-body-output=" });
+    ggt_cmd.addFileArg2(spirv_tools_builder.path("core_tables_header.inc"), .{ .prefix = "--core-tables-header-output=" });
+    ggt_cmd.addFileArg2(spirv_headers_builder.path(spirv_headers_builder.pathResolve(&.{ "include", "spirv", "unified1", "spirv.core.grammar.json" })), .{ .prefix = "--spirv-core-grammar=" });
+    ggt_cmd.addFileArg2(spirv_headers_builder.path(spirv_headers_builder.pathResolve(&.{ "include", "spirv", "unified1", "extinst.glsl.std.450.grammar.json" })), .{ .prefix = "--extinst=," });
+    ggt_cmd.addFileArg2(spirv_headers_builder.path(spirv_headers_builder.pathResolve(&.{ "include", "spirv", "unified1", "extinst.opencl.std.100.grammar.json" })), .{ .prefix = "--extinst=," });
+    ggt_cmd.addFileArg2(spirv_headers_builder.path(spirv_headers_builder.pathResolve(&.{ "include", "spirv", "unified1", "extinst.opencl.debuginfo.100.grammar.json" })), .{ .prefix = "--extinst=CLDEBUG100_," });
+    ggt_cmd.addFileArg2(spirv_headers_builder.path(spirv_headers_builder.pathResolve(&.{ "include", "spirv", "unified1", "extinst.nonsemantic.shader.debuginfo.100.grammar.json" })), .{ .prefix = "--extinst=SHDEBUG100_," });
+    ggt_cmd.addFileArg2(spirv_headers_builder.path(spirv_headers_builder.pathResolve(&.{ "include", "spirv", "unified1", "extinst.spv-amd-shader-explicit-vertex-parameter.grammar.json" })), .{ .prefix = "--extinst=," });
+    ggt_cmd.addFileArg2(spirv_headers_builder.path(spirv_headers_builder.pathResolve(&.{ "include", "spirv", "unified1", "extinst.spv-amd-shader-trinary-minmax.grammar.json" })), .{ .prefix = "--extinst=," });
+    ggt_cmd.addFileArg2(spirv_headers_builder.path(spirv_headers_builder.pathResolve(&.{ "include", "spirv", "unified1", "extinst.spv-amd-gcn-shader.grammar.json" })), .{ .prefix = "--extinst=," });
+    ggt_cmd.addFileArg2(spirv_headers_builder.path(spirv_headers_builder.pathResolve(&.{ "include", "spirv", "unified1", "extinst.spv-amd-shader-ballot.grammar.json" })), .{ .prefix = "--extinst=," });
+    ggt_cmd.addFileArg2(spirv_headers_builder.path(spirv_headers_builder.pathResolve(&.{ "include", "spirv", "unified1", "extinst.debuginfo.grammar.json" })), .{ .prefix = "--extinst=," });
+    ggt_cmd.addFileArg2(spirv_headers_builder.path(spirv_headers_builder.pathResolve(&.{ "include", "spirv", "unified1", "extinst.nonsemantic.clspvreflection.grammar.json" })), .{ .prefix = "--extinst=," });
+    ggt_cmd.addFileArg2(spirv_headers_builder.path(spirv_headers_builder.pathResolve(&.{ "include", "spirv", "unified1", "extinst.nonsemantic.vkspreflection.grammar.json" })), .{ .prefix = "--extinst=," });
+    ggt_cmd.addFileArg2(spirv_headers_builder.path(spirv_headers_builder.pathResolve(&.{ "include", "spirv", "unified1", "extinst.tosa.001000.1.grammar.json" })), .{ .prefix = "--extinst=TOSA_," });
+    ggt_cmd.addFileArg2(spirv_headers_builder.path(spirv_headers_builder.pathResolve(&.{ "include", "spirv", "unified1", "extinst.arm.motion-engine.100.grammar.json" })), .{ .prefix = "--extinst=," });
+    ggt_cmd.setCwd(spirv_tools_builder.path(spirv_tools_builder.pathResolve(&.{ "build", "source" })));
     spirv_tools_lib.step.dependOn(&ggt_cmd.step);
 
     const registry_tables_cmd = root.builder.addSystemCommand(&.{python3});
-    registry_tables_cmd.addFileArg2(root.spirv_tools_dep.builder.path(root.spirv_tools_dep.builder.pathResolve(&.{ "utils", "generate_registry_tables.py" })), .{});
-    registry_tables_cmd.addFileArg2(root.spirv_headers_dep.builder.path(root.spirv_headers_dep.builder.pathResolve(&.{ "include", "spirv", "spir-v.xml" })), .{ .prefix = "--xml=" });
-    registry_tables_cmd.addFileArg2(root.spirv_tools_dep.builder.path(root.spirv_tools_dep.builder.pathResolve(&.{ "build", "generators.inc" })), .{ .prefix = "--generator-output=" });
-    registry_tables_cmd.setCwd(root.spirv_tools_dep.builder.path(root.spirv_tools_dep.builder.pathResolve(&.{ "build", "source" })));
+    registry_tables_cmd.addFileArg2(spirv_tools_builder.path(spirv_tools_builder.pathResolve(&.{ "utils", "generate_registry_tables.py" })), .{});
+    registry_tables_cmd.addFileArg2(spirv_headers_builder.path(spirv_headers_builder.pathResolve(&.{ "include", "spirv", "spir-v.xml" })), .{ .prefix = "--xml=" });
+    registry_tables_cmd.addFileArg2(spirv_tools_builder.path(spirv_tools_builder.pathResolve(&.{ "build", "generators.inc" })), .{ .prefix = "--generator-output=" });
+    registry_tables_cmd.setCwd(spirv_tools_builder.path(spirv_tools_builder.pathResolve(&.{ "build", "source" })));
     spirv_tools_lib.step.dependOn(&registry_tables_cmd.step);
 
-    const spirv_tools_source_dir = try root.spirv_tools_dep.builder.root.root_dir.handle.openDir(root.builder.graph.io, "source", .{ .iterate = true });
+    const spirv_tools_source_dir = try spirv_tools_builder.root.root_dir.handle.openDir(root.builder.graph.io, "source", .{ .iterate = true });
     defer spirv_tools_source_dir.close(root.builder.graph.io);
     var walker = try spirv_tools_source_dir.walk(root.builder.graph.arena);
     {
         defer walker.deinit();
         var is_cpp_source = false;
         while (try walker.next(root.builder.graph.io)) |entry| {
-            const entry_path = root.spirv_tools_dep.builder.pathResolve(&.{ "source", entry.path });
+            const entry_path = spirv_tools_builder.pathResolve(&.{ "source", entry.path });
             switch (entry.kind) {
                 .file => {
                     is_cpp_source = false;
@@ -724,10 +745,10 @@ fn buildSPIRVToolsLibrary(root: *Root) !*std.Build.Step.Compile {
                     if (std.fs.path.dirname(entry.path)) |dirname| {
                         var it = std.fs.path.componentIterator(dirname);
                         if (std.mem.eql(u8, it.first().?.name, "opt") or std.mem.eql(u8, it.first().?.name, "val") or std.mem.eql(u8, it.first().?.name, "util")) {
-                            if (is_cpp_source) spirv_tools_lib.root_module.addCSourceFile(.{ .file = root.spirv_tools_dep.builder.path(entry_path) });
+                            if (is_cpp_source) spirv_tools_lib.root_module.addCSourceFile(.{ .file = spirv_tools_builder.path(entry_path) });
                         }
                     } else if (is_cpp_source) {
-                        spirv_tools_lib.root_module.addCSourceFile(.{ .file = root.spirv_tools_dep.builder.path(entry_path) });
+                        spirv_tools_lib.root_module.addCSourceFile(.{ .file = spirv_tools_builder.path(entry_path) });
                     }
                 },
                 else => {},
@@ -735,29 +756,30 @@ fn buildSPIRVToolsLibrary(root: *Root) !*std.Build.Step.Compile {
         }
     }
 
-    const spirv_tools_build_dir = try root.spirv_tools_dep.builder.root.createDirPathOpen(root.builder.graph.io, "build", .{ .open_options = .{ .iterate = true } });
+    const spirv_tools_build_dir = try spirv_tools_builder.root.createDirPathOpen(root.builder.graph.io, "build", .{ .open_options = .{ .iterate = true } });
     defer spirv_tools_build_dir.close(root.builder.graph.io);
-    try root.spirv_tools_dep.builder.root.createDirPath(root.builder.graph.io, root.spirv_tools_dep.builder.pathResolve(&.{ "build", "source" }));
+    try spirv_tools_builder.root.createDirPath(root.builder.graph.io, spirv_tools_builder.pathResolve(&.{ "build", "source" }));
 
     spirv_tools_lib.root_module.addCSourceFile(.{
-        .file = root.mimalloc_dep.builder.path(root.mimalloc_dep.builder.pathResolve(&.{ "src", "static.c" })),
+        .file = mimalloc_builder.path(mimalloc_builder.pathResolve(&.{ "src", "static.c" })),
         .flags = &.{"-Wno-date-time"},
     });
 
-    spirv_tools_lib.root_module.addIncludePath(root.spirv_tools_dep.builder.path("."));
-    spirv_tools_lib.root_module.addIncludePath(root.spirv_tools_dep.builder.path("build"));
-    spirv_tools_lib.root_module.addIncludePath(root.spirv_tools_dep.builder.path("source"));
-    spirv_tools_lib.root_module.addIncludePath(root.spirv_tools_dep.builder.path("include"));
-    spirv_tools_lib.root_module.addIncludePath(root.spirv_headers_dep.builder.path("."));
-    spirv_tools_lib.root_module.addIncludePath(root.spirv_headers_dep.builder.path("include"));
-    spirv_tools_lib.root_module.addIncludePath(root.spirv_headers_dep.builder.path(root.spirv_headers_dep.builder.pathResolve(&.{ "include", "spirv", "unified1" })));
-    spirv_tools_lib.root_module.addIncludePath(root.mimalloc_dep.builder.path("."));
-    spirv_tools_lib.root_module.addIncludePath(root.mimalloc_dep.builder.path("include"));
+    spirv_tools_lib.root_module.addIncludePath(spirv_tools_builder.path("."));
+    spirv_tools_lib.root_module.addIncludePath(spirv_tools_builder.path("build"));
+    spirv_tools_lib.root_module.addIncludePath(spirv_tools_builder.path("source"));
+    spirv_tools_lib.root_module.addIncludePath(spirv_tools_builder.path("include"));
+    spirv_tools_lib.root_module.addIncludePath(spirv_headers_builder.path("."));
+    spirv_tools_lib.root_module.addIncludePath(spirv_headers_builder.path("include"));
+    spirv_tools_lib.root_module.addIncludePath(spirv_headers_builder.path(spirv_headers_builder.pathResolve(&.{ "include", "spirv", "unified1" })));
+    spirv_tools_lib.root_module.addIncludePath(mimalloc_builder.path("."));
+    spirv_tools_lib.root_module.addIncludePath(mimalloc_builder.path("include"));
 
     return spirv_tools_lib;
 }
 
 fn addTintCSourceFile(root: *Root, tint_mod: *std.Build.Module, filename: []const u8, path: []const u8, flags: []const []const u8) void {
+    const dawn_builder = root.dawn_dep.builder;
     switch (root.native.target.result.os.tag) {
         .windows => if ((std.mem.endsWith(u8, filename, "_linux.cc")) or (std.mem.endsWith(u8, filename, "_posix.cc")) or (std.mem.endsWith(u8, filename, "_mac.cc"))) return,
         .macos => if ((std.mem.endsWith(u8, filename, "_linux.cc")) or (std.mem.endsWith(u8, filename, "_posix.cc")) or (std.mem.endsWith(u8, filename, "_windows.cc"))) return,
@@ -765,13 +787,16 @@ fn addTintCSourceFile(root: *Root, tint_mod: *std.Build.Module, filename: []cons
     }
     if (std.mem.eql(u8, filename, "parse_num.cc")) return;
     if ((std.mem.endsWith(u8, filename, ".cc")) and !(std.mem.endsWith(u8, filename, "_bench.cc")) and !(std.mem.endsWith(u8, filename, "_test.cc"))) {
-        tint_mod.addCSourceFile(.{ .file = root.dawn_dep.builder.path(path), .flags = flags });
+        tint_mod.addCSourceFile(.{ .file = dawn_builder.path(path), .flags = flags });
     }
 }
 
 fn buildTintLibrary(root: *Root) !*std.Build.Step.Compile {
+    const dawn_builder = root.dawn_dep.builder;
+    const spirv_tools_builder = root.spirv_tools_dep.builder;
+    const spirv_headers_builder = root.spirv_headers_dep.builder;
+
     const tint_mod = root.builder.createModule(.{
-        .root_source_file = root.builder.addWriteFiles().add("dummy.zig", ""),
         .target = root.native.target,
         .optimize = root.native.mode,
         .link_libc = true,
@@ -810,14 +835,14 @@ fn buildTintLibrary(root: *Root) !*std.Build.Step.Compile {
         &.{ "src", "tint", "lang", "wgsl" },
         &.{ "src", "tint", "utils" },
     }) |paths| {
-        resolved_path = root.dawn_dep.builder.pathResolve(paths);
-        dir = try root.dawn_dep.builder.root.root_dir.handle.openDir(root.builder.graph.io, resolved_path, .{ .iterate = true });
+        resolved_path = dawn_builder.pathResolve(paths);
+        dir = try dawn_builder.root.root_dir.handle.openDir(root.builder.graph.io, resolved_path, .{ .iterate = true });
         defer dir.close(root.builder.graph.io);
 
         walker = try dir.walk(root.builder.graph.arena);
         defer walker.deinit();
         next_walker_entry: while (try walker.next(root.builder.graph.io)) |entry| {
-            const entry_path = root.dawn_dep.builder.pathResolve(&.{ resolved_path, entry.path });
+            const entry_path = dawn_builder.pathResolve(&.{ resolved_path, entry.path });
             next_skipped_path: for ([_][]const []const u8{
                 &.{ "src", "tint", "lang", "core", "ir", "binary" },
                 &.{ "src", "tint", "lang", "spirv", "writer" },
@@ -840,16 +865,16 @@ fn buildTintLibrary(root: *Root) !*std.Build.Step.Compile {
         }
     }
 
-    tint_mod.addCSourceFile(.{ .file = root.dawn_dep.builder.path(root.dawn_dep.builder.pathResolve(&.{ "src", "tint", "api", "common", "vertex_pulling_config.cc" })), .flags = &flags });
-    tint_mod.addCSourceFile(.{ .file = root.dawn_dep.builder.path(root.dawn_dep.builder.pathResolve(&.{ "src", "tint", "api", "tint.cc" })), .flags = &flags });
+    tint_mod.addCSourceFile(.{ .file = dawn_builder.path(dawn_builder.pathResolve(&.{ "src", "tint", "api", "common", "vertex_pulling_config.cc" })), .flags = &flags });
+    tint_mod.addCSourceFile(.{ .file = dawn_builder.path(dawn_builder.pathResolve(&.{ "src", "tint", "api", "tint.cc" })), .flags = &flags });
 
-    tint_lib.root_module.addIncludePath(root.dawn_dep.builder.path("."));
-    tint_lib.root_module.addIncludePath(root.dawn_dep.builder.path("include"));
-    tint_lib.root_module.addIncludePath(root.spirv_tools_dep.builder.path("."));
-    tint_lib.root_module.addIncludePath(root.spirv_tools_dep.builder.path("build"));
-    tint_lib.root_module.addIncludePath(root.spirv_tools_dep.builder.path("include"));
-    tint_lib.root_module.addIncludePath(root.spirv_headers_dep.builder.path("include"));
-    tint_lib.root_module.addIncludePath(root.spirv_headers_dep.builder.path(root.spirv_headers_dep.builder.pathResolve(&.{ "include", "spirv", "unified1" })));
+    tint_lib.root_module.addIncludePath(dawn_builder.path("."));
+    tint_lib.root_module.addIncludePath(dawn_builder.path("include"));
+    tint_lib.root_module.addIncludePath(spirv_tools_builder.path("."));
+    tint_lib.root_module.addIncludePath(spirv_tools_builder.path("build"));
+    tint_lib.root_module.addIncludePath(spirv_tools_builder.path("include"));
+    tint_lib.root_module.addIncludePath(spirv_headers_builder.path("include"));
+    tint_lib.root_module.addIncludePath(spirv_headers_builder.path(spirv_headers_builder.pathResolve(&.{ "include", "spirv", "unified1" })));
 
     tint_mod.addCSourceFile(.{
         .file = root.spirv2wgsl_dir.addCopyFile(root.builder.path(root.builder.pathResolve(&.{ "src", "c_tint.cpp" })), "c_tint.cpp"),
@@ -863,6 +888,8 @@ fn buildTintLibrary(root: *Root) !*std.Build.Step.Compile {
 }
 
 fn importWGSLShaders(root: *Root, module: *std.Build.Module) !void {
+    const spirv_tools_builder = root.spirv_tools_dep.builder;
+
     var shaders_dir = try root.builder.root.root_dir.handle.openDir(root.builder.graph.io, root.builder.pathResolve(&.{ "src", "shaders" }), .{ .iterate = true });
     defer shaders_dir.close(root.builder.graph.io);
 
@@ -883,7 +910,7 @@ fn importWGSLShaders(root: *Root, module: *std.Build.Module) !void {
     translate_libspirv_and_tint.linkLibrary(spirv_tools_lib);
     translate_libspirv_and_tint.linkLibrary(tint_lib);
 
-    translate_libspirv_and_tint.addIncludePath(root.spirv_tools_dep.builder.path("include"));
+    translate_libspirv_and_tint.addIncludePath(spirv_tools_builder.path("include"));
 
     const spirv2wgsl_mod = root.builder.createModule(.{
         .root_source_file = root.builder.path(root.builder.pathResolve(&.{ "src", "spirv2wgsl.zig" })),
@@ -923,6 +950,117 @@ fn importWGSLShaders(root: *Root, module: *std.Build.Module) !void {
     }
 }
 
+fn buildBinaryenLibrary(root: *Root) !*std.Build.Step.Compile {
+    const binaryen_builder = root.binaryen_dep.builder;
+    const src_path = binaryen_builder.path("src");
+    const fp16_include_path = binaryen_builder.path(binaryen_builder.pathResolve(&.{ "third_party", "FP16", "include" }));
+    const llvmproject_include_path = binaryen_builder.path(binaryen_builder.pathResolve(&.{ "third_party", "llvm-project", "include" }));
+    const flags = [_][]const u8{"-std=c++20"};
+
+    const config_h = root.builder.addConfigHeader(.{
+        .style = .{ .cmake = binaryen_builder.path("config.h.in") },
+        .include_path = "config.h",
+    }, .{
+        .PROJECT_VERSION = "0",
+    });
+
+    const intrinsics_cpp = root.builder.addConfigHeader(.{
+        .style = .{ .cmake = src_path.path(binaryen_builder, binaryen_builder.pathResolve(&.{ "passes", "WasmIntrinsics.cpp.in" })) },
+        .include_path = "WasmIntrinsics.cpp",
+    }, .{
+        .WASM_INTRINSICS_EMBED = "0x00",
+    });
+
+    const binaryen_mod = root.builder.createModule(.{
+        .target = root.native.target,
+        .optimize = root.native.mode,
+        .link_libc = true,
+        .link_libcpp = true,
+    });
+
+    var subdir: std.Io.Dir = undefined;
+    var subdir_it: std.Io.Dir.Iterator = undefined;
+    for ([_][]const u8{
+        binaryen_builder.pathResolve(&.{ "src", "asmjs" }),
+        binaryen_builder.pathResolve(&.{ "src", "ir" }),
+        binaryen_builder.pathResolve(&.{ "src", "parser" }),
+        binaryen_builder.pathResolve(&.{ "src", "passes" }),
+        binaryen_builder.pathResolve(&.{ "src", "support" }),
+        binaryen_builder.pathResolve(&.{ "src", "tools", "fuzzing" }),
+        binaryen_builder.pathResolve(&.{ "src", "wasm" }),
+        binaryen_builder.pathResolve(&.{ "third_party", "llvm-project" }),
+    }) |subdir_path| {
+        subdir = try binaryen_builder.root.root_dir.handle.openDir(root.builder.graph.io, subdir_path, .{ .iterate = true });
+        defer subdir.close(root.builder.graph.io);
+        subdir_it = subdir.iterate();
+
+        while (try subdir_it.next(root.builder.graph.io)) |entry| {
+            if (std.mem.endsWith(u8, entry.name, ".cpp")) {
+                binaryen_mod.addCSourceFile(.{
+                    .file = binaryen_builder.path(binaryen_builder.pathResolve(&.{ subdir_path, entry.name })),
+                    .flags = &flags,
+                });
+            }
+        }
+    }
+
+    for ([_][]const u8{ binaryen_builder.pathResolve(&.{ "analysis", "cfg.cpp" }), "binaryen-c.cpp", binaryen_builder.pathResolve(&.{ "cfg", "Relooper.cpp" }) }) |c_source| {
+        binaryen_mod.addCSourceFile(.{
+            .file = src_path.path(binaryen_builder, c_source),
+            .flags = &flags,
+        });
+    }
+
+    binaryen_mod.addCSourceFiles(.{
+        .files = &.{"WasmIntrinsics.cpp"},
+        .root = intrinsics_cpp.getOutputDir(),
+    });
+
+    binaryen_mod.addIncludePath(src_path);
+    binaryen_mod.addIncludePath(fp16_include_path);
+    binaryen_mod.addIncludePath(llvmproject_include_path);
+    binaryen_mod.addIncludePath(config_h.getOutputDir());
+
+    const binaryen_lib = root.builder.addLibrary(.{
+        .linkage = .static,
+        .name = "WebAssembly.binaryen",
+        .root_module = binaryen_mod,
+    });
+    root.builder.installArtifact(binaryen_lib);
+
+    return binaryen_lib;
+}
+
+fn buildWASMOptExecutable(root: *Root) !*std.Build.Step.Compile {
+    const binaryen_builder = root.binaryen_dep.builder;
+    const src_path = binaryen_builder.path("src");
+    const fp16_include_path = binaryen_builder.path(binaryen_builder.pathResolve(&.{ "third_party", "FP16", "include" }));
+
+    const binaryen_lib = try buildBinaryenLibrary(root);
+
+    const wasm_opt_mod = root.builder.createModule(.{
+        .target = root.native.target,
+        .optimize = root.native.mode,
+        .link_libc = true,
+        .link_libcpp = true,
+    });
+    wasm_opt_mod.linkLibrary(binaryen_lib);
+    wasm_opt_mod.addIncludePath(src_path);
+    wasm_opt_mod.addIncludePath(fp16_include_path);
+    wasm_opt_mod.addIncludePath(src_path.path(binaryen_builder, "tools"));
+    wasm_opt_mod.addCSourceFile(.{
+        .file = src_path.path(binaryen_builder, binaryen_builder.pathResolve(&.{ "tools", "wasm-opt.cpp" })),
+        .flags = &.{"-std=c++20"},
+    });
+
+    const wasm_opt_exe = root.builder.addExecutable(.{
+        .name = "WebAssembly.wasm-opt",
+        .root_module = wasm_opt_mod,
+    });
+
+    return wasm_opt_exe;
+}
+
 fn buildPagesExecutable(root: *Root, options_mod: *std.Build.Module) !*std.Build.Step.Compile {
     const shader_types_mod = buildShaderTypeModule(root);
     const ffi_imports_mod = buildFFIImportsModule(root);
@@ -934,6 +1072,7 @@ fn buildPagesExecutable(root: *Root, options_mod: *std.Build.Module) !*std.Build
     const ffi_mod = buildFFIModule(root, shader_types_mod, log_mod, ffi_imports_mod, options_mod);
     const op_lib = buildOpLibrary(root, trace_lib);
     const cimgui_mod = try buildWASMCImGuiModule(root, op_lib, trace_lib);
+    const ui_mod = buildUIModule(root, cimgui_mod, options_mod, true);
 
     const pages_mod = root.builder.createModule(.{
         .root_source_file = root.builder.path(root.builder.pathResolve(&.{ "src", "pages.zig" })),
@@ -947,6 +1086,7 @@ fn buildPagesExecutable(root: *Root, options_mod: *std.Build.Module) !*std.Build
             .{ .name = "c", .module = cimgui_mod },
             .{ .name = "js", .module = ffi_mod },
             .{ .name = "shader", .module = shader_types_mod },
+            .{ .name = "ui", .module = ui_mod },
         },
     });
 
@@ -970,15 +1110,17 @@ fn buildPagesExecutable(root: *Root, options_mod: *std.Build.Module) !*std.Build
     });
 
     if (root.release_build) {
-        const wasm_opt = root.builder.findProgram(.{ .names = &.{"wasm-opt"} }) orelse return error.ProgramNotFound;
+        const wasm_opt_exe = try buildWASMOptExecutable(root);
+        const wasm_opt_install = root.builder.addInstallArtifact(wasm_opt_exe, .{});
+        root.builder.getInstallStep().dependOn(&wasm_opt_install.step);
 
-        const wasm_opt_run_cmd = root.builder.addSystemCommand(&.{
-            wasm_opt, "--enable-simd", "--enable-bulk-memory", "--enable-nontrapping-float-to-int", "--enable-sign-ext", "-Oz", "-o",
-        });
-        wasm_opt_run_cmd.addFileArg2(install.emitted_bin.?, .{});
-        wasm_opt_run_cmd.addFileArg2(install.emitted_bin.?, .{});
+        const wasm_opt = root.builder.addRunArtifact(wasm_opt_exe);
+        wasm_opt.step.dependOn(&wasm_opt_install.step);
+        wasm_opt.addArgs(&.{ "--enable-simd", "--enable-bulk-memory", "--enable-nontrapping-float-to-int", "--enable-sign-ext", "-Oz", "-o" });
+        wasm_opt.addFileArg2(install.emitted_bin.?, .{});
+        wasm_opt.addFileArg2(install.emitted_bin.?, .{});
 
-        install.step.dependOn(&wasm_opt_run_cmd.step);
+        install.step.dependOn(&wasm_opt.step);
     }
     root.builder.getInstallStep().dependOn(&install.step);
 
@@ -1045,6 +1187,7 @@ pub fn build(builder: *std.Build) !void {
         .spirv_headers_dep = undefined,
         .spirv_tools_dep = undefined,
         .dawn_dep = undefined,
+        .binaryen_dep = undefined,
     };
 
     const options_mod = try buildOptionsModule(&root);
@@ -1056,6 +1199,9 @@ pub fn build(builder: *std.Build) !void {
         if (builder.dependencyLazy("SPIRV-Headers", .{})) |dep| root.spirv_headers_dep = dep else |_| fetched_deps = false;
         if (builder.dependencyLazy("SPIRV-Tools", .{})) |dep| root.spirv_tools_dep = dep else |_| fetched_deps = false;
         if (builder.dependencyLazy("dawn", .{})) |dep| root.dawn_dep = dep else |_| fetched_deps = false;
+        if (root.release_build) {
+            if (builder.dependencyLazy("binaryen", .{})) |dep| root.binaryen_dep = dep else |_| fetched_deps = false;
+        }
         if (fetched_deps) _ = try buildPagesExecutable(&root, options_mod);
     }
 }

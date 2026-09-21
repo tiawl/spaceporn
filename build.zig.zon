@@ -34,6 +34,11 @@
             .hash = "N-V-__8AAOaLDhBmeqPgUZvF2DRv3SIuy-f-Ij_h_hgol_8U",
             .lazy = true,
         },
+        .binaryen = .{
+            .url = "git+https://github.com/WebAssembly/binaryen#d001112229969548b4f2e37444ca687bd3dba9c6",
+            .hash = "N-V-__8AAAgYngKYg-Am05d7X0Dcpb-rRkn6l4QSc6slZn96",
+            .lazy = true,
+        },
     },
     .fingerprint = 0xeeb3c31cc9dd406c,
 }

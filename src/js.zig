@@ -240,6 +240,10 @@ fn platformWindowGetCanvas(window_handle: js.Handle) js.Handle {
     return trace(@src(), .{window_handle});
 }
 
+fn platformWindowGetCrypto(window_handle: js.Handle) js.Handle {
+    return trace(@src(), .{window_handle});
+}
+
 fn platformWindowGetGpuInstance(window_handle: js.Handle) js.Handle {
     return trace(@src(), .{window_handle});
 }
@@ -278,6 +282,10 @@ fn platformCanvasResize(canvas_handle: js.Handle, width: js.Uint32, height: js.U
 
 fn platformCanvasListenEvent(canvas_handle: js.Handle, event_ptr: js.StringPtr, event_len: js.Uint32) void {
     trace(@src(), .{ canvas_handle, event_ptr, event_len });
+}
+
+fn platformCryptoGetRandomValues(crypto_handle: js.Handle, bytes_ptr: js.StringPtr, bytes_len: js.Uint32) void {
+    trace(@src(), .{ crypto_handle, bytes_ptr, bytes_len });
 }
 
 fn platformGetClipboard() js.Handle {
@@ -451,44 +459,44 @@ pub const gpu = struct {
         switch (self) {
             .request_adapter => {
                 js.gpu.Adapter.init();
-                if (js.gpu.Instance.requestAdapterCallback) |cb| cb();
+                if (js.gpu.Instance.singleton.requestAdapterCallback) |cb| cb();
             },
             .request_device => {
                 js.gpu.Device.init();
-                if (js.gpu.Adapter.requestDeviceCallback) |cb| cb();
+                if (js.gpu.Adapter.singleton.requestDeviceCallback) |cb| cb();
             },
             .pop_error_scope => js.gpu.Device.throwErrorScope(),
             .null_handle => |captured| std.debug.panic("{s}: called with {s}", .{ @src().fn_name, @tagName(captured) }),
         }
     }
 
-    pub const Context = struct {
+    const Context = struct {
         handle: js.Handle = null_handle,
 
-        var instance: @This() = .{};
+        var singleton: js.gpu.Context = .{};
 
         fn init(handle: js.Handle) void {
             js.console.assert(handle != null_handle, @src());
-            instance = .{ .handle = handle };
+            singleton = .{ .handle = handle };
         }
 
-        pub fn isInit() bool {
-            return instance.handle != null_handle;
+        fn isInit() bool {
+            return singleton.handle != null_handle;
         }
 
-        pub fn configure(texture_format: TextureFormat) void {
+        fn configure(texture_format: TextureFormat) void {
             js.console.assert(isInit(), @src());
-            js.console.assert(js.gpu.Device.isInit(), @src());
-            if (js.gpu.Device.isInit()) js.gpu.Device.pushErrorScope(.validation);
-            defer if (js.gpu.Device.isInit()) js.gpu.Device.popErrorScope();
-            js.gpuContextConfigure(instance.handle, js.gpu.Device.instance.handle, texture_format.tagName().ptr, texture_format.tagName().len);
+            js.console.assert(js.gpu.device.isInit(), @src());
+            if (js.gpu.device.isInit()) js.gpu.Device.pushErrorScope(.validation);
+            defer if (js.gpu.device.isInit()) js.gpu.Device.popErrorScope();
+            js.gpuContextConfigure(singleton.handle, js.gpu.Device.singleton.handle, texture_format.tagName().ptr, texture_format.tagName().len);
         }
 
-        pub fn getCurrentTexture() Texture {
+        fn getCurrentTexture() Texture {
             js.console.assert(isInit(), @src());
-            if (js.gpu.Device.isInit()) js.gpu.Device.pushErrorScope(.validation);
-            defer if (js.gpu.Device.isInit()) js.gpu.Device.popErrorScope();
-            const texture_handle = js.gpuContextGetCurrentTexture(instance.handle);
+            if (js.gpu.device.isInit()) js.gpu.Device.pushErrorScope(.validation);
+            defer if (js.gpu.device.isInit()) js.gpu.Device.popErrorScope();
+            const texture_handle = js.gpuContextGetCurrentTexture(singleton.handle);
             const texture_width = js.gpuTextureGetWidth(texture_handle);
             const texture_height = js.gpuTextureGetHeight(texture_handle);
             const texture_depth_or_array_layers = js.gpuTextureGetDepthOrArrayLayers(texture_handle);
@@ -503,63 +511,85 @@ pub const gpu = struct {
         }
     };
 
-    pub const Instance = struct {
-        handle: js.Handle = null_handle,
+    pub const context = struct {
+        pub const configure = js.gpu.Context.configure;
+        pub const getCurrentTexture = js.gpu.Context.getCurrentTexture;
+    };
 
-        var instance: @This() = .{};
-        var requestAdapterCallback: ?*const fn () void = null;
+    const Instance = struct {
+        handle: js.Handle = null_handle,
+        requestAdapterCallback: ?*const fn () void = null,
+
+        var singleton: @This() = .{};
 
         fn init(handle: js.Handle) void {
             js.console.assert(handle != null_handle, @src());
-            instance = .{ .handle = handle };
+            singleton = .{ .handle = handle };
         }
 
-        pub fn isInit() bool {
-            return instance.handle != null_handle;
+        fn isInit() bool {
+            return singleton.handle != null_handle;
         }
 
-        pub fn requestAdapter(callback: ?*const fn () void) void {
+        fn requestAdapter(callback: ?*const fn () void) void {
             js.console.assert(isInit(), @src());
-            if (js.gpu.Device.isInit()) js.gpu.Device.pushErrorScope(.validation);
-            defer if (js.gpu.Device.isInit()) js.gpu.Device.popErrorScope();
-            requestAdapterCallback = callback;
-            js.gpuInstanceRequestAdapter(instance.handle, .request_adapter);
+            if (js.gpu.device.isInit()) js.gpu.Device.pushErrorScope(.validation);
+            defer if (js.gpu.device.isInit()) js.gpu.Device.popErrorScope();
+            singleton.requestAdapterCallback = callback;
+            js.gpuInstanceRequestAdapter(singleton.handle, .request_adapter);
         }
 
-        pub fn getPreferredSurfaceFormat() TextureFormat {
+        fn getPreferredSurfaceFormat() TextureFormat {
             js.console.assert(isInit(), @src());
-            if (js.gpu.Device.isInit()) js.gpu.Device.pushErrorScope(.validation);
-            defer if (js.gpu.Device.isInit()) js.gpu.Device.popErrorScope();
-            const str: [:0]const u8 = std.mem.span(js.gpuInstanceGetPreferredSurfaceFormat(instance.handle));
+            if (js.gpu.device.isInit()) js.gpu.Device.pushErrorScope(.validation);
+            defer if (js.gpu.device.isInit()) js.gpu.Device.popErrorScope();
+            const str: [:0]const u8 = std.mem.span(js.gpuInstanceGetPreferredSurfaceFormat(singleton.handle));
             defer gpa.free(str); // Allocated into jsGpuInstanceGetPreferredSurfaceFormat
             return std.meta.stringToEnum(TextureFormat, str) orelse std.debug.panic("Unknown TextureFormat", .{});
         }
     };
 
-    pub const Adapter = struct {
+    pub const instance = struct {
+        pub const isInit = js.gpu.Instance.isInit;
+        pub const requestAdapter = js.gpu.Instance.requestAdapter;
+        pub const getPreferredSurfaceFormat = js.gpu.Instance.getPreferredSurfaceFormat;
+    };
+
+    const Adapter = struct {
         handle: js.Handle = null_handle,
         info: AdapterInfo = .{},
+        requestDeviceCallback: ?*const fn () void = null,
 
-        var instance: @This() = .{};
-        var requestDeviceCallback: ?*const fn () void = null;
+        var singleton: @This() = .{};
 
-        pub fn init() void {
+        fn init() void {
             const handle = js.gpuGetAdapter();
             js.console.assert(handle != null_handle, @src());
-            instance = .{ .handle = handle };
+            singleton = .{ .handle = handle };
         }
 
-        pub fn isInit() bool {
-            return instance.handle != null_handle;
+        fn isInit() bool {
+            return singleton.handle != null_handle;
         }
 
-        pub fn requestDevice(callback: ?*const fn () void) void {
+        fn getInfo() AdapterInfo {
             js.console.assert(isInit(), @src());
-            if (js.gpu.Device.isInit()) js.gpu.Device.pushErrorScope(.validation);
-            defer if (js.gpu.Device.isInit()) js.gpu.Device.popErrorScope();
-            requestDeviceCallback = callback;
-            js.gpuAdapterRequestDevice(instance.handle, .request_device);
+            return singleton.info;
         }
+
+        fn requestDevice(callback: ?*const fn () void) void {
+            js.console.assert(isInit(), @src());
+            if (js.gpu.device.isInit()) js.gpu.Device.pushErrorScope(.validation);
+            defer if (js.gpu.device.isInit()) js.gpu.Device.popErrorScope();
+            singleton.requestDeviceCallback = callback;
+            js.gpuAdapterRequestDevice(singleton.handle, .request_device);
+        }
+    };
+
+    pub const adapter = struct {
+        pub const getInfo = js.gpu.Adapter.getInfo;
+        pub const isInit = js.gpu.Adapter.isInit;
+        pub const requestDevice = js.gpu.Adapter.requestDevice;
     };
 
     pub const AdapterType = enum(js.Uint32) {
@@ -581,57 +611,55 @@ pub const gpu = struct {
         backend_type: BackendType = .WebGPU,
     };
 
-    pub const Device = struct {
+    const Device = struct {
         handle: js.Handle = null_handle,
 
-        var instance: @This() = .{};
+        var singleton: @This() = .{};
 
-        pub fn init() void {
+        fn init() void {
             const handle = js.gpuGetDevice();
             js.console.assert(handle != null_handle, @src());
-            instance = .{
-                .handle = handle,
-            };
+            singleton = .{ .handle = handle };
             pushErrorScope(.validation);
             defer popErrorScope();
             Queue.init(js.gpuDeviceGetQueue(handle));
         }
 
-        pub fn isInit() bool {
-            return instance.handle != null_handle;
+        fn isInit() bool {
+            return singleton.handle != null_handle;
         }
 
-        pub fn createShaderModule(source: []const u8) ShaderModule {
+        fn createShaderModule(source: []const u8) ShaderModule {
             js.console.assert(isInit(), @src());
             pushErrorScope(.validation);
             defer popErrorScope();
-            return ShaderModule.init(js.gpuDeviceCreateShaderModule(instance.handle, source.ptr, source.len));
+            return ShaderModule.init(js.gpuDeviceCreateShaderModule(singleton.handle, source.ptr, source.len));
         }
 
-        pub fn createPipelineLayout(bind_group_layouts: []const BindGroupLayout) PipelineLayout {
+        fn createPipelineLayout(bind_group_layouts: []const BindGroupLayout) PipelineLayout {
             js.console.assert(isInit(), @src());
             pushErrorScope(.validation);
             defer popErrorScope();
             for (bind_group_layouts) |bind_group_layout| js.console.assert(bind_group_layout.isInit(), @src());
-            return PipelineLayout.init(js.gpuDeviceCreatePipelineLayout(instance.handle, @intFromPtr(bind_group_layouts.ptr), bind_group_layouts.len));
+            return PipelineLayout.init(js.gpuDeviceCreatePipelineLayout(singleton.handle, @intFromPtr(bind_group_layouts.ptr), bind_group_layouts.len));
         }
 
-        pub fn createRenderPipeline(pipeline_layout: PipelineLayout, vertex_state: VertexState, fragment_state: FragmentState, primitive_state: PrimitiveState) RenderPipeline {
+        fn createRenderPipeline(pipeline_layout: PipelineLayout, vertex_state: VertexState, fragment_state: FragmentState, primitive_state: PrimitiveState) RenderPipeline {
             js.console.assert(isInit(), @src());
             js.console.assert(pipeline_layout.isInit(), @src());
             pushErrorScope(.validation);
             defer popErrorScope();
-            return RenderPipeline.init(js.gpuDeviceCreateRenderPipeline(instance.handle, pipeline_layout.handle, @intFromPtr(&vertex_state), @intFromPtr(&fragment_state), @intFromPtr(&primitive_state)));
+            return RenderPipeline.init(js.gpuDeviceCreateRenderPipeline(singleton.handle, pipeline_layout.handle, @intFromPtr(&vertex_state), @intFromPtr(&fragment_state), @intFromPtr(&primitive_state)));
         }
 
-        pub fn createCommandEncoder() CommandEncoder {
+        fn createCommandEncoder() CommandEncoder {
             js.console.assert(isInit(), @src());
             pushErrorScope(.validation);
             defer popErrorScope();
-            return CommandEncoder.init(js.gpuDeviceCreateCommandEncoder(instance.handle));
+            return CommandEncoder.init(js.gpuDeviceCreateCommandEncoder(singleton.handle));
         }
 
-        pub fn createTexture(descriptor: TextureDescriptor) Texture {
+        fn createTexture(descriptor: TextureDescriptor) Texture {
             js.console.assert(isInit(), @src());
             pushErrorScope(.validation);
             defer popErrorScope();
@@ -640,7 +668,7 @@ pub const gpu = struct {
             const dimension_ptr = descriptor.dimension_ptr;
             const dimension = std.meta.stringToEnum(TextureDimension, dimension_ptr[0..descriptor.dimension_len]) orelse std.debug.panic("Unknown TextureDimension", .{});
             return Texture.init(
-                js.gpuDeviceCreateTexture(instance.handle, @intFromPtr(&descriptor)),
+                js.gpuDeviceCreateTexture(singleton.handle, @intFromPtr(&descriptor)),
                 descriptor.width,
                 descriptor.height,
                 descriptor.depth_or_array_layers,
@@ -650,50 +678,63 @@ pub const gpu = struct {
             );
         }
 
-        pub fn createBuffer(size: js.Size, usage: js.Flags) Buffer {
+        fn createBuffer(size: js.Size, usage: js.Flags) Buffer {
             js.console.assert(isInit(), @src());
             pushErrorScope(.validation);
             defer popErrorScope();
-            return Buffer.init(js.gpuDeviceCreateBuffer(instance.handle, size, usage));
+            return Buffer.init(js.gpuDeviceCreateBuffer(singleton.handle, size, usage));
         }
 
-        pub fn createBindGroup(bind_group_layout: BindGroupLayout, entries: []const BindGroupEntry) BindGroup {
+        fn createBindGroup(bind_group_layout: BindGroupLayout, entries: []const BindGroupEntry) BindGroup {
             js.console.assert(isInit(), @src());
             js.console.assert(bind_group_layout.isInit(), @src());
             pushErrorScope(.validation);
             defer popErrorScope();
             for (entries) |entry| js.console.assert(entry.isInit(), @src());
-            return BindGroup.init(js.gpuDeviceCreateBindGroup(instance.handle, bind_group_layout.handle, @intFromPtr(entries.ptr), entries.len));
+            return BindGroup.init(js.gpuDeviceCreateBindGroup(singleton.handle, bind_group_layout.handle, @intFromPtr(entries.ptr), entries.len));
         }
 
-        pub fn createBindGroupLayout(entries: []const BindGroupLayoutEntry) BindGroupLayout {
+        fn createBindGroupLayout(entries: []const BindGroupLayoutEntry) BindGroupLayout {
             js.console.assert(isInit(), @src());
             pushErrorScope(.validation);
             defer popErrorScope();
-            return BindGroupLayout.init(js.gpuDeviceCreateBindGroupLayout(instance.handle, @intFromPtr(entries.ptr), entries.len));
+            return BindGroupLayout.init(js.gpuDeviceCreateBindGroupLayout(singleton.handle, @intFromPtr(entries.ptr), entries.len));
         }
 
-        pub fn createSampler(descriptor: SamplerDescriptor) Sampler {
+        fn createSampler(descriptor: SamplerDescriptor) Sampler {
             js.console.assert(isInit(), @src());
             pushErrorScope(.validation);
             defer popErrorScope();
-            return Sampler.init(js.gpuDeviceCreateSampler(instance.handle, @intFromPtr(&descriptor)));
-        }
-
-        fn pushErrorScope(comptime filter: ErrorFilter) void {
-            js.console.assert(isInit(), @src());
-            js.gpuDevicePushErrorScope(instance.handle, @tagName(filter).ptr, @tagName(filter).len);
+            return Sampler.init(js.gpuDeviceCreateSampler(singleton.handle, @intFromPtr(&descriptor)));
         }
 
         fn popErrorScope() void {
             js.console.assert(isInit(), @src());
-            js.gpuDevicePopErrorScope(instance.handle, .pop_error_scope);
+            js.gpuDevicePopErrorScope(singleton.handle, .pop_error_scope);
+        }
+
+        fn pushErrorScope(comptime filter: ErrorFilter) void {
+            js.console.assert(isInit(), @src());
+            js.gpuDevicePushErrorScope(singleton.handle, @tagName(filter).ptr, @tagName(filter).len);
         }
 
         fn throwErrorScope() void {
             js.console.assert(isInit(), @src());
-            js.gpuDeviceThrowErrorScope(instance.handle);
+            js.gpuDeviceThrowErrorScope(singleton.handle);
         }
+    };
+
+    pub const device = struct {
+        pub const createBindGroup = js.gpu.Device.createBindGroup;
+        pub const createBindGroupLayout = js.gpu.Device.createBindGroupLayout;
+        pub const createBuffer = js.gpu.Device.createBuffer;
+        pub const createCommandEncoder = js.gpu.Device.createCommandEncoder;
+        pub const createPipelineLayout = js.gpu.Device.createPipelineLayout;
+        pub const createRenderPipeline = js.gpu.Device.createRenderPipeline;
+        pub const createSampler = js.gpu.Device.createSampler;
+        pub const createShaderModule = js.gpu.Device.createShaderModule;
+        pub const createTexture = js.gpu.Device.createTexture;
+        pub const isInit = js.gpu.Device.isInit;
     };
 
     pub const ErrorFilter = enum(js.Uint32) {
@@ -1136,15 +1177,15 @@ pub const gpu = struct {
         pub fn beginRenderPass(self: @This(), texture_view: TextureView, descriptor: RenderPassDescriptor) RenderPassEncoder {
             js.console.assert(self.isInit(), @src());
             js.console.assert(texture_view.isInit(), @src());
-            if (js.gpu.Device.isInit()) js.gpu.Device.pushErrorScope(.validation);
-            defer if (js.gpu.Device.isInit()) js.gpu.Device.popErrorScope();
+            if (js.gpu.device.isInit()) js.gpu.Device.pushErrorScope(.validation);
+            defer if (js.gpu.device.isInit()) js.gpu.Device.popErrorScope();
             return RenderPassEncoder.init(js.gpuCommandEncoderBeginRenderPass(self.handle, texture_view.handle, @intFromPtr(&descriptor)));
         }
 
         pub fn finish(self: @This()) CommandBuffer {
             js.console.assert(self.isInit(), @src());
-            if (js.gpu.Device.isInit()) js.gpu.Device.pushErrorScope(.validation);
-            defer if (js.gpu.Device.isInit()) js.gpu.Device.popErrorScope();
+            if (js.gpu.device.isInit()) js.gpu.Device.pushErrorScope(.validation);
+            defer if (js.gpu.device.isInit()) js.gpu.Device.popErrorScope();
             return CommandBuffer.init(js.gpuCommandEncoderFinish(self.handle));
         }
     };
@@ -1215,67 +1256,67 @@ pub const gpu = struct {
         pub fn setPipeline(self: @This(), render_pipeline: RenderPipeline) void {
             js.console.assert(self.isInit(), @src());
             js.console.assert(render_pipeline.isInit(), @src());
-            if (js.gpu.Device.isInit()) js.gpu.Device.pushErrorScope(.validation);
-            defer if (js.gpu.Device.isInit()) js.gpu.Device.popErrorScope();
+            if (js.gpu.device.isInit()) js.gpu.Device.pushErrorScope(.validation);
+            defer if (js.gpu.device.isInit()) js.gpu.Device.popErrorScope();
             js.gpuRenderPassEncoderSetPipeline(self.handle, render_pipeline.handle);
         }
 
         pub fn setVertexBuffer(self: @This(), slot: js.Uint32, vertex_buffer: Buffer, offset: js.Offset, size: js.Size) void {
             js.console.assert(self.isInit(), @src());
             js.console.assert(vertex_buffer.isInit(), @src());
-            if (js.gpu.Device.isInit()) js.gpu.Device.pushErrorScope(.validation);
-            defer if (js.gpu.Device.isInit()) js.gpu.Device.popErrorScope();
+            if (js.gpu.device.isInit()) js.gpu.Device.pushErrorScope(.validation);
+            defer if (js.gpu.device.isInit()) js.gpu.Device.popErrorScope();
             js.gpuRenderPassEncoderSetVertexBuffer(self.handle, slot, vertex_buffer.handle, offset, size);
         }
 
         pub fn setIndexBuffer(self: @This(), index_buffer: Buffer, index_format: IndexFormat, offset: js.Offset, size: js.Size) void {
             js.console.assert(self.isInit(), @src());
             js.console.assert(index_buffer.isInit(), @src());
-            if (js.gpu.Device.isInit()) js.gpu.Device.pushErrorScope(.validation);
-            defer if (js.gpu.Device.isInit()) js.gpu.Device.popErrorScope();
+            if (js.gpu.device.isInit()) js.gpu.Device.pushErrorScope(.validation);
+            defer if (js.gpu.device.isInit()) js.gpu.Device.popErrorScope();
             js.gpuRenderPassEncoderSetIndexBuffer(self.handle, index_buffer.handle, index_format.tagName().ptr, index_format.tagName().len, offset, size);
         }
 
         pub fn setBindGroup(self: @This(), group_index: js.Uint32, bind_group: BindGroup, dynamic_offsets: []const js.Uint32) void {
             js.console.assert(self.isInit(), @src());
             js.console.assert(bind_group.isInit(), @src());
-            if (js.gpu.Device.isInit()) js.gpu.Device.pushErrorScope(.validation);
-            defer if (js.gpu.Device.isInit()) js.gpu.Device.popErrorScope();
+            if (js.gpu.device.isInit()) js.gpu.Device.pushErrorScope(.validation);
+            defer if (js.gpu.device.isInit()) js.gpu.Device.popErrorScope();
             js.gpuRenderPassEncoderSetBindGroup(self.handle, group_index, bind_group.handle, @intFromPtr(dynamic_offsets.ptr), dynamic_offsets.len);
         }
 
         pub fn setScissorRect(self: @This(), x: js.Uint32, y: js.Uint32, width: js.Uint32, height: js.Uint32) void {
             js.console.assert(self.isInit(), @src());
-            if (js.gpu.Device.isInit()) js.gpu.Device.pushErrorScope(.validation);
-            defer if (js.gpu.Device.isInit()) js.gpu.Device.popErrorScope();
+            if (js.gpu.device.isInit()) js.gpu.Device.pushErrorScope(.validation);
+            defer if (js.gpu.device.isInit()) js.gpu.Device.popErrorScope();
             js.gpuRenderPassEncoderSetScissorRect(self.handle, x, y, width, height);
         }
 
         pub fn setViewport(self: @This(), x: js.Float32, y: js.Float32, width: js.Float32, height: js.Float32, min_depth: js.Float32, max_depth: js.Float32) void {
             js.console.assert(self.isInit(), @src());
-            if (js.gpu.Device.isInit()) js.gpu.Device.pushErrorScope(.validation);
-            defer if (js.gpu.Device.isInit()) js.gpu.Device.popErrorScope();
+            if (js.gpu.device.isInit()) js.gpu.Device.pushErrorScope(.validation);
+            defer if (js.gpu.device.isInit()) js.gpu.Device.popErrorScope();
             js.gpuRenderPassEncoderSetViewport(self.handle, x, y, width, height, min_depth, max_depth);
         }
 
         pub fn setBlendConstant(self: @This(), color: Color) void {
             js.console.assert(self.isInit(), @src());
-            if (js.gpu.Device.isInit()) js.gpu.Device.pushErrorScope(.validation);
-            defer if (js.gpu.Device.isInit()) js.gpu.Device.popErrorScope();
+            if (js.gpu.device.isInit()) js.gpu.Device.pushErrorScope(.validation);
+            defer if (js.gpu.device.isInit()) js.gpu.Device.popErrorScope();
             js.gpuRenderPassEncoderSetBlendConstant(self.handle, @intFromPtr(&color));
         }
 
         pub fn drawIndexed(self: @This(), index_count: js.Uint32, instance_count: js.Uint32, first_index: js.Uint32, base_vertex: js.Int32, first_instance: js.Uint32) void {
             js.console.assert(self.isInit(), @src());
-            if (js.gpu.Device.isInit()) js.gpu.Device.pushErrorScope(.validation);
-            defer if (js.gpu.Device.isInit()) js.gpu.Device.popErrorScope();
+            if (js.gpu.device.isInit()) js.gpu.Device.pushErrorScope(.validation);
+            defer if (js.gpu.device.isInit()) js.gpu.Device.popErrorScope();
             js.gpuRenderPassEncoderDrawIndexed(self.handle, index_count, instance_count, first_index, base_vertex, first_instance);
         }
 
         pub fn end(self: *@This()) void {
             js.console.assert(self.isInit(), @src());
-            if (js.gpu.Device.isInit()) js.gpu.Device.pushErrorScope(.validation);
-            defer if (js.gpu.Device.isInit()) js.gpu.Device.popErrorScope();
+            if (js.gpu.device.isInit()) js.gpu.Device.pushErrorScope(.validation);
+            defer if (js.gpu.device.isInit()) js.gpu.Device.popErrorScope();
             js.gpuRenderPassEncoderEnd(self.handle);
             self.deinit();
         }
@@ -1301,43 +1342,50 @@ pub const gpu = struct {
         a: js.Float64,
     };
 
-    pub const Queue = struct {
+    const Queue = struct {
         handle: js.Handle = null_handle,
 
-        var instance: @This() = .{};
+        var singleton: @This() = .{};
 
-        pub fn init(handle: js.Handle) void {
+        fn init(handle: js.Handle) void {
             js.console.assert(handle != null_handle, @src());
-            instance = .{ .handle = handle };
+            singleton = .{ .handle = handle };
         }
 
-        pub fn isInit() bool {
-            return instance.handle != null_handle;
+        fn isInit() bool {
+            return singleton.handle != null_handle;
         }
 
-        pub fn submit(command_buffers: []const CommandBuffer) void {
+        fn submit(command_buffers: []const CommandBuffer) void {
             js.console.assert(isInit(), @src());
-            if (js.gpu.Device.isInit()) js.gpu.Device.pushErrorScope(.validation);
-            defer if (js.gpu.Device.isInit()) js.gpu.Device.popErrorScope();
+            if (js.gpu.device.isInit()) js.gpu.Device.pushErrorScope(.validation);
+            defer if (js.gpu.device.isInit()) js.gpu.Device.popErrorScope();
             for (command_buffers) |command_buffer| js.console.assert(command_buffer.isInit(), @src());
-            js.gpuQueueSubmit(instance.handle, @intFromPtr(command_buffers.ptr), command_buffers.len);
+            js.gpuQueueSubmit(singleton.handle, @intFromPtr(command_buffers.ptr), command_buffers.len);
         }
 
-        pub fn writeBuffer(comptime T: type, buffer: Buffer, buffer_offset: js.Offset, data: []const T, data_offset: js.Offset, size: js.Size) void {
+        fn writeBuffer(comptime T: type, buffer: Buffer, buffer_offset: js.Offset, data: []const T, data_offset: js.Offset, size: js.Size) void {
             js.console.assert(isInit(), @src());
             js.console.assert(buffer.isInit(), @src());
-            if (js.gpu.Device.isInit()) js.gpu.Device.pushErrorScope(.validation);
-            defer if (js.gpu.Device.isInit()) js.gpu.Device.popErrorScope();
+            if (js.gpu.device.isInit()) js.gpu.Device.pushErrorScope(.validation);
+            defer if (js.gpu.device.isInit()) js.gpu.Device.popErrorScope();
             const bytes = std.mem.sliceAsBytes(data);
-            js.gpuQueueWriteBuffer(instance.handle, buffer.handle, buffer_offset, bytes.ptr, bytes.len, data_offset, size);
+            js.gpuQueueWriteBuffer(singleton.handle, buffer.handle, buffer_offset, bytes.ptr, bytes.len, data_offset, size);
         }
 
-        pub fn writeTexture(info: TexelCopyTextureInfo, data: []const u8, data_layout: TexelCopyBufferLayout, size_extent: Extent3D) void {
+        fn writeTexture(info: TexelCopyTextureInfo, data: []const u8, data_layout: TexelCopyBufferLayout, size_extent: Extent3D) void {
             js.console.assert(isInit(), @src());
-            if (js.gpu.Device.isInit()) js.gpu.Device.pushErrorScope(.validation);
-            defer if (js.gpu.Device.isInit()) js.gpu.Device.popErrorScope();
-            js.gpuQueueWriteTexture(instance.handle, @intFromPtr(&info), data.ptr, data.len, @intFromPtr(&data_layout), @intFromPtr(&size_extent));
+            if (js.gpu.device.isInit()) js.gpu.Device.pushErrorScope(.validation);
+            defer if (js.gpu.device.isInit()) js.gpu.Device.popErrorScope();
+            js.gpuQueueWriteTexture(singleton.handle, @intFromPtr(&info), data.ptr, data.len, @intFromPtr(&data_layout), @intFromPtr(&size_extent));
         }
+    };
+
+    pub const queue = struct {
+        pub const isInit = js.gpu.Queue.isInit;
+        pub const submit = js.gpu.Queue.submit;
+        pub const writeBuffer = js.gpu.Queue.writeBuffer;
+        pub const writeTexture = js.gpu.Queue.writeTexture;
     };
 
     pub const TexelCopyTextureInfo = extern struct {
@@ -1431,8 +1479,8 @@ pub const gpu = struct {
                 };
             }
 
-            if (js.gpu.Device.isInit()) js.gpu.Device.pushErrorScope(.validation);
-            defer if (js.gpu.Device.isInit()) js.gpu.Device.popErrorScope();
+            if (js.gpu.device.isInit()) js.gpu.Device.pushErrorScope(.validation);
+            defer if (js.gpu.device.isInit()) js.gpu.Device.popErrorScope();
             return TextureView.init(js.gpuTextureCreateView(self.handle, @intFromPtr(&new_descriptor)));
         }
     };
@@ -1533,8 +1581,8 @@ pub const gpu = struct {
 
         pub fn destroy(self: *@This()) void {
             js.console.assert(self.isInit(), @src());
-            if (js.gpu.Device.isInit()) js.gpu.Device.pushErrorScope(.validation);
-            defer if (js.gpu.Device.isInit()) js.gpu.Device.popErrorScope();
+            if (js.gpu.device.isInit()) js.gpu.Device.pushErrorScope(.validation);
+            defer if (js.gpu.device.isInit()) js.gpu.Device.popErrorScope();
             js.gpuDestroyBuffer(self.handle);
         }
     };
@@ -1811,8 +1859,8 @@ pub const platform = struct {
         const default: @This() = .{ .shape = .arrow };
     };
 
-    pub const Mouse = struct {
-        var instance: @This() = undefined;
+    const Mouse = struct {
+        var singleton: @This() = undefined;
 
         cursor: Cursor,
         visible_cursor: Cursor,
@@ -1822,7 +1870,7 @@ pub const platform = struct {
         buttons: std.enums.EnumMap(MouseButton, KeyState),
 
         fn init() void {
-            instance = .{
+            singleton = .{
                 .cursor = .default,
                 .visible_cursor = .default,
                 .cursor_mode = .normal,
@@ -1832,62 +1880,72 @@ pub const platform = struct {
             };
         }
 
-        pub fn getCursorPosX() f64 {
-            return instance.cursor_pos_x;
+        fn getCursorPosX() f64 {
+            return singleton.cursor_pos_x;
         }
 
-        pub fn getCursorPosY() f64 {
-            return instance.cursor_pos_y;
+        fn getCursorPosY() f64 {
+            return singleton.cursor_pos_y;
         }
 
-        pub fn getCursorMode() Cursor.Mode {
-            return instance.cursor_mode;
+        fn getCursorMode() Cursor.Mode {
+            return singleton.cursor_mode;
         }
 
-        pub fn setCursor(cursor: *js.platform.Cursor) void {
+        fn setCursor(cursor: *js.platform.Cursor) void {
             js.console.assert(js.platform.is_init, @src());
             if (isPointerLock() or isCursorHidden()) {
-                instance.visible_cursor = cursor.*;
+                singleton.visible_cursor = cursor.*;
             } else {
-                instance.cursor = cursor.*;
+                singleton.cursor = cursor.*;
             }
         }
 
-        pub fn setCursorPosX(x: f64) void {
-            instance.cursor_pos_x = x;
+        fn setCursorPosX(x: f64) void {
+            singleton.cursor_pos_x = x;
         }
 
-        pub fn setCursorPosY(y: f64) void {
-            instance.cursor_pos_y = y;
+        fn setCursorPosY(y: f64) void {
+            singleton.cursor_pos_y = y;
         }
 
-        pub fn setCursorMode(cursor_mode: Cursor.Mode) void {
-            instance.cursor_mode = cursor_mode;
+        fn setCursorMode(cursor_mode: Cursor.Mode) void {
+            singleton.cursor_mode = cursor_mode;
         }
 
         fn isPointerLock() bool {
             js.console.assert(js.platform.is_init, @src());
-            return instance.cursor_mode == .disabled;
+            return singleton.cursor_mode == .disabled;
         }
 
         fn isCursorHidden() bool {
             js.console.assert(js.platform.is_init, @src());
-            return instance.cursor_mode == .hidden;
+            return singleton.cursor_mode == .hidden;
         }
 
         fn press(button: MouseButton) void {
             js.console.assert(js.platform.is_init, @src());
-            instance.buttons.put(button, .press);
+            singleton.buttons.put(button, .press);
         }
 
         fn release(button: MouseButton) void {
             js.console.assert(js.platform.is_init, @src());
-            instance.buttons.put(button, .release);
+            singleton.buttons.put(button, .release);
         }
     };
 
-    pub const Keyboard = struct {
-        var instance: @This() = undefined;
+    pub const mouse = struct {
+        pub const getCursorPosX = js.platform.Mouse.getCursorPosX;
+        pub const getCursorPosY = js.platform.Mouse.getCursorPosY;
+        pub const getCursorMode = js.platform.Mouse.getCursorMode;
+        pub const setCursor = js.platform.Mouse.setCursor;
+        pub const setCursorPosX = js.platform.Mouse.setCursorPosX;
+        pub const setCursorPosY = js.platform.Mouse.setCursorPosY;
+        pub const setCursorMode = js.platform.Mouse.setCursorMode;
+    };
+
+    const Keyboard = struct {
+        var singleton: @This() = undefined;
 
         keys: std.enums.EnumMap(Key, KeyState),
 
@@ -1896,15 +1954,15 @@ pub const platform = struct {
         }
 
         fn reset() void {
-            instance.keys = .initFull(.release);
+            singleton.keys = .initFull(.release);
         }
 
-        pub fn getKeyState(key: Key) KeyState {
+        fn getKeyState(key: Key) KeyState {
             js.console.assert(js.platform.is_init, @src());
-            return instance.keys.get(key) orelse std.debug.panic("{s}.{s}: unknown Key", .{ @typeName(@This()), @src().fn_name });
+            return singleton.keys.get(key) orelse std.debug.panic("{s}.{s}: unknown Key", .{ @typeName(@This()), @src().fn_name });
         }
 
-        pub fn getKeyName(key: Key, scancode: Scancode) [:0]const u8 {
+        fn getKeyName(key: Key, scancode: Scancode) [:0]const u8 {
             js.console.assert(js.platform.is_init, @src());
             const input = if (key == .unknown) scancode else Scancode.fromKey(key);
             return @tagName(input);
@@ -1912,12 +1970,12 @@ pub const platform = struct {
 
         fn press(key: Key) void {
             js.console.assert(js.platform.is_init, @src());
-            instance.keys.put(key, .press);
+            singleton.keys.put(key, .press);
         }
 
         fn release(key: Key) void {
             js.console.assert(js.platform.is_init, @src());
-            instance.keys.put(key, .release);
+            singleton.keys.put(key, .release);
         }
 
         fn isShiftPressed() bool {
@@ -1941,7 +1999,7 @@ pub const platform = struct {
         }
 
         // Here we ignore caps_lock and num_lock modifiers for simplicity
-        pub fn computeModifierBits() c_int {
+        fn computeModifierBits() c_int {
             js.console.assert(js.platform.is_init, @src());
             var bits: c_int = 0;
             if (isShiftPressed()) bits |= @backingInt(Mod.shift);
@@ -1950,6 +2008,12 @@ pub const platform = struct {
             if (isSuperPressed()) bits |= @backingInt(Mod.super);
             return bits;
         }
+    };
+
+    pub const keyboard = struct {
+        pub const computeModifierBits = js.platform.Keyboard.computeModifierBits;
+        pub const getKeyName = js.platform.Keyboard.getKeyName;
+        pub const getKeyState = js.platform.Keyboard.getKeyState;
     };
 
     pub const Event = enum(u32) {
@@ -2092,8 +2156,8 @@ pub const platform = struct {
         }
     }
 
-    pub const Window = struct {
-        var instance: @This() = undefined;
+    const Window = struct {
+        var singleton: @This() = undefined;
 
         const Event = enum(u32) {
             resize,
@@ -2106,33 +2170,36 @@ pub const platform = struct {
         handle: js.Handle,
         focused: bool,
         monitor_scale: js.Float32,
+        listening: std.enums.EnumMap(@This().Event, bool),
 
         fn init() void {
             js.console.assert(!js.platform.is_init, @src());
             const handle = js.platformGetWindow();
             js.console.assert(handle != null_handle, @src());
-            instance = .{
+            singleton = .{
                 .handle = handle,
                 .focused = true,
                 .monitor_scale = js.platformWindowGetDevicePixelRatio(handle),
+                .listening = .initFull(false),
             };
-            Canvas.init(js.platformWindowGetCanvas(handle));
+            Canvas.init(js.platformWindowGetCanvas(singleton.handle));
+            Crypto.init(js.platformWindowGetCrypto(singleton.handle));
             Mouse.init();
             Keyboard.init();
         }
 
         fn isInit() bool {
-            return instance.handle != null_handle;
+            return singleton.handle != null_handle;
         }
 
-        pub fn isFocused() bool {
+        fn isFocused() bool {
             js.console.assert(isInit(), @src());
-            return instance.focused;
+            return singleton.focused;
         }
 
-        pub fn getMonitorScale() js.Float32 {
+        fn getMonitorScale() js.Float32 {
             js.console.assert(isInit(), @src());
-            return instance.monitor_scale;
+            return singleton.monitor_scale;
         }
 
         fn onResize() void {
@@ -2145,16 +2212,16 @@ pub const platform = struct {
         fn onFocus() void {
             js.console.assert(js.platform.is_init, @src());
             js.console.assert(isInit(), @src());
-            instance.focused = true;
-            onWindowFocus(instance.focused);
+            singleton.focused = true;
+            onWindowFocus(singleton.focused);
         }
 
         fn onBlur() void {
             js.console.assert(js.platform.is_init, @src());
             js.console.assert(isInit(), @src());
-            instance.focused = false;
+            singleton.focused = false;
             Keyboard.reset();
-            onWindowFocus(instance.focused);
+            onWindowFocus(singleton.focused);
         }
 
         fn onKeyDown() void {
@@ -2181,11 +2248,11 @@ pub const platform = struct {
             onKey(key, scancode, .release, getModifierBitsFromKeyboardEvent());
         }
 
-        pub fn onEvent(event_type: js.String) void {
+        fn onEvent(event_type: js.String) void {
             js.console.assert(js.platform.is_init, @src());
             js.console.assert(isInit(), @src());
             defer gpa.free(std.mem.span(event_type)); // Allocated into jsPlatformWindowListenEvent
-            switch (std.meta.stringToEnum(js.platform.Window.Event, std.mem.span(event_type)) orelse std.debug.panic("{s}: Unknown js.platform.Window.Event: {s}", .{ @src().fn_name, event_type })) {
+            switch (std.meta.stringToEnum(@This().Event, std.mem.span(event_type)) orelse std.debug.panic("{s}: Unknown js.platform.Window.Event: {s}", .{ @src().fn_name, event_type })) {
                 .resize => onResize(),
                 .focus => onFocus(),
                 .blur => onBlur(),
@@ -2197,18 +2264,55 @@ pub const platform = struct {
         fn listenEvent(comptime event: @This().Event) void {
             js.console.assert(js.platform.is_init, @src());
             js.console.assert(isInit(), @src());
-            js.platformWindowListenEvent(instance.handle, @tagName(event).ptr, @tagName(event).len);
+            if (!singleton.listening.get(event).?) {
+                js.platformWindowListenEvent(singleton.handle, @tagName(event).ptr, @tagName(event).len);
+                singleton.listening.put(event, true);
+            }
         }
 
-        pub fn getGpuInstance() void {
+        fn getGpuInstance() void {
             js.console.assert(js.platform.is_init, @src());
             js.console.assert(isInit(), @src());
-            js.gpu.Instance.init(js.platformWindowGetGpuInstance(instance.handle));
+            js.gpu.Instance.init(js.platformWindowGetGpuInstance(singleton.handle));
         }
     };
 
-    pub const Canvas = struct {
-        var instance: @This() = undefined;
+    pub const window = struct {
+        pub const getGpuInstance = js.platform.Window.getGpuInstance;
+        pub const getMonitorScale = js.platform.Window.getMonitorScale;
+        pub const isFocused = js.platform.Window.isFocused;
+        pub const isInit = js.platform.Window.isInit;
+        pub const onEvent = js.platform.Window.onEvent;
+    };
+
+    const Crypto = struct {
+        var singleton: @This() = undefined;
+
+        handle: js.Handle = null_handle,
+
+        fn init(handle: js.Handle) void {
+            js.console.assert(handle != null_handle, @src());
+            singleton = .{ .handle = handle };
+        }
+
+        fn isInit() bool {
+            return singleton.handle != null_handle;
+        }
+
+        fn random(bytes: []u8) void {
+            js.console.assert(js.platform.is_init, @src());
+            js.console.assert(isInit(), @src());
+            js.platformCryptoGetRandomValues(singleton.handle, bytes.ptr, bytes.len);
+        }
+    };
+
+    pub const crypto = struct {
+        pub const isInit = js.platform.Crypto.isInit;
+        pub const random = js.platform.Crypto.random;
+    };
+
+    const Canvas = struct {
+        var singleton: @This() = undefined;
 
         const Event = enum(u32) {
             mouseup,
@@ -2224,54 +2328,56 @@ pub const platform = struct {
         height: js.Uint32,
         left: js.Uint32,
         top: js.Uint32,
+        listening: std.enums.EnumMap(@This().Event, bool),
 
         fn init(handle: js.Handle) void {
             js.console.assert(handle != null_handle, @src());
-            instance = .{
+            singleton = .{
                 .handle = handle,
                 .width = undefined,
                 .height = undefined,
                 .left = undefined,
                 .top = undefined,
+                .listening = .initFull(false),
             };
             syncSize();
         }
 
         fn isInit() bool {
-            return instance.handle != null_handle;
+            return singleton.handle != null_handle;
         }
 
-        pub fn getGpuContext() void {
+        fn getGpuContext() void {
             js.console.assert(js.platform.is_init, @src());
             js.console.assert(isInit(), @src());
-            js.gpu.Context.init(js.platformCanvasGetGpuContext(instance.handle));
+            js.gpu.Context.init(js.platformCanvasGetGpuContext(singleton.handle));
         }
 
-        pub fn getWidth() js.Uint32 {
+        fn getWidth() js.Uint32 {
             js.console.assert(isInit(), @src());
-            return instance.width;
+            return singleton.width;
         }
 
-        pub fn getHeight() js.Uint32 {
+        fn getHeight() js.Uint32 {
             js.console.assert(isInit(), @src());
-            return instance.height;
+            return singleton.height;
         }
 
         fn syncSize() void {
             js.console.assert(isInit(), @src());
-            instance.width = js.platformCanvasGetBoundingClientRectWidth(instance.handle);
-            instance.height = js.platformCanvasGetBoundingClientRectHeight(instance.handle);
-            instance.left = js.platformCanvasGetBoundingClientRectLeft(instance.handle);
-            instance.top = js.platformCanvasGetBoundingClientRectTop(instance.handle);
-            js.platformCanvasResize(instance.handle, instance.width, instance.height, Window.getMonitorScale());
+            singleton.width = js.platformCanvasGetBoundingClientRectWidth(singleton.handle);
+            singleton.height = js.platformCanvasGetBoundingClientRectHeight(singleton.handle);
+            singleton.left = js.platformCanvasGetBoundingClientRectLeft(singleton.handle);
+            singleton.top = js.platformCanvasGetBoundingClientRectTop(singleton.handle);
+            js.platformCanvasResize(singleton.handle, singleton.width, singleton.height, Window.getMonitorScale());
         }
 
         fn transformCoords() struct { f32, f32 } {
             const client_x = getClientXFromMouseMoveEvent();
             const client_y = getClientYFromMouseMoveEvent();
             const dpr = Window.getMonitorScale();
-            const x = std.math.lossyCast(f32, client_x - instance.left) * dpr;
-            const y = std.math.lossyCast(f32, client_y - instance.top) * dpr;
+            const x = std.math.lossyCast(f32, client_x - singleton.left) * dpr;
+            const y = std.math.lossyCast(f32, client_y - singleton.top) * dpr;
             return .{ x, y };
         }
 
@@ -2334,11 +2440,11 @@ pub const platform = struct {
             onScroll(delta_x * multiplier, delta_y * multiplier);
         }
 
-        pub fn onEvent(event_type: js.String) void {
+        fn onEvent(event_type: js.String) void {
             js.console.assert(js.platform.is_init, @src());
             js.console.assert(isInit(), @src());
             defer gpa.free(std.mem.span(event_type)); // Allocated into jsPlatformCanvasListenEvent
-            switch (std.meta.stringToEnum(js.platform.Canvas.Event, std.mem.span(event_type)) orelse std.debug.panic("{s}: Unknown js.platform.Canvas.Event: {s}", .{ @src().fn_name, event_type })) {
+            switch (std.meta.stringToEnum(@This().Event, std.mem.span(event_type)) orelse std.debug.panic("{s}: Unknown js.platform.Canvas.Event: {s}", .{ @src().fn_name, event_type })) {
                 .mouseup => onMouseUp(),
                 .mousedown => onMouseDown(),
                 .mousemove => onMouseMove(),
@@ -2351,12 +2457,23 @@ pub const platform = struct {
         fn listenEvent(comptime event: @This().Event) void {
             js.console.assert(js.platform.is_init, @src());
             js.console.assert(isInit(), @src());
-            js.platformCanvasListenEvent(instance.handle, @tagName(event).ptr, @tagName(event).len);
+            if (!singleton.listening.get(event).?) {
+                js.platformCanvasListenEvent(singleton.handle, @tagName(event).ptr, @tagName(event).len);
+                singleton.listening.put(event, true);
+            }
         }
     };
 
-    pub const Clipboard = struct {
-        var instance: @This() = .{};
+    pub const canvas = struct {
+        pub const isInit = js.platform.Canvas.isInit;
+        pub const getGpuContext = js.platform.Canvas.getGpuContext;
+        pub const getWidth = js.platform.Canvas.getWidth;
+        pub const getHeight = js.platform.Canvas.getHeight;
+        pub const onEvent = js.platform.Canvas.onEvent;
+    };
+
+    const Clipboard = struct {
+        var singleton: @This() = .{};
 
         handle: js.Handle = null_handle,
         text: [:0]const u8 = "",
@@ -2364,27 +2481,33 @@ pub const platform = struct {
         fn init() void {
             const handle = js.platformGetClipboard();
             js.console.assert(handle != null_handle, @src());
-            instance = .{
+            singleton = .{
                 .handle = handle,
                 .text = "",
             };
         }
 
         fn isInit() bool {
-            return instance.handle != null_handle;
+            return singleton.handle != null_handle;
         }
 
-        pub fn getText() [:0]const u8 {
+        fn getText() [:0]const u8 {
             js.console.assert(js.platform.is_init, @src());
             js.console.assert(isInit(), @src());
-            return instance.text;
+            return singleton.text;
         }
 
-        pub fn setText(str: [:0]const u8) void {
+        fn setText(str: [:0]const u8) void {
             js.console.assert(js.platform.is_init, @src());
             js.console.assert(isInit(), @src());
-            instance.text = str;
-            js.platformClipboardWriteText(instance.handle, str.ptr, str.len);
+            singleton.text = str;
+            js.platformClipboardWriteText(singleton.handle, str.ptr, str.len);
         }
+    };
+
+    pub const clipboard = struct {
+        pub const getText = js.platform.Clipboard.getText;
+        pub const isInit = js.platform.Clipboard.isInit;
+        pub const setText = js.platform.Clipboard.setText;
     };
 };

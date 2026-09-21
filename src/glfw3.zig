@@ -61,25 +61,25 @@ pub fn setErrorCallback(callback: c.GLFWerrorfun) callconv(.c) c.GLFWerrorfun {
 
 pub fn getClipboardString(window: ?*c.GLFWwindow) callconv(.c) [*:0]const u8 {
     _ = window;
-    return js.platform.Clipboard.getText();
+    return js.platform.clipboard.getText();
 }
 
 pub fn setClipboardString(window: ?*c.GLFWwindow, c_str: ?[*:0]const u8) callconv(.c) void {
     _ = window;
-    js.platform.Clipboard.setText(std.mem.span(c_str orelse ""));
+    js.platform.clipboard.setText(std.mem.span(c_str orelse ""));
 }
 
 pub fn setCursor(window: ?*c.GLFWwindow, c_cursor_opt: ?*c.GLFWcursor) callconv(.c) void {
     _ = window;
     if (c_cursor_opt) |c_cursor| {
-        js.platform.Mouse.setCursor(@ptrCast(@alignCast(c_cursor)));
+        js.platform.mouse.setCursor(@ptrCast(@alignCast(c_cursor)));
     } else js.console.err("{s}: cursor parameter is null", .{@src().fn_name});
 }
 
 pub fn getCursorPos(window: ?*c.GLFWwindow, xpos: ?*f64, ypos: ?*f64) callconv(.c) void {
     _ = window;
-    if (xpos) |x| x.* = js.platform.Mouse.getCursorPosX();
-    if (ypos) |y| y.* = js.platform.Mouse.getCursorPosY();
+    if (xpos) |x| x.* = js.platform.mouse.getCursorPosX();
+    if (ypos) |y| y.* = js.platform.mouse.getCursorPosY();
 }
 
 pub fn setCursorPos(window: ?*c.GLFWwindow, xpos: f64, ypos: f64) callconv(.c) void {
@@ -89,11 +89,11 @@ pub fn setCursorPos(window: ?*c.GLFWwindow, xpos: f64, ypos: f64) callconv(.c) v
 
 pub fn getKey(window: ?*c.GLFWwindow, key: c_int) callconv(.c) c_int {
     _ = window;
-    return @backingInt(js.platform.Keyboard.getKeyState(@fromBackingInt(key)));
+    return @backingInt(js.platform.keyboard.getKeyState(@fromBackingInt(key)));
 }
 
 pub fn getKeyName(key: c_int, scancode: c_int) callconv(.c) [*:0]const u8 {
-    return js.platform.Keyboard.getKeyName(@fromBackingInt(key), @fromBackingInt(scancode));
+    return js.platform.keyboard.getKeyName(@fromBackingInt(key), @fromBackingInt(scancode));
 }
 
 // ImGui use this function to pop stacking errors so this is why we don't implement it
@@ -120,7 +120,7 @@ pub fn destroyCursor(c_cursor_opt: ?*c.GLFWcursor) callconv(.c) void {
 pub fn getWindowAttrib(window: ?*c.GLFWwindow, c_attrib: c_int) callconv(.c) c_int {
     _ = window;
     return switch (c_attrib) {
-        c.GLFW_FOCUSED => if (js.platform.Window.isFocused()) c.GLFW_TRUE else c.GLFW_FALSE,
+        c.GLFW_FOCUSED => if (js.platform.window.isFocused()) c.GLFW_TRUE else c.GLFW_FALSE,
         else => std.debug.panic("{s}: window attrib ({d}) not supported", .{ @src().fn_name, c_attrib }),
     };
 }
@@ -128,7 +128,7 @@ pub fn getWindowAttrib(window: ?*c.GLFWwindow, c_attrib: c_int) callconv(.c) c_i
 pub fn getInputMode(window: ?*c.GLFWwindow, c_mode: c_int) callconv(.c) c_int {
     _ = window;
     return switch (c_mode) {
-        c.GLFW_CURSOR => @backingInt(js.platform.Mouse.getCursorMode()),
+        c.GLFW_CURSOR => @backingInt(js.platform.mouse.getCursorMode()),
         else => std.debug.panic("{s}: mode ({d}) not supported", .{ @src().fn_name, c_mode }),
     };
 }
@@ -136,7 +136,7 @@ pub fn getInputMode(window: ?*c.GLFWwindow, c_mode: c_int) callconv(.c) c_int {
 pub fn setInputMode(window: ?*c.GLFWwindow, c_mode: c_int, c_value: c_int) callconv(.c) void {
     _ = window;
     switch (c_mode) {
-        c.GLFW_CURSOR => js.platform.Mouse.setCursorMode(@fromBackingInt(c_value)),
+        c.GLFW_CURSOR => js.platform.mouse.setCursorMode(@fromBackingInt(c_value)),
         else => std.debug.panic("{s}: mode ({d}) not supported", .{ @src().fn_name, c_mode }),
     }
 }
@@ -148,8 +148,8 @@ pub fn getGamepadState(jid: c_int, state: ?*c.GLFWgamepadstate) callconv(.c) c_i
 
 pub fn getWindowContentScale(window: ?*c.GLFWwindow, xscale: ?*f32, yscale: ?*f32) callconv(.c) void {
     _ = window;
-    if (xscale) |x| x.* = js.platform.Window.getMonitorScale();
-    if (yscale) |y| y.* = js.platform.Window.getMonitorScale();
+    if (xscale) |x| x.* = js.platform.window.getMonitorScale();
+    if (yscale) |y| y.* = js.platform.window.getMonitorScale();
 }
 
 pub fn getMonitorContentScale(monitor: ?*c.GLFWmonitor, xscale: ?*f32, yscale: ?*f32) callconv(.c) void {
@@ -160,11 +160,11 @@ pub fn getMonitorContentScale(monitor: ?*c.GLFWmonitor, xscale: ?*f32, yscale: ?
 pub fn getWindowSize(window: ?*c.GLFWwindow, width: ?*c_int, height: ?*c_int) callconv(.c) void {
     _ = window;
     if (width) |w| {
-        const canvas_width = js.platform.Canvas.getWidth();
+        const canvas_width = js.platform.canvas.getWidth();
         w.* = std.math.cast(c_int, canvas_width) orelse std.debug.panic("{s}: failed to cast {s} to c_int", .{ @typeName(@TypeOf(canvas_width)), @src().fn_name });
     }
     if (height) |h| {
-        const canvas_height = js.platform.Canvas.getHeight();
+        const canvas_height = js.platform.canvas.getHeight();
         h.* = std.math.cast(c_int, canvas_height) orelse std.debug.panic("{s}: failed to cast {s} to c_int", .{ @typeName(@TypeOf(canvas_height)), @src().fn_name });
     }
 }
@@ -174,5 +174,5 @@ pub fn getFramebufferSize(window: ?*c.GLFWwindow, width: ?*c_int, height: ?*c_in
 }
 
 pub fn getTime() callconv(.c) f64 {
-    return js.time.now();
+    return js.time.now() / std.time.ms_per_s;
 }

@@ -248,17 +248,18 @@ fn jsStringViewFromStr(str: []const u8) c.WGPUStringView {
     };
 }
 
-pub fn adapterGetInfo(c_adapter: c.WGPUAdapter, info: *c.WGPUAdapterInfo) callconv(.c) c.WGPUStatus {
-    const adapter: *js.gpu.Adapter = @ptrCast(@alignCast(c_adapter));
+pub fn adapterGetInfo(adapter: c.WGPUAdapter, info: *c.WGPUAdapterInfo) callconv(.c) c.WGPUStatus {
+    _ = adapter;
+    const adapter_info = js.gpu.adapter.getInfo();
     info.* = .{
-        .description = jsStringViewFromStr(adapter.info.description),
-        .vendor = jsStringViewFromStr(adapter.info.vendor),
-        .vendorID = adapter.info.vendor_id,
-        .architecture = jsStringViewFromStr(adapter.info.architecture),
-        .device = jsStringViewFromStr(adapter.info.device),
-        .deviceID = adapter.info.device_id,
-        .adapterType = @backingInt(adapter.info.adapter_type),
-        .backendType = @backingInt(adapter.info.backend_type),
+        .description = jsStringViewFromStr(adapter_info.description),
+        .vendor = jsStringViewFromStr(adapter_info.vendor),
+        .vendorID = adapter_info.vendor_id,
+        .architecture = jsStringViewFromStr(adapter_info.architecture),
+        .device = jsStringViewFromStr(adapter_info.device),
+        .deviceID = adapter_info.device_id,
+        .adapterType = @backingInt(adapter_info.adapter_type),
+        .backendType = @backingInt(adapter_info.backend_type),
     };
     return c.WGPUStatus_Success;
 }
@@ -297,7 +298,7 @@ pub fn deviceCreateBindGroup(c_device: c.WGPUDevice, c_descriptor_opt: ?*const c
         defer gpa.free(bind_group_entries);
         for (0..c_descriptor.entryCount) |i| bind_group_entries[i] = jsBindGroupEntryFromC(&c_descriptor.entries[i]);
         const bind_group = gpa.create(js.gpu.BindGroup) catch std.debug.panic("{s}: out of memory", .{@src().fn_name});
-        bind_group.* = js.gpu.Device.createBindGroup(@as(*js.gpu.BindGroupLayout, @ptrCast(@alignCast(c_descriptor.layout))).*, bind_group_entries);
+        bind_group.* = js.gpu.device.createBindGroup(@as(*js.gpu.BindGroupLayout, @ptrCast(@alignCast(c_descriptor.layout))).*, bind_group_entries);
         return @ptrCast(@alignCast(bind_group));
     } else std.debug.panic("{s}: descriptor is null", .{@src().fn_name});
 }
@@ -309,7 +310,7 @@ pub fn deviceCreateBindGroupLayout(c_device: c.WGPUDevice, c_descriptor_opt: ?*c
         defer gpa.free(bind_group_layout_entries);
         for (0..c_descriptor.entryCount) |i| bind_group_layout_entries[i] = jsBindGroupLayoutEntryFromC(&c_descriptor.entries[i]);
         const bind_group_layout = gpa.create(js.gpu.BindGroupLayout) catch std.debug.panic("{s}: out of memory", .{@src().fn_name});
-        bind_group_layout.* = js.gpu.Device.createBindGroupLayout(bind_group_layout_entries);
+        bind_group_layout.* = js.gpu.device.createBindGroupLayout(bind_group_layout_entries);
         return @ptrCast(@alignCast(bind_group_layout));
     } else std.debug.panic("{s}: descriptor is null", .{@src().fn_name});
 }
@@ -318,7 +319,7 @@ pub fn deviceCreateBuffer(c_device: c.WGPUDevice, c_descriptor_opt: ?*const c.WG
     _ = c_device;
     if (c_descriptor_opt) |c_descriptor| {
         const buffer = gpa.create(js.gpu.Buffer) catch std.debug.panic("{s}: out of memory", .{@src().fn_name});
-        buffer.* = js.gpu.Device.createBuffer(c_descriptor.size, c_descriptor.usage);
+        buffer.* = js.gpu.device.createBuffer(c_descriptor.size, c_descriptor.usage);
         return @ptrCast(@alignCast(buffer));
     } else std.debug.panic("{s}: descriptor is null", .{@src().fn_name});
 }
@@ -332,7 +333,7 @@ pub fn deviceCreatePipelineLayout(c_device: c.WGPUDevice, c_descriptor_opt: ?*co
         for (0..c_descriptor.bindGroupLayoutCount) |i| {
             bind_group_layouts[i] = @as(*js.gpu.BindGroupLayout, @ptrCast(@alignCast(c_descriptor.bindGroupLayouts[i]))).*;
         }
-        pipeline_layout.* = js.gpu.Device.createPipelineLayout(bind_group_layouts);
+        pipeline_layout.* = js.gpu.device.createPipelineLayout(bind_group_layouts);
         return @ptrCast(@alignCast(pipeline_layout));
     } else std.debug.panic("{s}: descriptor is null", .{@src().fn_name});
 }
@@ -361,7 +362,7 @@ pub fn deviceCreateRenderPipeline(c_device: c.WGPUDevice, c_descriptor_opt: ?*co
         }
         const primitive_state = jsPrimitiveStateFromC(&c_descriptor.primitive);
         const render_pipeline = gpa.create(js.gpu.RenderPipeline) catch std.debug.panic("{s}: out of memory", .{@src().fn_name});
-        render_pipeline.* = js.gpu.Device.createRenderPipeline(@as(*js.gpu.PipelineLayout, @ptrCast(@alignCast(c_descriptor.layout))).*, vertex_state, fragment_state, primitive_state);
+        render_pipeline.* = js.gpu.device.createRenderPipeline(@as(*js.gpu.PipelineLayout, @ptrCast(@alignCast(c_descriptor.layout))).*, vertex_state, fragment_state, primitive_state);
         return @ptrCast(@alignCast(render_pipeline));
     } else std.debug.panic("{s}: descriptor is null", .{@src().fn_name});
 }
@@ -371,7 +372,7 @@ pub fn deviceCreateSampler(c_device: c.WGPUDevice, c_descriptor_opt: ?*const c.W
     if (c_descriptor_opt) |c_descriptor| {
         const descriptor = jsSamplerDescriptorFromC(c_descriptor);
         const sampler = gpa.create(js.gpu.Sampler) catch std.debug.panic("{s}: out of memory", .{@src().fn_name});
-        sampler.* = js.gpu.Device.createSampler(descriptor);
+        sampler.* = js.gpu.device.createSampler(descriptor);
         return @ptrCast(@alignCast(sampler));
     } else std.debug.panic("{s}: descriptor is null", .{@src().fn_name});
 }
@@ -389,7 +390,7 @@ pub fn deviceCreateShaderModule(c_device: c.WGPUDevice, c_descriptor_opt: ?*cons
             else => std.debug.panic("{s}: Unknown WGPUSType value", .{@src().fn_name}),
         }
         const shader_module = gpa.create(js.gpu.ShaderModule) catch std.debug.panic("{s}: out of memory", .{@src().fn_name});
-        shader_module.* = js.gpu.Device.createShaderModule(code);
+        shader_module.* = js.gpu.device.createShaderModule(code);
         return @ptrCast(@alignCast(shader_module));
     } else std.debug.panic("{s}: descriptor is null", .{@src().fn_name});
 }
@@ -399,7 +400,7 @@ pub fn deviceCreateTexture(c_device: c.WGPUDevice, c_descriptor_opt: ?*const c.W
     if (c_descriptor_opt) |c_descriptor| {
         const descriptor = jsTextureDescriptorFromC(c_descriptor);
         const texture = gpa.create(js.gpu.Texture) catch std.debug.panic("{s}: out of memory", .{@src().fn_name});
-        texture.* = js.gpu.Device.createTexture(descriptor);
+        texture.* = js.gpu.device.createTexture(descriptor);
         return @ptrCast(@alignCast(texture));
     } else std.debug.panic("{s}: descriptor is null", .{@src().fn_name});
 }
@@ -433,7 +434,7 @@ pub fn queueRelease(c_queue: c.WGPUQueue) callconv(.c) void {
 
 pub fn queueWriteBuffer(c_queue: c.WGPUQueue, c_buffer: c.WGPUBuffer, buffer_offset: u64, c_data: ?*const anyopaque, size: usize) callconv(.c) void {
     _ = c_queue;
-    js.gpu.Queue.writeBuffer(u8, @as(*js.gpu.Buffer, @ptrCast(@alignCast(c_buffer))).*, buffer_offset, @as([*]const u8, @ptrCast(c_data))[0..size], 0, size);
+    js.gpu.queue.writeBuffer(u8, @as(*js.gpu.Buffer, @ptrCast(@alignCast(c_buffer))).*, buffer_offset, @as([*]const u8, @ptrCast(c_data))[0..size], 0, size);
 }
 
 pub fn queueWriteTexture(c_queue: c.WGPUQueue, destination_opt: ?*const c.WGPUTexelCopyTextureInfo, c_data: ?*const anyopaque, data_size: usize, c_data_layout_opt: ?*const c.WGPUTexelCopyBufferLayout, write_size_opt: ?*const c.WGPUExtent3D) callconv(.c) void {
@@ -444,7 +445,7 @@ pub fn queueWriteTexture(c_queue: c.WGPUQueue, destination_opt: ?*const c.WGPUTe
                 const info = jsTexelCopyTextureInfoFromC(destination);
                 const data_layout = jsTexelCopyBufferLayoutFromC(c_data_layout);
                 const size = jsExtent3DFromC(write_size);
-                js.gpu.Queue.writeTexture(info, @as([*]const u8, @ptrCast(c_data))[0..data_size], data_layout, size);
+                js.gpu.queue.writeTexture(info, @as([*]const u8, @ptrCast(c_data))[0..data_size], data_layout, size);
             } else std.debug.panic("{s}: write_size is null", .{@src().fn_name});
         } else std.debug.panic("{s}: c_data_layout is null", .{@src().fn_name});
     } else std.debug.panic("{s}: destination is null", .{@src().fn_name});

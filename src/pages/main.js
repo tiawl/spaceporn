@@ -50,10 +50,6 @@ const root = {
         console.error(`${fn_name} error:`, err);
         this.wasm.exports.onFailure();
     },
-
-    // TODO: remove this when FPS compute is removed
-    last_frame_time: 0,
-    frame_count: 0,
 };
 
 console.assert = function(cond, text) {
@@ -64,20 +60,7 @@ console.assert = function(cond, text) {
 
 function update(timestamp) {
     root.timestamp = timestamp;
-
-    // TODO: remove the FPS compute
-    const dt = timestamp - root.last_frame_time;
-    root.last_frame_time = timestamp;
-    root.frame_count++;
-
-    // Update FPS counter every 60 frames
-    if (root.frame_count % 60 === 0) {
-        const fps = Math.round(1000 / dt);
-        document.getElementById('fps').textContent = `FPS: ${fps}`;
-    }
-
     root.wasm.exports.update();
-
     requestAnimationFrame(update);
 }
 
@@ -969,17 +952,17 @@ var wasm_imports = {
             queue.submit(command_buffers);
         },
 
-        jsGpuQueueWriteBuffer: function(queue_id, buffer_id, BUFFER_OFFSET_BIGINT, data_ptr, data_len, DATA_OFFSET_BIGINT, SIZE_BIGINT) {
+        jsGpuQueueWriteBuffer: function(queue_id, buffer_id, BUFFER_OFFSET_BIGINT, bytes_ptr, bytes_len, DATA_OFFSET_BIGINT, SIZE_BIGINT) {
             const queue = root.handles.get(queue_id);
             const buffer = root.handles.get(buffer_id);
             console.assert(typeof queue !== 'undefined' && typeof buffer !== 'undefined', `Invalid queue (${queue_id}) or buffer (${buffer_id}) handle`);
 
-            const data = new Uint8Array(root.wasm.exports.memory.buffer, data_ptr, data_len);
+            const bytes = new Uint8Array(root.wasm.exports.memory.buffer, bytes_ptr, bytes_len);
 
-            queue.writeBuffer(buffer, Number(BUFFER_OFFSET_BIGINT), data, Number(DATA_OFFSET_BIGINT), Number(SIZE_BIGINT));
+            queue.writeBuffer(buffer, Number(BUFFER_OFFSET_BIGINT), bytes, Number(DATA_OFFSET_BIGINT), Number(SIZE_BIGINT));
         },
 
-        jsGpuQueueWriteTexture: function(queue_id, info_ptr, data_ptr, data_len, data_layout_ptr, size_extent_ptr) {
+        jsGpuQueueWriteTexture: function(queue_id, info_ptr, bytes_ptr, bytes_len, data_layout_ptr, size_extent_ptr) {
             const queue = root.handles.get(queue_id);
             console.assert(typeof queue !== 'undefined', `Invalid queue (${queue_id}) handle`);
 
@@ -992,9 +975,9 @@ var wasm_imports = {
             const size_extent_view = new DataView(root.wasm.exports.memory.buffer, size_extent_ptr, Number(root.wasm.exports.sizeOfExtent3D()));
             const size_extent = decode.view.Extent3D(size_extent_view, 0);
 
-            const data = new Uint8Array(root.wasm.exports.memory.buffer, data_ptr, data_len);
+            const bytes = new Uint8Array(root.wasm.exports.memory.buffer, bytes_ptr, bytes_len);
 
-            queue.writeTexture(info, data, data_layout, size_extent);
+            queue.writeTexture(info, bytes, data_layout, size_extent);
         },
 
         jsPlatformGetWindow: function() {
@@ -1006,6 +989,13 @@ var wasm_imports = {
             console.assert(typeof win !== 'undefined', `Invalid window (${win_id}) handle`);
 
             return root.handles.create(win.document.getElementById('canvas'));
+        },
+
+        jsPlatformWindowGetCrypto: function(win_id) {
+            const win = root.handles.get(win_id);
+            console.assert(typeof win !== 'undefined', `Invalid window (${win_id}) handle`);
+
+            return root.handles.create(win.crypto);
         },
 
         jsPlatformWindowGetGpuInstance: function(win_id) {
@@ -1092,6 +1082,14 @@ var wasm_imports = {
             console.assert(typeof canvas !== 'undefined', `Invalid canvas (${canvas_id}) handle`);
 
             return canvas.getBoundingClientRect().top;
+        },
+
+        jsPlatformCryptoGetRandomValues: function(cryptography_id, bytes_ptr, bytes_len) {
+            const cryptography = root.handles.get(cryptography_id);
+            console.assert(typeof cryptography !== 'undefined', `Invalid crypto (${cryptography_id}) handle`);
+
+            const bytes = new Uint8Array(root.wasm.exports.memory.buffer, bytes_ptr, bytes_len);
+            cryptography.getRandomValues(bytes);
         },
 
         jsPlatformGetClipboard: function() {

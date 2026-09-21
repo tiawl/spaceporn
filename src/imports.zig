@@ -90,6 +90,7 @@ pub extern "env" fn jsGpuQueueWriteBuffer(js.Handle, js.Handle, js.Offset, js.St
 pub extern "env" fn jsGpuQueueWriteTexture(js.Handle, js.OpaquePtr, js.StringPtr, js.Uint32, js.OpaquePtr, js.OpaquePtr) void;
 pub extern "env" fn jsPlatformGetWindow() js.Handle;
 pub extern "env" fn jsPlatformWindowGetCanvas(js.Handle) js.Handle;
+pub extern "env" fn jsPlatformWindowGetCrypto(js.Handle) js.Handle;
 pub extern "env" fn jsPlatformWindowGetGpuInstance(js.Handle) js.Handle;
 pub extern "env" fn jsPlatformWindowListenEvent(js.Handle, js.StringPtr, js.Uint32) void;
 pub extern "env" fn jsPlatformWindowGetDevicePixelRatio(js.Handle) js.Float32;
@@ -100,6 +101,7 @@ pub extern "env" fn jsPlatformCanvasGetBoundingClientRectTop(js.Handle) js.Uint3
 pub extern "env" fn jsPlatformCanvasGetGpuContext(js.Handle) js.Handle;
 pub extern "env" fn jsPlatformCanvasResize(js.Handle, js.Uint32, js.Uint32, js.Float32) void;
 pub extern "env" fn jsPlatformCanvasListenEvent(js.Handle, js.StringPtr, js.Uint32) void;
+pub extern "env" fn jsPlatformCryptoGetRandomValues(js.Handle, js.StringPtr, js.Uint32) void;
 pub extern "env" fn jsPlatformGetClipboard() js.Handle;
 pub extern "env" fn jsPlatformClipboardWriteText(js.Handle, js.StringPtr, js.Uint32) void;
 pub extern "env" fn jsPlatformKeyboardEventGetCodepoint() js.Uint32;

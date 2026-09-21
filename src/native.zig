@@ -4,6 +4,7 @@ const build = @import("build");
 const prototypes = @import("prototypes");
 const shader = @import("shaders/types.zig");
 const log = @import("log");
+const ui = @import("ui");
 
 extern "c" fn glfwCreateWindow(width: u32, height: u32, title: [*c]const u8, monitor: ?*c.GLFWmonitor, share: ?*c.GLFWwindow) ?*c.GLFWwindow;
 extern "c" fn glfwGetFramebufferSize(window: ?*c.GLFWwindow, width: [*c]u32, height: [*c]u32) void;
@@ -362,8 +363,7 @@ const Root = struct {
     current_frame: u32 = 0,
     framebuffer_resized: bool = false,
     start_time: std.Io.Timestamp = undefined,
-    imgui_window_created: bool = false,
-    imgui_window_hidden: bool = false,
+    ui_is_hidden: bool = false,
     prng: std.Random.DefaultPrng,
     random: std.Random,
     seed: u32 = 0,
@@ -414,93 +414,14 @@ fn GLFWKeyCallback(window: ?*c.GLFWwindow, key: c_int, scancode: c_int, action: 
         } else unreachable;
         // WARNING: US keyboard layout used here
         switch (key) {
-            c.GLFW_KEY_SPACE => root.?.imgui_window_hidden = !root.?.imgui_window_hidden,
+            c.GLFW_KEY_SPACE => root.?.ui_is_hidden = !root.?.ui_is_hidden,
             c.GLFW_KEY_ESCAPE => c.glfwSetWindowShouldClose(root.?.window, c.GLFW_TRUE),
             else => {},
         }
     }
 }
 
-fn initImguiStyle() void {
-    var style: *c.ImGuiStyle = c.ImGui_GetStyle();
-
-    // --- 1. Sizing and Spacing (Sharp & Aggressive) ---
-    style.WindowPadding = c.ImVec2{ .x = 10.0, .y = 10.0 };
-    style.FramePadding = c.ImVec2{ .x = 6.0, .y = 4.0 };
-    style.ItemSpacing = c.ImVec2{ .x = 8.0, .y = 4.0 };
-    style.ScrollbarSize = 13.0;
-    style.GrabMinSize = 10.0;
-
-    // --- 2. Borders & Rounding (Cyberpunk = Hard Edges) ---
-    style.WindowRounding = 0.0;
-    style.FrameRounding = 0.0;
-    style.PopupRounding = 0.0;
-    style.ScrollbarRounding = 0.0;
-    style.GrabRounding = 0.0;
-    style.TabRounding = 0.0;
-
-    style.WindowBorderSize = 1.0;
-    style.FrameBorderSize = 1.0;
-    style.PopupBorderSize = 1.0;
-
-    // --- 3. The Neon Palette ---
-    // Background: Pitch Black / Deep Navy
-    // Neon Cyan: #00f9 | Neon Pink: #ff003 | Neon Yellow: #fcee0a
-
-    // Text
-    style.Colors[c.ImGuiCol_Text] = c.ImVec4{ .x = 0.00, .y = 1.00, .z = 0.62, .w = 1.00 }; // Neon Green/Cyan
-    style.Colors[c.ImGuiCol_TextDisabled] = c.ImVec4{ .x = 0.20, .y = 0.40, .z = 0.35, .w = 1.00 };
-
-    // Backgrounds
-    style.Colors[c.ImGuiCol_WindowBg] = c.ImVec4{ .x = 0.02, .y = 0.02, .z = 0.04, .w = 0.95 }; // Near black
-    style.Colors[c.ImGuiCol_ChildBg] = c.ImVec4{ .x = 0.02, .y = 0.02, .z = 0.04, .w = 0.00 };
-    style.Colors[c.ImGuiCol_PopupBg] = c.ImVec4{ .x = 0.02, .y = 0.02, .z = 0.04, .w = 0.98 };
-
-    // Borders (The "Glow" look)
-    style.Colors[c.ImGuiCol_Border] = c.ImVec4{ .x = 1.00, .y = 0.00, .z = 0.25, .w = 0.60 }; // Neon Pink Border
-    style.Colors[c.ImGuiCol_BorderShadow] = c.ImVec4{ .x = 1.00, .y = 0.00, .z = 0.25, .w = 0.20 };
-
-    // Frames
-    style.Colors[c.ImGuiCol_FrameBg] = c.ImVec4{ .x = 0.05, .y = 0.05, .z = 0.10, .w = 1.00 };
-    style.Colors[c.ImGuiCol_FrameBgHovered] = c.ImVec4{ .x = 1.00, .y = 0.00, .z = 0.25, .w = 0.20 };
-    style.Colors[c.ImGuiCol_FrameBgActive] = c.ImVec4{ .x = 1.00, .y = 0.00, .z = 0.25, .w = 0.40 };
-
-    // Title Barsc.
-    style.Colors[c.ImGuiCol_TitleBg] = c.ImVec4{ .x = 0.02, .y = 0.02, .z = 0.04, .w = 1.00 };
-    style.Colors[c.ImGuiCol_TitleBgActive] = c.ImVec4{ .x = 0.05, .y = 0.05, .z = 0.10, .w = 1.00 };
-    style.Colors[c.ImGuiCol_TitleBgCollapsed] = c.ImVec4{ .x = 0.02, .y = 0.02, .z = 0.04, .w = 1.00 };
-
-    // Menus
-    style.Colors[c.ImGuiCol_MenuBarBg] = c.ImVec4{ .x = 0.05, .y = 0.05, .z = 0.10, .w = 1.00 };
-
-    // Scrollbars
-    style.Colors[c.ImGuiCol_ScrollbarBg] = c.ImVec4{ .x = 0.02, .y = 0.02, .z = 0.04, .w = 1.00 };
-    style.Colors[c.ImGuiCol_ScrollbarGrab] = c.ImVec4{ .x = 1.00, .y = 0.93, .z = 0.04, .w = 0.60 }; // Neon Yellow
-    style.Colors[c.ImGuiCol_ScrollbarGrabHovered] = c.ImVec4{ .x = 1.00, .y = 0.93, .z = 0.04, .w = 0.80 };
-    style.Colors[c.ImGuiCol_ScrollbarGrabActive] = c.ImVec4{ .x = 1.00, .y = 0.93, .z = 0.04, .w = 1.00 };
-
-    // Interactables
-    style.Colors[c.ImGuiCol_CheckMark] = c.ImVec4{ .x = 1.00, .y = 0.93, .z = 0.04, .w = 1.00 }; // Yellow
-    style.Colors[c.ImGuiCol_SliderGrab] = c.ImVec4{ .x = 1.00, .y = 0.00, .z = 0.25, .w = 0.80 }; // Pink
-    style.Colors[c.ImGuiCol_SliderGrabActive] = c.ImVec4{ .x = 1.00, .y = 0.00, .z = 0.25, .w = 1.00 };
-    style.Colors[c.ImGuiCol_Button] = c.ImVec4{ .x = 0.00, .y = 1.00, .z = 0.62, .w = 0.20 }; // Cyan Ghost
-    style.Colors[c.ImGuiCol_ButtonHovered] = c.ImVec4{ .x = 0.00, .y = 1.00, .z = 0.62, .w = 0.50 };
-    style.Colors[c.ImGuiCol_ButtonActive] = c.ImVec4{ .x = 0.00, .y = 1.00, .z = 0.62, .w = 1.00 };
-    style.Colors[c.ImGuiCol_Header] = c.ImVec4{ .x = 1.00, .y = 0.00, .z = 0.25, .w = 0.30 };
-    style.Colors[c.ImGuiCol_HeaderHovered] = c.ImVec4{ .x = 1.00, .y = 0.00, .z = 0.25, .w = 0.50 };
-    style.Colors[c.ImGuiCol_HeaderActive] = c.ImVec4{ .x = 1.00, .y = 0.00, .z = 0.25, .w = 1.00 };
-
-    // Tabs
-    style.Colors[c.ImGuiCol_Tab] = c.ImVec4{ .x = 0.05, .y = 0.05, .z = 0.10, .w = 1.00 };
-    style.Colors[c.ImGuiCol_TabHovered] = c.ImVec4{ .x = 1.00, .y = 0.00, .z = 0.25, .w = 0.80 };
-    style.Colors[c.ImGuiCol_TabActive] = c.ImVec4{ .x = 0.80, .y = 0.00, .z = 0.20, .w = 1.00 };
-
-    // Misc
-    style.Colors[c.ImGuiCol_TextSelectedBg] = c.ImVec4{ .x = 1.00, .y = 0.93, .z = 0.04, .w = 0.30 };
-    style.Colors[c.ImGuiCol_NavHighlight] = c.ImVec4{ .x = 1.00, .y = 0.00, .z = 0.25, .w = 1.00 };
-}
-
-fn initImgui(root: *Root) error{ ImGuiCreateContext, ImGuiGlfwInit, ImGuiVulkanInit, ImGuiVulkanLoad }!void {
+fn initUI(root: *Root) error{ ImGuiCreateContext, ImGuiGlfwInit, ImGuiVulkanInit, ImGuiVulkanLoad }!void {
     _ = c.CIMGUI_CHECKVERSION();
     if (c.ImGui_CreateContext(null) == null) return error.ImGuiCreateContext;
     errdefer c.ImGui_DestroyContext(null);
@@ -509,7 +430,7 @@ fn initImgui(root: *Root) error{ ImGuiCreateContext, ImGuiGlfwInit, ImGuiVulkanI
     io.IniFilename = null;
     io.ConfigFlags |= c.ImGuiConfigFlags_NavEnableKeyboard | c.ImGuiConfigFlags_NavEnableGamepad;
 
-    initImguiStyle();
+    ui.setStyle(true);
 
     if (!c.cImGui_ImplGlfw_InitForVulkan(root.window, true)) return error.ImGuiGlfwInit;
     errdefer c.cImGui_ImplGlfw_Shutdown();
@@ -546,71 +467,13 @@ fn initImgui(root: *Root) error{ ImGuiCreateContext, ImGuiGlfwInit, ImGuiVulkanI
     errdefer c.cImGui_ImplVulkan_Shutdown();
 }
 
-fn deinitImgui() void {
+fn deinitUI() void {
     c.cImGui_ImplVulkan_Shutdown();
     c.cImGui_ImplGlfw_Shutdown();
     c.ImGui_DestroyContext(null);
 }
 
-fn drawImgui(root: *Root) (std.mem.Allocator.Error || error{ImGuiBegin})!void {
-    c.cImGui_ImplVulkan_NewFrame();
-    c.cImGui_ImplGlfw_NewFrame();
-    c.ImGui_NewFrame();
-
-    if (!root.imgui_window_created) {
-        const window_pos: c.ImVec2 = .{ .x = 0.0, .y = 0.0 };
-        const window_pivot: c.ImVec2 = .{ .x = 0.0, .y = 0.0 };
-
-        c.ImGui_SetNextWindowPosEx(window_pos, 0, window_pivot);
-
-        root.imgui_window_created = true;
-    }
-
-    var extent: c.VkExtent2D = undefined;
-    glfwGetFramebufferSize(root.window, &extent.width, &extent.height);
-    extent = .{
-        .width = std.math.clamp(extent.width, root.physical_device.capabilities.minImageExtent.width, root.physical_device.capabilities.maxImageExtent.width),
-        .height = std.math.clamp(extent.height, root.physical_device.capabilities.minImageExtent.height, root.physical_device.capabilities.maxImageExtent.height),
-    };
-    const window_size = c.ImVec2{ .x = 300.0, .y = @floatFromInt(extent.height) };
-    c.ImGui_SetNextWindowSize(window_size, 0);
-
-    const flags = c.ImGuiWindowFlags_NoCollapse | c.ImGuiWindowFlags_NoMove | c.ImGuiWindowFlags_NoResize | c.ImGuiWindowFlags_NoTitleBar;
-
-    if (!root.imgui_window_hidden) {
-        if (!c.ImGui_Begin("tweaker", null, flags)) return error.ImGuiBegin;
-        defer c.ImGui_End();
-        const io: *c.ImGuiIO = c.ImGui_GetIO();
-
-        if (c.ImGui_CollapsingHeader("Help", 0)) {
-            c.ImGui_BulletText("Press SPACE to hide/show this panel");
-            c.ImGui_BulletText("Press ESPACE to close " ++ build.name);
-        }
-
-        if (c.ImGui_CollapsingHeader("Stats", 0)) {
-            const fps_text = try std.fmt.allocPrintSentinel(root.init.gpa, "Average {d:.1} ms/frame ({d:.0} FPS)", .{ std.time.ms_per_s / io.Framerate, io.Framerate }, 0);
-            defer root.init.gpa.free(fps_text);
-            c.ImGui_Text(fps_text.ptr);
-        }
-
-        if (c.ImGui_CollapsingHeader("Settings", 0)) {
-            const seed_text = try std.fmt.allocPrintSentinel(root.init.gpa, "Seed: {d}", .{root.seed}, 0);
-            defer root.init.gpa.free(seed_text);
-            if (c.ImGui_Button("New Seed")) {
-                root.seed = root.random.int(u32);
-                root.offscreen.render = true;
-            }
-            c.ImGui_SameLine();
-            c.ImGui_Text(seed_text.ptr);
-        }
-
-        //if (c.ImGui_CollapsingHeader("Stars", 0)) {
-    }
-
-    c.ImGui_Render();
-}
-
-fn renderImGui(root: *Root) void {
+fn renderUI(root: *Root) void {
     c.cImGui_ImplVulkan_RenderDrawDataEx(c.ImGui_GetDrawData(), root.command_buffers[root.current_frame], @ptrCast(c.VK_NULL_HANDLE));
 }
 
@@ -2352,12 +2215,25 @@ fn recordCommandBuffer(root: *Root, image_index: u32) !void {
         const onscreen_descriptor_sets = [_]c.VkDescriptorSet{root.descriptor_sets[root.current_frame]};
         prototypes.vkCmdBindDescriptorSets(root.command_buffers[root.current_frame], c.VK_PIPELINE_BIND_POINT_GRAPHICS, root.pipelines.layout, 0, onscreen_descriptor_sets.len, &onscreen_descriptor_sets, onscreen_dynamic_offsets.len, &onscreen_dynamic_offsets);
         prototypes.vkCmdDrawIndexed(root.command_buffers[root.current_frame], indices.len, 1, 0, 0, 0);
-        renderImGui(root);
+        renderUI(root);
     }
 
     try errify(prototypes.vkEndCommandBuffer(root.command_buffers[root.current_frame]));
 
     root.offscreen.render = false;
+}
+
+fn drawUI(root: *Root) (std.mem.Allocator.Error || error{ImGuiBegin})!void {
+    c.cImGui_ImplVulkan_NewFrame();
+    c.cImGui_ImplGlfw_NewFrame();
+
+    var extent: c.VkExtent2D = undefined;
+    glfwGetFramebufferSize(root.window, &extent.width, &extent.height);
+    extent = .{
+        .width = std.math.clamp(extent.width, root.physical_device.capabilities.minImageExtent.width, root.physical_device.capabilities.maxImageExtent.width),
+        .height = std.math.clamp(extent.height, root.physical_device.capabilities.minImageExtent.height, root.physical_device.capabilities.maxImageExtent.height),
+    };
+    try ui.draw(root.ui_is_hidden, root.init.gpa, extent.width, extent.height, &root.offscreen.render, &root.seed, root.random);
 }
 
 fn draw(root: *Root) (std.mem.Allocator.Error || error{ Vulkan, ImGuiBegin })!void {
@@ -2366,7 +2242,7 @@ fn draw(root: *Root) (std.mem.Allocator.Error || error{ Vulkan, ImGuiBegin })!vo
     const fences = [_]c.VkFence{root.in_flight_fences[root.current_frame]};
     try errify(prototypes.vkWaitForFences(root.device, fences.len, &fences, c.VK_TRUE, TIMEOUT));
 
-    try drawImgui(root);
+    try drawUI(root);
 
     var image_index: u32 = undefined;
     switch (prototypes.vkAcquireNextImageKHR(root.device, root.swapchain, TIMEOUT, root.image_available_semaphores[root.current_frame], @ptrCast(c.VK_NULL_HANDLE), &image_index)) {
@@ -2449,6 +2325,8 @@ fn loop(root: *Root) (std.mem.Allocator.Error || std.Io.Cancelable || error{ Vul
 }
 
 pub fn main(init: std.process.Init) (std.mem.Allocator.Error || std.Io.Cancelable || error{ Vulkan, GLFWCreateWindow, GLFWInit, VulkanNotSupported, QueueFamilies, UnknownFunction, NoSuitableMemoryType, NoAvailablePhysicalDevice, NoSuitablePhysicalDevice, ImGuiCreateContext, ImGuiGlfwInit, ImGuiVulkanInit, ImGuiVulkanLoad, ImGuiBegin })!void {
+    var seed: u64 = undefined;
+    init.io.random(std.mem.asBytes(&seed));
     var root: Root = .{
         .init = &init,
         .arena = init.arena.allocator(),
@@ -2459,11 +2337,7 @@ pub fn main(init: std.process.Init) (std.mem.Allocator.Error || std.Io.Cancelabl
             },
             .layers = 2,
         },
-        .prng = .init(blk: {
-            var seed: u64 = undefined;
-            init.io.random(std.mem.asBytes(&seed));
-            break :blk seed;
-        }),
+        .prng = .init(seed),
         .random = undefined,
     };
     root.random = root.prng.random();
@@ -2526,8 +2400,8 @@ pub fn main(init: std.process.Init) (std.mem.Allocator.Error || std.Io.Cancelabl
     defer deinitSemaphores(&root);
     defer deinitFences(&root);
 
-    try initImgui(&root);
-    defer deinitImgui();
+    try initUI(&root);
+    defer deinitUI();
 
     try loop(&root);
 }

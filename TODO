@@ -9,14 +9,17 @@
     - pixelization
     - zoom
     - seed
-- pages:
-  - catch up native
-  - ui.zig: common imgui panel file
+- common:
+  - ui.zig: abstract totally imgui into ui
   - frontend.zig: common main functions between native and pages builds
+- pages:
+  - ui.zig: fix seed
+  - ui.zig: remove ESCAPE into HELP menu
+  - catch up native
   - check wgpu limits and features
   - implement persistence (imgui.ini) through browser caching
 - native:
-  - use gpa allocator
+  - fix window resize
   - use Vk debug ext
   - implement persistence (imgui.ini) with options
 - build.zig:

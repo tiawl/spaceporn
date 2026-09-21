@@ -2,21 +2,16 @@
   - time reset
   - pixelization
   - zoom
-  - seed reset
-- zig shaders:
-  - uniforms (UBO):
-    - atlas (random & noise)
-    - pixelization
-    - zoom
-    - seed
+- common:
+  - common main functions between native and pages builds:
+    - frontend.zig: args parsing / options
+    - backend.zig: platform + renderer + ui
 - pages:
-  - catch up native
-  - ui.zig: common imgui panel file
-  - frontend.zig: common main functions between native and pages builds
+  - make 'root' a local var
   - check wgpu limits and features
   - implement persistence (imgui.ini) through browser caching
 - native:
-  - use gpa allocator
+  - fix window resize
   - use Vk debug ext
   - implement persistence (imgui.ini) with options
 - build.zig:
@@ -30,3 +25,4 @@
 - code:
   - maybe could we take some advices from the TigerStyle chart ?
   - review panic and js.console.err calls
+  - functions should return specific errors instead of anyerror (or should not)

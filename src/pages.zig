@@ -2,13 +2,13 @@ const std = @import("std");
 const c = @import("c");
 const js = @import("js");
 const shader = @import("shader");
+const UI = @import("ui").UI;
 
 pub const std_options_debug_io: std.Io = std.Io.failing;
 pub const panic = std.debug.FullPanic(js.console.panic);
 pub const std_options: std.Options = .{
     .allow_stack_tracing = true, // currently useless for wasm target
 };
-var gpa = std.heap.wasm_allocator;
 
 export fn sizeOfBindGroupEntry() js.BigUint64 {
     return @sizeOf(js.gpu.BindGroupEntry);
@@ -106,12 +106,152 @@ comptime {
 }
 
 // TODO: refactor this with native
-const LAYER_COUNT = 2;
+const LAYERS_COUNT = 2;
 
 // TODO: refactor this with native
 const PIXELLIZATION_MAX = 200;
 
+const ImplementedUI = struct {
+    render_pass_encoder: *js.gpu.RenderPassEncoder,
+
+    fn ui(self: *@This(), r: *Root, comptime erase_gamma: bool) UI {
+        self.render_pass_encoder = &root.onscreen_render_pass_encoder;
+        return UI.implement(self, &vtable, r.gpa, erase_gamma) catch |err| js.console.err("UI Implementation failed: {s}", .{@errorName(err)});
+    }
+
+    const vtable: UI.VTable = .{
+        .init_fn = @This().init,
+        .deinit_fn = @This().deinit,
+        .new_frame_fn = @This().newFrame,
+        .render_fn = @This().render,
+        .get_scale_fn = @This().getScale,
+    };
+
+    fn init(ptr: *anyopaque) !void {
+        const self: *@This() = @ptrCast(@alignCast(ptr));
+        _ = self;
+
+        if (!c.cImGui_ImplGlfw_InitForOther(@ptrFromInt(1), false)) {
+            js.console.err("cImGui_ImplGlfw_InitForOther() failed", .{});
+        }
+
+        var init_info: c.ImGui_ImplWGPU_InitInfo = .{
+            .Device = @ptrFromInt(1),
+            .NumFramesInFlight = 3,
+            .RenderTargetFormat = @backingInt(root.surface_texture_format),
+            .DepthStencilFormat = c.WGPUTextureFormat_Undefined,
+            .PipelineMultisampleState = .{
+                .count = 1,
+                .mask = std.math.maxInt(u32),
+                .alphaToCoverageEnabled = c.WGPU_FALSE,
+            },
+        };
+
+        if (!c.cImGui_ImplWGPU_Init(&init_info)) {
+            js.console.err("cImGui_ImplWGPU_Init() failed", .{});
+        }
+    }
+
+    fn deinit(ptr: *anyopaque) void {
+        const self: *@This() = @ptrCast(@alignCast(ptr));
+        _ = self;
+
+        c.cImGui_ImplWGPU_Shutdown();
+        c.cImGui_ImplGlfw_Shutdown();
+    }
+
+    fn newFrame(ptr: *anyopaque) void {
+        const self: *@This() = @ptrCast(@alignCast(ptr));
+        _ = self;
+
+        c.cImGui_ImplWGPU_NewFrame();
+        c.cImGui_ImplGlfw_NewFrame();
+    }
+
+    fn render(ptr: *anyopaque) void {
+        const self: *@This() = @ptrCast(@alignCast(ptr));
+
+        c.cImGui_ImplWGPU_RenderDrawData(c.ImGui_GetDrawData(), @ptrCast(@alignCast(self.render_pass_encoder)));
+    }
+
+    fn getScale(ptr: *anyopaque) f32 {
+        const self: *@This() = @ptrCast(@alignCast(ptr));
+        _ = self;
+
+        return js.platform.window.getMonitorScale();
+    }
+
+    fn onWindowResize(width: f32, height: f32, data: ?*anyopaque) void {
+        var r: *Root = @ptrCast(@alignCast(data));
+
+        r.onscreen_ubo.resolution_x = width;
+        r.onscreen_ubo.resolution_y = height;
+    }
+
+    fn onWindowFocus(focused: bool, data: ?*anyopaque) void {
+        const r: *Root = @ptrCast(@alignCast(data));
+        _ = r;
+
+        c.cImGui_ImplGlfw_WindowFocusCallback(@ptrFromInt(1), if (focused) 1 else 0);
+    }
+
+    fn onCursorEnter(entered: bool, data: ?*anyopaque) void {
+        const r: *Root = @ptrCast(@alignCast(data));
+        _ = r;
+
+        c.cImGui_ImplGlfw_CursorEnterCallback(@ptrFromInt(1), if (entered) 1 else 0);
+    }
+
+    fn onCursorPos(x: f32, y: f32, data: ?*anyopaque) void {
+        const r: *Root = @ptrCast(@alignCast(data));
+        _ = r;
+
+        c.cImGui_ImplGlfw_CursorPosCallback(@ptrFromInt(1), x, y);
+    }
+
+    fn onMouseButton(button: js.platform.MouseButton, pressed: bool, data: ?*anyopaque) void {
+        const r: *Root = @ptrCast(@alignCast(data));
+        _ = r;
+
+        c.cImGui_ImplGlfw_MouseButtonCallback(
+            @ptrFromInt(1),
+            @backingInt(button),
+            @backingInt(if (pressed) js.platform.Action.press else js.platform.Action.release),
+            js.platform.keyboard.computeModifierBits(),
+        );
+    }
+
+    fn onScroll(xoffset: f32, yoffset: f32, data: ?*anyopaque) void {
+        const r: *Root = @ptrCast(@alignCast(data));
+        _ = r;
+
+        c.cImGui_ImplGlfw_ScrollCallback(@ptrFromInt(1), xoffset, yoffset);
+    }
+
+    fn onChar(codepoint: js.Uint32, data: ?*anyopaque) void {
+        const r: *Root = @ptrCast(@alignCast(data));
+        _ = r;
+
+        c.cImGui_ImplGlfw_CharCallback(@ptrFromInt(1), codepoint);
+    }
+
+    fn onKey(key: js.platform.Key, scancode: js.platform.Scancode, action: js.platform.Action, mods: js.Uint32, data: ?*anyopaque) void {
+        var r: *Root = @ptrCast(@alignCast(data));
+
+        c.cImGui_ImplGlfw_KeyCallback(@ptrFromInt(1), @backingInt(key), @backingInt(scancode), @backingInt(action), std.math.cast(c_int, mods) orelse 0);
+
+        if (action == .press) {
+            if (scancode == .space or key == .space) {
+                r.ui.is_hidden = !r.ui.is_hidden;
+            } else if (scancode == .escape or key == .escape) {
+                js.platform.window.close();
+            }
+        }
+    }
+};
+
 const Root = struct {
+    gpa: std.mem.Allocator,
     surface_texture_format: js.gpu.TextureFormat = undefined,
     sampler: js.gpu.Sampler = .{},
     vertex_buffer: js.gpu.Buffer = .{},
@@ -121,7 +261,7 @@ const Root = struct {
     offscreen_texture_format: js.gpu.TextureFormat = undefined,
     offscreen_texture: js.gpu.Texture = undefined,
     offscreen_texture_view: js.gpu.TextureView = .{},
-    offscreen_layer_texture_views: [LAYER_COUNT]js.gpu.TextureView = undefined,
+    offscreen_layer_texture_views: [LAYERS_COUNT]js.gpu.TextureView = undefined,
     offscreen_uniform_buffer: js.gpu.Buffer = .{},
     offscreen_ubo: shader.OffscreenUBO = undefined,
     offscreen_bind_group: js.gpu.BindGroup = .{},
@@ -131,10 +271,22 @@ const Root = struct {
     onscreen_ubo: shader.OnscreenUBO = undefined,
     onscreen_bind_group: js.gpu.BindGroup = .{},
     onscreen_render_pipeline: js.gpu.RenderPipeline = .{},
+    onscreen_render_pass_encoder: js.gpu.RenderPassEncoder = .{},
     start_time: ?js.Float64 = null,
     failed: bool = false,
+    prng: std.Random.DefaultPrng,
+    impl_ui: ImplementedUI = undefined,
+    ui: UI = undefined,
+
+    fn init(self: *@This()) void {
+        var seed: u64 = undefined;
+        js.platform.crypto.random(std.mem.asBytes(&seed));
+        self.gpa = std.heap.wasm_allocator;
+        self.prng = .init(seed);
+        self.ui = self.impl_ui.ui(&root, false);
+    }
 };
-var root: Root = .{};
+var root: Root = undefined;
 
 // TODO: refactor this with native
 const vertices = [_]@Vector(2, f32){
@@ -150,97 +302,58 @@ const offscreen_ubo_size = js.wgsl.sizeOf(@TypeOf(root.offscreen_ubo));
 const onscreen_ubo_size = js.wgsl.sizeOf(@TypeOf(root.onscreen_ubo));
 
 export fn allocUint8(len: u32) [*]const u8 {
-    const slice = gpa.alloc(u8, len) catch std.debug.panic("{s}: failed to allocate memory", .{@src().fn_name});
+    const slice = root.gpa.alloc(u8, len) catch std.debug.panic("{s}: failed to allocate memory", .{@src().fn_name});
     return slice.ptr;
 }
 
-fn onWindowResize(width: f32, height: f32) void {
-    root.onscreen_ubo.resolution_x = width;
-    root.onscreen_ubo.resolution_y = height;
-}
-
-fn onWindowFocus(focused: bool) void {
-    c.cImGui_ImplGlfw_WindowFocusCallback(@ptrFromInt(1), if (focused) 1 else 0);
-}
-
-fn onCursorEnter(entered: bool) void {
-    c.cImGui_ImplGlfw_CursorEnterCallback(@ptrFromInt(1), if (entered) 1 else 0);
-}
-
-fn onCursorPos(x: f32, y: f32) void {
-    c.cImGui_ImplGlfw_CursorPosCallback(@ptrFromInt(1), x, y);
-}
-
-fn onMouseButton(button: js.platform.MouseButton, pressed: bool) void {
-    c.cImGui_ImplGlfw_MouseButtonCallback(
-        @ptrFromInt(1),
-        @backingInt(button),
-        @backingInt(if (pressed) js.platform.Action.press else js.platform.Action.release),
-        js.platform.Keyboard.computeModifierBits(),
-    );
-}
-
-fn onScroll(xoffset: f32, yoffset: f32) void {
-    c.cImGui_ImplGlfw_ScrollCallback(@ptrFromInt(1), xoffset, yoffset);
-}
-
-fn onChar(codepoint: js.Uint32) void {
-    c.cImGui_ImplGlfw_CharCallback(@ptrFromInt(1), codepoint);
-}
-
-fn onKey(key: js.platform.Key, scancode: js.platform.Scancode, action: js.platform.Action, mods: js.Uint32) void {
-    c.cImGui_ImplGlfw_KeyCallback(@ptrFromInt(1), @backingInt(key), @backingInt(scancode), @backingInt(action), std.math.cast(c_int, mods) orelse 0);
-}
-
 fn requestAdapterCallback() void {
-    js.gpu.Adapter.requestDevice(requestDeviceCallback);
+    js.gpu.adapter.requestDevice(requestDeviceCallback);
 }
 
 fn requestDeviceCallback() void {
-    js.gpu.Context.configure(root.surface_texture_format);
+    js.gpu.context.configure(root.surface_texture_format);
     const vertex_attributes = [_]js.gpu.VertexAttribute{
         .init(0, .float32x2, 0),
     };
     const vertex_buffer_layouts = [_]js.gpu.VertexBufferLayout{
         js.gpu.VertexBufferLayout.init(2 * 4, &vertex_attributes), // 2 floats, 4 bytes each
     };
-    root.fullscreen_shader_module = js.gpu.Device.createShaderModule(@embedFile("fullscreen.vert.wgsl"));
-    root.onscreen_shader_module = js.gpu.Device.createShaderModule(@embedFile("onscreen.frag.wgsl"));
-    root.offscreen_shader_module = js.gpu.Device.createShaderModule(@embedFile("offscreen.frag.wgsl"));
+    root.fullscreen_shader_module = js.gpu.device.createShaderModule(@embedFile("fullscreen.vert.wgsl"));
+    root.onscreen_shader_module = js.gpu.device.createShaderModule(@embedFile("onscreen.frag.wgsl"));
+    root.offscreen_shader_module = js.gpu.device.createShaderModule(@embedFile("offscreen.frag.wgsl"));
     const fullscreen_vertex_state: js.gpu.VertexState = .init(root.fullscreen_shader_module, &vertex_buffer_layouts);
-    root.sampler = js.gpu.Device.createSampler(.{});
-    root.vertex_buffer = js.gpu.Device.createBuffer(vertex_buffer_size, js.gpu.BufferUsage.vertex | js.gpu.BufferUsage.copy_dst);
-    js.gpu.Queue.writeBuffer(@TypeOf(vertices), root.vertex_buffer, 0, &[_]@TypeOf(vertices){vertices}, 0, @sizeOf(@TypeOf(vertices)));
-    root.index_buffer = js.gpu.Device.createBuffer(index_buffer_size, js.gpu.BufferUsage.index | js.gpu.BufferUsage.copy_dst);
-    js.gpu.Queue.writeBuffer(@TypeOf(indices), root.index_buffer, 0, &[_]@TypeOf(indices){indices}, 0, @sizeOf(@TypeOf(indices)));
+    root.sampler = js.gpu.device.createSampler(.{});
+    root.vertex_buffer = js.gpu.device.createBuffer(vertex_buffer_size, js.gpu.BufferUsage.vertex | js.gpu.BufferUsage.copy_dst);
+    js.gpu.queue.writeBuffer(@TypeOf(vertices), root.vertex_buffer, 0, &[_]@TypeOf(vertices){vertices}, 0, @sizeOf(@TypeOf(vertices)));
+    root.index_buffer = js.gpu.device.createBuffer(index_buffer_size, js.gpu.BufferUsage.index | js.gpu.BufferUsage.copy_dst);
+    js.gpu.queue.writeBuffer(@TypeOf(indices), root.index_buffer, 0, &[_]@TypeOf(indices){indices}, 0, @sizeOf(@TypeOf(indices)));
     root.offscreen_ubo.resolution_x = PIXELLIZATION_MAX;
     root.offscreen_ubo.resolution_y = PIXELLIZATION_MAX;
-    root.offscreen_ubo.seed = 0;
     root.offscreen_texture_format = .rgba8unorm;
     const offscreen_texture_descriptor = js.gpu.TextureDescriptor.init(
         root.offscreen_texture_format,
         .@"2d",
         @round(root.offscreen_ubo.resolution_x),
         @round(root.offscreen_ubo.resolution_y),
-        LAYER_COUNT,
+        LAYERS_COUNT,
         1,
         1,
         js.gpu.TextureUsage.texture_binding | js.gpu.TextureUsage.render_attachment | js.gpu.TextureUsage.copy_dst,
     );
-    root.offscreen_texture = js.gpu.Device.createTexture(offscreen_texture_descriptor);
+    root.offscreen_texture = js.gpu.device.createTexture(offscreen_texture_descriptor);
     root.offscreen_texture_view = root.offscreen_texture.createView(.fromDimension(.@"2d-array"), .{});
-    root.offscreen_uniform_buffer = js.gpu.Device.createBuffer(offscreen_ubo_size, js.gpu.BufferUsage.uniform | js.gpu.BufferUsage.copy_dst);
+    root.offscreen_uniform_buffer = js.gpu.device.createBuffer(offscreen_ubo_size, js.gpu.BufferUsage.uniform | js.gpu.BufferUsage.copy_dst);
 
     const offscreen_bind_group_layout_entries = [_]js.gpu.BindGroupLayoutEntry{
         js.gpu.BindGroupLayoutEntry.initUniformBuffer(0, js.gpu.ShaderStage.fragment),
     };
-    var offscreen_bind_group_layout = js.gpu.Device.createBindGroupLayout(&offscreen_bind_group_layout_entries);
+    var offscreen_bind_group_layout = js.gpu.device.createBindGroupLayout(&offscreen_bind_group_layout_entries);
     defer offscreen_bind_group_layout.deinit();
     const offscreen_bind_group_entries = [_]js.gpu.BindGroupEntry{
         js.gpu.BindGroupEntry.initBuffer(0, root.offscreen_uniform_buffer, 0, offscreen_ubo_size),
     };
-    root.offscreen_bind_group = js.gpu.Device.createBindGroup(offscreen_bind_group_layout, &offscreen_bind_group_entries);
-    var offscreen_pipeline_layout = js.gpu.Device.createPipelineLayout(&[_]js.gpu.BindGroupLayout{offscreen_bind_group_layout});
+    root.offscreen_bind_group = js.gpu.device.createBindGroup(offscreen_bind_group_layout, &offscreen_bind_group_entries);
+    var offscreen_pipeline_layout = js.gpu.device.createPipelineLayout(&[_]js.gpu.BindGroupLayout{offscreen_bind_group_layout});
     defer offscreen_pipeline_layout.deinit();
 
     const offscreen_color_target_states = [_]js.gpu.ColorTargetState{
@@ -254,25 +367,23 @@ fn requestDeviceCallback() void {
 
     const offscreen_fragment_state: js.gpu.FragmentState = .init(root.offscreen_shader_module, &offscreen_color_target_states);
 
-    root.offscreen_render_pipeline = js.gpu.Device.createRenderPipeline(offscreen_pipeline_layout, fullscreen_vertex_state, offscreen_fragment_state, .{});
+    root.offscreen_render_pipeline = js.gpu.device.createRenderPipeline(offscreen_pipeline_layout, fullscreen_vertex_state, offscreen_fragment_state, .{});
 
-    updateOffscreen();
-
-    root.onscreen_uniform_buffer = js.gpu.Device.createBuffer(onscreen_ubo_size, js.gpu.BufferUsage.uniform | js.gpu.BufferUsage.copy_dst);
+    root.onscreen_uniform_buffer = js.gpu.device.createBuffer(onscreen_ubo_size, js.gpu.BufferUsage.uniform | js.gpu.BufferUsage.copy_dst);
     const onscreen_bind_group_layout_entries = [_]js.gpu.BindGroupLayoutEntry{
         js.gpu.BindGroupLayoutEntry.initUniformBuffer(0, js.gpu.ShaderStage.fragment),
         js.gpu.BindGroupLayoutEntry.init2DArrayTexture(1, js.gpu.ShaderStage.fragment),
         js.gpu.BindGroupLayoutEntry.initSampler(2, js.gpu.ShaderStage.fragment),
     };
-    var onscreen_bind_group_layout = js.gpu.Device.createBindGroupLayout(&onscreen_bind_group_layout_entries);
+    var onscreen_bind_group_layout = js.gpu.device.createBindGroupLayout(&onscreen_bind_group_layout_entries);
     defer onscreen_bind_group_layout.deinit();
     const onscreen_bind_group_entries = [_]js.gpu.BindGroupEntry{
         js.gpu.BindGroupEntry.initBuffer(0, root.onscreen_uniform_buffer, 0, onscreen_ubo_size),
         js.gpu.BindGroupEntry.initTextureView(1, root.offscreen_texture_view),
         js.gpu.BindGroupEntry.initSampler(2, root.sampler),
     };
-    root.onscreen_bind_group = js.gpu.Device.createBindGroup(onscreen_bind_group_layout, &onscreen_bind_group_entries);
-    var onscreen_pipeline_layout = js.gpu.Device.createPipelineLayout(&[_]js.gpu.BindGroupLayout{onscreen_bind_group_layout});
+    root.onscreen_bind_group = js.gpu.device.createBindGroup(onscreen_bind_group_layout, &onscreen_bind_group_entries);
+    var onscreen_pipeline_layout = js.gpu.device.createPipelineLayout(&[_]js.gpu.BindGroupLayout{onscreen_bind_group_layout});
     defer onscreen_pipeline_layout.deinit();
 
     const onscreen_color_target_states = [_]js.gpu.ColorTargetState{
@@ -286,9 +397,9 @@ fn requestDeviceCallback() void {
 
     const onscreen_fragment_state: js.gpu.FragmentState = .init(root.onscreen_shader_module, &onscreen_color_target_states);
 
-    root.onscreen_render_pipeline = js.gpu.Device.createRenderPipeline(onscreen_pipeline_layout, fullscreen_vertex_state, onscreen_fragment_state, .{});
-    root.onscreen_ubo.resolution_x = std.math.lossyCast(f32, js.platform.Canvas.getWidth());
-    root.onscreen_ubo.resolution_y = std.math.lossyCast(f32, js.platform.Canvas.getHeight());
+    root.onscreen_render_pipeline = js.gpu.device.createRenderPipeline(onscreen_pipeline_layout, fullscreen_vertex_state, onscreen_fragment_state, .{});
+    root.onscreen_ubo.resolution_x = std.math.lossyCast(f32, js.platform.canvas.getWidth());
+    root.onscreen_ubo.resolution_y = std.math.lossyCast(f32, js.platform.canvas.getHeight());
 
     js.requestAnimationFrame();
 }
@@ -302,64 +413,31 @@ export fn triggerCallback(cb_handle: js.Handle) void {
     js.gpu.triggerCallback(callback);
 }
 
-fn initImgui() void {
-    _ = c.CIMGUI_CHECKVERSION();
-    if (c.ImGui_CreateContext(null) == null) {
-        js.console.err("ImGui_CreateContext() failed", .{});
-    }
-
-    var io: *c.ImGuiIO = c.ImGui_GetIO();
-    io.IniFilename = null;
-    io.ConfigFlags |= c.ImGuiConfigFlags_NavEnableKeyboard | c.ImGuiConfigFlags_NavEnableGamepad;
-    io.BackendFlags |= c.ImGuiBackendFlags_RendererHasTextures;
-
-    // TODO: replace this line with initImguiStyle();
-    c.ImGui_StyleColorsDark(null);
-
-    if (!c.cImGui_ImplGlfw_InitForOther(@ptrFromInt(1), false)) {
-        js.console.err("cImGui_ImplGlfw_InitForOther() failed", .{});
-    }
-
-    var init_info: c.ImGui_ImplWGPU_InitInfo = .{
-        .Device = @ptrFromInt(1),
-        .NumFramesInFlight = 3,
-        .RenderTargetFormat = @backingInt(root.surface_texture_format),
-        .DepthStencilFormat = c.WGPUTextureFormat_Undefined,
-        .PipelineMultisampleState = .{
-            .count = 1,
-            .mask = std.math.maxInt(u32),
-            .alphaToCoverageEnabled = c.WGPU_FALSE,
-        },
-    };
-
-    if (!c.cImGui_ImplWGPU_Init(&init_info)) {
-        js.console.err("cImGui_ImplWGPU_Init() failed", .{});
-    }
-}
-
 export fn init() void {
     js.platform.init();
-    js.platform.listenEvent(.windowresize, onWindowResize);
-    js.platform.listenEvent(.windowfocus, onWindowFocus);
-    js.platform.listenEvent(.cursorpos, onCursorPos);
-    js.platform.listenEvent(.cursorenter, onCursorEnter);
-    js.platform.listenEvent(.mousebutton, onMouseButton);
-    js.platform.listenEvent(.scroll, onScroll);
-    js.platform.listenEvent(.char, onChar);
-    js.platform.listenEvent(.key, onKey);
-    js.platform.Canvas.getGpuContext();
-    js.platform.Window.getGpuInstance();
-    root.surface_texture_format = js.gpu.Instance.getPreferredSurfaceFormat();
-    initImgui();
-    js.gpu.Instance.requestAdapter(requestAdapterCallback);
+    root.init();
+    js.platform.setEventData(@ptrCast(@alignCast(&root)));
+    js.platform.listenEvent(.windowresize, ImplementedUI.onWindowResize);
+    js.platform.listenEvent(.windowfocus, ImplementedUI.onWindowFocus);
+    js.platform.listenEvent(.cursorpos, ImplementedUI.onCursorPos);
+    js.platform.listenEvent(.cursorenter, ImplementedUI.onCursorEnter);
+    js.platform.listenEvent(.mousebutton, ImplementedUI.onMouseButton);
+    js.platform.listenEvent(.scroll, ImplementedUI.onScroll);
+    js.platform.listenEvent(.char, ImplementedUI.onChar);
+    js.platform.listenEvent(.key, ImplementedUI.onKey);
+    js.platform.canvas.getGpuContext();
+    js.platform.window.getGpuInstance();
+    root.surface_texture_format = js.gpu.instance.getPreferredSurfaceFormat();
+    root.ui.init() catch |err| js.console.err("UI Initialization failed: {s}", .{@errorName(err)});
+    js.gpu.instance.requestAdapter(requestAdapterCallback);
 }
 
 export fn onWindowEvent(event_type: js.String) void {
-    js.platform.Window.onEvent(event_type);
+    js.platform.window.onEvent(event_type);
 }
 
 export fn onCanvasEvent(event_type: js.String) void {
-    js.platform.Canvas.onEvent(event_type);
+    js.platform.canvas.onEvent(event_type);
 }
 
 fn updateOffscreen() void {
@@ -367,8 +445,8 @@ fn updateOffscreen() void {
     var offscreen_command_encoder: js.gpu.CommandEncoder = .{};
     var offscreen_command_buffer: js.gpu.CommandBuffer = .{};
     var offscreen_layer_texture_view_desc: js.gpu.TextureViewDescriptor = .fromDimension(.@"2d");
-    for (0..LAYER_COUNT) |layer| {
-        offscreen_command_encoder = js.gpu.Device.createCommandEncoder();
+    for (0..LAYERS_COUNT) |layer| {
+        offscreen_command_encoder = js.gpu.device.createCommandEncoder();
         defer offscreen_command_encoder.deinit();
         offscreen_layer_texture_view_desc.base_array_layer = layer;
         if (root.offscreen_layer_texture_views[layer].isInit()) root.offscreen_layer_texture_views[layer].deinit();
@@ -380,54 +458,56 @@ fn updateOffscreen() void {
             offscreen_render_pass_encoder.setVertexBuffer(0, root.vertex_buffer, 0, @sizeOf(@TypeOf(vertices)));
             offscreen_render_pass_encoder.setIndexBuffer(root.index_buffer, .uint32, 0, @sizeOf(@TypeOf(indices)));
             root.offscreen_ubo.layer = layer;
-            js.gpu.Queue.writeBuffer(@TypeOf(root.offscreen_ubo), root.offscreen_uniform_buffer, 0, &[_]@TypeOf(root.offscreen_ubo){root.offscreen_ubo}, 0, @sizeOf(@TypeOf(root.offscreen_ubo)));
+            js.gpu.queue.writeBuffer(@TypeOf(root.offscreen_ubo), root.offscreen_uniform_buffer, 0, &[_]@TypeOf(root.offscreen_ubo){root.offscreen_ubo}, 0, @sizeOf(@TypeOf(root.offscreen_ubo)));
             offscreen_render_pass_encoder.setBindGroup(0, root.offscreen_bind_group, &.{});
             offscreen_render_pass_encoder.drawIndexed(indices.len, 1, 0, 0, 0);
         }
         offscreen_command_buffer = offscreen_command_encoder.finish();
         defer offscreen_command_buffer.deinit();
-        js.gpu.Queue.submit(&[_]js.gpu.CommandBuffer{offscreen_command_buffer});
+        js.gpu.queue.submit(&[_]js.gpu.CommandBuffer{offscreen_command_buffer});
+    }
+}
+
+fn drawUI() void {
+    root.ui.draw(js.platform.canvas.getWidth(), js.platform.canvas.getHeight(), root.offscreen_ubo.seed) catch |err| {
+        js.console.err("UI Drawing failed: {s}", .{@errorName(err)});
+    };
+
+    if (root.ui.buttons.new_seed.isPressed()) {
+        root.offscreen_ubo.seed = root.prng.random().int(u32);
+        updateOffscreen();
+        root.ui.buttons.new_seed.release();
     }
 }
 
 export fn update() void {
     if (root.failed) js.console.throwErr(.js_err);
 
-    c.cImGui_ImplGlfw_NewFrame();
-    c.cImGui_ImplWGPU_NewFrame();
-    c.ImGui_NewFrame();
-    c.ImGui_GetStyle().*.Colors[c.ImGuiCol_WindowBg] = .{ .x = 1, .y = 0, .z = 0, .w = 1 }; // opaque red
-    c.ImGui_GetStyle().*.Colors[c.ImGuiCol_Text] = .{ .x = 1, .y = 1, .z = 1, .w = 1 };
-    c.ImGui_SetNextWindowPos(.{ .x = 50, .y = 30 }, c.ImGuiCond_FirstUseEver);
-    c.ImGui_SetNextWindowSize(.{ .x = 100, .y = 90 }, c.ImGuiCond_FirstUseEver);
-    if (c.ImGui_Begin("Test", null, 0)) c.ImGui_Text("Hello world");
-    c.ImGui_End();
-    c.ImGui_Render();
+    drawUI();
 
-    var surface_texture = js.gpu.Context.getCurrentTexture();
+    var surface_texture = js.gpu.context.getCurrentTexture();
     defer surface_texture.deinit();
     var surface_texture_view = surface_texture.createView(.fromDimension(.@"2d"), .{});
     defer surface_texture_view.deinit();
 
     const now: js.Float64 = js.time.now();
     if (root.start_time == null) root.start_time = now;
-    var onscreen_command_encoder = js.gpu.Device.createCommandEncoder();
+    var onscreen_command_encoder = js.gpu.device.createCommandEncoder();
     defer onscreen_command_encoder.deinit();
-    var onscreen_render_pass_encoder: js.gpu.RenderPassEncoder = .{};
     {
-        onscreen_render_pass_encoder = onscreen_command_encoder.beginRenderPass(surface_texture_view, .{});
-        defer onscreen_render_pass_encoder.end();
-        onscreen_render_pass_encoder.setPipeline(root.onscreen_render_pipeline);
-        onscreen_render_pass_encoder.setVertexBuffer(0, root.vertex_buffer, 0, @sizeOf(@TypeOf(vertices)));
-        onscreen_render_pass_encoder.setIndexBuffer(root.index_buffer, .uint32, 0, @sizeOf(@TypeOf(indices)));
+        root.onscreen_render_pass_encoder = onscreen_command_encoder.beginRenderPass(surface_texture_view, .{});
+        defer root.onscreen_render_pass_encoder.end();
+        root.onscreen_render_pass_encoder.setPipeline(root.onscreen_render_pipeline);
+        root.onscreen_render_pass_encoder.setVertexBuffer(0, root.vertex_buffer, 0, @sizeOf(@TypeOf(vertices)));
+        root.onscreen_render_pass_encoder.setIndexBuffer(root.index_buffer, .uint32, 0, @sizeOf(@TypeOf(indices)));
         root.onscreen_ubo.time = std.math.lossyCast(f32, (now - root.start_time.?) / 1000.0);
-        js.gpu.Queue.writeBuffer(@TypeOf(root.onscreen_ubo), root.onscreen_uniform_buffer, 0, &[_]@TypeOf(root.onscreen_ubo){root.onscreen_ubo}, 0, @sizeOf(@TypeOf(root.onscreen_ubo)));
-        onscreen_render_pass_encoder.setBindGroup(0, root.onscreen_bind_group, &.{});
-        onscreen_render_pass_encoder.drawIndexed(indices.len, 1, 0, 0, 0);
-        // Imgui must be drawn after the onscreen render pass:
-        c.cImGui_ImplWGPU_RenderDrawData(c.ImGui_GetDrawData(), @ptrCast(@alignCast(&onscreen_render_pass_encoder)));
+        js.gpu.queue.writeBuffer(@TypeOf(root.onscreen_ubo), root.onscreen_uniform_buffer, 0, &[_]@TypeOf(root.onscreen_ubo){root.onscreen_ubo}, 0, @sizeOf(@TypeOf(root.onscreen_ubo)));
+        root.onscreen_render_pass_encoder.setBindGroup(0, root.onscreen_bind_group, &.{});
+        root.onscreen_render_pass_encoder.drawIndexed(indices.len, 1, 0, 0, 0);
+        // Order matters here: UI must be drawn after the onscreen render pass:
+        root.ui.render();
     }
     var onscreen_command_buffer = onscreen_command_encoder.finish();
     defer onscreen_command_buffer.deinit();
-    js.gpu.Queue.submit(&[_]js.gpu.CommandBuffer{onscreen_command_buffer});
+    js.gpu.queue.submit(&[_]js.gpu.CommandBuffer{onscreen_command_buffer});
 }

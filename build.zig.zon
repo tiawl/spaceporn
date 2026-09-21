@@ -7,31 +7,36 @@
     },
     .dependencies = .{
         .cimgui_zig = .{
-            .url = "git+https://github.com/tiawl/cimgui.zig#641dac18c7d718bd4ae892791ced5f2e1b346d07",
-            .hash = "cimgui_zig-1.0.0-2XubkhwIxgDBt3gp7eh2wgZFuDQG2ArFQcXAGQ26WqLs",
+            .url = "git+https://github.com/tiawl/cimgui.zig#22c8b319255e992ab079d87fb54224b4d1461a5b",
+            .hash = "cimgui_zig-1.0.0-2XubktxJxgC2UnFTIKGAUA9tb_2drZuWq_G6BVABQ0m4",
         },
         .translate_c = .{
-            .url = "git+https://codeberg.org/ziglang/translate-c#0944784e197e419433a21d4b28bfc65e48e7d514",
-            .hash = "translate_c-0.0.0-Q_BUWo5NBwBs3K0a-B1XbxEF3gFdTb75VgOE0FL-2qKL",
+            .url = "git+https://codeberg.org/ziglang/translate-c#14d8a0232cee6488377bae62127cf401f4c4bd29",
+            .hash = "translate_c-0.0.0-Q_BUWo5NBwAWyRlnrU_almDUdEYvRuUu39bYZkwop6Ak",
         },
         .mimalloc = .{
-            .url = "git+https://github.com/microsoft/mimalloc#39448a96aae7eab35840b2a9d19adaf175cf9b34",
-            .hash = "N-V-__8AAHeBWgChIbefEJ9IRzhZ8s2NuYqApa3KOfh_Pjct",
+            .url = "git+https://github.com/microsoft/mimalloc#31d034d94cdb8e22f7d7ed55967f581a2d6e831d",
+            .hash = "N-V-__8AAJ2kWgAyMSn9Yf-t-pUPi1ZkFkG6UUOmXod6BvPG",
             .lazy = true,
         },
         .@"SPIRV-Headers" = .{
-            .url = "git+https://github.com/KhronosGroup/SPIRV-Headers#04fd3caa1e8267e4d95c806cad901181728e1006",
-            .hash = "N-V-__8AADfWPwDeuBnRPneVxuif7fpyfwwwYCbin0p6IEdt",
+            .url = "git+https://github.com/KhronosGroup/SPIRV-Headers#cb42dec3830d3ac67fa449ecdc0c0f73d5e74498",
+            .hash = "N-V-__8AAHjlPwChqOB01fulYNDe8oV7RcO-heJYxpd0z0_E",
             .lazy = true,
         },
         .@"SPIRV-Tools" = .{
-            .url = "git+https://github.com/KhronosGroup/SPIRV-Tools#25318da789b94854908a15b4c718145e4e63fc87",
-            .hash = "N-V-__8AAASrlwEDX-lsdrqhvOgsfAhn15sBBVE6Y8Wjfv_-",
+            .url = "git+https://github.com/KhronosGroup/SPIRV-Tools#1d0401cd2b68ae34cda9ff625bedd1be4ed6214a",
+            .hash = "N-V-__8AAIDalwFy_XS83943r0MfVNjZUyE63o2z9Xx_Euwk",
             .lazy = true,
         },
         .dawn = .{
-            .url = "git+https://dawn.googlesource.com/dawn#aa02747dfae033881f4334ad7e2b04a5e06bc492",
-            .hash = "N-V-__8AAOaLDhBmeqPgUZvF2DRv3SIuy-f-Ij_h_hgol_8U",
+            .url = "git+https://dawn.googlesource.com/dawn#6c1e27710cd182e794b1c97a08b27f1778713957",
+            .hash = "N-V-__8AAJxPAhAGgh3ZelHb52OOtZyvP-OUvJGbRym8JCKp",
+            .lazy = true,
+        },
+        .binaryen = .{
+            .url = "git+https://github.com/WebAssembly/binaryen#eacbf2333a8c7c7ca65b2d08c7a92d1bf4b12650",
+            .hash = "N-V-__8AAHBDngKuW6gJePI1pCOkpXEE_y62NB_yF_RW5wQm",
             .lazy = true,
         },
     },
